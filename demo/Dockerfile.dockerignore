@@ -1,0 +1,15 @@
+# 빌드 컨텍스트(리포 루트) 축소. BuildKit이 <Dockerfile>.dockerignore로 인식한다.
+.git
+
+# ★ 호스트의 **생성물**은 넣지 않는다 — 이미지는 소스에서 스스로 만든다(builder가 buf generate·
+# go build·javac를 자기 안에서 돈다). 넣으면 기여자의 낡은 gen/이 이미지로 새어 들어가
+# "데모는 리포 빌드와 무관하다"가 거짓이 된다(실제로 새고 있었다).
+gen
+build
+dist
+demo/.generated
+demo/results
+demo/*.svg
+demo/*.dot
+discovery/collectors/jvm/collector/build
+discovery/collectors/jvm/collector/.gradle

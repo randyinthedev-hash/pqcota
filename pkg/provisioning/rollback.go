@@ -1,0 +1,99 @@
+package provisioning
+
+import (
+	"fmt"
+	"strings"
+
+	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+)
+
+// GenerateRollbackPlaybook — GenerateProvisioningPlaybook의 역방향(§6A). forward가 스테이지한
+// provider 모듈과 배치한 config 조각을 **제거**해 before 상태로 되돌리는 Ansible 플레이북을 생성한다.
+//
+// forward는 원본(기존 모듈·config)을 *덮어쓰지 않고 파일을 추가*하므로(§6A 원자적 배치), 그 추가분을
+// 지우면 원본이 그대로 복원된다 — before 원문을 따로 재생성할 필요가 없다.
+//
+// L3면 **forward의 정확한 역순**으로 되돌린다: pre → deactivate → 파일 제거 → restart.
+// activate가 바꾼 것(include·symlink 등)은 그것을 만든 사람만 되돌릴 수 있으니 deactivate 훅을 쓴다.
+func GenerateRollbackPlaybook(plan *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) string {
+	install := level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL ||
+		level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
+	activate := level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
+
+	var b strings.Builder
+	b.WriteString("# 생성됨: pqcota 롤백 플레이북 — `ansible-playbook`으로 되돌린다.\n")
+	if activate {
+		fmt.Fprintf(&b, "# %s 역방향: 비활성화 → 활성화 되돌림 → 배치 파일 제거 → 재시작(원본 미변경).\n", levelName(level))
+	} else {
+		fmt.Fprintf(&b, "# %s 역방향: forward 배치 파일 제거(원본 미변경).\n", levelName(level))
+	}
+
+	byNode := map[string][]*provisioningv1.RemediationAction{}
+	var order []string
+	for _, a := range plan.GetActions() {
+		n := a.GetTargetNodeId()
+		if _, ok := byNode[n]; !ok {
+			order = append(order, n)
+		}
+		byNode[n] = append(byNode[n], a)
+	}
+
+	for _, node := range order {
+		fmt.Fprintf(&b, "\n- name: %s\n", yamlScalar("pqcota 롤백 — "+node))
+		fmt.Fprintf(&b, "  hosts: [%s]\n", yamlScalar(node))
+		b.WriteString("  become: true\n  tasks:\n")
+		// L3 역순: 먼저 내리고(pre) 활성화를 되돌린 뒤(deactivate) 파일을 지운다.
+		// forward와 같은 이유로 단계별로 모아 낸다 — 조치별 재시작은 서비스를 여러 번 흔든다.
+		if activate {
+			writeHooks(&b, "① 비활성화(사전)", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetPre))
+			writeHooks(&b, "② 활성화 되돌림", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetDeactivate))
+		}
+		dests := map[string]string{}
+		if install {
+			dests = ConfigDests(byNode[node]) // forward와 같은 규칙 — 놓은 것을 그대로 지운다
+		}
+		removed := map[string]bool{}
+		for _, a := range byNode[node] {
+			d := dests[a.GetId()]
+			if d != "" && removed[d] {
+				d = ""
+			} else if d != "" {
+				removed[d] = true
+			}
+			writeRollbackTasks(&b, a, d)
+		}
+		// 마지막에 재시작해 원래 설정으로 다시 로드시킨다.
+		if activate {
+			writeHooks(&b, "④ 재시작", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetRestart))
+		}
+	}
+	return b.String()
+}
+
+func writeRollbackTasks(b *strings.Builder, a *provisioningv1.RemediationAction, cfgDest string) {
+	kind := a.GetKind()
+	inject := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT
+	cfgOnly := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
+	if !inject && !cfgOnly {
+		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포하지 않았으므로 롤백도 수동(§4.3 레거시 터치)\n", a.GetId(), kind)
+		return
+	}
+
+	jca := a.GetCryptoRuntime() == commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA
+
+	// L2에서 배치한 config 조각 제거(L1 stage-only면 config를 배치 안 했으니 스킵).
+	if cfgDest != "" {
+		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("config 조각 제거 ("+cfgDest+")"))
+		fmt.Fprintf(b, "      ansible.builtin.file: { path: %s, state: absent }\n", yamlScalar(cfgDest))
+	}
+
+	if inject { // 스테이지한 provider 모듈 제거 — forward가 놓은 그 경로(paths.go 공유)
+		prov := a.GetProviderChoice()
+		if prov == "" {
+			prov = "provider"
+		}
+		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("provider 모듈 제거 ("+prov+")"))
+		fmt.Fprintf(b, "      ansible.builtin.file: { path: %s, state: absent }\n", yamlScalar(ModulePath(prov, jca)))
+	}
+}

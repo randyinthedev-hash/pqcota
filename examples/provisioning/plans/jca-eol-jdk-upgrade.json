@@ -1,0 +1,15 @@
+{
+  "id": "ex-jca-eol",
+  "status": "PLAN_STATUS_FINALIZED",
+  "scope": "ring-2",
+  "approvalSignatures": ["reviewer:bob"],
+  "actions": [{
+    "id": "a1",
+    "targetNodeId": "legacy-app",
+    "findingId": "f-jdk8-eol",
+    "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
+    "kind": "REMEDIATION_KIND_JDK_UPGRADE",
+    "targetAlgorithm": "ML-KEM (FIPS 203)",
+    "rollbackNote": "이전 JDK로 복원 — 수동"
+  }]
+}

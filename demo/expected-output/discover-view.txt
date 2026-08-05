@@ -1,0 +1,23 @@
+╔══════════════════════════════════════════════════════════╗
+║  pqcota 디스커버리 뷰 (OSS · 읽기전용)                     ║
+╚══════════════════════════════════════════════════════════╝
+
+──────── ① 발견 자산 (노드별) ────────
+  pay-app
+    • JCA provider chain: SUN,SunRsaSign,SunEC,SunJSSE,SunJCE,SunJGSS,SunSASL,XMLDSig,SunPCSC,JdkLDAP,JdkSASL,SunPKCS11,BC [EVIDENCE_STRENGTH_CONFIRMED]
+    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+  pay-db
+    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+    • OpenSSL  libssl.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+  web-gw
+    • OpenSSL  libcrypto.so.3 3.0.13 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+
+──────── ② 관측 통신 엣지 + 양자내성 posture ────────
+  🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [표준]
+  🟢 web-gw     → pay-app            SSH   sntrup761x25519-sha512@openssh.com [실험]
+  🔴 web-gw     → pay-db             TLS   x25519
+  🔴 web-gw     → pay-db             SSH   curve25519-sha256
+
+  posture 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
+
+관측 토폴로지 DOT 저장: /work/topology.dot (색=posture, 실선=관측). 선언 대비 3-상태 대조는 이 뷰의 범위 밖.

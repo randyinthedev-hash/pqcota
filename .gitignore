@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# 빌드 산출물 (빌드는 ubuntu-dev)
+/gen/
+*.pb.go
+node_modules/
+dist/
+build/
+
+# 커스텀 토폴로지 — 샘플(topology.example.yaml)만 추적하고, 사용자 복사본·생성물은 무시한다.
+# (추적 파일을 직접 편집하게 하면 git이 더러워지고 pull이 충돌한다 — .env.example 관례)
+/demo/topology/topology.yaml
+/demo/topology/*.local.yaml
+# 리포에 생기는 데모 산출물은 전부 여기 하나로 모인다(그림·생성된 compose/groups/profiles).
+/demo/.generated/
+
+# python 캐시
+__pycache__/
+*.pyc
+
+# 통합 테스트용 빌드 바이너리 (Docker COPY 대상)
+discovery/collectors/openssl/integration/openssl-collector
+collectors/**/*.class
+collectors/**/*.jar
+
+# 로컬 설정
+.env
+.env.local
+*.local
+
+# 로컬 빌드 바이너리
+/bin/
+
+# 데모 산출물 (위 /demo/.generated/ 로 통합 — 옛 경로는 잔재 정리용으로만 남긴다)
+demo/results/
+
+# 빌드 머신의 개인 작업 환경 문서 — 제품 문서가 아니다(에이전트 메모리에서 관리)
+docs/테스트_샌드박스.md
+
+# HotSpot attach 트리거 파일 — 대상 JVM이 자기 CWD에 만든다(테스트는 임시 폴더에서 띄운다)
+.attach_pid*

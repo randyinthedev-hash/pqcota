@@ -1,0 +1,4 @@
+node_id,name,ip,port,ssh_user,ssh_key,ssh_pass
+node-a,Web 프론트,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,
+node-b,결제 앱(Java),10.0.0.3,22,deploy,,example-password
+node-c,결제 DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,

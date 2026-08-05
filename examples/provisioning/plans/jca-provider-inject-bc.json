@@ -1,0 +1,16 @@
+{
+  "id": "ex-jca-bc",
+  "status": "PLAN_STATUS_FINALIZED",
+  "scope": "ring-0",
+  "approvalSignatures": ["reviewer:bob"],
+  "actions": [{
+    "id": "a1",
+    "targetNodeId": "app-02",
+    "findingId": "f-jca-no-pqc",
+    "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
+    "kind": "REMEDIATION_KIND_PROVIDER_INJECT",
+    "targetAlgorithm": "ML-KEM (FIPS 203)",
+    "providerChoice": "BC",
+    "rollbackNote": "등록 라인 + JAR 제거"
+  }]
+}

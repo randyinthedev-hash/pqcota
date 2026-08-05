@@ -1,0 +1,121 @@
+한국어 · [English](README.en.md)
+
+# pqcota
+
+PQC 마이그레이션 관리 플랫폼 **pqcota**(OSS, [Apache-2.0](LICENSE)). 레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 **Discovery → Inventory → Provisioning** 3단계로 다룬다.
+
+**이름** — *pqcota*(발음 **P-cota**) = **PQC**(양자내성암호) + **Orchestra**(-ota). **이 소프트웨어는 교향악의 *단원*이지 마에스트로가 아니다.** 무엇을·언제 이관할지 지휘하는 **마에스트로는 이 도구를 쓰는 사용자**이고, pqcota는 제 파트(관측·정규화·생성)를 정확히 연주한다.
+
+---
+
+## 무엇을 하나 — 세 단계
+
+| 단계 | 하는 일 | 산출 |
+|---|---|---|
+| ① **[Discovery](discovery/README.md)** | 실행 중인 시스템이 **어떤 암호 알고리즘을 쓰는지 관측**한다 — 로드된 라이브러리, JVM provider 체인, 핸드셰이크에서 협상된 알고리즘 | 노드별 관측 결과(정규화된 CBOM) |
+| ② **[Inventory](inventory/README.md)** | 관측을 **어느 노드·어느 앱의 것인지 이어 붙여 쌓는다** — 머신 메타데이터, 스냅샷 간 변화 diff | 중앙 인벤토리(append-only) |
+| ③ **[Provisioning](provisioning/README.md)** | 확정된 계획에서 **PQC 전환 산출물을 만든다** — config 조각, 적용·롤백 Ansible 플레이북(L1/L2/L3), 롤백 근거 | 플레이북 + before 레코드 |
+
+## 써보기 — 데모
+
+**Docker만 있으면** 전 범위를 한 번에 돌려본다 — 접근준비 → 디스커버리 → 인벤토리 →
+프로비저닝(생성·적용·되돌림). 컨테이너로 세운 노드들을 실제로 관측한다.
+
+```bash
+./demo/scripts/up.sh && ./demo/scripts/demo.sh   # 정리: ./demo/scripts/down.sh
+```
+
+구성·예상 결과·자기 호스트에 적용하는 법 → **[demo/](demo/README.md)**
+
+---
+
+## 사전 요구
+
+**빌드**
+- Go 1.26.4+
+- buf (+`protoc-gen-go`·`protoc-gen-go-grpc`)
+- JDK 11+ — **선택**. JVM attach 사이드카를 만들 때만. 없으면 그 단계만 건너뛴다
+
+**실행**
+- 여러 노드 관측 — 컨트롤러에 Ansible, 대상 노드로의 SSH 접근
+- 단일 노드 관측 — 설치할 것 없음. 그 노드에서 바이너리를 직접 실행한다(`pqcota-netcap`은 `CAP_NET_RAW` 필요) → [discovery/cmd](discovery/cmd/README.md)
+
+## 빌드
+
+pqcota는 **중앙 컨트롤러 노드** 하나와, 그 컨트롤러가 Ansible/SSH로 닿는 **대상 노드들**로 구성된다.
+**빌드는 컨트롤러에서 한다** — 컨트롤러에서 실행할 CLI와 대상 노드로 보낼 collector를 여기서 함께 만든다.
+
+**① 계약 코드 생성** — 계약(`contracts/*.proto`)에서 Go 코드를 만든다. `make tools`가 생성
+플러그인(`protoc-gen-go`·`-grpc`)을 설치하고, `make generate`가 변환한다. 생성된 `gen/`은 gitignore 대상이다.
+
+```bash
+make tools && make generate     # contracts/*.proto → gen/
+```
+
+**② 컨트롤러에서 쓸 CLI** — 관측 결과를 적재·조회하고 플레이북을 생성하는 커맨드들.
+
+```bash
+go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
+```
+
+**③ 대상 노드에 올릴 collector** — 셋뿐이고 **노드 arch에 맞춰** 정적으로 만든다
+→ [배포 설계](discovery/collector_배포_설계.md).
+
+```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
+  ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
+
+make build-jar                  # JVM 노드가 있을 때만: attach 사이드카 → build/collector.jar
+```
+
+collector는 **리눅스 전용**이라 `GOOS=linux`와 `CGO_ENABLED=0`(정적 링크 — 배포판·libc 무관)은 고정이다.
+노드에 맞춰 바꾸는 것은 `GOARCH`뿐이며, 값 목록은 [Go 문서](https://go.dev/doc/install/source#environment)를 따른다.
+
+**노드 커널은 3.2 이상**이면 된다 — Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#지원-범위)에 있다.
+
+노드에서 collector를 돌릴 때의 권한·환경변수 → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
+
+리포에 기여한다면(테스트·게이트·계약 변경) → [CONTRIBUTING](CONTRIBUTING.md).
+
+## 스택
+
+- **Go** — collector·CLI 전부. `CGO_ENABLED=0` 정적 단일 바이너리
+- **Java** — JVM attach 사이드카만(JVM 안에서만 가능한 관측이라)
+- **Protobuf/gRPC** — 단계 사이를 잇는 계약([`contracts/`](contracts/))
+- **Postgres** — 여러 노드를 시간에 걸쳐 쌓고 조회할 때만. 단일 노드 관측에선 쓰지 않는다
+
+## 지원 범위
+
+**관측**
+
+| 무엇을 관측 | 대상 | 왜 |
+|---|---|---|
+| OpenSSL 자산 · 통신 엣지 | **Linux** (amd64·arm64) | `/proc`·ELF·AF_PACKET에 의존 |
+| JVM provider 체인 | **Java 8+**, JVM이 도는 곳 | attach는 OS 비의존(검증 범위는 Linux) |
+
+**전환(프로비저닝)** — 확정 계획의 조치 종류에 따라 갈린다.
+
+| 런타임 | 상황 | 생성물 |
+|---|---|---|
+| **OpenSSL** | 3.5+ (네이티브 PQC) | config 조각만 — 레거시 무터치 |
+| | 3.0–3.4 | provider 모듈 배치 + 그 모듈을 참조하는 config 조각. 모듈 자체는 사용자가 준비한다 |
+| | 1.1.1 이하 | **생성하지 않는다** — 포크 교체가 필요해 수동 단계로 표기 |
+| **JCA**(Java) | **JDK 24+** (네이티브 PQC) | `java.security` 조각만. 고전 그룹을 함께 둔다 — 릴리스 JDK가 아직 하이브리드 그룹을 협상하지 않는다(≤25 실측) |
+| | **JDK 8+** (provider 주입) | provider JAR 배치 + `java.security` 등록 조각. JAR 배치만으로는 로드되지 않아 활성화가 따로 필요하다 |
+| | 그 이하(EOL) | **생성하지 않는다** — JDK 업그레이드가 필요해 수동 단계로 표기 |
+
+적용은 Ansible 플레이북으로 한다. 생성되는 플레이북이 POSIX 경로·모듈(`ansible.builtin.copy`, `/opt/pqcota`)을 전제하므로 대상 노드는 **Linux**다 — Ansible 자체는 Windows도 다루지만 이 산출물이 아직 그렇지 않다.
+
+Windows(CNG)는 [로드맵](RELEASE_NOTES.md)에 있다 — v0.1.0은 계약에 스키마만 예약했고 collector는 이후 릴리스다.
+
+---
+
+## 상태 · 버전
+
+개발 중 — 정식 릴리스(v0.1.0) 이전이다. **버전별 목표·성과**는 [릴리스 노트](RELEASE_NOTES.md).
+
+## 라이선스
+
+- **Apache-2.0** — 원문 [LICENSE](LICENSE)
+- 의존성 라이선스 정리 → [라이선스 정리](docs/라이선스_정리.md)
+- 서드파티 고지 → [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)

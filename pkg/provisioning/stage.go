@@ -1,0 +1,326 @@
+package provisioning
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+)
+
+// GenerateProvisioningPlaybook — 확정 계획의 조치를 L1/L2로 배포하는 Ansible 플레이북을 생성한다(§4.3 표준 substrate).
+// core는 **생성만** — 사용자 Ansible이 실행한다(§4.6, 자체 실행엔진 없음). 플레이북=데이터라 GPL 전염 없음.
+//
+//	L1 Stage-only    : provider 모듈을 규칙 폴더에 배치(스테이지)만. config·활성화 없음.
+//	L2 Stage+Install : 모듈 + config 조각(config_artifact) 배치까지.
+//	L3 Full-auto     : 여기에 **활성화·재시작**까지. 명령은 계획의 ActivationHooks(사용자가 적은 것)를
+//	                   의미 순서로 배치한다 — pre → [배치] → activate → restart. 도구가 활성화 방법을
+//	                   추측하지 않는다(§2.6). 빈 훅은 그 단계를 만들지 않고 무엇이 빠졌는지 고지한다.
+//
+// config로 배포 불가한 조치(포크 교체·프록시·재빌드 등)는 주석으로 명시하고 건너뛴다(수동 단계).
+func GenerateProvisioningPlaybook(plan *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) string {
+	install := level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL ||
+		level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
+	activate := level == provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
+
+	var b strings.Builder
+	b.WriteString("# 생성됨: pqcota 프로비저닝 플레이북 — `ansible-playbook`으로 적용한다.\n")
+	if activate {
+		fmt.Fprintf(&b, "# 레벨: %s — 모듈·config 배치 + **활성화·재시작**(계획의 훅). 되돌림: rollback 플레이북.\n", levelName(level))
+	} else {
+		fmt.Fprintf(&b, "# 레벨: %s — 배치까지(활성화·재시작 없음). 되돌림: 배치 파일 제거.\n", levelName(level))
+	}
+	// JCA provider 주입이 있으면 흔한 함정을 헤더에서 먼저 짚는다: JAR '배치'만으로는 로드되지
+	// 않는다(각 조각 주석에도 있지만 열어봐야 보임). 그 배선은 앱 기동 방식에 달렸으니 L3의 activate 훅에 적는다.
+	if hasJCAProviderInject(plan) {
+		b.WriteString("# ⚠ JCA provider 주입 포함 — JAR '배치'만으로는 provider가 로드되지 않는다.\n")
+		b.WriteString("#   JVM이 JAR을 찾게 하려면 classpath 또는 --module-path에 얹어야 한다(JDK 9+엔 lib/ext 없음).\n")
+		b.WriteString("#   그 배선은 앱 기동 방식에 달렸으니 계획의 activation.activate 훅에 적는다(L3).\n")
+	}
+
+	byNode := map[string][]*provisioningv1.RemediationAction{}
+	var order []string
+	for _, a := range plan.GetActions() {
+		n := a.GetTargetNodeId()
+		if _, ok := byNode[n]; !ok {
+			order = append(order, n)
+		}
+		byNode[n] = append(byNode[n], a)
+	}
+
+	for _, node := range order {
+		fmt.Fprintf(&b, "\n- name: %s\n", yamlScalar("pqcota 프로비저닝 — "+node))
+		fmt.Fprintf(&b, "  hosts: [%s]\n", yamlScalar(node))
+		b.WriteString("  become: true\n  tasks:\n")
+		b.WriteString("    - name: 스테이징 디렉터리\n")
+		fmt.Fprintf(&b, "      ansible.builtin.file: { path: %s, state: directory, mode: '0755' }\n", StageDir)
+		if install {
+			// config 조각을 놓을 디렉터리도 미리 만든다 — ansible.builtin.copy는 대상 디렉터리가
+			// 없으면 실패한다("Destination directory does not exist"). 깨끗한 노드에는 없다.
+			b.WriteString("    - name: config 디렉터리\n")
+			fmt.Fprintf(&b, "      ansible.builtin.file: { path: %s, state: directory, mode: '0755' }\n", ConfigDir)
+		}
+		// L3: 조치 전 내릴 것(pre)을 배치보다 앞에 둔다 — 서비스를 내린 뒤 파일을 바꾸는 순서.
+		// 한 노드의 조치들을 **단계별로 모은다**(조치마다 pre/activate/restart를 반복하지 않는다):
+		// 같은 서비스에 조치가 3개면 조치별로 내면 재시작이 3번 일고, 더 나쁘게는 활성화 사이에
+		// 재시작이 끼어 일부만 반영된 상태로 서비스가 뜬다. 내리고 → 다 바꾸고 → 다 켜고 → 한 번 재시작.
+		if activate {
+			writeHooks(&b, "① 비활성화(사전)", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetPre))
+		}
+		dests := map[string]string{}
+		if install {
+			dests = ConfigDests(byNode[node])
+		}
+		emitted := map[string]bool{} // 같은 경로에 두 번 copy하지 않는다(내용이 같은 조각은 하나로 본다)
+		for _, a := range byNode[node] {
+			d := dests[a.GetId()]
+			if d != "" && emitted[d] {
+				d = ""
+			} else if d != "" {
+				emitted[d] = true
+			}
+			writeActionTasks(&b, a, d)
+		}
+		// L3: 배치가 끝난 뒤 활성화 → 재시작. 순서가 의미다(참조되게 만든 뒤 새로 로드).
+		if activate {
+			writeHooks(&b, "② 활성화", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetActivate))
+			writeHooks(&b, "③ 재시작", hookCmds(byNode[node], (*provisioningv1.ActivationHooks).GetRestart))
+		}
+	}
+	return b.String()
+}
+
+// hasJCAProviderInject — 계획에 JCA provider 주입 조치가 하나라도 있나(classpath 배선 함정 대상).
+func hasJCAProviderInject(plan *provisioningv1.FinalizedPlan) bool {
+	for _, a := range plan.GetActions() {
+		if a.GetKind() == provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT &&
+			a.GetCryptoRuntime() == commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA {
+			return true
+		}
+	}
+	return false
+}
+
+// ActionConfig — 조치의 config 조각 내용. 저장된 아티팩트가 없으면 재생성한다(§0.2 파생은 항상 재계산 가능).
+func ActionConfig(a *provisioningv1.RemediationAction) string {
+	if cfg := a.GetConfigArtifact(); cfg != "" {
+		return cfg
+	}
+	return Render(a)
+}
+
+// ConfigDests — 한 노드의 조치별 config 조각 배치 경로(조각 없는 조치는 없음).
+// 런타임별로 묶어, **내용이 같은 조각은 한 경로**를 쓰고(흔한 경우 — 같은 목표 알고리즘),
+// 내용이 다른 조각이 둘 이상이면 조치별로 경로를 나눈다. forward·롤백이 같은 규칙을 써야
+// 되돌림이 대칭이라 여기 한 곳에 둔다.
+func ConfigDests(as []*provisioningv1.RemediationAction) map[string]string {
+	out := map[string]string{}
+	for _, jca := range []bool{false, true} {
+		var ids []string
+		contentOf, firstID := map[string]string{}, map[string]string{}
+		for _, a := range as {
+			k := a.GetKind()
+			if k != provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT &&
+				k != provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY {
+				continue
+			}
+			if (a.GetCryptoRuntime() == commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA) != jca {
+				continue
+			}
+			c := ActionConfig(a)
+			ids = append(ids, a.GetId())
+			contentOf[a.GetId()] = c
+			if _, ok := firstID[c]; !ok {
+				firstID[c] = a.GetId()
+			}
+		}
+		if len(ids) == 0 {
+			continue
+		}
+		if len(firstID) == 1 { // 서로 다른 조각이 하나 — 기존 경로 그대로
+			for _, id := range ids {
+				out[id] = ConfigPath(jca)
+			}
+			continue
+		}
+		for _, id := range ids { // 충돌 — 조각별로 경로를 나눠 아무것도 잃지 않는다
+			out[id] = SplitConfigPath(jca, firstID[contentOf[id]])
+		}
+	}
+	return out
+}
+
+// ConfigConflictWarnings — 한 노드·런타임에 서로 다른 조각이 둘 이상이라 경로를 나눈 경우를 알린다.
+// 나누기만 하면 **어느 것도 참조되지 않는다** — 사용자가 활성화 훅에서 고를 수 있게 크게 알린다(§2.6).
+func ConfigConflictWarnings(plan *provisioningv1.FinalizedPlan) []string {
+	byNode := map[string][]*provisioningv1.RemediationAction{}
+	var order []string
+	for _, a := range plan.GetActions() {
+		n := a.GetTargetNodeId()
+		if _, ok := byNode[n]; !ok {
+			order = append(order, n)
+		}
+		byNode[n] = append(byNode[n], a)
+	}
+	var out []string
+	for _, node := range order {
+		paths := map[string]bool{}
+		for _, d := range ConfigDests(byNode[node]) {
+			paths[d] = true
+		}
+		var split []string
+		for d := range paths {
+			if d != ConfigPath(false) && d != ConfigPath(true) {
+				split = append(split, d)
+			}
+		}
+		if len(split) == 0 {
+			continue
+		}
+		sort.Strings(split)
+		out = append(out, fmt.Sprintf("node=%s: 같은 런타임에 **서로 다른 config 조각이 %d개**라 경로를 나눴다(%s). 한 파일에 합치지 않는다 — 섹션이 충돌할 수 있어 도구가 병합 순서를 정하지 않는다(§2.1). 어느 조각을 참조할지는 activation.activate에 적어야 한다.",
+			node, len(split), strings.Join(split, ", ")))
+	}
+	return out
+}
+
+func writeActionTasks(b *strings.Builder, a *provisioningv1.RemediationAction, cfgDest string) {
+	kind := a.GetKind()
+	inject := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT
+	cfgOnly := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
+	if !inject && !cfgOnly {
+		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포 불가 — 수동 단계(§4.3 레거시 터치)\n", a.GetId(), kind)
+		return
+	}
+
+	jca := a.GetCryptoRuntime() == commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA
+
+	if inject { // provider 모듈 스테이지(주입형만)
+		prov := a.GetProviderChoice()
+		if prov == "" {
+			prov = "provider"
+		}
+		file, dest, sfx := ModuleFile(prov, jca), ModulePath(prov, jca), varSuffix(prov)
+
+		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("provider 모듈 스테이지 ("+prov+")"))
+		b.WriteString("      ansible.builtin.copy:\n")
+		// src는 **컨트롤러 로컬 경로**다(Ansible copy). provider별 변수 → 전역 변수 → files/<이름>
+		// 순으로 찾으므로, 한 플레이북에 여러 provider가 섞여도 각각 지정할 수 있다.
+		// Jinja 문자열 리터럴 안에 들어가는 파일명은 Jinja 규칙으로, 그 전체 스칼라는 YAML 규칙으로
+		// 이스케이프해야 한다 — 둘 중 하나만 하면 provider 이름에 인용부호가 있을 때 깨진다.
+		expr := fmt.Sprintf("{{ pqcota_module_src_%s | default(pqcota_module_src | default('%s')) }}", sfx, jinjaSingleQuoted(file))
+		fmt.Fprintf(b, "        src: %s\n", yamlScalar(expr))
+		fmt.Fprintf(b, "        dest: %s\n", yamlScalar(dest))
+		b.WriteString("        mode: '0644'\n")
+
+		// 무결성 확인 — 타깃에서 암호 연산을 수행할 네이티브 코드를 심는 일이라, 무엇을 심었는지
+		// 고정할 수단이 필요하다(§2.3 RCE 대칭성). sha256을 주지 않으면 건너뛴다(하위호환).
+		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("provider 모듈 sha256 확인 ("+prov+")"))
+		fmt.Fprintf(b, "      ansible.builtin.stat: { path: %s, checksum_algorithm: sha256 }\n", yamlScalar(dest))
+		fmt.Fprintf(b, "      register: pqcota_stat_%s\n", sfx)
+		fmt.Fprintf(b, "      when: pqcota_module_sha256_%s is defined or pqcota_module_sha256 is defined\n", sfx)
+		b.WriteString("    - name: sha256 불일치면 중단\n")
+		b.WriteString("      ansible.builtin.assert:\n")
+		fmt.Fprintf(b, "        that: pqcota_stat_%s.stat.checksum == (pqcota_module_sha256_%s | default(pqcota_module_sha256))\n", sfx, sfx)
+		fmt.Fprintf(b, "        fail_msg: %s\n", yamlScalar(file+" 무결성 불일치 — 배치한 모듈이 기대한 아티팩트가 아니다"))
+		fmt.Fprintf(b, "      when: pqcota_module_sha256_%s is defined or pqcota_module_sha256 is defined\n", sfx)
+	}
+
+	if cfgDest == "" {
+		return // L1 stage-only, 또는 같은 경로에 이미 배치됨(내용 동일)
+	}
+
+	// L2: config 조각을 놓는다. 이 조각이 실제로 참조되게 만드는 것은 L3의 activate 훅이다.
+	cfg := ActionConfig(a)
+	dest := cfgDest
+	fmt.Fprintf(b, "    - name: %s\n", yamlScalar("config 조각 배치 ("+dest+")"))
+	b.WriteString("      ansible.builtin.copy:\n")
+	fmt.Fprintf(b, "        dest: %s\n", yamlScalar(dest))
+	b.WriteString("        content: |\n")
+	for _, line := range strings.Split(strings.TrimRight(cfg, "\n"), "\n") {
+		fmt.Fprintf(b, "          %s\n", line)
+	}
+}
+
+// hookCmds — 한 노드 조치들에서 같은 단계의 명령을 뽑되 **중복은 한 번만**(순서 보존).
+// 같은 서비스를 여러 조치가 건드리면 재시작 명령이 같다 — 그걸 그대로 n번 내면 n번 재시작한다.
+func hookCmds(as []*provisioningv1.RemediationAction, get func(*provisioningv1.ActivationHooks) string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, a := range as {
+		cmd := strings.TrimSpace(get(a.GetActivation()))
+		if cmd == "" || seen[cmd] {
+			continue
+		}
+		seen[cmd] = true
+		out = append(out, cmd)
+	}
+	return out
+}
+
+// writeHooks — 사용자가 적은 명령을 태스크로 낸다. 없으면 **아무것도 만들지 않는다**(추측 금지).
+// 무엇이 비었는지는 ActivationWarnings가 따로 고지한다 — 조용히 넘어가지 않게.
+//
+// 명령은 **리터럴 블록 스칼라**(`|-`)로 낸다. 사용자가 적은 임의 텍스트라 줄바꿈·`:`·`#`·인용부호가
+// 들어올 수 있고, 그대로 한 줄 스칼라에 붙이면 플레이북이 깨진다(실제로 깨졌다 — 여러 줄 명령).
+// 블록 스칼라는 이스케이프 없이 어떤 셸 명령이든 담는다.
+func writeHooks(b *strings.Builder, label string, cmds []string) {
+	for _, cmd := range cmds {
+		fmt.Fprintf(b, "    - name: %s\n", yamlScalar(label+" (계획 제공)"))
+		b.WriteString("      ansible.builtin.shell: |-\n")
+		for _, line := range strings.Split(strings.TrimRight(cmd, "\n"), "\n") {
+			fmt.Fprintf(b, "        %s\n", line)
+		}
+	}
+}
+
+// jinjaSingleQuoted — Jinja 홑인용 문자열 리터럴 안에 넣을 수 있게 `\`·`'`를 이스케이프한다.
+func jinjaSingleQuoted(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `'`, `\'`)
+}
+
+// yamlScalar — 계획에서 온 문자열을 한 줄 YAML 스칼라로 안전하게 낸다.
+// node_id·provider 이름·조치 id는 사용자 데이터라 `:`나 `#`가 들어오면 매핑으로 오해된다.
+// 항상 겹인용부호로 감싸고 그 안의 `\`·`"`만 이스케이프한다(YAML 겹인용 규칙).
+func yamlScalar(s string) string {
+	esc := strings.ReplaceAll(s, "\\", "\\\\")
+	esc = strings.ReplaceAll(esc, "\"", "\\\"")
+	esc = strings.ReplaceAll(esc, "\n", "\\n")
+	return "\"" + esc + "\""
+}
+
+// ActivationWarnings — L3인데 훅이 비어 무엇이 일어나지 **않는지** 알린다(§2.6·§2.7).
+// 생성을 막지는 않는다 — 사용자가 일부러 일부 단계만 맡길 수 있다. 다만 조용히 두지 않는다.
+func ActivationWarnings(p *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) []string {
+	if level != provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO {
+		return nil
+	}
+	var out []string
+	for _, a := range p.GetActions() {
+		h := a.GetActivation()
+		if strings.TrimSpace(h.GetActivate()) == "" {
+			out = append(out, fmt.Sprintf("조치 %s(node=%s): activation.activate 없음 — config 조각을 놓기만 하고 **참조되게 만들지 않는다**(L3인데 활성화가 일어나지 않음).", a.GetId(), a.GetTargetNodeId()))
+		}
+		if strings.TrimSpace(h.GetRestart()) == "" {
+			out = append(out, fmt.Sprintf("조치 %s(node=%s): activation.restart 없음 — 프로세스가 재시작되지 않아 **새 provider가 로드되지 않을 수 있다**.", a.GetId(), a.GetTargetNodeId()))
+		}
+		if strings.TrimSpace(h.GetDeactivate()) == "" && strings.TrimSpace(h.GetActivate()) != "" {
+			out = append(out, fmt.Sprintf("조치 %s(node=%s): activation.deactivate 없음 — 롤백이 **활성화를 되돌리지 못한다**(파일만 제거됨).", a.GetId(), a.GetTargetNodeId()))
+		}
+	}
+	return out
+}
+
+func levelName(l provisioningv1.DeployAutomationLevel) string {
+	switch l {
+	case provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY:
+		return "L1 Stage-only"
+	case provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL:
+		return "L2 Stage+Install"
+	case provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO:
+		return "L3 Full-auto (Stage+Install+활성화·재시작)"
+	default:
+		return "미판정"
+	}
+}

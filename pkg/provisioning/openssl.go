@@ -1,0 +1,91 @@
+package provisioning
+
+import (
+	"fmt"
+	"strings"
+
+	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+)
+
+// renderOpenSSL — OpenSSL remediation taxonomy(§4.3) → openssl.cnf 조각.
+//   - CONFIG_ONLY (3.5+ 네이티브)   : 하이브리드 그룹 활성화만. 레거시·provider 무터치.
+//   - PROVIDER_INJECT (3.0–3.4)     : provider 모듈 로드 + 활성화 + 그룹. cnf 롤백 가역.
+//   - 그 외(포크교체·프록시·재빌드·폐기): config로 안 되는 조치 → 주석 블록으로 정직하게.
+func renderOpenSSL(a *provisioningv1.RemediationAction) string {
+	group := hybridGroup(a.GetTargetAlgorithm())
+	switch a.GetKind() {
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY:
+		return opensslConfigOnly(group, a.GetTargetAlgorithm())
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT:
+		return opensslProviderInject(group, a.GetTargetAlgorithm(), a.GetProviderChoice())
+	default:
+		return opensslNonConfig(a)
+	}
+}
+
+// groupsLine — 하이브리드 그룹 + 고전 폴백(하위호환 접속 유지, §4.3 검증 매트릭스).
+func groupsLine(group string) string {
+	if group == "" {
+		return "# Groups: 목표가 KEM 하이브리드 그룹이 아님(서명·미상) — 수동 지정 필요\n"
+	}
+	return fmt.Sprintf("Groups = %s:x25519\n", group) // PQC 우선, 고전 폴백
+}
+
+func opensslConfigOnly(group, target string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.5+ config-only — %s 하이브리드 활성화(§4.3)\n", target)
+	b.WriteString("# 레거시·provider 무터치. 롤백=이 조각 제거.\n")
+	b.WriteString("[openssl_init]\n")
+	b.WriteString("ssl_conf = ssl_sect\n\n")
+	b.WriteString("[ssl_sect]\n")
+	b.WriteString("system_default = system_default_sect\n\n")
+	b.WriteString("[system_default_sect]\n")
+	b.WriteString(groupsLine(group))
+	return b.String()
+}
+
+func opensslProviderInject(group, target, provider string) string {
+	if provider == "" {
+		provider = "oqsprovider" // 3.0–3.4 표준 PQC provider 기본값(§4.4 특수 케이스는 내부 provider)
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.0–3.4 provider 주입 — %s (provider=%s)(§4.3)\n", target, provider)
+	b.WriteString("# 버전 유지 + provider 배치로 알고리즘 능력만 대체. 롤백=cnf 한 줄.\n")
+	b.WriteString("[openssl_init]\n")
+	b.WriteString("providers = provider_sect\n")
+	b.WriteString("ssl_conf = ssl_sect\n\n")
+	b.WriteString("[provider_sect]\n")
+	b.WriteString("default = default_sect\n")
+	fmt.Fprintf(&b, "%s = %s_sect\n\n", provider, provider)
+	b.WriteString("[default_sect]\n")
+	b.WriteString("activate = 1\n\n")
+	fmt.Fprintf(&b, "[%s_sect]\n", provider)
+	b.WriteString("activate = 1\n")
+	// 절대 경로 — 상대명이면 OpenSSL이 모듈 디렉터리(OPENSSL_MODULES/MODULESDIR)에서 찾는데
+	// 플레이북이 배치하는 곳은 거기가 아니다. 배치 위치를 아는 쪽이 경로를 적는다(paths.go).
+	fmt.Fprintf(&b, "module = %s\n\n", ModulePath(provider, false))
+	b.WriteString("[ssl_sect]\n")
+	b.WriteString("system_default = system_default_sect\n\n")
+	b.WriteString("[system_default_sect]\n")
+	b.WriteString(groupsLine(group))
+	return b.String()
+}
+
+// opensslNonConfig — config 주입으로 해결 불가한 조치. 무엇을·왜 수동인지 명시(§4.3 "레거시 터치").
+func opensslNonConfig(a *provisioningv1.RemediationAction) string {
+	var reason string
+	switch a.GetKind() {
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE:
+		reason = "포크/버전 교체 필요(1.1.1·1.0.2 — provider API 부재). 레거시 터치=필요."
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_PROXY_FRONT:
+		reason = "프록시 프론팅으로 PQC 종단 분리. 레거시 무터치 대안 — 별도 프록시 배포."
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_REBUILD:
+		reason = "정적·벤더링 링크 — CI 재빌드 필요. 레거시 터치=필요."
+	case provisioningv1.RemediationKind_REMEDIATION_KIND_DECOMMISSION:
+		reason = "EOL·저가치 — 폐기 또는 리스크 수용."
+	default:
+		reason = "config로 주입 불가한 조치."
+	}
+	return fmt.Sprintf("# pqcota: OpenSSL 비-config 조치(%s)\n# %s\n# → 이 조치는 openssl.cnf 조각으로 생성되지 않는다. 계획 수동 단계 참조.\n",
+		a.GetKind(), reason)
+}

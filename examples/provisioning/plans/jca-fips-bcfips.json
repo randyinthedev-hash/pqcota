@@ -1,0 +1,16 @@
+{
+  "id": "ex-jca-bcfips",
+  "status": "PLAN_STATUS_FINALIZED",
+  "scope": "regulated",
+  "approvalSignatures": ["reviewer:bob", "compliance:carol"],
+  "actions": [{
+    "id": "a1",
+    "targetNodeId": "pay-01",
+    "findingId": "f-jca-regulated",
+    "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
+    "kind": "REMEDIATION_KIND_PROVIDER_INJECT",
+    "targetAlgorithm": "ML-KEM (FIPS 203)",
+    "providerChoice": "BCFIPS",
+    "rollbackNote": "등록 라인 + JAR 제거"
+  }]
+}

@@ -1,0 +1,60 @@
+// PQC 마이그레이션 플랫폼 — 통신 엣지 관측 스키마 (SSOT, DISCOVERY 단계)
+//
+// 규정서 §12(크립토 통신 토폴로지) · 인벤토리 설계 §2(CommunicationEdge).
+// network-collector(디스커버리 §2.5)가 TLS/SSH 핸드셰이크를 수동 관측해
+// 노드 간 통신 엣지(src→dst + 협상 KEX 그룹·cipher)를 채운다 → 관측 레인(observed).
+//
+// 책임 경계(§6.1 유지):
+//   Collector = 원시 핸드셰이크 포집 + 협상 파라미터 추출 → ObservedEdge[] 반환.
+//   정규화     = posture 분류(§12.1)·선언 대조(§3.3)·토폴로지 렌더(§12.3). 파생 뷰.
+
+syntax = "proto3";
+
+package pqcota.discovery.v1;
+
+import "google/protobuf/timestamp.proto";
+import "pqcota/common/v1/common.proto";
+
+option go_package = "github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1";
+
+// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(§12.1 ⚪).
+enum NetworkProtocol {
+  NETWORK_PROTOCOL_UNSPECIFIED = 0; // 불명 — 암호화된 핸드셰이크·캡처 창 밖
+  NETWORK_PROTOCOL_TLS = 1;
+  NETWORK_PROTOCOL_SSH = 2;
+  NETWORK_PROTOCOL_QUIC = 3;        // 핸드셰이크 암호화 → 대개 posture 불명
+}
+
+// 관측 시점에서 본 src 노드의 역할(방향). 대조·토폴로지 방향성의 근거.
+enum EdgeRole {
+  EDGE_ROLE_UNSPECIFIED = 0;
+  EDGE_ROLE_CLIENT = 1; // src가 연결 개시자
+  EDGE_ROLE_SERVER = 2; // src가 수신자
+}
+
+// 양자내성 posture (§12.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
+// Collector 출력에는 존재하지 않는다(§0.2, EvidenceStrength와 동일 원칙).
+enum QuantumPosture {
+  QUANTUM_POSTURE_UNSPECIFIED = 0; // ⚪ 불명·미관측 (암호화 핸드셰이크·캡처 밖)
+  QUANTUM_POSTURE_PQC_HYBRID = 1;  // 🟢 하이브리드/PQC 협상 (X25519MLKEM768, sntrup761x25519 …)
+  QUANTUM_POSTURE_CLASSICAL = 2;   // 🔴 고전 = 양자 취약 (X25519, ECDHE, RSA …)
+}
+
+// 관측된 통신 엣지 한 단위 (§2 CommunicationEdge의 관측 레인).
+// Collector가 CollectionResult.observed_edges로 반환한다. posture는 코어가 채운다.
+message ObservedEdge {
+  string src_node_id = 1;   // 스코프 마스터 앵커(§0.4). 관측 캡처 호스트.
+  string dst_node_id = 2;   // 스코프 마스터에 해소된 상대. 미등재면 빈 문자열 + dst_addr로 표기(§0.4 등재요청).
+  string dst_addr = 3;      // 원시 상대 주소 "ip:port" — dst_node_id 미해소 시 off-scope 판정 근거.
+  uint32 port = 4;
+  NetworkProtocol protocol = 5;
+  EdgeRole role = 6;
+
+  string negotiated_group = 7; // 협상된 KEX 그룹. posture 분류 입력. 예: "X25519MLKEM768".
+  string cipher = 8;           // 협상된 cipher suite (부가 근거).
+
+  pqcota.common.v1.DetectionMethod detection_method = 9; // 대개 RUNTIME_INTROSPECTION(수동 관측) — evidence_strength 파생 근거.
+  uint64 observed_count = 10;           // 관측 횟수(빈도) — confidence 입력(§3.5).
+  google.protobuf.Timestamp first_seen = 11;
+  google.protobuf.Timestamp last_seen = 12;
+}

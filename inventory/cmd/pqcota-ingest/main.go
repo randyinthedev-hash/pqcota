@@ -1,0 +1,229 @@
+// Command pqcota-ingest — 중앙(인벤토리 호스트)에서 실행. 엣지 노드들이 낸 CollectionResult
+// JSON들을 취합해 스코프 게이트 → 정규화 → append-only 히스토리에 적재한다(§0.4·§2.5⑥).
+// 엣지↔중앙 경계를 넘어온 정규화된 계약을 실제로 "적재"하는 관문 — 데모의 휘발성 뷰를
+// 누적 중앙 인벤토리로 승격시킨다.
+//
+// usage: pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
+//
+//	results-dir       : *.json (protojson CollectionResult) — Ansible/업로드로 회수된 것
+//	scope-master-file : (선택) 등재 노드 ID 목록(한 줄에 하나). 없으면 게이트 생략(로컬/데모).
+//	-scope-assets     : (선택) 자산 스코프 정책 CSV. 노드는 등재됐어도 그 안에서 **계속 관리할
+//	                    자산만** 남긴다(§0.4 노드 게이트를 자산 단위로). 제외분은 적재되지 않되
+//	                    몇 건인지 고지된다 — 제외는 부재가 아니다(§2.7).
+//	env PQCOTA_DSN     : (선택) 있으면 Postgres 영속화, 없으면 인메모리(요약만).
+package main
+
+import (
+	"bufio"
+	"context"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/pqcota/pqcota/pkg/discovery/history"
+	"github.com/pqcota/pqcota/pkg/inventory/ingest"
+	"github.com/pqcota/pqcota/pkg/kernel/scope"
+	"github.com/pqcota/pqcota/pkg/kernel/sign"
+	"google.golang.org/protobuf/encoding/protojson"
+)
+
+func main() {
+	scopeAssets := flag.String("scope-assets", "",
+		"자산 스코프 정책 CSV — 노드 안에서 무엇을 계속 관리할지(action,runtime,lib,app_key,note)")
+	flag.Parse()
+	args := flag.Args()
+	if len(args) < 1 {
+		fmt.Fprintln(os.Stderr, "usage: pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]")
+		os.Exit(2)
+	}
+	dir := args[0]
+
+	var master *scope.Master
+	if len(args) > 1 {
+		ids, err := readScope(args[1])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "scope 읽기:", err)
+			os.Exit(1)
+		}
+		master = scope.NewMaster(ids)
+	}
+
+	results := loadResults(dir)
+	if len(results) == 0 {
+		fmt.Fprintf(os.Stderr, "결과 JSON 없음: %s/*.json\n", dir)
+		os.Exit(1)
+	}
+
+	store, closeFn, persistent := openStore()
+	defer closeFn()
+
+	// 서명 검증(§2.7) — PQCOTA_VERIFY_KEY(콤마 구분 base64 공개키)가 있으면. 없으면 생략.
+	var verifySig func(*discoveryv1.CollectionResult) bool
+	if pubs := envKeys("PQCOTA_VERIFY_KEY"); len(pubs) > 0 {
+		verifySig = func(r *discoveryv1.CollectionResult) bool { return sign.Verify(pubs, r) }
+	}
+
+	// 밀리초까지 — 스냅샷 id(prefix+":"+node)는 -snapshot·-diff가 쓰는 사용자 손잡이라
+	// 유일해야 한다. 초 단위면 같은 초에 두 번 적재할 때 id가 충돌한다.
+	prefix := "ingest-" + time.Now().UTC().Format("20060102T150405.000Z")
+	// 자산 스코프 — 노드는 등재됐어도 그 안의 자산 중 관리 대상만 남긴다(§0.4를 자산 단위로).
+	assetPolicy, err := loadAssetPolicy(*scopeAssets)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	rep, err := ingest.IngestResults(results, master, verifySig, prefix, "ruleset-demo", store, assetPolicy)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ingest:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("╔══════════════════════════════════════════════════╗")
+	fmt.Println("║  pqcota 중앙 적재 (Discovery → 히스토리)           ║")
+	fmt.Println("╚══════════════════════════════════════════════════╝")
+	backing := "인메모리(요약만 — 프로세스 종료 시 소멸)"
+	if persistent {
+		backing = "Postgres(append-only 영속)"
+	}
+	fmt.Printf("입력: %d개 CollectionResult · 저장소: %s\n", len(results), backing)
+	if master != nil {
+		fmt.Printf("스코프 게이트: 등재분만 적재(미등재는 등재요청)\n")
+	} else {
+		fmt.Printf("스코프 게이트: 생략(CMDB 미지정)\n")
+	}
+	if verifySig != nil {
+		fmt.Printf("서명 검증: PQCOTA_VERIFY_KEY로 검증(불일치는 거부, §2.7)\n")
+	} else {
+		fmt.Printf("서명 검증: 생략(전송 보안에 의존)\n")
+	}
+	// 스냅샷은 실질 내용이 바뀐 노드에만 새로 생긴다 — 나머지는 관측 기록만 남아
+	// "봤다"는 사실은 보존하되 같은 상태를 중복 저장하지 않는다.
+	fmt.Printf("\n적재 결과: 수용 %d · 미등재/앵커없음 %d · 서명거부 %d → 노드 %d개 관측(변화 %d · 동일 %d)\n",
+		rep.Accepted, rep.OffScope, rep.Rejected, rep.Snapshots, rep.Changed, rep.Snapshots-rep.Changed)
+	if rep.ExcludedByScope > 0 {
+		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 말한다(§2.7).
+		fmt.Printf("자산 스코프: 관리 대상 아님으로 %d건 제외(관측은 됐으나 적재 안 함)\n", rep.ExcludedByScope)
+	}
+
+	for _, node := range rep.Nodes {
+		snap, _ := store.Latest(node)
+		if snap == nil {
+			continue
+		}
+		fmt.Printf("  • %-12s 자산 %d · 관측엣지 %d\n", node, len(snap.Findings), len(snap.Edges))
+	}
+	for _, n := range rep.Notes {
+		fmt.Printf("  ⚠ %s\n", n)
+	}
+	for _, c := range rep.Conflicts {
+		if c.Kind == "duplicate" {
+			fmt.Printf("  ⚠ 중복: 물리머신 %s를 여러 node_id로 등록 → %v (같은 머신, 이름만 다름)\n", c.Key, c.Members)
+		} else {
+			fmt.Printf("  ⚠ 충돌: node_id %s가 여러 머신을 가리킴 → %v (재이미지·오라벨 의심)\n", c.Key, c.Members)
+		}
+	}
+}
+
+func openStore() (history.Store, func(), bool) {
+	dsn := os.Getenv("PQCOTA_DSN")
+	if dsn == "" {
+		return history.NewMemStore(), func() {}, false
+	}
+	pg, err := history.NewPgStore(context.Background(), dsn)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Postgres 연결 실패, 인메모리로 대체:", err)
+		return history.NewMemStore(), func() {}, false
+	}
+	return pg, pg.Close, true
+}
+
+func loadResults(dir string) []*discoveryv1.CollectionResult {
+	// *.json(단일 객체)과 *.jsonl(JSON Lines, 한 줄=한 결과) 모두 읽는다.
+	// jvm attach 경로가 노드당 JVM 여럿을 JSONL로 방출하므로 한 스트림에 여러 결과가 온다.
+	var paths []string
+	for _, g := range []string{"*.json", "*.jsonl"} {
+		m, _ := filepath.Glob(filepath.Join(dir, g))
+		paths = append(paths, m...)
+	}
+	var out []*discoveryv1.CollectionResult
+	for _, p := range paths {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		out = append(out, parseResultDocs(b)...)
+	}
+	return out
+}
+
+// parseResultDocs — 한 파일 바이트에서 CollectionResult 여러 개를 뽑는다(순수·테스트 가능).
+// 먼저 파일 전체를 단일 객체로 시도하고(compact·multiline 모두), 실패하면 JSON Lines로 —
+// 줄별 파싱해 성공한 것만 모은다(CollectionResult 아닌 줄은 건너뜀). 이 순서라야 pretty-print된
+// 단일 객체(줄별로는 안 깨짐)와 JSONL을 다 감당한다.
+func parseResultDocs(b []byte) []*discoveryv1.CollectionResult {
+	if res := (&discoveryv1.CollectionResult{}); protojson.Unmarshal(b, res) == nil {
+		return []*discoveryv1.CollectionResult{res}
+	}
+	var out []*discoveryv1.CollectionResult
+	for _, line := range strings.Split(string(b), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		res := &discoveryv1.CollectionResult{}
+		if protojson.Unmarshal([]byte(line), res) == nil {
+			out = append(out, res)
+		}
+	}
+	return out
+}
+
+// envKeys — 환경변수의 콤마 구분 base64 공개키 목록.
+func envKeys(name string) []string {
+	v := strings.TrimSpace(os.Getenv(name))
+	if v == "" {
+		return nil
+	}
+	var out []string
+	for _, k := range strings.Split(v, ",") {
+		if k = strings.TrimSpace(k); k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
+}
+
+func readScope(path string) ([]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var ids []string
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		ids = append(ids, line)
+	}
+	return ids, sc.Err()
+}
+
+// loadAssetPolicy — 자산 스코프 정책 CSV를 읽는다. 경로가 비면 nil(전부 관리 대상).
+func loadAssetPolicy(path string) (*scope.AssetPolicy, error) {
+	if path == "" {
+		return nil, nil
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("자산 스코프 열기: %w", err)
+	}
+	defer f.Close()
+	return scope.LoadAssetPolicy(f)
+}

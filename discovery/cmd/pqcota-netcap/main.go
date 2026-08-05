@@ -1,0 +1,142 @@
+//go:build linux
+
+// Command pqcota-netcap — 타깃 노드에서 실행. 관측 창 동안 TLS/SSH 핸드셰이크를 AF_PACKET으로
+// 수동 관측해 통신 엣지를 CollectionResult JSON으로 stdout에 낸다(디스커버리 §2.5).
+// CAP_NET_RAW 필요. 없으면 **관측이 안 된다** — 그 사실을 stderr로 분명히 알리고, stdout으로는
+// 완전성 갭(DegradedResult)을 낸다. 갭을 중앙까지 보내야 인벤토리가 "못 봤다"와 "링크가 없다"를
+// 구분한다(§2.7). 종료코드는 0이라 fleet 실행(Ansible)이 그 갭을 회수한다 — --strict면 1.
+// usage: pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
+// env: NETCAP_IFACE, NETCAP_WINDOW_SEC
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"net"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/pqcota/pqcota/discovery/collectors/network"
+	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+)
+
+func main() {
+	strict := flag.Bool("strict", false, "관측 불가면 갭만 내고 끝내지 않고 종료코드 1로 실패")
+	flag.Parse()
+
+	node := flag.Arg(0)
+	if node == "" {
+		node = "host://local"
+	}
+	iface := envOr("NETCAP_IFACE", "eth0")
+	if a := flag.Arg(1); a != "" {
+		iface = a
+	}
+	windowSec := 8
+	if v := os.Getenv("NETCAP_WINDOW_SEC"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			windowSec = n
+		}
+	}
+	if a := flag.Arg(2); a != "" {
+		if n, err := strconv.Atoi(a); err == nil {
+			windowSec = n
+		}
+	}
+
+	src := &network.LiveSource{
+		Iface:   iface,
+		Node:    node,
+		SelfIPs: localIPs(),
+		Window:  time.Duration(windowSec) * time.Second,
+	}
+	fmt.Fprintf(os.Stderr, "[netcap] %s iface=%s window=%ds 관측 시작…\n", node, iface, windowSec)
+
+	obs, err := src.Observe(nil, nil)
+	if err != nil {
+		if errors.Is(err, network.ErrCaptureUnavailable) {
+			emit(network.DegradedResult(node, "CAP_NET_RAW 없음 — 미관측(부재 아님): "+err.Error()))
+			// **관측은 실패했다**고 분명히 말한다. 이전 메시지("캡처 불가 → 완전성 갭 강등")는
+			// 무엇이 없는지도 어떻게 고치는지도 말하지 않아, 손으로 돌린 사람이 성공으로 읽었다.
+			exe, _ := os.Executable()
+			fmt.Fprintf(os.Stderr, `[netcap] ✗ 관측하지 못했다 — AF_PACKET 소켓을 열 수 없다(CAP_NET_RAW 없음).
+          부여: sudo setcap cap_net_raw+ep %s   (또는 root로 실행)
+          지금 낸 것은 관측값이 아니라 **갭 기록**이다 — 이 노드에 링크가 없다는 뜻이 아니다.
+          종료코드는 0이다: 이 갭을 중앙까지 보내야 인벤토리가 "못 봤다"와 "없다"를 구분한다.
+          실패로 끝내려면 --strict.
+`, exe)
+			if *strict {
+				os.Exit(1)
+			}
+			return
+		}
+		fmt.Fprintln(os.Stderr, "[netcap] observe:", err)
+		os.Exit(1)
+	}
+
+	// 같은 엣지의 여러 관측(ClientHello/ServerHello 등)을 키별로 병합한다.
+	// TLS는 ServerHello에만 협상 그룹이 실리므로 "그룹 있는 관측"을 우선 채택한다.
+	self := src.SelfIPs
+	byKey := map[string]*discoveryv1.ObservedEdge{}
+	var order []string
+	for _, o := range obs {
+		if o.HS == nil || !network.ShouldObserve(o.Conn, self) {
+			continue
+		}
+		e := network.BuildEdge(o.Conn, o.HS)
+		k := fmt.Sprintf("%s|%s|%d|%d", e.GetSrcNodeId(), e.GetDstAddr(), e.GetPort(), e.GetProtocol())
+		if ex, ok := byKey[k]; ok {
+			ex.ObservedCount++
+			if ex.GetNegotiatedGroup() == "" && e.GetNegotiatedGroup() != "" {
+				ex.NegotiatedGroup = e.GetNegotiatedGroup()
+				ex.Cipher = e.GetCipher()
+			}
+		} else {
+			byKey[k] = e
+			order = append(order, k)
+		}
+	}
+	edges := make([]*discoveryv1.ObservedEdge, 0, len(order))
+	for _, k := range order {
+		edges = append(edges, byKey[k])
+	}
+	// 창이 중간에 끊겼으면 "관측 없음"과 구별되게 노트에 남긴다 — 결함을 갭으로 위장하지 않는다.
+	note := ""
+	if src.Truncated {
+		note = fmt.Sprintf("관측 창이 읽기 오류로 중단됨(%v) — 이 결과는 창 전체를 대표하지 않는다(갭≠부재)", src.TruncErr)
+		fmt.Fprintln(os.Stderr, "[netcap] ⚠ "+note)
+	}
+	emit(network.BuildResult(node, edges, note))
+	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개\n", len(edges))
+}
+
+func emit(res *discoveryv1.CollectionResult) {
+	b, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "marshal:", err)
+		os.Exit(1)
+	}
+	os.Stdout.Write(b)
+}
+
+// localIPs — 자기 IP·"ip:*" 표기를 모아 자기참조 회피·방향 판정에 쓴다.
+func localIPs() map[string]bool {
+	self := map[string]bool{}
+	addrs, _ := net.InterfaceAddrs()
+	for _, a := range addrs {
+		if ipn, ok := a.(*net.IPNet); ok {
+			self[ipn.IP.String()] = true
+		}
+	}
+	return self
+}
+
+func envOr(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return def
+}

@@ -1,0 +1,415 @@
+# PQC 마이그레이션 관리 플랫폼 — 단계별 프로세스 규정
+
+**버전**: v4 (단계적 배포 모델 신설: 부트스트랩 provider + 런타임 페이로드, L1/L2/L3 위임 레벨)
+**대상 시스템**: 기업 내부 네트워크의 **암호 런타임 기반 레거시 서버/클라이언트**(OpenSSL 및 Java JCE/JCA를 우선 대상)에 대한 크립토 현황 디스커버리 → 인벤토리 → 프로비저닝 관리 플랫폼
+**문서 성격**: 세 단계(Discovery / Inventory / Deploy)의 업무 프로세스 및 자동화 경계 규정. 구현·운영·감사의 기준 문서.
+
+> **§4.5 단계적 배포 모델 요약**: 부트스트랩 provider를 노드에 사전 설치하고 중앙 명령으로 PQC 페이로드를 배포·활성화하는 채널을 규정. 위험도별 위임 레벨(L1 다운로드만 / L2 설치까지 / L3 활성화+재시작)을 자산별 속성(`deploy_automation_level`)으로 선택. 각 단계 경계를 게이트·롤백 지점화. "약속된 스크립트 실행=RCE" 위험에 대한 타협 불가 계약(서명검증·폴더접근제어·멱등성·최소권한·자기잠금회피) 명시.
+
+---
+
+## 0. 관통 원칙 (세 단계 공통)
+
+이 규정 전체를 지배하는 원칙. 개별 단계 규정은 모두 이로부터 파생된다.
+
+### 0.1 자동화 경계 원칙 — "아는 것은 자동, 판단은 게이트"
+
+모든 단계에서 동작을 세 등급으로 분류한다. 이 삼분(三分)이 각 단계 자동화 규정의 척추다.
+
+| 등급 | 정의 | 처리 |
+|---|---|---|
+| **AUTO** | 기계가 결정론적으로 옳게 판정 가능 | 완전 자동 실행 |
+| **PROPOSE** | 기계가 후보·권장안을 낼 수 있으나 확정은 사람 몫 | 자동 제안 + 사람 승인 게이트 |
+| **MANUAL** | 원리적으로 기계가 확정 불가 | 사람 판정 필수, 기계는 정보 정리만 |
+
+애매한 것을 AUTO로 넣는 순간 플랫폼의 안전성이 무너진다. 경계가 불확실하면 항상 한 등급 낮춘다.
+
+### 0.2 원본 불변 + 파생 뷰 원칙
+
+수집·판정·계획의 **원본은 절대 in-place 수정하지 않는다.** 정규화 결과·리컨실리에이션 그래프·확정 계획은 모두 원본 위에 계산되는 **파생 뷰**다. 규칙(강화 로직·매핑 테이블)이 개선되면 원본에서 재계산한다. 감사 무결성이 제품 신뢰의 기반이다.
+
+### 0.3 Provenance Chain 원칙
+
+모든 실행(행위)은 4-계열 히스토리를 관통하는 인과 사슬로 역추적 가능해야 한다.
+
+```
+상태(디스커버리 스냅샷) → 판단(인간 판정) → 의도(확정 계획) → 행위(프로비저닝 실행)
+```
+
+이 사슬로 완결되지 않는 실행은 규정 위반이다.
+
+### 0.4 스코프 마스터 원칙
+
+**자산관리정보(사용자 CMDB/자산 등록부)가 관리 대상 경계의 유일한 권위 소스다.** 디스커버리 배포, 인벤토리 등재, 프로비저닝 실행 대상이 모두 이 마스터로 게이트된다. 마스터 미등재 노드는 원칙적으로 수집·실행 대상이 아니며, 관측으로 발견될 경우 "실행 대상"이 아니라 "등재 판정 요청 대상"으로 흐른다.
+
+### 0.5 암호 런타임 추상 원칙
+플랫폼의 대상은 특정 라이브러리가 아니라 **"암호 provider를 갖는 런타임"**이라는 추상이다. OpenSSL(provider 아키텍처)과 JCA/JCE(Security Provider)가 첫 두 구현이며, 동일 패턴을 갖는 것들(.NET CNG, Python cryptography, Go crypto, Node 등)이 후속 확장 대상이다.
+
+- **프로세스 규정(3단계, AUTO/PROPOSE/MANUAL)은 런타임 무관하게 불변**이다.
+- 런타임별로 달라지는 것은 **(a) 디스커버리 수집 방법, (b) 버전·provider 축 스키마, (c) remediation taxonomy 분기** 세 가지 — 그리고 (a)–(c) 밑에 암묵으로 깔린 **(d) 프로비저닝 substrate**(아티팩트를 어디에·어떻게 배치·되돌리나)다. openssl·jca는 둘 다 POSIX 파일이라 (d)가 `jca` 2-way 스위치 뒤에 숨어 있었다. non-POSIX 런타임(예: Windows CNG의 레지스트리/GPO)은 이 (d)를 건드리므로 별도 취급이다. 상세·반례 테스트: [런타임 확장 계약](런타임_확장_계약.md).
+- 모든 finding·자산은 **`crypto_runtime`을 1급 필드**로 가진다(`openssl` / `jca` / …). 이 필드가 각 단계의 런타임 분기를 결정한다.
+
+---
+
+## 1. 대상 런타임 모델
+두 런타임은 "provider로 알고리즘 능력을 주입한다"는 점에서 **개념적으로 동형**이다. 이 동형성이 "버전 안 올리고 내부 provider 주입" 전략을 양쪽에 성립시킨다.
+
+### 1.1 provider 동형성
+
+| | OpenSSL | JCA/JCE |
+|---|---|---|
+| 확장점 | Provider (`.so`), 3.x provider API | Security Provider (JAR) |
+| 활성화 | `openssl.cnf` provider 섹션 | `java.security` `security.provider.N=` |
+| 동적 주입 | dlopen/config | `Security.addProvider()` / `insertProviderAt()` |
+| 알고리즘 요청 | EVP 고수준 API | `Cipher/Signature/KeyPairGenerator.getInstance()` |
+| PQC provider 선례 | oqs-provider, OpenSSL 3.5 네이티브 | BouncyCastle(ML-KEM/ML-DSA/SLH-DSA), 최신 JDK 네이티브 |
+| 내부 provider 주입 | ✅ 가능 | ✅ 가능 |
+
+### 1.2 런타임별 근본 차이 (분기 근거)
+
+**OpenSSL — 버전이 provider 가능 여부를 가른다**
+- 3.0+ : provider API 존재 → 파일 배치 + `openssl.cnf` 활성화로 재빌드 없이 주입
+- 3.5+ : ML-KEM/ML-DSA/SLH-DSA 네이티브 + TLS 하이브리드(X25519MLKEM768) 기본 → config만
+- 1.1.1 / 1.0.2 : **provider 아키텍처 없음**(ENGINE만) → 로더블 모듈로 TLS PQC 불가, 포크 교체 또는 프록시
+- 버전 축: `lib + version + fork`(OpenSSL/BoringSSL/LibreSSL/AWS-LC — 동일 soname 문제)
+
+**JCA/JCE — provider 등록 메커니즘과 이원 버전 축이 관건**
+- 등록 층위: (a) `java.security` 정적 순서 목록(JRE 전역), (b) `addProvider()` 런타임 동적 주입(**코드에 숨어 파일 스캔 불가**), (c) `getInstance("...","BC")` 명시 지목(java.security 변경 무효), (d) **우선순위 협상**(목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider 무시)
+- **이원 버전 축**: `{jdk_vendor, jdk_version}` × `{provider_set}`. `pqc_readiness = "JDK 네이티브 지원" ∨ "provider 보강"`의 논리합
+- `jdk.tls.disabledAlgorithms` 등 정책이 실제 등급를 좌우
+
+### 1.3 스키마 반영 규칙
+
+- `crypto_runtime`: `openssl` | `jca`
+- OpenSSL: `lib`, `version`, `fork`, `binding_mode`(dynamic/static/dlopen/vendored)
+- JCA: `jdk_vendor`, `jdk_version`, `provider_set`(등록 순서 포함), `registration_mode`(static/dynamic/explicit)
+- 공통: `usage_context`(server/client/at-rest/signing), `pqc_readiness`, `fips_validation`, `remediation_class`, **`evidence_strength`**, **`detection_method`**
+
+---
+
+## 2. DISCOVERY 단계 규정
+
+### 2.1 목적과 경계
+
+관리 대상 노드에서 크립토 자산 정보를 수집하여 중앙에 정규화된 형태로 집계한다. **판단하지 않는다** — Discovery는 사실 수집이며 해석·분류·결정은 후속 단계 소관이다.
+
+### 2.2 collector 지형 — 플러그형
+
+**CBOMkit은 디스커버리 전체가 아니라 정적/소스 계층 collector 하나다.** collector는 intake 계약을 만족하는 한 무엇이든 붙는다.
+
+| 계층 | collector 후보 | 커버 | 런타임 |
+|---|---|---|---|
+| 소스/아티팩트 | CBOMkit(hyperion/theia), CryptoScan, CipherIQ cbom-generator | 소스·라이브러리·인증서·키 | 양쪽(hyperion는 JCA 소스 우수) |
+| 런타임/프로세스 | 자체 에이전트, CipherIQ crypto-tracer(eBPF), Pixie/eCapture/Kubeshark | 실제 로드·호출(dlopen 포함) | OpenSSL 강, Java는 아래 참조 |
+| 네트워크 | CipherIQ pqc-flow, 자체 스캐너 | TLS/SSH/QUIC 협상 그룹 | 무관(TLS≠OpenSSL 귀속 약함) |
+| JVM 인트로스펙션 | **자체 구현(공백 영역)** | `Security.getProviders()` 실체 | JCA 전용 |
+
+**규정**: 어느 단일 collector도 완전하지 않다. **CBOMkit은 정적/소스 계층의 최적 collector이나 프로세스 런타임·소스 없는 레거시는 원리적으로 못 덮는다.** JCA provider 체인 실체는 전용 오픈소스가 없어 **JVM 인트로스펙션은 자체 구현**한다.
+
+### 2.3 3계층 교차검증 (런타임별 탐지 분기)
+
+**OpenSSL**
+- 파일시스템/패키지: `libssl/libcrypto` 실물, `ldd`/`readelf` NEEDED, 패키지 역의존성, **정적 바이너리 문자열 시그니처**(fork·버전 판별)
+- 프로세스/런타임: `/proc/*/maps`·`lsof`·`ss` (dlopen·벤더링 포착, 배치 누락 방지 위해 시간대별 반복)
+- 네트워크(보조): 로컬 TLS 등급
+
+**JCA/JCE**
+- 아티팩트: JAR/WAR/EAR 내 provider JAR(`bcprov-*` 등) + Maven/Gradle **의존성 그래프** 파싱
+- 정책 파싱: `java.security` 등록 순서 + `jdk.tls.*` + `disabledAlgorithms`
+- 런타임 인트로스펙션(ground truth): 실행 중 JVM에 attach → `getProviders()`·로드된 provider 체인 조회 (정적으로 못 보는 동적 등록·명시 지목 포착)
+- 동적 등록 사각지대: `addProvider()`는 바이트코드/소스 호출지점 분석 또는 실행 중 조회로만
+
+**provider 시그니처 레지스트리** — crypto-registry에 아래 provider 시그니처를 등록해 디스커버리가 버전·FIPS·알고리즘 커버리지를 자동 판정한다. 각 provider가 서로 다른 `pqc_readiness`·`fips_validation`·알고리즘 커버리지를 함의한다.
+
+| provider JAR/모듈 시그니처 | 성격 | PQC 커버리지 | FIPS |
+|---|---|---|---|
+| `bcprov-jdk18on-*` (BouncyCastle 1.79+) | 순수 자바, 전 JDK(1.8+) | ML-KEM/ML-DSA/**SLH-DSA** | 미검증(표준판) |
+| BC-FJA (FIPS 변형) | FIPS 140-3 인증(네이티브 가속) | ML-KEM/ML-DSA/SLH-DSA | **140-3** |
+| JDK 네이티브(24/25+, SunJCE 확장) | 런타임 내장 | ML-KEM/ML-DSA **only** (SLH-DSA 없음) | JDK별 |
+| openssl-jostle (JNI 브릿지) | 네이티브 OpenSSL을 JCA로 노출 | ML-KEM/ML-DSA/SLH-DSA | OpenSSL 모듈 따름 |
+| 내부 PQC provider | 자체 | 정의 대상 | 미검증 |
+
+**규정**: SLH-DSA는 JDK 네이티브에 없으므로 SLH-DSA 필요 자산은 JDK 버전 무관하게 BC(또는 jostle) 의존으로 태깅한다.
+
+### 2.4 소스 부재 = 지배 케이스
+
+기업 레거시는 소스 부재가 **기본값**이다(벤더 바이너리, 소스 유실, 셰이딩/정적 링크, COTS). 따라서 디스커버리 주력은 소스 스캔이 아니라 **아티팩트/런타임 우선**이다.
+
+**핵심 규정 — 소스 부재는 정보 부재가 아니라 정보 열화다.** 소스가 없으면 "무엇이 링크/로드됐나"까지는 잡되 "어떻게 쓰이나"(algorithm·usage_context)는 열화된다. 이 열화를 반드시 `evidence_strength`로 명시한다.
+
+| detection_method | evidence_strength | 채우는 필드 |
+|---|---|---|
+| source (Hyperion 등) | confirmed | algorithm, usage_context 완전 |
+| artifact (Theia·JAR 스캔) | inferred-high | 라이브러리·의존성, usage 부분 |
+| symbol-analysis (정적 바이너리) | **inferred-low** | fork·version 추정, usage 없음 |
+| runtime-introspection (`/proc`·`getProviders()`) | confirmed | 실제 로드·provider 체인 |
+| dynamic-trace (eBPF/ltrace) | confirmed | 실제 호출 알고리즘 (침습적, PROPOSE+) |
+
+### 2.5 정규화 파이프라인 (단계 경계마다 계약 고정)
+
+1. **원시 포집** — collector 네이티브 출력 불변 보존 (재정규화 원천)
+2. **파싱/변환** — 네이티브 → 정규화된 CycloneDX CBOM
+3. **강화** — 버전→pqc_readiness 매핑, fork/`{jdk×provider}` 판별, server/client 역할 태깅, evidence_strength 부착
+4. **검증** — 스키마 적합성 + 타당성(모순 플래그)
+5. **동일성 해소 + dedup** — 노드 동일성(마스터 ID 앵커), finding 동일성(정규화 해시)
+6. **영속화** — 디스커버리 히스토리에 상태 스냅샷 append
+
+### 2.6 자동화 규정
+
+| 동작 | 등급 | 규정 |
+|---|---|---|
+| collector 배포·실행 | AUTO | 스코프 마스터 게이트 노드 한정 |
+| 원시 포집·파싱·정규화 | AUTO | 결정론적 |
+| fork / `{jdk×provider}` 판별 | AUTO | 판별 불가 시 `unknown` 명시 |
+| evidence_strength 부착 | AUTO | detection_method 기반 결정론적 |
+| JVM 인트로스펙션(실행 중) | AUTO | 미실행 프로세스는 완전성 맵에 갭 기록 |
+| dynamic-trace(eBPF/ltrace) | PROPOSE | 침습적, 고가치 자산 선택 적용 |
+| 스코프 밖 통신 발견 | PROPOSE | "등재/제외 판정 요청"으로 라우팅 |
+| 미보고·수집 실패 노드 | MANUAL | 완전성 맵에 명시, 자동 "부재" 처리 금지 |
+
+**규정**: 채우지 못한 필드는 반드시 `unknown` 명시("unknown도 1급 증거").
+
+### 2.7 산출물 / 무결성
+
+- **정규화된 CBOM + Envelope**: 본문(§1.3 필드) + Envelope(collector id+버전, 수집 방법, 시각, 대상 노드, **collector 서명**)
+- **완전성 맵**: 스코프 대비 커버리지 — **collector별·계층별로 분리 기록**("Theia 스캔됨, 프로세스 계층 미수집"). 이래야 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 못 봄"을 혼동하지 않는다.
+- 수집 채널: mTLS 인증 + 서명된 리포트. 자기참조 회피(관리 평면 크립토를 데이터 평면과 분리·명시)
+
+---
+
+## 3. INVENTORY 단계 규정
+
+### 3.1 목적과 경계
+
+수집된 사실을 **의사결정 가능한 상태**로 정제한다. 두 증거원(선언·관측)을 대조하고, 사람 리뷰를 거쳐 확정 계획의 근거가 될 리컨실리에이션 뷰를 만든다. **인벤토리 확정은 기계적 머지가 아니라 리뷰-계획-확정으로 이뤄진다.**
+
+### 3.2 정규 형식 규정
+
+**"CBOMkit 포맷" · "CipherIQ 포맷"은 오칭이다.** 양쪽 다 **CycloneDX CBOM(ECMA-424) 표준**을 출력한다. 다만 세 층위를 구분한다:
+
+- **스키마(표준·동일)**: 상호운용 보장. 파서·뷰어 공유 가능
+- **스펙 버전(변이)**: 1.6 vs 1.7 편차 → **정규화 파이프라인이 내부 정규 버전으로 수렴**
+- **커버리지·enrichment(도구 고유·상이)**: 같은 필드라도 어느 도구가 무엇을 채우는지 다름. CipherIQ의 의존성 DAG·NIST SP 800-57 생명주기 상태 등은 표준 `properties` 확장에 실림
+
+**정규 형식 = CycloneDX CBOM(표준 본문) + Envelope(provenance) + evidence 메타데이터(확장).** 수집 원본을 그대로 정규 형식으로 삼지 않는다. 반드시 (1) 버전 정규화, (2) Envelope 부착, (3) evidence_strength 태깅, (4) 도구 고유 `properties`(DAG·생명주기 등)의 정규 필드 매핑·보존을 거친다.
+
+### 3.3 대조 → 리뷰 → 확정
+
+**① 대조 엔진 (3-상태 reconciliation)** — 각 통신 엣지 분류:
+- **CONFIRMED**(선언∩관측): 신뢰도 최상
+- **UNDECLARED**(관측 only): shadow 통신, 보안 최우선 발견
+- **UNOBSERVED**(선언 only): 실존(DR/배치) vs stale vs 커버리지 갭 — **기계 확정 불가**
+
+**② 리뷰 큐 생성** — 대조 엔진은 정답이 아니라 판정 대상을 구조화·우선순위화:
+- 자동 통과 후보: CONFIRMED+고신뢰+저위험 → 일괄 승인 묶음
+- 필수 개별 리뷰: UNDECLARED, 저신뢰 UNOBSERVED, 레거시 터치 필요, 컷오버가 상대방을 깰 엣지
+- 우선순위: 위험도 × 블라스트반경 × 데이터민감도
+
+**③ 리뷰-확정** — `draft → in-review → finalized`. finalized(전 필수항목 판정 + 승인 서명) 전에는 프로비저닝 실행 불가. 링/도메인 단위 부분 확정 허용.
+
+### 3.4 리뷰 granularity (하이브리드)
+
+- **정책 단위 기본**: 리뷰어가 remediation 규칙 판정. **버전×링크모드(및 JDK×provider) 솔루션 카탈로그가 그대로 리뷰 대상 정책 템플릿**
+- **개별 격리 예외**: 정책 예외·고위험·shadow 엣지만 엣지 단위
+
+### 3.5 자동화 규정
+
+| 동작 | 등급 | 규정 |
+|---|---|---|
+| 버전 정규화·Envelope·evidence 부착 | AUTO | 파생 뷰 |
+| 3-상태 대조·엣지 분류 | AUTO | CONFIRMED/UNDECLARED 결정론적 |
+| confidence 스코어링 | AUTO | f(관측빈도, 기간, 선언신선도, 소스일치도) |
+| 자동 통과 후보 선별 | PROPOSE | 일괄 승인 제안, 승인은 사람 |
+| UNOBSERVED 처리 | MANUAL | 실존/stale/갭 판정 사람 필수 |
+| 계획 확정(finalize) | MANUAL | 승인 서명 필수 |
+
+### 3.6 판정 영속화 (리뷰 재사용)
+
+- 판정 = 엣지 상태가 아니라 "인간의 결론" → 재수집에도 부착 유지
+- 무효화 트리거: 근거 증거 실질 변화 시 해당 판정만 재검토 플래그 → **델타 리뷰**
+- stale 판정 만료: 신뢰도 감쇠, 주기적 재확인
+
+### 3.7 산출물
+
+- **리컨실리에이션 뷰**(파생): 엣지별 state + confidence + provenance
+- **확정 계획**(finalized): 프로비저닝의 유일한 실행 근거
+- **결정·계획 히스토리**: provenance chain의 판단·의도 계열
+
+---
+
+## 4. DEPLOY (프로비저닝) 단계 규정
+
+### 4.1 목적과 경계
+
+확정 계획에 따라 remediation을 실행한다. **책임 분리**: 리뷰어는 "무엇을·어떤 순서로"(계획 레이어), 플랫폼은 "어떻게 안전하게"(실행 레이어). 절대 섞지 않는다.
+
+### 4.2 핵심 전략 — 버전 유지 + 내부 provider 주입 (양쪽 런타임)
+
+버전을 올리지 않고 **내부 개발 PQC provider를 주입**하여 알고리즘 능력만 대체. 다수 케이스의 조치가 "라이브러리 전체 교체"에서 "provider 배치 + 활성화 + 검증"으로 축소된다(원자적·가역적, 자기잠금 위험 완화).
+
+### 4.3 Remediation Taxonomy — OpenSSL 브랜치
+
+| 자산 상태 | 조치 | 레거시 터치 |
+|---|---|---|
+| 3.5+ / 동적 | config만(하이브리드 활성화) | 불필요 |
+| 3.0–3.4 / 동적 | **내부 provider 주입 + config** | 불필요(cnf 한 줄 롤백) |
+| 1.1.1·1.0.2 / 동적 | 포크 교체 **또는** 프록시 프론팅 | 교체=필요 / 프록시=불필요 |
+| 정적·벤더링 | 재빌드(CI) **또는** 프록시 | 재빌드=필요 |
+| EOL·저가치 | 폐기 또는 리스크 수용 | 불필요 |
+
+검증 매트릭스: provider가 `OSSL_CAPABILITY_TLS_GROUP` 광고하는가, 앱이 그룹/TLS버전 고정 안 하는가, 3.5 호스트는 중복 회피(config만).
+
+### 4.4 Remediation Taxonomy — JCA/JCE 브랜치
+| 자산 상태 | 조치 | 레거시 터치 | 대응 OpenSSL |
+|---|---|---|---|
+| JDK 네이티브 PQC 지원 | `java.security` 순서·`jdk.tls.*` config만 | 불필요 | 3.5 config-only |
+| 미지원 JDK + provider 주입 가능 | **provider JAR 배치 + java.security 등록** | 불필요(재배포 없이) | 3.x provider 주입 |
+| provider 명시 지목/동적 등록 앱 | **앱 코드·설정 변경 필요** | 필요 | 그룹 고정 앱 reconfig |
+| EOL JDK | JDK 업그레이드 또는 프록시 프론팅 | 업그레이드=필요 | 1.1.1 포크교체/프록시 |
+| 셰이딩(shaded) 크립토 | 재빌드 | 필요 | 정적/벤더링 재빌드 |
+
+JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입했는가**(우선순위 앞선 provider가 가로채지 않는가), `getInstance("...","BC")` 명시 지목 앱은 config 무효, **전역 `java.security` 변경 blast radius** 산출.
+
+**provider 후보 및 선택 기준** — Java에서 주입할 provider는 자산 성격에 따라 라우팅한다.
+
+| 자산 성격 | 권장 provider | 근거 |
+|---|---|---|
+| 일반 자산, 구형 JDK(<24) | **BouncyCastle**(bcprov-jdk18on) | 전 JDK 커버, 표준 JCA API, 허용적 라이선스 |
+| **규제 대상 자산** | **BC-FJA (FIPS 140-3)** | 내부 provider FIPS 갭 해소, 감사 대응 |
+| 신형 JDK(24/25+), SLH-DSA 불필요 | JDK 네이티브 | provider 주입 불필요, config만 |
+| OpenSSL 백엔드 통합 희망 | openssl-jostle | 이원 런타임 provider 수렴 |
+| 특수 알고리즘·HSM·독자 통제 | 내부 PQC provider | 아래 참조 |
+
+**내부 provider 포지셔닝**: BC가 세 표준 알고리즘을 표준 API로 제공하고 FIPS 인증본(BC-FJA)까지 있으므로, Java 쪽에서 표준 PQC를 자체 구현할 정당성은 약하다. **내부 provider의 가치는 (a) OpenSSL 런타임 특수 요구, (b) BC 미지원 독자 알고리즘·HSM 연동, (c) 라이선스·공급망 통제 사유가 있을 때로 한정**한다. 순수하게 표준 PQC를 Java에 넣는 목적이면 BC 채택이 재발명보다 합리적이며, 내부 provider는 OpenSSL·특수 케이스에 집중한다.
+
+**라이선스 주의**: BouncyCastle 표준판은 MIT 계열 허용적 라이선스라 제품에 번들·직접 통합해도 copyleft 전염이 없다(§6 GPL 격리 대상 아님). 단 BC-FJA(FIPS) 변형은 별도 라이선스·계약 조건일 수 있어 규제 자산 채택 시 확인한다.
+
+### 4.5 단계적 배포 모델 — 부트스트랩 provider + 런타임 페이로드
+
+**부트스트랩 provider를 관리 대상 노드에 사전 설치**해두고, 중앙 명령으로 PQC 페이로드 모듈을 배포·활성화한다. 위험을 실행 창(execution window) 밖으로 밀어내고, 각 단계 경계를 게이트·롤백 지점으로 삼는다.
+
+**두 컴포넌트 분리**
+- **부트스트랩 provider(사전 설치, 범용)**: 알고리즘을 담지 않는 얇은 로더. "약속된 위치의 서명된 스크립트/페이로드를 검증하고 실행"하는 범용 실행기. 특정 앱을 모른다.
+- **PQC 페이로드 + 앱별 스크립트(런타임 배포)**: 실제 알고리즘 모듈 + "이 프로세스는 이렇게 재시작한다"는 앱 고유 지식(Apache `graceful`, `systemctl reload`, 커스텀 데몬 각자 방식)을 담은 스크립트.
+
+**단계별 위임 레벨 — 자산별 선택 (`deploy_automation_level` 1급 속성)**
+
+| Level | 동작 | 위험 | 가역성 | 서비스 영향 | 대상 |
+|---|---|---|---|---|---|
+| **L1 Stage-only** | 규칙 폴더에 PQC 모듈 다운로드만 | 최저 | 완전 가역(삭제) | 없음 | 최보수·최고위험 자산 |
+| **L2 Stage+Install** | 모듈 설치까지, 활성화·재시작은 사용자 수동 | 낮음 | 가역(구 상태 보존) | 없음 | **프로덕션 현실적 기본값** |
+| **L3 Full auto** | 약속된 스크립트로 활성화+재시작까지 | 높음 | 원자적 롤백 필요 | 있음 | 무상태 워커·긴급 대응 |
+
+레벨은 **자산별 속성**이며 전사 일괄이 아니다("결제 서버=L2, 무상태 워커=L3"). 리뷰-확정 단계에서 리뷰어가 자산별로 판정한다.
+
+**단계 경계 = 게이트·롤백 지점**
+- L1 후: 다운로드 무결성 검증(서명·해시). 실패 시 삭제로 완전 원복, 서비스 무영향.
+- L2 후: 설치 검증(위치·형태). 롤백=설치 취소.
+- L3 실행 중: graceful drain → 재시작 → **부팅 검증**(정상 기동 + 새 provider 로드 + 디스패치 체인 진입 + TLS 하위호환 접속). 실패 시 **원자적 롤백**(구 provider/설정 복귀 후 재시작).
+- L3 후: 재스캔으로 상태 변경 확인(Deploy→Discovery 폐루프).
+
+**타협 불가 계약 (약속된 스크립트 실행 = 원격 코드 실행이므로)**
+1. **스크립트·페이로드 서명 검증**: "폴더에 있으면 실행"이 아니라 "등록된 provenance와 일치해야 실행". 악성 스크립트 투입 시 서명 불일치로 거부.
+2. **폴더 접근 제어**: 약속된 폴더의 쓰기 권한을 부트스트랩 배포 채널로만 제한. 로컬 사용자·타 프로세스 쓰기 차단.
+3. **각 단계 멱등성**: 명령 재전송·부분 실패 재시도가 안전(배치·간헐 노드 대응).
+4. **최소 권한 실행**: 스크립트 실행 범위 화이트리스트·샌드박스·감사.
+5. **자기잠금 회피(L3)**: 관리 채널(SSH/에이전트 TLS) 관련 프로세스는 L3 자동 재시작 제외 또는 순서 최후. 부트스트랩 자신의 통신은 배포 대상 모듈에 의존하지 않게 격리(자기 재시작 금지).
+
+**substrate 분리**: L1·L2(다운로드·설치)는 config-mgmt(Ansible 등) substrate로도 가능한 표준 배포. **L3(약속된 스크립트 실행·재시작)는 부트스트랩 provider 고유 채널**이다. 오케스트레이션 지능(drain·rolling·게이트·롤백)은 부트스트랩(노드)이 아니라 **중앙 계획 엔진** 책임.
+
+**프로세스 재시작 정직성 — 동적 프로비저닝 미지원**: OpenSSL provider는 대개 프로세스 시작 시 로드되므로 "무중단 실시간"은 대부분 환상이다. **동적 프로비저닝**(암호 사용 앱이 동작 중 새 프로비저닝을 무재시작 반영 — 실행 JVM `addProvider()` 주입·OpenSSL 무재시작 교체)은 **하지 않는다**: 라이브 주입은 침습·불안정 + JEP 451 노출. 대신 모든 활성화를 **정적 config 배치 + 재시작으로 규정**한다. 재시작 명령은 계획의 `activation.restart`에 적힌 것을 쓴다 — 무엇을 어떻게 내리고 올리는지는 환경의 운영 지식이라 도구가 추측하지 않는다(§2.6). 플릿 수준의 가용성 오케스트레이션(graceful drain·rolling·LB 풀 제거→헬스체크→복귀)은 하지 않는다.
+★ 이는 *적용* 결정이며, 디스커버리가 런타임 등록 provider를 *탐지*하는 능력(§2.2)과 무관.
+
+### 4.6 실행 substrate 규정
+
+**자체 원격 실행 엔진을 만들지 않는다.** 검증된 config-mgmt(Ansible/Salt/패키지 리포)를 오케스트레이션 substrate로 쓰고, 부가가치는 그 위 크립토 인텔리전스·안전 레일에 둔다.
+
+### 4.7 안전 레일 규정 (플랫폼 강제 — 타협 불가)
+
+리뷰어가 "전부 즉시"를 확정해도 아래는 플랫폼이 강제한다.
+- **링 배치**: dev → canary → progressive. 전체 동시 배포 금지
+- **헬스 게이트**: (1) TLS 정상 서비스, (2) **기존 클라이언트 하위호환 접속** 검증
+- **자동 롤백**: 게이트 실패 시 즉시 원복(원자적 스왑 + 원커맨드 revert)
+- **자기잠금 회피**: 관리 채널(SSH/TLS) 걸린 호스트는 검증 순서 **최후**
+- **하위호환 우선**: 하이브리드(X25519MLKEM768) 기본. 순수 PQC 컷오버는 peer-readiness 확인 후에만
+
+### 4.8 역할 기반 순서화
+
+TLS 비대칭성상 **클라이언트 측 지원을 먼저 넓히고 서버 측을 나중에 전환**(클라이언트 선전환=폴백 존재로 무해, 서버 선전환=미준비 클라이언트 차단 위험). mesh(동시 서버·클라이언트)는 역할별 크립토 자산 분리 관리, 하이브리드-우선으로 순환을 끊는다.
+
+### 4.9 자동화 규정
+
+| 동작 | 등급 | 규정 |
+|---|---|---|
+| 계획→실행 명령 변환 | AUTO | finalized 계획 한정 |
+| dry-run/plan 모드 | AUTO | 실행 전 변경 사항 제시 |
+| 링 배치·헬스게이트·롤백 | AUTO | 플랫폼 강제, 우회 불가 |
+| provider 주입·config 변경 | AUTO(게이트 내) | 링 진행 + 게이트 통과 조건부 |
+| 순수 PQC 컷오버 | MANUAL | peer-readiness 미확인 시 금지 |
+| 레거시 터치(포크교체·재빌드·JDK업그레이드) | PROPOSE→MANUAL | 고위험, 개별 승인 |
+| L1 다운로드 / L2 설치 | AUTO(게이트 내) | 서비스 무영향, 무결성 검증 후 |
+| L3 활성화+재시작 | AUTO(게이트 내) | graceful drain + 부팅검증 + 자동롤백 강제. 관리채널 프로세스 제외/최후 |
+| deploy_automation_level 판정 | MANUAL | 자산별 리뷰어 판정 |
+
+### 4.10 공급망 / 무결성
+
+- **서명된 아티팩트만 배포**: 주입 provider(`.so`/JAR)의 provenance 매번 검증
+- **FIPS 태깅**: 내부 provider는 FIPS 140-3 미검증 → 규제 대상 자산에 양쪽 런타임 모두 일관 태깅
+- **규제 자산 provider 라우팅**: 규제 대상 자산은 내부 미검증 provider가 아니라 **FIPS 140-3 검증 provider로 라우팅**한다(Java=BC-FJA, OpenSSL=FIPS provider). remediation 계획 생성 시 자산의 `fips_validation` 요구가 provider 선택을 강제한다.
+- **불변 감사 로그**: 모든 디스커버리·판정·실행 기록, 컴플라이언스 증거 이중 활용
+- **프로비저닝 히스토리** → provenance chain의 행위 계열, 재스캔 폐루프로 드리프트 확인
+
+---
+
+## 5. 단계 간 핸드오프 계약
+
+```
+Discovery ──[정규화된 CBOM + Envelope + 완전성 맵]──▶ Inventory
+Inventory ──[finalized 확정 계획]──────────▶ Deploy
+Deploy    ──[상태 변경]────────────────────▶ Discovery (재스캔 폐루프)
+```
+
+- **Discovery→Inventory**: 미검증·스키마 부적합 CBOM 등재 거부. `unknown`·`evidence_strength`는 명시적이어야 함
+- **Inventory→Deploy**: **finalized 아닌 계획은 실행 거부**(최강 게이트)
+- **Deploy→Discovery**: 실행 후 재스캔으로 상태 변경 확인, 드리프트 시 신규 리뷰 항목 생성
+
+---
+
+## 6. collector 계약 & 라이선스 경계 규정
+### 6.1 intake 계약 (플러그형 collector 인터페이스)
+
+코어는 **"노드를 주면 정규화된 CBOM을 반환한다"**는 collector 추상 인터페이스만 의존한다. 그 뒤가 CBOMkit인지 CipherIQ인지 자체 collector인지 코어는 **몰라야 한다.** 사용자는 배포/설정에서 collector 백엔드를 선택하며, 어느 백엔드든 같은 정규화된 CBOM을 출력하므로 downstream(reconcile·리뷰·프로비저닝)은 백엔드 무관하게 동일 동작한다.
+
+### 6.2 라이선스 격리
+
+플랫폼은 GPL/넌GPL 이원 구성이다. **핵심 위험은 GPL copyleft 전염이며, 이를 아키텍처로 차단한다.**
+
+- **넌GPL 컴포넌트**: 정규화·reconcile·리뷰-확정·거버넌스·**프로비저닝(provider 주입·프록시·안전 레일)**·Collector·UI
+- **GPL(선택) 컴포넌트**: CipherIQ 계열(cbom-generator 등, GPL-3.0-or-later) 또는 자체 GPL collector
+- **격리 3원칙(전염 차단)**:
+  1. **프로세스 분리** — GPL 컴포넌트를 라이브러리 링크가 아니라 독립 바이너리로 CLI 호출(cbom-generator는 이미 stdout CycloneDX 출력)
+  2. **표준 데이터 경계** — 프로세스 간 교환을 CycloneDX CBOM(표준)으로만 한정, 코어 내부 API에 결합 금지
+  3. **배포 분리** — GPL 코드를 넌GPL 저장소·배포물에 번들·정적 링크·소스 포함 금지. 사용자 선택 시 별도 설치
+- **자기 전염 차단**: 자체 GPL collector ↔ 넌GPL 코어 사이에도 동일 경계 적용
+- **듀얼 라이선스 협상**: 긴밀 통합이 필요하면 GPL 컴포넌트 벤더(Graziano Labs)와의 라이선스 협상으로 리스크를 계약으로 확정
+- **실사 필수**: 컴포넌트별 정확한 라이선스(GPL vs AGPL, or-later) 확인, SaaS 배포 시 AGPL 함의 검토. **배포 전 OSS 라이선스 전문 변호사 검토**(본 규정은 법률 자문 아님)
+
+### 6.3 사용자 선택 UX 규정
+
+- collector 선택 시 라이선스 함의 명시: "CipherIQ 백엔드 = GPL 컴포넌트 별도 설치" vs "자체 collector = 허용적 라이선스(별도 설치 불필요)"
+- 선택과 무관하게 정규화된 CBOM 수렴 보장
+
+---
+
+## 7. 자동화 성숙도 로드맵
+
+| Phase | 범위 | 자동화 수준 |
+|---|---|---|
+| 0 | 읽기전용 Discovery + 선언 임포트 + 정규화 파이프라인 (OpenSSL·JCA 양쪽) | AUTO 수집, 인벤토리 뷰만 |
+| 1 | 관측 병행 + 대조 + 리뷰 큐 (shadow 발견 리포트) | PROPOSE 중심 |
+| 2 | config-only 조치 (하이브리드 활성화 / java.security 순서) | 저위험 AUTO(게이트 내) |
+| 3 | 부트스트랩 provider 배포 + 단계적 배포(L1→L2→L3) provider 주입 (canary+롤백) | 게이트 강제 AUTO |
+| 4 | 프록시 프론팅 + 재빌드/JDK업그레이드 파이프라인 연동 + 긴급 대응(실시간 pull) | PROPOSE→MANUAL |
+| 5 | 지속 드리프트 탐지 + config-driven crypto-agility 강제 | 폐루프 AUTO |
+
+가치는 선적재(Phase 0 즉시 가치), 위험은 후행(실행은 성숙 후).

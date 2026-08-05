@@ -1,0 +1,21 @@
+{
+  "id": "ex-custom-jca",
+  "status": "PLAN_STATUS_FINALIZED",
+  "scope": "ring-1",
+  "approvalSignatures": [
+    "reviewer:bob"
+  ],
+  "actions": [
+    {
+      "id": "a1",
+      "targetNodeId": "app-03",
+      "findingId": "f-jca-custom",
+      "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
+      "kind": "REMEDIATION_KIND_PROVIDER_INJECT",
+      "targetAlgorithm": "ML-KEM (FIPS 203)",
+      "providerChoice": "acme-jce",
+      "rollbackNote": "등록 라인 + JAR 제거",
+      "providerClass": "com.acme.jce.AcmeProvider"
+    }
+  ]
+}

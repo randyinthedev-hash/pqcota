@@ -1,0 +1,15 @@
+{
+  "id": "ex-jca-native",
+  "status": "PLAN_STATUS_FINALIZED",
+  "scope": "ring-0",
+  "approvalSignatures": ["reviewer:bob"],
+  "actions": [{
+    "id": "a1",
+    "targetNodeId": "app-01",
+    "findingId": "f-jdk-native-pqc",
+    "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
+    "kind": "REMEDIATION_KIND_CONFIG_ONLY",
+    "targetAlgorithm": "ML-KEM (FIPS 203)",
+    "rollbackNote": "java.security 조각 제거"
+  }]
+}
