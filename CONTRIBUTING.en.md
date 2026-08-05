@@ -113,6 +113,14 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector re
 
 Acceptance criteria and implementation order: [discovery test cases](discovery/디스커버리_테스트케이스.md)·[inventory test cases](inventory/인벤토리_테스트케이스.md) (TDD).
 
+## Language
+
+The **Korean** documents are authoritative; the English ones (`*.en.md`) are translations — machine-assisted, and where the two differ the Korean is correct.
+
+**Issues and PRs are fastest in Korean.** The maintainer is a Korean speaker, so English goes through translation both ways — that isn't a refusal, it just makes the round trip longer. Code, logs, and error messages read the same in any language, so paste them verbatim.
+
+Translation contributions are welcome. The **source of truth stays Korean**, though — authoring two languages at once drifts apart in a one-person project.
+
 ## Issues · proposals
 
 **Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.md).
