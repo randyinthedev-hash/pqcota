@@ -20,7 +20,7 @@ Before the first release (v0.1.0). Security fixes land only on **`main` latest**
 **Do not open a public issue, PR, or discussion.** Use one of these private channels:
 
 1. **GitHub private report (preferred)** — the repo's **Security tab → "Report a vulnerability"**. This follows a coordinated-disclosure process.
-2. If that isn't possible, **contact the maintainer directly**.
+2. If that isn't possible, **contact the maintainer directly** — <randyinthedev@gmail.com>. Prefixing the subject with `[security]` helps it surface faster.
 
 Including the following speeds up triage: affected component (collector/CLI/library), reproduction steps, impact (privilege escalation·information disclosure·integrity compromise, etc.), and a PoC if possible.
 

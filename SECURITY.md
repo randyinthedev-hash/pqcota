@@ -18,7 +18,7 @@
 **공개 이슈·PR·토론으로 올리지 말 것.** 다음 비공개 경로로 알린다:
 
 1. **GitHub 비공개 신고 (권장)** — 리포 **Security 탭 → "Report a vulnerability"**. 조율된 공개(coordinated disclosure) 절차로 진행된다.
-2. 위가 불가하면 **메인테이너에게 직접** 연락한다.
+2. 위가 불가하면 **메인테이너에게 직접** 연락한다 — <randyinthedev@gmail.com>. 제목에 `[security]`를 달아주면 빨리 눈에 띈다.
 
 신고에 다음을 담아주면 분류가 빠르다: 영향 컴포넌트(collector/CLI/라이브러리), 재현 절차, 영향(권한 상승·정보 노출·무결성 훼손 등), 가능하면 PoC.
 
