@@ -12,6 +12,33 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**(OSS, [Apache-2.0](LICENSE)). 
 
 ---
 
+## 무엇이 나오나
+
+관측한 것을 노드·앱에 이어 붙이고, 회선에서 **실제로 협상된 그룹**까지 함께 본다.
+
+```
+──────── ① 발견 자산 (노드별) ────────
+  pay-app
+    • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
+  pay-db
+    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
+
+──────── ② 관측 통신 엣지 + 양자내성 posture ────────
+  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [표준]
+  🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [실험]
+  🔴 web-gw  → pay-db    TLS  x25519
+  🔴 web-gw  → pay-db    SSH  curve25519-sha256
+
+  posture 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
+```
+
+같은 관측을 토폴로지로도 낸다 — 색이 posture다.
+
+![관측 토폴로지 — 색이 posture(🟢 PQC/하이브리드 · 🔴 고전 · ⚪ 불명)](demo/expected-output/topology.svg)
+
+**🔴는 "취약하다"는 판정이 아니라 "고전 알고리즘으로 협상됐다"는 관측이다.** 무엇을 언제 바꿀지는 사용자가 정한다. 전체 예상 출력은 [demo/expected-output](demo/expected-output/README.md)에 있다.
+
 ## 무엇을 하나 — 세 단계
 
 | 단계 | 하는 일 | 산출 |

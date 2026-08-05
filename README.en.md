@@ -14,6 +14,35 @@ A PQC migration management platform (OSS, [Apache-2.0](LICENSE)). It handles the
 
 ---
 
+---
+
+## What it looks like
+
+Observations are tied to nodes and apps, and the **group actually negotiated on the wire** is shown alongside.
+
+```
+──────── ① discovered assets (per node) ────────
+  pay-app
+    • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
+  pay-db
+    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
+
+──────── ② observed edges + quantum posture ────────
+  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [standard]
+  🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
+  🔴 web-gw  → pay-db    TLS  x25519
+  🔴 web-gw  → pay-db    SSH  curve25519-sha256
+
+  posture totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
+```
+
+The same observation is also rendered as a topology — color is posture.
+
+![Observed topology — color is posture (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
+
+**🔴 is not a verdict of "vulnerable" — it is the observation that a classical algorithm was negotiated.** What to change, and when, is the user's call. Full expected output lives in [demo/expected-output](demo/expected-output/README.md).
+
 ## What it does — three stages
 
 | Stage | What it does | Output |

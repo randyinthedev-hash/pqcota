@@ -1,0 +1,90 @@
+name: release
+
+# 태그를 밀면 노드에 올릴 정적 바이너리를 만들어 릴리스에 붙인다.
+# 평가하려는 사람이 Go·buf를 깔고 소스를 빌드하게 두지 않기 위해서다.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '릴리스로 만들 태그 (예: v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # JVM attach 사이드카 — 레거시 JVM에 붙어야 해서 --release 8로 빌드된다.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: 계약 생성
+        run: make tools && make generate
+
+      # 노드에 올리는 것은 이 셋뿐이다(배포 설계). arch만 바꿔 정적으로 만든다.
+      - name: collector 정적 빌드
+        run: |
+          set -eu
+          for arch in amd64 arm64; do
+            out="dist/pqcota-linux-$arch"
+            mkdir -p "$out"
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags='-s -w' -o "$out/" \
+              ./discovery/cmd/pqcota-nodescan \
+              ./discovery/cmd/pqcota-netcap \
+              ./discovery/cmd/pqcota-jvmscan
+            file "$out"/* | grep -q 'statically linked' \
+              || { echo "✗ $arch: 정적 링크가 아니다 — 배포판·libc를 가리게 된다"; exit 1; }
+            tar -C dist -czf "dist/pqcota-linux-$arch.tar.gz" "pqcota-linux-$arch"
+          done
+
+      - name: JVM 사이드카
+        run: |
+          make build-jar
+          [ -f build/collector.jar ] && cp build/collector.jar dist/ || echo "collector.jar 없음 — attach 경로는 이 릴리스에 없다"
+
+      # 받은 사람이 무결성을 확인할 수 있어야 한다. 서명은 아직 없다(로드맵).
+      # collector.jar가 없을 수 있다(javac 없는 환경) — 그때 sha256sum이 실패해
+      # 릴리스 전체가 멈추면 안 된다. 있는 것만 센다.
+      - name: SHA256SUMS
+        run: |
+          cd dist
+          sha256sum *.tar.gz $([ -f collector.jar ] && echo collector.jar) | tee SHA256SUMS
+
+      - name: 릴리스 발행
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          {
+            echo "릴리스 내용은 [RELEASE_NOTES.md](RELEASE_NOTES.md)를 본다."
+            echo
+            echo "**노드에 올리는 것**은 \`pqcota-linux-<arch>.tar.gz\` 안의 세 바이너리다 — \`pqcota-nodescan\`·\`pqcota-netcap\`·\`pqcota-jvmscan\`. 정적 링크라 배포판·libc를 가리지 않고, **커널 3.2 이상**이면 된다."
+            echo
+            echo "JVM attach 경로를 쓰려면 \`collector.jar\`도 함께 받는다."
+            echo
+            echo "받은 뒤 \`sha256sum -c SHA256SUMS\`로 확인할 수 있다. 서명된 릴리스는 로드맵에 있다."
+          } > /tmp/relnotes.md
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TAG" \
+            --notes-file /tmp/relnotes.md \
+            dist/*.tar.gz dist/SHA256SUMS $([ -f dist/collector.jar ] && echo dist/collector.jar)
