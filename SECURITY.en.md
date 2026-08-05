@@ -24,6 +24,8 @@ Before the first release (v0.1.0). Security fixes land only on **`main` latest**
 
 Including the following speeds up triage: affected component (collector/CLI/library), reproduction steps, impact (privilege escalation·information disclosure·integrity compromise, etc.), and a PoC if possible.
 
+> **Anything that isn't a vulnerability belongs in a public issue.** Bugs, questions, and proposals go to **this repo's issues** — there's nothing to hide, and an open discussion stays for the next person. Private reporting is only for **things that could expose users to attack if known before a fix**.
+
 ## Response
 
 As a solo project, response is **best-effort** — acknowledge receipt, reproduce and assess, then coordinate a fix plan with the reporter. There is no SLA before release, but valid reports are prioritized.

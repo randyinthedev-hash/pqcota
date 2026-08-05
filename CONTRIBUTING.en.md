@@ -113,6 +113,19 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector re
 
 Acceptance criteria and implementation order: [discovery test cases](discovery/디스커버리_테스트케이스.md)·[inventory test cases](inventory/인벤토리_테스트케이스.md) (TDD).
 
+## Issues · proposals
+
+**Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.md).
+
+Including this with a bug report speeds up reproduction:
+
+- what you expected and what happened
+- the command you ran and its output (redact sensitive values)
+- environment — kernel version (`uname -r`), distro, Go version. Collectors are Linux-only and assume **kernel 3.2 or later**
+- for observation issues, the target runtime (OpenSSL version, JDK distribution)
+
+**For large changes, open an issue before a PR.** Contracts (`contracts/`) are the single source of truth here, so anything touching the schema or a boundary needs design agreement first — discovering a disagreement after the code is written costs us both.
+
 ## Design first
 
 Before adding a feature, read the rationale docs — [docs/](docs/README.md) has the process spec and subsystem designs, and every `§` reference in the code points there.
