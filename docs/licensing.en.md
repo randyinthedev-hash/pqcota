@@ -35,13 +35,13 @@ Dependencies **compiled and linked** into the static Go binaries built from this
 | `github.com/jackc/pgpassfile` | v1.0.0 | MIT | pgx indirect |
 | `github.com/jackc/pgservicefile` | v0.0.0-20240606120523-5a60cdf6a761 | MIT | pgx indirect |
 | `github.com/jackc/puddle/v2` | v2.2.2 | MIT | pgx connection pool |
-| `google.golang.org/grpc` | v1.82.0 | **Apache-2.0** | intake contract transport |
+| `google.golang.org/grpc` | v1.82.1 | **Apache-2.0** | intake contract transport |
 | `google.golang.org/protobuf` | v1.36.11 | **BSD-3-Clause** | contract serialization (protojson included) |
 | `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260414002931-afd174a4e478 | Apache-2.0 | grpc indirect |
-| `golang.org/x/sys` | v0.43.0 | **BSD-3-Clause** | AF_PACKET (network collector) |
-| `golang.org/x/net` | v0.53.0 | BSD-3-Clause | grpc indirect |
-| `golang.org/x/sync` | v0.20.0 | BSD-3-Clause | indirect |
-| `golang.org/x/text` | v0.36.0 | BSD-3-Clause | indirect |
+| `golang.org/x/sys` | v0.46.0 | **BSD-3-Clause** | AF_PACKET (network collector) |
+| `golang.org/x/net` | v0.56.0 | BSD-3-Clause | grpc indirect |
+| `golang.org/x/sync` | v0.21.0 | BSD-3-Clause | indirect |
+| `golang.org/x/text` | v0.39.0 | BSD-3-Clause | indirect |
 
 `gopkg.in/yaml.v3` (MIT) is not in the list above — it is used only by the demo topology generator and by tests, so it is not linked into the collectors or CLIs.
 
