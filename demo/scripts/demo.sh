@@ -197,6 +197,101 @@ docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-l3-rollback.yml" |
 docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   rolled │ /'
 fi  # PNODE 가드 끝
 
+# ── (선택) 실물 provider — 생성물이 정말 능력을 만드는가 ──────────────────────────
+# 6/6까지는 **빈 파일**을 배치한다. 배포 경로(스테이징·sha256 게이트·활성화·되돌림)를 보이는 데는
+# 그것으로 충분하고, "Docker만 있으면 된다"는 데모 전제도 지킨다. 다만 빈 파일로는 마지막 한 칸을
+# 못 보인다: **도구가 낸 조각이 그 노드의 OpenSSL에 실제로 PQC 능력을 만드는가.**
+# DEMO_REAL_PROVIDER=1이면 실물 oqsprovider를 빌드해 그 한 칸까지 확인한다(빌드가 수 분 걸려 기본 꺼짐).
+#
+# 대상은 6/6의 PNODE가 아니다 — 넣을 자리가 있는 노드는 **OpenSSL 3.0–3.4**뿐이다.
+# 1.1.1엔 provider라는 개념이 없고, 3.5+는 ML-KEM이 네이티브라 조치가 CONFIG_ONLY로 갈린다
+# (pkg/provisioning/openssl.go). 인벤토리에서 그 대역을 관측한 노드를 고르고, 없으면 생략한다(§2.6).
+BAND="f->'openssl'->>'version' ~ '^3\.[0-4]([.]|$)'"
+if [ "${DEMO_REAL_PROVIDER:-0}" = "1" ]; then
+echo
+echo "▶ (선택) 실물 provider 검증 — 조치 → 재관측 → 인벤토리 변화 (DEMO_REAL_PROVIDER=1)"
+RNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
+  where $BAND order by s.seq desc limit 1" | tr -d '[:space:]')
+if [ -z "$RNODE" ]; then
+  echo "   (OpenSSL 3.0–3.4를 관측한 노드가 없어 생략 — provider 주입이 갈 자리가 그 대역이다)"
+else
+RFID=$(pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
+  where s.node_id='$RNODE' and $BAND order by s.seq desc, f->>'id' limit 1" | tr -d '[:space:]')
+RVER=$(pg -tAc "select distinct (f->'openssl'->>'lib')||' '||(f->'openssl'->>'version') from pqcota_snapshots s, jsonb_array_elements(s.findings) f where f->>'id'='$RFID'" | head -1 | sed 's/^ *//;s/ *$//')
+echo "   대상: $RNODE ($RVER) · finding $RFID"
+# 기본 토폴로지에서 이 finding은 5단계 스코프가 잡음으로 뺀 것이다(sshd·python이 로드한 libcrypto).
+# 여기서 보려는 것은 "관리할 자산인가"가 아니라 "3.0 런타임에서 도구가 낸 조각이 먹는가"라서 그대로 쓴다.
+
+# 능력 측정은 `list -kem-algorithms`로 한다. `-tls-groups`는 3.2+에만 있어서 이 대역(3.0–3.4)의
+# 아래쪽 노드에서는 옵션 자체가 없다 — 없는 옵션의 빈 출력을 "능력 없음"으로 읽으면 오답이 된다.
+echo "   ── 조치 전 능력: 이 노드의 OpenSSL이 아는 ML-KEM 계열 KEM ──"
+KEMQ='openssl list -kem-algorithms 2>/dev/null | grep -ci mlkem || true'
+BEFORE_G=$(docker exec "$RNODE" sh -lc "$KEMQ" | tr -d '[:space:]')
+echo "   openssl list -kem-algorithms | grep -ci mlkem  →  ${BEFORE_G:-0}"
+
+# 실물 모듈. 노드 이미지와 같은 베이스에서 빌드해야 ABI가 맞는다.
+"$DEMO_DIR/scripts/internal/build-oqsprovider.sh" "$GEN/oqsprovider.so"
+docker exec pqcota-ctl bash -lc 'mkdir -p /work/ansible/files'
+docker cp "$GEN/oqsprovider.so" pqcota-ctl:/work/ansible/files/oqsprovider.so >/dev/null
+RSHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
+
+docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
+{"id":"plan-demo-real","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
+ "approvalSignatures":["reviewer:demo"],
+ "actions":[{"id":"a1","targetNodeId":"$RNODE","findingId":"$RFID",
+   "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
+   "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
+   "providerChoice":"oqsprovider","rollbackNote":"cnf 한 줄 + 모듈 제거",
+   "activation":{
+     "pre":"/usr/local/bin/ssl-apps.sh stop",
+     "activate":"printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/openssl-pqc.cnf > /etc/pqcota/service.env",
+     "deactivate":"rm -f /etc/pqcota/service.env",
+     "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
+JSON
+echo "   ── L2 배치(실물 .so · sha256 게이트) + L3 활성화 ──"
+docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
+docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$RSHA provision-real.yml" \
+  | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
+docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 /work/plan-real.json > /work/ansible/provision-real-l3.yml" 2>/dev/null
+docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
+
+echo "   ── 조치 후 능력: 활성화된 그 설정으로 다시 묻는다 ──"
+ACT='. /etc/pqcota/service.env 2>/dev/null; export OPENSSL_CONF;'
+docker exec "$RNODE" sh -lc "$ACT openssl list -providers 2>/dev/null | grep -A2 -i oqs | head -4" | sed 's/^/   /'
+docker exec "$RNODE" sh -lc "$ACT openssl list -kem-algorithms 2>/dev/null | grep -i mlkem | head -3" | sed 's/^/   /'
+AFTER_G=$(docker exec "$RNODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
+if [ "${AFTER_G:-0}" -gt "${BEFORE_G:-0}" ]; then
+  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개. 도구가 낸 config + 배치가 **실제 암호 능력**을 만들었다."
+else
+  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개 — 늘지 않았다. 모듈이 로드되지 않은 것이다."
+  echo "     확인할 곳: 모듈의 미해결 의존(\`ldd\`)과 cnf의 module 경로. 안 된 것을 됐다고 적지 않는다."
+fi
+
+echo "   ── 재관측(디스커버리 재실행 → 적재) 후 인벤토리가 이 변화를 보는가 ──"
+RPRE=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
+docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
+RPOST=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+if [ -n "$RPRE" ] && [ -n "$RPOST" ] && [ "$RPRE" != "$RPOST" ]; then
+  docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -diff '$RPRE','$RPOST'" | sed 's/^/   /'
+else
+  echo "   변화 없음 — 새 스냅샷이 생기지 않았다(내용이 같으면 스냅샷을 만들지 않는다)."
+fi
+echo "   ※ 능력은 분명히 늘었는데 인벤토리는 그대로다. 지어낸 결과가 아니라 **관측 범위의 사실**이다:"
+echo "     · OpenSSL은 provider 층을 관측하는 경로가 아직 없다 — /proc/maps의 libssl·libcrypto와"
+echo "       ELF 문자열(fork·버전)까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다."
+echo "     · 핸드셰이크도 안 바뀐다 — 협상은 양쪽이 알아야 하고, 이 토폴로지의 상대는 1.1.1이다."
+echo "     설계 검토는 docs/검토_중인_설계.md §2. 없는 것을 있는 척하지 않는 것이 이 도구의 전제다(§2.6)."
+
+echo "   ── 되돌림(L3 → L2) — 노드를 원래대로 ──"
+docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null
+docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
+docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --rollback /work/plan-real.json > /work/ansible/provision-real-rollback.yml" 2>/dev/null
+docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
+docker exec "$RNODE" sh -lc "$KEMQ" | sed 's/^/   되돌린 뒤 ML-KEM KEM: /'
+fi  # RNODE 가드 끝
+fi  # DEMO_REAL_PROVIDER 끝
+
 echo
 echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱귀속·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
 echo "   산출물: demo/.generated/topology.svg (색=posture) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
