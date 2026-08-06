@@ -44,6 +44,30 @@ func TestRenderOpenSSLProviderInject(t *testing.T) {
 	}
 }
 
+// 목적: 생성한 조각을 OPENSSL_CONF로 직접 가리켜도 먹는 상태를 유지한다.
+// [openssl_init]은 최상위 `openssl_conf = openssl_init`이 있어야 읽힌다 — 그 줄이 빠지면
+// 배치도 되고 sha256 게이트도 통과하는데 provider는 안 올라오는, 가장 알아채기 어려운 실패가 된다
+// (실물 oqsprovider로 재현했다). 섹션보다 **앞**이어야 하므로 위치까지 본다.
+func TestRenderOpenSSLConfigIsUsableStandalone(t *testing.T) {
+	kinds := map[string]provisioningv1.RemediationKind{
+		"config-only":     provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+		"provider-inject": provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT,
+	}
+	for name, kind := range kinds {
+		t.Run(name, func(t *testing.T) {
+			art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
+				kind, "ML-KEM (FIPS 203)", ""))
+			at := strings.Index(art, "openssl_conf = openssl_init")
+			if at < 0 {
+				t.Fatalf("최상위 지시자가 없다 — OpenSSL이 [openssl_init]을 읽지 않는다:\n%s", art)
+			}
+			if sect := strings.Index(art, "["); sect >= 0 && at > sect {
+				t.Errorf("최상위 지시자가 첫 섹션(%d) 뒤(%d)에 있다 — 그 섹션에 속해 버린다:\n%s", sect, at, art)
+			}
+		})
+	}
+}
+
 // config로 주입 불가한 조치(포크 교체 등)는 정직하게 비-config 조치임을 명시(§4.3 "레거시 터치").
 func TestRenderOpenSSLNonConfig(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,

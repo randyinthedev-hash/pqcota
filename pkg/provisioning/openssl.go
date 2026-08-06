@@ -23,6 +23,14 @@ func renderOpenSSL(a *provisioningv1.RemediationAction) string {
 	}
 }
 
+// initDirective — 섹션보다 먼저 와야 하는 최상위 지시자. 이 한 줄이 없으면 OpenSSL은
+// [openssl_init]을 **아예 보지 않는다** — 조각을 OPENSSL_CONF로 직접 가리키면(활성화 지점이
+// 그런 환경이면 흔하다) 배치도 되고 게이트도 통과하는데 능력은 그대로인 상태가 된다.
+// 실제로 그랬다: 실물 oqsprovider를 배치·활성화했는데 `openssl list -providers`에 안 떴다.
+// 조각을 시스템 cnf에서 .include 하는 환경에서는 이 줄이 중복되지만, 같은 값의 재대입이라
+// 무해하다(3.0.13에서 확인). 두 활성화 경로 중 하나만 되는 것보다 낫다.
+const initDirective = "openssl_conf = openssl_init\n\n"
+
 // groupsLine — 하이브리드 그룹 + 고전 폴백(하위호환 접속 유지, §4.3 검증 매트릭스).
 func groupsLine(group string) string {
 	if group == "" {
@@ -35,6 +43,7 @@ func opensslConfigOnly(group, target string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.5+ config-only — %s 하이브리드 활성화(§4.3)\n", target)
 	b.WriteString("# 레거시·provider 무터치. 롤백=이 조각 제거.\n")
+	b.WriteString(initDirective)
 	b.WriteString("[openssl_init]\n")
 	b.WriteString("ssl_conf = ssl_sect\n\n")
 	b.WriteString("[ssl_sect]\n")
@@ -51,6 +60,7 @@ func opensslProviderInject(group, target, provider string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.0–3.4 provider 주입 — %s (provider=%s)(§4.3)\n", target, provider)
 	b.WriteString("# 버전 유지 + provider 배치로 알고리즘 능력만 대체. 롤백=cnf 한 줄.\n")
+	b.WriteString(initDirective)
 	b.WriteString("[openssl_init]\n")
 	b.WriteString("providers = provider_sect\n")
 	b.WriteString("ssl_conf = ssl_sect\n\n")
