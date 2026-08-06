@@ -5,6 +5,37 @@ set -euo pipefail
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DSN="postgres://postgres:pqcota@pqcota-demo-pg:5432/pqcota"
 
+# 조정 지점은 전부 환경변수다. 여기 적어 두는 건 **문서를 읽어야만 있는 줄 아는** 것을 없애기
+# 위해서다 — 특히 선택 단계는 켜지 않으면 존재 자체가 출력에 안 나온다.
+# up.sh 확인보다 먼저 온다: 아직 안 세운 사람도 무엇이 있는지는 볼 수 있어야 한다.
+usage() {
+	cat <<'HELP'
+사용법: demo.sh            접근준비 → 디스커버리 → 인벤토리 → 프로비저닝(6단계)
+
+인자는 받지 않는다. 조정은 환경변수로 한다:
+
+  DEMO_REAL_PROVIDER=1   선택 단계를 켠다 — 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에
+                         배치·활성화하고, 조치가 **실제로 암호 능력을 만드는지**까지 확인한다.
+                         기본 데모는 빈 파일로 배포 경로만 보인다. 첫 실행은 빌드로 수 분 더 걸린다.
+  OQS_BUILD_BASE=<이미지> 그 provider를 빌드할 베이스. 노드 이미지와 같아야 ABI가 맞는다
+                         (기본 ubuntu:24.04 — 기본 토폴로지의 OpenSSL 3 노드와 같다).
+
+  DEMO_TARGET_EDGES=<n>  이만큼 관측될 때까지 디스커버리를 다시 돈다 (기본: 토폴로지의 엣지 수)
+  DEMO_MAX_ATTEMPTS=<n>  그 재수집의 상한 (기본 4)
+
+예:
+  ./demo/scripts/demo.sh
+  DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
+
+먼저 ./demo/scripts/up.sh 로 환경을 세우고, 끝나면 ./demo/scripts/down.sh 로 지운다.
+HELP
+}
+case "${1:-}" in
+-h | --help) usage; exit 0 ;;
+"") ;;
+*) echo "demo.sh: 모르는 인자 '$1' — 이 스크립트는 인자를 받지 않는다." >&2; usage >&2; exit 2 ;;
+esac
+
 # 데모 구성은 up.sh가 topology.yaml에서 생성한 산출물(compose·groups·profiles·manifest)이 정의한다.
 GEN="$DEMO_DIR/.generated"
 [ -f "$GEN/manifest.env" ] || { echo "먼저 ./demo/scripts/up.sh 를 실행하세요(생성물이 없습니다)." >&2; exit 1; }
