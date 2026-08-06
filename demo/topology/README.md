@@ -100,7 +100,7 @@ edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC 
 | 축 | 값 | 무엇을 보이나 |
 |---|---|---|
 | **노드 종류** | `openssl` · `java` | pqcota가 관측하는 런타임만 |
-| **openssl fork** | `openssl` · `libressl` | discovery의 **fork 판별**(§1.2, 같은 soname 다른 fork) |
+| **openssl fork** | `openssl` · `libressl` | discovery의 **fork 판별**(수용 원칙 §2.2, 같은 soname 다른 fork) |
 | **openssl version** | `1.1.1` · `3.0` · `3` | base 이미지의 OpenSSL 버전(레거시↔현대·버전 탐지) |
 | **jca providers** | 예: `[BC]` · `[]` | BC 유무 → JCA posture 차이(attach로 동적 등록 포착) |
 | **networks** | 임의 세그먼트 목록 | 다중 브리지로 망 분리, 노드가 여러 세그먼트에 걸침 |
@@ -122,7 +122,7 @@ edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC 
   세그먼트를 써도 되지만, **관측하려는 쌍은 소스 노드의 첫 세그먼트에서 서로 도달**해야 잡힌다 — 소스가
   안 닿는 격리 세그먼트의 엣지는 캡처되지 않는다(예시는 pay-db를 corp+db 양쪽에 걸쳐 corp에서 관측한다).
 - **LibreSSL은 버전을 OpenSSL로 위장한다**(`OPENSSL_VERSION_NUMBER` 호환값). 그래서 `fork: libressl`
-  노드는 실제로 LibreSSL을 로드하지만 collector는 **OpenSSL 3.1.x로 보고**한다 — 같은 soname 문제(§1.2)가
+  노드는 실제로 LibreSSL을 로드하지만 collector는 **OpenSSL 3.1.x로 보고**한다 — 같은 soname 문제(수용 원칙 §2.2)가
   버전 위장까지 겹친 정직한 한계다. 이 축은 지원하되 예시엔 두지 않았다.
 
 생성물은 `demo/.generated/`(gitignore, 리포 산출물 단일 위치)에 떨어진다 — 열어보면 무엇이 만들어졌는지 그대로 보인다.

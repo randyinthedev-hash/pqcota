@@ -75,7 +75,7 @@ message ActivationHooks {
 message RemediationAction {
   string id = 1;
   string target_node_id = 2; // 스코프 마스터 앵커(§0.4)
-  string finding_id = 3;     // 근거 Finding(§1.3)
+  string finding_id = 3;     // 근거 Finding(수용 원칙 §2.4)
 
   pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기(docs/암호_런타임_수용_원칙.md)
   RemediationKind kind = 5;                          // taxonomy 조치(§4.3/§4.4)

@@ -94,7 +94,7 @@ func jcaProviderInject(group, target, choice, explicitClass string) string {
 	// 읽히게 적으면 거짓말이 되므로 조각이 직접 그렇게 말한다. 밀어내지 않고 넣으려면 뒤 번호를 전부
 	// 한 칸씩 미뤄야 하는데, 그러려면 그 노드의 java.security 원본을 알아야 한다 — 도구는 모른다(§2.6).
 	fmt.Fprintf(&b, "security.provider.2=%s\n", class)
-	b.WriteString("# ↑ 우선순위 2 — PQC 알고리즘이 먼저 디스패치되게(§1.2(d) 순서 협상).\n")
+	b.WriteString("# ↑ 우선순위 2 — PQC 알고리즘이 먼저 디스패치되게(수용 원칙 §2.2(d) 순서 협상).\n")
 	b.WriteString("# ⚠ 이 줄은 **2번 자리를 대체한다**(끼워 넣지 않는다). 원래 2번이던 provider는\n")
 	b.WriteString("#   목록에서 빠진다 — JDK 기본값이면 대개 SunRsaSign이고, 그러면 RSA 서비스가\n")
 	b.WriteString("#   이 provider 구현으로 넘어간다. 밀어내지 않으려면 대상 노드의 java.security에서\n")

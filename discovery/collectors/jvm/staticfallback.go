@@ -56,7 +56,7 @@ func hostPath(pid int, p string) string {
 
 // ParseJavaSecurity — `security.provider.N=<값>` 줄을 **N 순서대로** 뽑는다(순수 함수).
 //
-// 순서가 곧 우선순위라 정렬이 결과의 의미를 바꾼다(§1.2) — 파일에 적힌 순서가 아니라
+// 순서가 곧 우선순위라 정렬이 결과의 의미를 바꾼다(수용 원칙 §2.2) — 파일에 적힌 순서가 아니라
 // **N 숫자 순**이 실제 등록 순서다. 값에 인자가 붙는 경우(`SunPKCS11 ${java.home}/conf/...`)는
 // 첫 토큰이 provider 이름·클래스다.
 func ParseJavaSecurity(content string) Collected {

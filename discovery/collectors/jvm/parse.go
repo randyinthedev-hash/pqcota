@@ -12,7 +12,7 @@ import (
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
 )
 
-// Provider — getProviders() 실체의 한 항목(등록 순서 포함, §1.2).
+// Provider — getProviders() 실체의 한 항목(등록 순서 포함, 수용 원칙 §2.2).
 type Provider struct {
 	Order     int
 	Name      string
@@ -60,7 +60,7 @@ func BuildResult(node string, c Collected) *discoveryv1.CollectionResult {
 }
 
 // BuildResultFor — 파싱 결과를 정규화된 CBOM Envelope로. attach 성공은 runtime-introspection(confirmed 근거),
-// 정적 폴백은 artifact + 완전성 갭(§2.6 갭≠부재). provider_set 순서 보존(§1.2).
+// 정적 폴백은 artifact + 완전성 갭(§2.6 갭≠부재). provider_set 순서 보존(수용 원칙 §2.2).
 //
 // ident: 한 노드에 JVM이 여럿일 때 이들을 **구별**하는 안정 식별자(JAVA_HOME 권장). 비면 단일.
 // finding id는 (node|컴포넌트명|runtime|fork) 해시라, ident를 컴포넌트명에 실어야 서로 다른 JVM이
@@ -112,7 +112,7 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 }
 
 // buildJcaCycloneDX — provider 체인을 CycloneDX 본문 + pqcota properties(§3.2)로.
-// provider_set은 등록 순서 CSV(§1.2 우선순위 협상 판정 근거). compName·appKeys로 다중 JVM 구별.
+// provider_set은 등록 순서 CSV(수용 원칙 §2.2 우선순위 협상 판정 근거). compName·appKeys로 다중 JVM 구별.
 func buildJcaCycloneDX(providerNames []string, detectionMethod, compName string, appKeys []string) []byte {
 	type prop struct {
 		Name  string `json:"name"`

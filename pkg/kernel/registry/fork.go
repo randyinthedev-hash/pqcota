@@ -1,5 +1,5 @@
 // Package registry holds deterministic signature-matching data used by the
-// Discovery enrichment stage (규정서 §2.3 v3, 설계 문서 §3.3). 파생 규칙이므로
+// Discovery enrichment stage (수용 원칙 §2.3, 설계 문서 §3.3). 파생 규칙이므로
 // 개선 시 원본에서 재계산되며 ruleset_version으로 고정된다(§0.2).
 package registry
 
@@ -9,7 +9,7 @@ import (
 )
 
 // ForkSignature — OpenSSL 계열 fork·version 판별 시그니처 (설계 §2.1, SD-3 IP).
-// OpenSSL/BoringSSL/LibreSSL/AWS-LC가 같은 soname을 쓰는 문제(§1.2)를
+// OpenSSL/BoringSSL/LibreSSL/AWS-LC가 같은 soname을 쓰는 문제(수용 원칙 §2.2)를
 // 바이너리 문자열/심볼 시그니처로 해소한다.
 type ForkSignature struct {
 	Fork     string   // "OpenSSL" | "BoringSSL" | "LibreSSL" | "AWS-LC"

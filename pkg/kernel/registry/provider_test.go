@@ -34,7 +34,7 @@ func TestMatchProvider(t *testing.T) {
 			t.Fatal("expected match for SunJCE")
 		}
 		if !registry.SLHDSAGap(p) {
-			t.Error("JDK-native must be flagged with SLH-DSA gap (§2.3)")
+			t.Error("JDK-native must be flagged with SLH-DSA gap (수용 원칙 §2.3)")
 		}
 		if p.Covers("SLH-DSA") {
 			t.Error("JDK-native must not cover SLH-DSA")

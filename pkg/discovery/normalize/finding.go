@@ -68,7 +68,7 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 				ProviderSet:      providerSet,
 				RegistrationMode: parseRegistrationMode(props["pqcota:jca.registration_mode"]),
 			}}
-			// provider 시그니처 레지스트리 강화(§2.3/§4.10): FIPS·SLH-DSA 갭.
+			// provider 시그니처 레지스트리 강화(수용 원칙 §2.3 · 규정서 §4.10): FIPS·SLH-DSA 갭.
 			f.FipsValidation, f.PqcReadiness = jcaEnrichment(providerSet)
 		}
 
@@ -163,7 +163,7 @@ func splitCSV(s string) []string {
 }
 
 // jcaEnrichment — provider_set을 시그니처 레지스트리와 대조해 fips_validation·pqc_readiness를
-// 파생한다(§2.3/§4.10). SLH-DSA는 JDK 네이티브에 없으므로 갭을 명시한다.
+// 파생한다(수용 원칙 §2.3 · 규정서 §4.10). SLH-DSA는 JDK 네이티브에 없으므로 갭을 명시한다.
 func jcaEnrichment(providers []string) (fips, readiness string) {
 	fips = "none"
 	hasMLKEM, hasSLHDSA := false, false
