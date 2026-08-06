@@ -10,25 +10,25 @@ import (
 // IngestReport — 중앙 적재 결과 요약.
 type IngestReport struct {
 	Accepted  int // 수용된 CollectionResult 수
-	OffScope  int // 미등재/앵커 없음 → 등재 판정 요청(§0.4)
-	Rejected  int // 서명 검증 실패 → 거부(§2.7)
+	OffScope  int // 미등재/앵커 없음 → 등재 판정 요청(§1.4)
+	Rejected  int // 서명 검증 실패 → 거부(§2.6)
 	Snapshots int // 적재된 노드 수(= 관측 기록 건수)
 	Changed   int // 그중 실질 내용이 바뀌어 **새 스냅샷**이 생긴 노드 수
 	// ExcludedByScope — 자산 스코프 정책으로 관리 대상에서 뺀 finding 수(제외 ≠ 부재 — 고지용).
 	ExcludedByScope int
 	Nodes           []string           // 저장된 노드
 	Notes           []string           // off-scope/거부 사유
-	Conflicts       []IdentityConflict // node_id↔지문 중복/충돌(사용자 입력 검증, §0.4)
+	Conflicts       []IdentityConflict // node_id↔지문 중복/충돌(사용자 입력 검증, §1.4)
 }
 
 // IngestResults — 회수된 CollectionResult[]를 중앙 인벤토리(히스토리)에 적재한다.
 // 엣지↔중앙 경계를 넘어온 계약을 받아 노드별로 정규화·영속화하는 관문이다.
 //
-// 흐름(§0.4·§2.7·§2.5): 노드별 그룹핑 → 스코프 게이트 → 서명검증 → Normalize → history append.
+// 흐름(§1.4·§2.6·§2.4): 노드별 그룹핑 → 스코프 게이트 → 서명검증 → Normalize → history append.
 //   - master=nil  : 스코프 게이트 생략(로컬/데모 — CMDB 없음).
 //   - verifySig=nil: 서명검증 생략(전송 보안이 대신할 때, 예 mTLS/SSH).
 //
-// 미등재 노드는 저장하지 않고 등재 판정 요청으로 센다(§0.4 — 임의 수집 금지).
+// 미등재 노드는 저장하지 않고 등재 판정 요청으로 센다(§1.4 — 임의 수집 금지).
 func IngestResults(
 	results []*discoveryv1.CollectionResult,
 	master *scope.Master,
@@ -38,7 +38,7 @@ func IngestResults(
 	assetPolicy *scope.AssetPolicy, // nil이면 관측된 자산 전부가 관리 대상
 ) (*IngestReport, error) {
 	rep := &IngestReport{}
-	rep.Conflicts = CheckIdentity(results) // 사용자 node_id 입력의 중복/충돌을 지문으로 교차검증(§0.4)
+	rep.Conflicts = CheckIdentity(results) // 사용자 node_id 입력의 중복/충돌을 지문으로 교차검증(§1.4)
 	byNode := map[string][]*discoveryv1.CollectionResult{}
 	var order []string
 
@@ -51,12 +51,12 @@ func IngestResults(
 		}
 		if master != nil && !master.Registered(node) {
 			rep.OffScope++
-			rep.Notes = append(rep.Notes, node+": 미등재 → 등재 판정 요청(§0.4)")
+			rep.Notes = append(rep.Notes, node+": 미등재 → 등재 판정 요청(§1.4)")
 			continue
 		}
 		if verifySig != nil && !verifySig(res) {
 			rep.Rejected++
-			rep.Notes = append(rep.Notes, node+": 서명 검증 실패 → 거부(§2.7)")
+			rep.Notes = append(rep.Notes, node+": 서명 검증 실패 → 거부(§2.6)")
 			continue
 		}
 		if _, ok := byNode[node]; !ok {
@@ -66,7 +66,7 @@ func IngestResults(
 		rep.Accepted++
 	}
 
-	// 노드별로 정규화 → append-only 히스토리 적재(§2.5⑥). 결정론: 같은 입력·규칙 → 같은 finding id.
+	// 노드별로 정규화 → append-only 히스토리 적재(§2.4⑥). 결정론: 같은 입력·규칙 → 같은 finding id.
 	for _, node := range order {
 		snapID := snapshotPrefix + ":" + node
 		snap, err := normalize.Normalize(byNode[node], snapID, node, rulesetVersion, store, assetPolicy)
@@ -96,7 +96,7 @@ func IngestCBOM(raw []byte, targetNodeID string, verifySig func([]byte) bool, sn
 		CbomCyclonedx:        raw,
 		CyclonedxSpecVersion: "1.6",
 		// 받은 바이트를 그대로 원본으로 남긴다 — 본문은 내부 정규 버전으로 수렴할 수 있어
-		// 나중에 "무엇을 받았나"를 되짚으려면 수렴 전 바이트가 필요하다(§2.5 step 1).
+		// 나중에 "무엇을 받았나"를 되짚으려면 수렴 전 바이트가 필요하다(§2.4 step 1).
 		RawCapture: raw,
 		RawFormat:  "external-cbom/cyclonedx",
 	}

@@ -43,6 +43,6 @@ message Decision {
   string signature = 6;   // 승인 서명 — finalize 필수(§3.3③)
   string basis_hash = 7;  // 판정 근거 증거의 해시 → 근거 변하면 무효화 트리거(§3.6 델타 리뷰)
 
-  string derived_from_snapshot_id = 8; // 어떤 리컨실리에이션 스냅샷에 대한 판정인가(§0.2)
+  string derived_from_snapshot_id = 8; // 어떤 리컨실리에이션 스냅샷에 대한 판정인가(§1.2)
   google.protobuf.Timestamp decided_at = 9;
 }

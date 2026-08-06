@@ -1,4 +1,4 @@
-// Package inventory renders the read-only inventory view (설계 §8-7, Phase 0 산출물).
+// Package inventory renders the read-only inventory view (인벤토리 설계 §1 컴포넌트 아키텍처, Phase 0 산출물).
 // 스냅샷의 파생 Finding + 완전성 갭을 사람이 읽는 텍스트로. 판단은 하지 않는다(§2.1).
 package inventory
 
@@ -12,7 +12,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/kernel/posture"
 )
 
-// Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 못 봄"으로 명시(§2.7).
+// Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 못 봄"으로 명시(§2.6).
 func Render(snap *history.Snapshot) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "노드 %s  (스냅샷 %s · ruleset %s)\n", snap.NodeID, snap.ID, snap.RulesetVersion)
@@ -27,7 +27,7 @@ func Render(snap *history.Snapshot) string {
 			detail, id)
 	}
 	if snap.ExcludedByScope > 0 {
-		// 제외는 "없음"이 아니다 — 정책으로 뺀 걸 감추면 인벤토리가 거짓말한다(§2.7).
+		// 제외는 "없음"이 아니다 — 정책으로 뺀 걸 감추면 인벤토리가 거짓말한다(§2.6).
 		fmt.Fprintf(&b, "자산 스코프 제외: %d건 (관측됐으나 관리 대상 아님 — 부재가 아니다)\n", snap.ExcludedByScope)
 	}
 	if c := snap.Completeness; c != nil && len(c.GetLayersMissing()) > 0 {
@@ -52,7 +52,7 @@ func detailOf(f *discoveryv1.Finding) string {
 		detail = fmt.Sprintf("providers=%d %s", len(f.GetJca().GetProviderSet()), f.GetPqcReadiness())
 	}
 	if ak := f.GetAppKeys(); len(ak) > 0 {
-		detail += "  @" + strings.Join(ak, ",") // 자산 귀속(§0.5) — 공유 .so면 다중 앱
+		detail += "  @" + strings.Join(ak, ",") // 자산 귀속(§1.5) — 공유 .so면 다중 앱
 	}
 	return detail
 }
@@ -83,7 +83,7 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 	pruned []history.RetentionEvent) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "노드 %s — 변화 지점 %d건 (오래된 것부터)\n", nodeID, len(snaps))
-	// 절단이 있었으면 먼저 고지한다 — 안 그러면 이력의 구멍이 "관측을 안 함"으로 읽힌다(§2.7 정신).
+	// 절단이 있었으면 먼저 고지한다 — 안 그러면 이력의 구멍이 "관측을 안 함"으로 읽힌다(§2.6 정신).
 	for _, e := range pruned {
 		fmt.Fprintf(&b, "⌫ %s 이전 %d건은 보존 정책으로 절단됨 (%s, 관측 기록 %d건 · %s 실행)\n",
 			e.PrunedUpTo.Format("2006-01-02 15:04:05"), e.Snapshots, e.Policy, e.Observations,
@@ -140,11 +140,11 @@ func RenderDiff(a, b *history.Snapshot) string {
 		a.CreatedAt.Format("2006-01-02 15:04:05"), a.Seq, a.RulesetVersion,
 		b.CreatedAt.Format("2006-01-02 15:04:05"), b.Seq, b.RulesetVersion)
 	if a.RulesetVersion != b.RulesetVersion {
-		sb.WriteString("⚠ ruleset이 다르다 — 파생값(evidence·pqc_readiness) 차이는 실제 변화가 아니라 재계산 결과일 수 있다(§0.2).\n\n")
+		sb.WriteString("⚠ ruleset이 다르다 — 파생값(evidence·pqc_readiness) 차이는 실제 변화가 아니라 재계산 결과일 수 있다(§1.2).\n\n")
 	}
 	// 방향 규약: 첫 인자=과거, 둘째=최신. '추가'=둘째에만·'사라짐'=첫째에만이라, 인자를 시간
 	// 역순으로 주면 방향이 뒤집혀 읽힌다 — 하드 에러는 아니다(되돌림 미리보기로 역순 비교가
-	// 유효하므로). 대신 뒤집혔음을 고지한다(§2.7 — 오독을 조용히 두지 않는다).
+	// 유효하므로). 대신 뒤집혔음을 고지한다(§2.6 — 오독을 조용히 두지 않는다).
 	if a.CreatedAt.After(b.CreatedAt) {
 		sb.WriteString("⚠ 첫 스냅샷이 더 최신이다(시간 역순) — '추가'는 실은 사라진 것, '사라짐'은 생긴 것으로 뒤집혀 읽힌다. 시간순은 <과거id>,<최신id>.\n\n")
 	}
@@ -220,7 +220,7 @@ func sortedKeys(m map[string]*discoveryv1.Finding) []string {
 func edgeDst(e *discoveryv1.ObservedEdge) string {
 	d := e.GetDstNodeId()
 	if d == "" {
-		return e.GetDstAddr() // 스코프 미해소(off-scope) — 원시 주소로 표기(§0.4)
+		return e.GetDstAddr() // 스코프 미해소(off-scope) — 원시 주소로 표기(§1.4)
 	}
 	if p := e.GetPort(); p != 0 {
 		return fmt.Sprintf("%s:%d", d, p)

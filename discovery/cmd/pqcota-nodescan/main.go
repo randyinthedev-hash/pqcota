@@ -6,7 +6,7 @@
 //	json (기본) CollectionResult JSON을 stdout에 — 중앙이 회수해 적재한다
 //	table       정규화까지 하고 사람이 읽는 표를 stdout에 — 저장하지 않는다
 //
-// env PQCOTA_SIGN_KEY: (선택) base64 ed25519 개인키 → 리포트에 서명(§2.7). 중앙이 공개키로 검증.
+// env PQCOTA_SIGN_KEY: (선택) base64 ed25519 개인키 → 리포트에 서명(§2.6). 중앙이 공개키로 검증.
 package main
 
 import (
@@ -31,7 +31,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	// 머신 지문 수집. node-id 인자(CMDB 권위)가 있으면 그것, 없으면 지문에서 결정론적 self-id(§0.4).
+	// 머신 지문 수집. node-id 인자(CMDB 권위)가 있으면 그것, 없으면 지문에서 결정론적 self-id(§1.4).
 	fp := machineid.Fingerprint()
 	node := flag.Arg(0) // CMDB 권위 override
 	if node == "" {
@@ -43,7 +43,7 @@ func main() {
 	dets, st := openssl.ScanHost(registry.DefaultForkSignatures)
 	res := openssl.BuildResult(node, dets)
 	// `/proc`를 못 열었으면 "OpenSSL 없음"이 아니라 **관측 자체가 불가**다. 빈 결과를 그대로
-	// 내보내면 부재로 읽히므로 완전성 노트에 남기고 크게 알린다(§2.7).
+	// 내보내면 부재로 읽히므로 완전성 노트에 남기고 크게 알린다(§2.6).
 	if st.ProcUnavailable {
 		const note = "/proc를 열 수 없어 관측하지 못했다 — 부재가 아니라 갭이다(리눅스에서 실행할 것)"
 		if c := res.GetCompleteness(); c != nil {
@@ -51,9 +51,9 @@ func main() {
 		}
 		fmt.Fprintln(os.Stderr, "[nodescan] ⚠ "+note)
 	}
-	res.GetEnvelope().Machine = fp // 상관 지문 부착(§0.4 — IP·수동입력에 흔들리지 않게)
+	res.GetEnvelope().Machine = fp // 상관 지문 부착(§1.4 — IP·수동입력에 흔들리지 않게)
 
-	// 리포트 서명(§2.7) — 키가 있으면. 전송 보안 없는 경로의 신뢰 앵커.
+	// 리포트 서명(§2.6) — 키가 있으면. 전송 보안 없는 경로의 신뢰 앵커.
 	if key := os.Getenv("PQCOTA_SIGN_KEY"); key != "" {
 		if sig, err := sign.Sign(key, res); err == nil {
 			res.GetEnvelope().Signature = sig
@@ -80,7 +80,7 @@ func main() {
 		fmt.Fprintf(w, "== pqcota Discovery — %s (읽기전용·저장 안 함) ==\n", node)
 		fmt.Fprintf(w, "스캔: 접근가능 %d · 접근불가/종료 %d · OpenSSL lib %d\n\n", st.Accessible, st.Denied, len(dets))
 		fmt.Fprint(w, tbl)
-		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵의 갭 — root 없이는 타 사용자 /proc을 못 본다, 부재 아님 §2.7)\n", st.Denied)
+		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵의 갭 — root 없이는 타 사용자 /proc을 못 본다, 부재 아님 §2.6)\n", st.Denied)
 	}
 	fmt.Fprintf(os.Stderr, "[nodescan] %s: 접근가능 %d · 거부 %d · OpenSSL lib %d\n",
 		node, st.Accessible, st.Denied, len(dets))

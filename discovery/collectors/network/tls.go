@@ -7,7 +7,7 @@ import (
 
 // ParseTLSHandshake — TLS 핸드셰이크(ClientHello/ServerHello)를 파싱해 협상 정보를 뽑는다(TD-NETWORK-1,2).
 // 입력은 TLS 레코드(content_type 0x16로 시작) 또는 벌거벗은 핸드셰이크 메시지 둘 다 허용한다.
-// 복호화 없음 — supported_groups/key_share/cipher/version 평문 필드만 읽는다(§2.5).
+// 복호화 없음 — supported_groups/key_share/cipher/version 평문 필드만 읽는다(§2.4).
 func ParseTLSHandshake(b []byte) (*Handshake, error) {
 	// TLS 레코드 헤더(22=handshake)면 5바이트 스킵.
 	if len(b) >= 5 && b[0] == 0x16 {

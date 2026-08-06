@@ -1,6 +1,6 @@
 // Package registry holds deterministic signature-matching data used by the
 // Discovery enrichment stage (수용 원칙 §2.3, 설계 문서 §3.3). 파생 규칙이므로
-// 개선 시 원본에서 재계산되며 ruleset_version으로 고정된다(§0.2).
+// 개선 시 원본에서 재계산되며 ruleset_version으로 고정된다(§1.2).
 package registry
 
 import (
@@ -18,7 +18,7 @@ type ForkSignature struct {
 
 // DefaultForkSignatures — 초기 시드. OpenSSL을 마지막에 두어 fork 고유 마커를
 // 먼저 매칭한다(BoringSSL/AWS-LC 바이너리도 "OpenSSL" 문자열을 포함할 수 있으므로).
-// 커버 범위 확장은 §9 열린 질문(커뮤니티 기여 유인).
+// 커버 범위 확장은 디스커버리 설계 §8 열린 설계 질문(커뮤니티 기여 유인).
 var DefaultForkSignatures = []ForkSignature{
 	{Fork: "BoringSSL", Contains: []string{"BoringSSL"}},
 	{Fork: "AWS-LC", Contains: []string{"AWS-LC", "aws-lc"}},
@@ -26,7 +26,7 @@ var DefaultForkSignatures = []ForkSignature{
 	{Fork: "OpenSSL", Contains: []string{"OpenSSL"}},
 }
 
-// ForkMatch — 매칭 결과. Matched=false면 Fork=""(unknown 명시, §2.6).
+// ForkMatch — 매칭 결과. Matched=false면 Fork=""(unknown 명시, §2.5).
 type ForkMatch struct {
 	Fork    string
 	Version string

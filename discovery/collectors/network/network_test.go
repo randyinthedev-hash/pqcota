@@ -149,7 +149,7 @@ func TestParseSSHKexInit(t *testing.T) {
 	if !found {
 		t.Errorf("kex 목록에 sntrup761x25519-sha512 없음: %v", hs.OfferedGroups)
 	}
-	// ★ KEXINIT 하나는 **제안**일 뿐이다 — 협상 결과로 채우면 안 된다(§2.1·§2.6).
+	// ★ KEXINIT 하나는 **제안**일 뿐이다 — 협상 결과로 채우면 안 된다(§2.1·§2.5).
 	// (이전엔 "최선호 → 🟢"를 단언해 버그를 정답으로 못박고 있었다. 그 단언을 뒤집는다.)
 	if hs.NegotiatedGroup != "" {
 		t.Errorf("단일 KEXINIT에서 negotiated를 채우면 안 된다(제안≠협상): %q", hs.NegotiatedGroup)
@@ -178,7 +178,7 @@ func TestNegotiateSSHKex(t *testing.T) {
 	if got := network.NegotiateSSHKex(modern, rev); got != "sntrup761x25519-sha512@openssh.com" {
 		t.Errorf("클라이언트 선호가 결정해야: %q", got)
 	}
-	// 한쪽만 관측 → 미상. 본 것만으로 협상을 지어내지 않는다(§2.6).
+	// 한쪽만 관측 → 미상. 본 것만으로 협상을 지어내지 않는다(§2.5).
 	for name, got := range map[string]string{
 		"서버 미관측":    network.NegotiateSSHKex(modern, nil),
 		"클라이언트 미관측": network.NegotiateSSHKex(nil, modern),
@@ -225,7 +225,7 @@ func TestQUICUnknownPosture(t *testing.T) {
 		t.Error("QUIC는 협상 그룹 불명이어야(빈 문자열)")
 	}
 	if posture.Classify(e.GetNegotiatedGroup(), "") != discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED {
-		t.Error("불명은 ⚪ UNSPECIFIED — 고전으로 단정 금지(§6.2)")
+		t.Error("불명은 ⚪ UNSPECIFIED — 고전으로 단정 금지(라이선스 정리)")
 	}
 }
 
@@ -342,7 +342,7 @@ func (t truncSource) WindowTruncated() (bool, error) { return true, t.cause }
 
 // TD-NETWORK-19 — 창이 읽기 오류로 중단되면 결과가 창 전체를 대표하지 않는다. 엣지가 하나도 없을
 // 때가 특히 위험하다 — 아무 말도 안 하면 "핸드셰이크 없음"으로 읽혀 결함이 갭으로
-// 위장된다(§2.7). 그래서 엣지가 없어도 노드별 결과를 내고 완전성 노트에 중단을 적는다.
+// 위장된다(§2.6). 그래서 엣지가 없어도 노드별 결과를 내고 완전성 노트에 중단을 적는다.
 func TestCollect_marksTruncatedWindow(t *testing.T) {
 	const want = "관측 창이 중단됐다"
 	cause := errors.New("recvfrom: input/output error")

@@ -36,7 +36,7 @@ func TestPgStore(t *testing.T) {
 	}
 	comp := &commonv1.Completeness{LayersMissing: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_ARTIFACT}}
 
-	// 통신 엣지 관측 레인(§12) — 라운드트립 보존 검증.
+	// 통신 엣지 관측 레인(인벤토리 설계 §6) — 라운드트립 보존 검증.
 	edge := &discoveryv1.ObservedEdge{
 		SrcNodeId: node, DstNodeId: "db-01", Port: 5432,
 		Protocol: discoveryv1.NetworkProtocol_NETWORK_PROTOCOL_TLS, NegotiatedGroup: "X25519MLKEM768",
@@ -76,7 +76,7 @@ func TestPgStore(t *testing.T) {
 	}
 	// 엣지 레인 라운드트립.
 	if len(all[0].Edges) != 1 || all[0].Edges[0].GetNegotiatedGroup() != "X25519MLKEM768" {
-		t.Errorf("통신 엣지 보존 실패(§12): %+v", all[0].Edges)
+		t.Errorf("통신 엣지 보존 실패(인벤토리 설계 §6): %+v", all[0].Edges)
 	}
 	if len(all[1].Edges) != 0 {
 		t.Errorf("엣지 없는 스냅샷은 빈 엣지여야: %+v", all[1].Edges)

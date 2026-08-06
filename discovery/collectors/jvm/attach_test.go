@@ -9,7 +9,7 @@ import (
 )
 
 // TD-JVM-6 — 정찰→attach 오케스트레이션. 실 JVM·agent 없이 attach를 주입해 검증한다.
-// 실패한 JVM은 조용히 버리지 않고 갭으로 세어야 한다(§2.7).
+// 실패한 JVM은 조용히 버리지 않고 갭으로 세어야 한다(§2.6).
 func TestAttachAll(t *testing.T) {
 	jvms := []jvm.JVMProc{
 		{PID: 10, JavaHome: "/opt/jdk17"},
@@ -97,7 +97,7 @@ func TestAttachClient(t *testing.T) {
 	if got := jvm.AttachClient(mixed); got != "/opt/jdk21/bin/java" {
 		t.Errorf("attach 가능한 JDK를 골라야: %q", got)
 	}
-	// 하나도 없으면 "" — 별도 런타임을 지어내지 않고 정적 폴백으로 내려간다(§2.6).
+	// 하나도 없으면 "" — 별도 런타임을 지어내지 않고 정적 폴백으로 내려간다(§2.5).
 	jreOnly := []jvm.JVMProc{{PID: 1, JavaBin: "/opt/jre/bin/java", AttachCapable: false}}
 	if got := jvm.AttachClient(jreOnly); got != "" {
 		t.Errorf("attach 가능 JDK가 없으면 빈 값이어야: %q", got)

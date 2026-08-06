@@ -59,7 +59,7 @@ func buildDeclared(node, runtime, component string) *discoveryv1.CollectionResul
 			TargetNodeId:     node,
 			CollectorLicense: "Apache-2.0",
 		},
-		// 선언 원본 한 행 — 매핑 규칙이 바뀌면 여기서 다시 만든다(§2.5 step 1).
+		// 선언 원본 한 행 — 매핑 규칙이 바뀌면 여기서 다시 만든다(§2.4 step 1).
 		RawCapture:           []byte(node + "," + runtime + "," + component),
 		RawFormat:            "declaration/csv-v1",
 		CbomCyclonedx:        cbom,

@@ -1,10 +1,10 @@
 //go:build linux
 
 // Command pqcota-netcap — 타깃 노드에서 실행. 관측 창 동안 TLS/SSH 핸드셰이크를 AF_PACKET으로
-// 수동 관측해 통신 엣지를 CollectionResult JSON으로 stdout에 낸다(디스커버리 §2.5).
+// 수동 관측해 통신 엣지를 CollectionResult JSON으로 stdout에 낸다(디스커버리 §2.4).
 // CAP_NET_RAW 필요. 없으면 **관측이 안 된다** — 그 사실을 stderr로 분명히 알리고, stdout으로는
 // 완전성 갭(DegradedResult)을 낸다. 갭을 중앙까지 보내야 인벤토리가 "못 봤다"와 "링크가 없다"를
-// 구분한다(§2.7). 종료코드는 0이라 fleet 실행(Ansible)이 그 갭을 회수한다 — --strict면 1.
+// 구분한다(§2.6). 종료코드는 0이라 fleet 실행(Ansible)이 그 갭을 회수한다 — --strict면 1.
 // usage: pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 // env: NETCAP_IFACE, NETCAP_WINDOW_SEC
 package main

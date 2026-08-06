@@ -73,14 +73,14 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 ## 계약 우선 (contract-first)
 
 - 타입·enum을 바꾸려면 **`contracts/*.proto`를 고치고 `make generate`** 한다. `gen/`을 직접 손대지 않는다.
-- `evidence_strength`·`pqc_readiness` 같은 **파생값은 Collector가 아니라 코어가 채운다**(§0.2 — 재계산 위해 규칙은 한 곳에). 상세: [contracts/README](contracts/README.md).
-- 통제 어휘의 `*_UNSPECIFIED = 0`은 "unknown"이다 — 빈칸/누락으로 두지 않는다(§2.6).
+- `evidence_strength`·`pqc_readiness` 같은 **파생값은 Collector가 아니라 코어가 채운다**(§1.2 — 재계산 위해 규칙은 한 곳에). 상세: [contracts/README](contracts/README.md).
+- 통제 어휘의 `*_UNSPECIFIED = 0`은 "unknown"이다 — 빈칸/누락으로 두지 않는다(§2.5).
 
 ## Collector 확장 — 계약이 곧 seam
 
 레퍼런스 collector(openssl·jvm·network)는 세 가지 관측 방식의 예일 뿐이다. **관측 대상이 늘면 collector를 새로 붙이면 된다** — 코어를 고치지 않고. 접점은 하나, `CollectionResult`(정규화된 CycloneDX + `pqcota:` properties) 계약이다.
 
-- collector가 하는 일은 **관측 → `CollectionResult` emit**까지다. `evidence_strength`·`pqc_readiness` 같은 파생값은 **채우지 않는다** — 코어가 계약 입력에서 파생한다(§0.2 — 규칙이 한 곳에 있어야 재계산으로 재현된다).
+- collector가 하는 일은 **관측 → `CollectionResult` emit**까지다. `evidence_strength`·`pqc_readiness` 같은 파생값은 **채우지 않는다** — 코어가 계약 입력에서 파생한다(§1.2 — 규칙이 한 곳에 있어야 재계산으로 재현된다).
 - 계약만 맞추면 언어도 자유다(레퍼런스도 Go·Java 폴리글랏). 도구 고유 enrichment는 표준 `properties` 확장 키(규약: [contracts/README](contracts/README.md))에 싣는다.
 - 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors) 참고 — 새 collector도 같은 틀(관측까지·못 본 건 갭으로·추측 금지)을 따른다.
 
@@ -96,18 +96,18 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 **포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 `buf lint`·`fmt-check`·`check-boundary`·`check-docs`·`go vet`·`build`(호스트+리눅스 교차)·`build-jar`·`go test`를 돌리니 PR 전 **전부 그린**이어야 한다. `check-docs`는 md를 검사한다: 끊어진 링크·앵커, 리포 바깥을 가리키는 위치 선언(안 하는 일은 "하지 않는다"로 적는다), 역할분담 산문(문서에는 **기능과 사용법**만), 개인 개발 환경 정보, 라이선스 표와 실제 의존성의 불일치. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
 
-**주석은 "왜"를 국문으로, §를 달아서.** 코드가 *무엇을* 하는지는 코드가 말한다 — 주석은 *왜 이렇게* 했고 어긴 대안이 왜 틀린지를 적고, 근거를 규정서 §로 건다. 이 리포의 주석이 유독 긴 이유다. 예: `// ★ 제외는 "없음"이 아니다 — 정책으로 뺀 걸 조용히 사라지게 하면 인벤토리가 거짓말한다(§2.7)`.
+**주석은 "왜"를 국문으로, §를 달아서.** 코드가 *무엇을* 하는지는 코드가 말한다 — 주석은 *왜 이렇게* 했고 어긴 대안이 왜 틀린지를 적고, 근거를 규정서 §로 건다. 이 리포의 주석이 유독 긴 이유다. 예: `// ★ 제외는 "없음"이 아니다 — 정책으로 뺀 걸 조용히 사라지게 하면 인벤토리가 거짓말한다(§2.6)`.
 
 **정직성을 코드로 강제한다** — 문서가 아니라 실행에서 지켜져야 한다:
-- **unknown은 1급**(§2.6) — 판별 불가는 빈칸이 아니라 `*_UNSPECIFIED`/명시적 "미상"으로 둔다. 통제 어휘 enum의 `0`은 항상 unknown.
-- **갭 ≠ 부재**(§2.7) — 못 본 것·정책으로 뺀 것을 조용히 드롭하지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
+- **unknown은 1급**(§2.5) — 판별 불가는 빈칸이 아니라 `*_UNSPECIFIED`/명시적 "미상"으로 둔다. 통제 어휘 enum의 `0`은 항상 unknown.
+- **갭 ≠ 부재**(§2.6) — 못 본 것·정책으로 뺀 것을 조용히 드롭하지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
 - **추측·판정 금지**(§2.1) — 관측 안 한 걸 지어내지 않는다. diff가 "변화 없음"이면 그게 정답이다.
 
-**파생값은 원본에서 재계산 가능하게**(§0.2). `evidence_strength` 같은 파생은 collector가 아니라 코어가 원본(`detection_method`)에서 결정론적으로 만든다 — 규칙이 한 곳(`pkg/discovery/normalize`)에 있어야 재현된다. **서명·정규화 경로엔 벽시계·난수를 넣지 않는다**(같은 입력→같은 바이트). 내용 지문은 휘발 필드(관측 횟수·`last_seen`)를 뺀다.
+**파생값은 원본에서 재계산 가능하게**(§1.2). `evidence_strength` 같은 파생은 collector가 아니라 코어가 원본(`detection_method`)에서 결정론적으로 만든다 — 규칙이 한 곳(`pkg/discovery/normalize`)에 있어야 재현된다. **서명·정규화 경로엔 벽시계·난수를 넣지 않는다**(같은 입력→같은 바이트). 내용 지문은 휘발 필드(관측 횟수·`last_seen`)를 뺀다.
 
 **순수 함수로 테스트 가능하게.** 파싱·판정 로직을 I/O에서 떼어 실물(프로세스·DB·네트워크) 없이 단위 테스트되게 쓴다 — 예: `ParseProcMaps(reader)`는 `/proc` 없이 돈다. **테스트는 동작만이 아니라 "왜 이 불변식인지"를 못박는다**(회귀 테스트엔 그 버그의 본질을 주석으로).
 
-**외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지·발자국, §2.4). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
+**외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지·발자국, §2.3). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
 
 **계약을 바꾸면 딸린 것도.** collector가 주장하는 필드는 전부 `sign.Canonical`에 들어가야 한다(서명 사각 금지). oneof arm은 **메시지 전체에서 안 쓰인** 필드 번호를 쓴다(oneof는 메시지의 번호 공간을 공유한다). 상세 체크리스트: [contracts/README](contracts/README.md).
 

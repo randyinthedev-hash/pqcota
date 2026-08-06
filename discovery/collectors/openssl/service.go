@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Service exposes openssl-collector via the intake 계약(§6.1, contracts/collector.proto).
+// Service exposes openssl-collector via the intake 계약(§1.6, contracts/collector.proto).
 // 코어는 이 서비스 뒤가 openssl-collector인지 모른다 — 정규화된 CBOM Envelope만 받는다.
 type Service struct {
 	discoveryv1.UnimplementedCollectorServer
@@ -32,7 +32,7 @@ func (s *Service) now() time.Time {
 	return time.Now()
 }
 
-// Describe — 능력 신고(§6.1). 코어가 완전성 맵·계층 커버리지·라이선스 UX 판단에 사용.
+// Describe — 능력 신고(§1.6). 코어가 완전성 맵·계층 커버리지·라이선스 UX 판단에 사용.
 func (s *Service) Describe(_ context.Context, _ *discoveryv1.DescribeRequest) (*discoveryv1.CollectorCapabilities, error) {
 	return &discoveryv1.CollectorCapabilities{
 		CollectorId:    "openssl-collector",
@@ -76,7 +76,7 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 			switch {
 			case err != nil:
 				// 대상 프로세스를 **못 봤다**. 컨테이너 네임스페이스가 갈렸거나 권한이 없다.
-				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 못 본 것은 부재가 아니다(§2.7).
+				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 못 본 것은 부재가 아니다(§2.6).
 				note = "대상 프로세스를 볼 수 없다(네임스페이스 분리·권한 등) — 미관측 ≠ 부재: " + err.Error()
 			case len(dets) == 0:
 				// 봤는데 없었다. 이건 관측 결과이므로 계층은 커버된 것이다.
@@ -91,7 +91,7 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 		}
 	}
 	// 원본이 없으면 형식 이름도 달지 않는다 — 이름만 있고 내용이 없으면 "원본을 보관한다"는
-	// 약속이 거짓이 된다(§0.2).
+	// 약속이 거짓이 된다(§1.2).
 	rawFormat := "openssl-collector/native-v1"
 	if len(raw) == 0 {
 		rawFormat = ""
@@ -143,7 +143,7 @@ func buildCycloneDX(dets []Detection) ([]byte, error) {
 				{"pqcota:openssl.version", d.Version},
 				{"pqcota:openssl.binding_mode", d.BindingMode},
 				{"pqcota:openssl.path", d.Path},
-				{"pqcota:app_keys", strings.Join(d.AppKeys, ",")}, // 자산 귀속(§0.5) — 다중 앱이면 CSV
+				{"pqcota:app_keys", strings.Join(d.AppKeys, ",")}, // 자산 귀속(§1.5) — 다중 앱이면 CSV
 			},
 		})
 	}

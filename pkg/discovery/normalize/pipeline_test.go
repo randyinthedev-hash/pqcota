@@ -114,7 +114,7 @@ func TestDeriveFindings_JCA(t *testing.T) {
 func TestNormalizePipeline(t *testing.T) {
 	store := history.NewMemStore()
 
-	// dedup: 동일 노드·컴포넌트를 두 번 넣어도 하나로 수렴(§2.5⑤).
+	// dedup: 동일 노드·컴포넌트를 두 번 넣어도 하나로 수렴(§2.4⑤).
 	results := []*discoveryv1.CollectionResult{opensslResult("cmdb://n1"), opensslResult("cmdb://n1")}
 	snap, err := normalize.Normalize(results, "snap-1", "cmdb://n1", "ruleset-1", store, nil)
 	if err != nil {
@@ -128,7 +128,7 @@ func TestNormalizePipeline(t *testing.T) {
 		t.Error("히스토리에 스냅샷 append 안 됨")
 	}
 
-	// 재현성: 같은 입력+ruleset → 같은 finding id(§0.2).
+	// 재현성: 같은 입력+ruleset → 같은 finding id(§1.2).
 	snap2, _ := normalize.Normalize([]*discoveryv1.CollectionResult{opensslResult("cmdb://n1")}, "snap-2", "cmdb://n1", "ruleset-1", store, nil)
 	if snap.Findings[0].GetId() != snap2.Findings[0].GetId() {
 		t.Error("결정론 위반: 같은 입력인데 finding id 다름")

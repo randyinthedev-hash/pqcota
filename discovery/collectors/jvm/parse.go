@@ -1,5 +1,5 @@
 // Package jvm hosts the JVM collector's Go side: it parses the Java attach
-// sidecar 출력을 정규화된 CBOM Envelope(CollectionResult)로 변환하고 intake 계약(§6.1)으로 노출한다.
+// sidecar 출력을 정규화된 CBOM Envelope(CollectionResult)로 변환하고 intake 계약(§1.6)으로 노출한다.
 // (attach 자체는 순수 Java 사이드카 — discovery/collectors/jvm/collector. 여기선 결과를 계약으로.)
 package jvm
 
@@ -24,7 +24,7 @@ type Provider struct {
 type Collected struct {
 	Providers []Provider
 	Degraded  bool
-	// Raw — 파싱 전 원본 텍스트. raw_capture로 실려 재정규화의 입력이 된다(§2.5 step 1).
+	// Raw — 파싱 전 원본 텍스트. raw_capture로 실려 재정규화의 입력이 된다(§2.4 step 1).
 	Raw string
 }
 
@@ -60,7 +60,7 @@ func BuildResult(node string, c Collected) *discoveryv1.CollectionResult {
 }
 
 // BuildResultFor — 파싱 결과를 정규화된 CBOM Envelope로. attach 성공은 runtime-introspection(confirmed 근거),
-// 정적 폴백은 artifact + 완전성 갭(§2.6 갭≠부재). provider_set 순서 보존(수용 원칙 §2.2).
+// 정적 폴백은 artifact + 완전성 갭(§2.5 갭≠부재). provider_set 순서 보존(수용 원칙 §2.2).
 //
 // ident: 한 노드에 JVM이 여럿일 때 이들을 **구별**하는 안정 식별자(JAVA_HOME 권장). 비면 단일.
 // finding id는 (node|컴포넌트명|runtime|fork) 해시라, ident를 컴포넌트명에 실어야 서로 다른 JVM이
@@ -134,7 +134,7 @@ func buildJcaCycloneDX(providerNames []string, detectionMethod, compName string,
 		{"pqcota:jca.provider_set", strings.Join(providerNames, ",")},
 		{"pqcota:jca.registration_mode", "dynamic"},
 	}
-	if len(appKeys) > 0 { // 다중 JVM 귀속(§0.5와 같은 결) — 어느 JDK/앱의 체인인지
+	if len(appKeys) > 0 { // 다중 JVM 귀속(§1.5와 같은 결) — 어느 JDK/앱의 체인인지
 		props = append(props, prop{"pqcota:app_keys", strings.Join(appKeys, ",")})
 	}
 	c := comp{Type: "cryptographic-asset", Name: compName, Properties: props}

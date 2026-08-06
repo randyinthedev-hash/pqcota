@@ -42,11 +42,11 @@ func (j JVMProc) Ident() string {
 // JVMScanStats — 스캔 커버리지(완전성 맵 원천, openssl ScanStats와 대칭).
 type JVMScanStats struct {
 	Accessible int // /proc 접근 가능 프로세스
-	Denied     int // 접근 불가(타 사용자·종료) — 갭(≠부재, §2.7)
+	Denied     int // 접근 불가(타 사용자·종료) — 갭(≠부재, §2.6)
 	WithJVM    int // JVM으로 식별된 프로세스
 
 	// ProcUnavailable — `/proc`를 열 수 없었나(마운트 안 된 컨테이너·chroot·비-리눅스).
-	// 이때 "JVM 0개"는 **없다가 아니라 못 봤다**이다. 구별하지 않으면 결함이 갭으로 위장된다(§2.7).
+	// 이때 "JVM 0개"는 **없다가 아니라 못 봤다**이다. 구별하지 않으면 결함이 갭으로 위장된다(§2.6).
 	ProcUnavailable bool
 }
 
@@ -60,17 +60,17 @@ const AttachLibRel = "lib/libattach.so"
 // exists를 주입받아 실물 파일시스템 없이 테스트된다.
 //
 // 왜 필요한가 — ① **② JDK 클라이언트 폴백**(비-HotSpot용)의 후보를 고르는 데 쓰이고,
-// ② attach 실패 사유를 겪기 전에 미리 설명해 준다(§2.7 갭 고지의 질).
+// ② attach 실패 사유를 겪기 전에 미리 설명해 준다(§2.6 갭 고지의 질).
 // ★ false라고 attach를 포기하는 뜻은 아니다 — 1순위 Go 네이티브는 JDK 없이 붙는다.
 func attachCapable(javaHome string, exists func(string) bool) bool {
 	if javaHome == "" {
-		return false // JAVA_HOME을 못 짚었으면 모른다 — 가능하다고 단정하지 않는다(§2.6)
+		return false // JAVA_HOME을 못 짚었으면 모른다 — 가능하다고 단정하지 않는다(§2.5)
 	}
 	return exists(filepath.Join(javaHome, AttachLibRel))
 }
 
 // deriveJavaHome — 런처 exe 또는 libjvm.so 경로에서 JAVA_HOME을 추정한다(best-effort).
-// 못 짚으면 "" — 추측해 채우지 않는다(§2.6).
+// 못 짚으면 "" — 추측해 채우지 않는다(§2.5).
 func deriveJavaHome(exe, libjvm string) string {
 	if exe != "" {
 		if d := filepath.Dir(exe); filepath.Base(d) == "bin" { // .../bin/java → .../

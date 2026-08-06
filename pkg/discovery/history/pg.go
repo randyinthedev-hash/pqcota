@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS pqcota_snapshots (
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_pqcota_snap_node ON pqcota_snapshots(node_id, seq);
--- 통신 엣지 레인(§12). 기존 테이블에도 멱등 추가.
+-- 통신 엣지 레인(인벤토리 설계 §6). 기존 테이블에도 멱등 추가.
 ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS edges JSONB;
 -- 내용 지문 — 같은 상태의 반복 관측을 접기 위함. 기존 행은 NULL(지문 미상 → 항상 새로 만듦).
 ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS content_hash TEXT;
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS pqcota_retention_events (
 CREATE INDEX IF NOT EXISTS idx_pqcota_ret_node ON pqcota_retention_events(node_id, seq);
 `
 
-// PgStore — Postgres append-only 히스토리(§2.5⑥ 영속화, §0.2 원본 불변).
+// PgStore — Postgres append-only 히스토리(§2.4⑥ 영속화, §1.2 원본 불변).
 // INSERT만 한다 — 스냅샷은 절대 갱신/삭제하지 않는다. 파생 Finding은 protojson으로 보존.
 type PgStore struct{ pool *pgxpool.Pool }
 

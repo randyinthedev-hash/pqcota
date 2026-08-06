@@ -51,7 +51,7 @@
 - **Discovery** — openssl·jvm·network 레퍼런스 collector(둘 다 `/proc` 선행 정찰 — openssl은 로드된 lib, jvm은 실행 중 JVM 열거→attach, 다중 JVM은 앱 단위 구별), 정규화 파이프라인(evidence·완전성 맵), 히스토리 적재·ed25519 서명(collector 주장 전부 서명), CBOM 위임 수신.
 - **Inventory** — 중앙 적재·조회(Postgres), 머신 메타데이터(엔드포인트·프로필), 앱 귀속, **이력 열람·스냅샷 상세·변화 diff**(`-history`·`-snapshot`·`-diff`).
 - **보존 정책** — 관측 기록/스냅샷 2층 분리(같은 상태 반복 관측은 저장을 늘리지 않되 "언제 봤나"는 보존) + 절단(`pqcota-prune`, 기본 dry-run·최신 불가침·절단 사실 기록).
-- **자산 스코프** — 노드 등재 게이트(§0.4)를 자산 단위로 확장. 사용자가 선언한 관리 대상만 적재하고 제외 건수를 고지한다(`pqcota-ingest -scope-assets`).
+- **자산 스코프** — 노드 등재 게이트(§1.4)를 자산 단위로 확장. 사용자가 선언한 관리 대상만 적재하고 제외 건수를 고지한다(`pqcota-ingest -scope-assets`).
 - **Provisioning 생성** — 실행 게이트(finalized-only), taxonomy→config 아티팩트, 적용·롤백 Ansible 플레이북(**L1/L2/L3**), before 캡처·롤백 레코드.
 - **L3 활성화·재시작** — 계획의 `activation` 훅(pre·activate·deactivate·restart)에 **사용자가 적은 명령**을 의미 순서(내리고 → 바꾸고 → 켜고 → 재시작)로 배치하고, 롤백은 정확한 역순으로 낸다. 활성화 방법은 환경마다 달라 **도구가 추측하지 않는다** — 빈 훅은 만들지 않고 무엇이 일어나지 않는지 고지한다.
 - **CNG 스키마 예약** — `CRYPTO_RUNTIME_WIN_CNG` enum + `CngAxes`(oneof arm)를 계약에 추가(**미구현** — 채우는 콜렉터·정규화·프로비저닝은 v0.2.0/v0.3.0). 단계적 도입의 시작점이다. **계약에 자리가 난다는 것까지** 확인했다(순수 additive — 기존 필드 번호·타입 불변). 실물 Windows에서 무엇 하나 돌려본 바 없으므로 "CNG를 지원한다"는 뜻이 아니다.

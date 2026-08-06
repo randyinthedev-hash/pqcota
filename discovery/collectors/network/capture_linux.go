@@ -10,18 +10,18 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// LiveSource — AF_PACKET 원시 소켓 캡처(§2.5, CAP_NET_RAW 필요). 관측 창 동안 핸드셰이크
+// LiveSource — AF_PACKET 원시 소켓 캡처(§2.4, CAP_NET_RAW 필요). 관측 창 동안 핸드셰이크
 // 프레임을 읽어 통신 엣지 관측으로 바꾼다. 조립은 순수 부분(DissectTCPPayload·ParseHandshakePayload)의 합성.
 // 소켓을 못 열면(권한 등) ErrCaptureUnavailable로 감싸 반환 → 코어가 완전성 갭으로 강등(TD-NETWORK-13).
 type LiveSource struct {
 	Iface      string          // 캡처 인터페이스(예 "eth0"). ""=모든 인터페이스
 	Node       string          // 캡처 호스트 스코프 노드 ID(앵커)
-	SelfIPs    map[string]bool // 자기 IP — 방향 판정·자기참조(§2.7)
+	SelfIPs    map[string]bool // 자기 IP — 방향 판정·자기참조(§2.6)
 	Window     time.Duration   // 관측 창(0이면 3초)
 	MaxPackets int             // 상한(0=창으로만 종료)
 
 	// Truncated — 창을 다 채우지 못하고 읽기 오류로 중단됐나. 중단을 조용히 "관측 없음"으로
-	// 보고하면 **결함이 갭처럼 보인다**(§2.7) — 호출자가 완전성 노트에 반영하라고 남긴다.
+	// 보고하면 **결함이 갭처럼 보인다**(§2.6) — 호출자가 완전성 노트에 반영하라고 남긴다.
 	Truncated bool
 	TruncErr  error
 }
@@ -43,7 +43,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 			_ = unix.Bind(fd, &unix.SockaddrLinklayer{Protocol: htons(unix.ETH_P_ALL), Ifindex: ifi.Index})
 		}
 	}
-	// 수신 타임아웃으로 관측 창을 폴링한다(handshake-only 필터는 BPF로 확장 예정, §2.5).
+	// 수신 타임아웃으로 관측 창을 폴링한다(handshake-only 필터는 BPF로 확장 예정, §2.4).
 	tv := unix.NsecToTimeval(int64(200 * time.Millisecond))
 	_ = unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
 
@@ -62,7 +62,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 			// 그 시그널이 블로킹 syscall을 깨우면 EINTR이 돌아온다(netpoller가 감싸주지 않는 원시
 			// syscall이라 자동 재시도가 없다). 이걸 치명적 오류로 보고 break 하면 관측 창이 **무작위
 			// 시점에 조용히 끝난다** — 실측: 25초 창이 0·0·14·25초에 끝났고, 그때마다 "핸드셰이크
-			// 없음"으로 보고돼 결함이 갭처럼 보였다(§2.7).
+			// 없음"으로 보고돼 결함이 갭처럼 보였다(§2.6).
 			if err == unix.EAGAIN || err == unix.EWOULDBLOCK || err == unix.EINTR {
 				continue // 창 내 타임아웃·시그널 인터럽트 — 계속 관측
 			}
@@ -137,7 +137,7 @@ func (p *sshPending) resolve() []Observation {
 			Protocol:      "SSH",
 			Role:          "client",
 			OfferedGroups: offered,
-			// 양쪽을 다 본 경우에만 채워진다 — 아니면 "" → 코어가 ⚪ 불명으로 분류(§2.6).
+			// 양쪽을 다 본 경우에만 채워진다 — 아니면 "" → 코어가 ⚪ 불명으로 분류(§2.5).
 			NegotiatedGroup: NegotiateSSHKex(e.client, e.server),
 		}})
 	}
@@ -146,7 +146,7 @@ func (p *sshPending) resolve() []Observation {
 
 // edgeFor — 세그먼트에서 client→server 방향 엣지를 만든다. 서버 = 낮은 포트 쪽.
 // 로컬이 클라이언트일 때만 방출(emit=true)한다 — 양쪽에서 잡히는 중복과 방향 혼선을 없앤다.
-// 서버측에서 본 핸드셰이크는 상대(클라이언트) 노드가 보고한다. IP→노드 해소는 코어(§0.4).
+// 서버측에서 본 핸드셰이크는 상대(클라이언트) 노드가 보고한다. IP→노드 해소는 코어(§1.4).
 func (s *LiveSource) edgeFor(seg *Segment) (ConnTuple, bool) {
 	serverIP, serverPort, clientIP := seg.SrcIP, seg.SrcPort, seg.DstIP
 	if seg.SrcPort > seg.DstPort { // 낮은 포트가 서버

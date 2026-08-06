@@ -7,14 +7,14 @@ import (
 	"github.com/pqcota/pqcota/pkg/kernel/scope"
 )
 
-// Normalize — 정규화 파이프라인 후단(§2.5 ③~⑥). 한 노드에 대한 CollectionResult들을
+// Normalize — 정규화 파이프라인 후단(§2.4 ③~⑥). 한 노드에 대한 CollectionResult들을
 // 강화(Finding 파생) → 동일성 해소(dedup) → **자산 스코프 게이트** → 완전성 병합 → 스냅샷 →
 // 히스토리 append 한다.
 //
 // policy가 nil이면 전부 관리 대상이다. 제외분은 버려지되 **세어서 스냅샷에 남긴다** —
-// 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다(§2.7 제외 ≠ 부재).
+// 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다(§2.6 제외 ≠ 부재).
 //
-// 결정론적: 같은 입력 + 같은 rulesetVersion → 같은 finding id(§0.2 재현성).
+// 결정론적: 같은 입력 + 같은 rulesetVersion → 같은 finding id(§1.2 재현성).
 func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rulesetVersion string,
 	store history.Store, policy *scope.AssetPolicy) (*history.Snapshot, error) {
 	seen := make(map[string]bool)
@@ -30,13 +30,13 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 			return nil, err
 		}
 		for _, f := range fs {
-			if seen[f.GetId()] { // 정규화 해시로 dedup(§2.5⑤)
+			if seen[f.GetId()] { // 정규화 해시로 dedup(§2.4⑤)
 				continue
 			}
 			seen[f.GetId()] = true
 			findings = append(findings, f)
 		}
-		// 관측 통신 엣지(network-collector, §12)도 스냅샷 관측 레인에 싣는다. 노드 내부 자산과 별도.
+		// 관측 통신 엣지(network-collector, 인벤토리 설계 §6)도 스냅샷 관측 레인에 싣는다. 노드 내부 자산과 별도.
 		for _, e := range res.GetObservedEdges() {
 			k := edgeKey(e)
 			if seenEdge[k] {
@@ -48,7 +48,7 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 		comp = mergeCompleteness(comp, res.GetCompleteness())
 	}
 
-	// 자산 스코프 게이트 — 노드 게이트(§0.4)를 자산 단위로 넓힌 것. 사용자가 선언한
+	// 자산 스코프 게이트 — 노드 게이트(§1.4)를 자산 단위로 넓힌 것. 사용자가 선언한
 	// 관리 대상만 남기고, 뺀 수는 고지용으로 보존한다.
 	kept, excluded := policy.Apply(findings)
 
@@ -62,14 +62,14 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 		ExcludedByScope: excluded,
 	}
 	if store != nil {
-		if err := store.Append(snap); err != nil { // append-only(§0.2)
+		if err := store.Append(snap); err != nil { // append-only(§1.2)
 			return nil, err
 		}
 	}
 	return snap, nil
 }
 
-// edgeKey — 엣지 동일성(§6.2 dedup). 방향+프로토콜+협상그룹 기준.
+// edgeKey — 엣지 동일성(인벤토리 설계 §6.2 dedup). 방향+프로토콜+협상그룹 기준.
 func edgeKey(e *discoveryv1.ObservedEdge) string {
 	dst := e.GetDstNodeId()
 	if dst == "" {

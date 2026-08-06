@@ -140,7 +140,7 @@ func TestRealSSHKexInit(t *testing.T) {
 	if !containsSubstr(hs.OfferedGroups, "sntrup761x25519") {
 		t.Errorf("OpenSSH 9.x는 sntrup761x25519 제공 기대, got %v", hs.OfferedGroups)
 	}
-	// 실물 서버의 제안을 봤어도 그것만으로 협상을 단정하지 않는다 — 상대 목록을 봐야 안다(§2.6).
+	// 실물 서버의 제안을 봤어도 그것만으로 협상을 단정하지 않는다 — 상대 목록을 봐야 안다(§2.5).
 	// (이 축을 안 봐서 "제안=협상" 결함이 실물 테스트도 통과했다.)
 	if hs.NegotiatedGroup != "" {
 		t.Errorf("단일 KEXINIT 관측에 negotiated가 채워졌다: %q", hs.NegotiatedGroup)

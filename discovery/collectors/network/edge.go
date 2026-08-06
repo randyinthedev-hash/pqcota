@@ -15,13 +15,13 @@ const (
 type ConnTuple struct {
 	SrcNode      string // 캡처 호스트 = 스코프 노드 ID(앵커, 알려짐)
 	DstNodeID    string // 코어가 스코프 마스터로 해소했으면 채워짐. 보통 "" (코어가 사후 해소)
-	DstAddr      string // 원시 상대 주소 "ip:port" — off-scope 판정 근거(§0.4, IC-E3)
+	DstAddr      string // 원시 상대 주소 "ip:port" — off-scope 판정 근거(§1.4, IC-E3)
 	Port         uint32
 	SrcInitiated bool // src가 TCP 연결 개시자면 src=client (역할 방향의 근거)
 }
 
 // BuildEdge — 파싱된 핸드셰이크 + 연결 튜플 → 관측 통신 엣지(ObservedEdge). TD-NETWORK-4.
-// posture는 넣지 않는다 — negotiated_group만 채우고 코어가 분류(§0.2).
+// posture는 넣지 않는다 — negotiated_group만 채우고 코어가 분류(§1.2).
 func BuildEdge(conn ConnTuple, hs *Handshake) *discoveryv1.ObservedEdge {
 	e := &discoveryv1.ObservedEdge{
 		SrcNodeId:       conn.SrcNode,
@@ -32,14 +32,14 @@ func BuildEdge(conn ConnTuple, hs *Handshake) *discoveryv1.ObservedEdge {
 		Role:            edgeRole(hs, conn.SrcInitiated),
 		NegotiatedGroup: hs.NegotiatedGroup,
 		Cipher:          hs.Cipher,
-		// 수동 관측이지만 실제 협상을 직접 봤으므로 confirmed로 파생되는 방법을 쓴다(§2.4).
+		// 수동 관측이지만 실제 협상을 직접 봤으므로 confirmed로 파생되는 방법을 쓴다(§2.3).
 		DetectionMethod: commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
 		ObservedCount:   1,
 	}
 	return e
 }
 
-// ShouldObserve — 자기참조(자기 노드 대상/자기 트래픽) 핸드셰이크는 엣지에서 제외한다(TD-NETWORK-8, §2.7).
+// ShouldObserve — 자기참조(자기 노드 대상/자기 트래픽) 핸드셰이크는 엣지에서 제외한다(TD-NETWORK-8, §2.6).
 // selfAddrs: 캡처 호스트 자신의 주소·노드ID 집합. dst가 여기 속하면 관측 대상 아님.
 func ShouldObserve(conn ConnTuple, selfAddrs map[string]bool) bool {
 	if conn.DstNodeID != "" && conn.DstNodeID == conn.SrcNode {
@@ -53,7 +53,7 @@ func ShouldObserve(conn ConnTuple, selfAddrs map[string]bool) bool {
 
 // BuildResult — 관측 엣지들을 관측 레인 CollectionResult로 조립한다(TD-NETWORK-6).
 // crypto_runtime은 귀속하지 않는다(TLS≠OpenSSL, 노드 내부 Finding 아님). NETWORK 계층만 커버.
-// windowNote: 관측 창 한계를 정직히 기록(미관측 링크 ≠ 부재, TD-NETWORK-7/§2.7).
+// windowNote: 관측 창 한계를 정직히 기록(미관측 링크 ≠ 부재, TD-NETWORK-7/§2.6).
 func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote string) *discoveryv1.CollectionResult {
 	if windowNote == "" {
 		windowNote = "관측 창 동안 흐른 핸드셰이크만 — 유휴·배치·DR 링크는 미관측(갭≠부재)"
@@ -77,7 +77,7 @@ func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote stri
 }
 
 // DegradedResult — 캡처 자체가 불가할 때(예: CAP_NET_RAW 없음) 관측 대신 완전성 갭을 낸다(TD-NETWORK-13).
-// NETWORK 계층을 layers_missing으로 표기 — "관측 못 함"을 "연결 없음/부재"로 처리 금지(§2.7).
+// NETWORK 계층을 layers_missing으로 표기 — "관측 못 함"을 "연결 없음/부재"로 처리 금지(§2.6).
 func DegradedResult(node, reason string) *discoveryv1.CollectionResult {
 	return &discoveryv1.CollectionResult{
 		Envelope: &commonv1.Envelope{

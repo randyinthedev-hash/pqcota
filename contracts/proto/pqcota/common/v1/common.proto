@@ -3,7 +3,7 @@
 // 세 단계(discovery/inventory/deploy)가 모든 경계에서 공유하는 통제 어휘·Envelope.
 // pkg/kernel의 계약판 — 어느 한 단계에 속하지 않는 "공유 어휘"만 여기 둔다.
 //
-// 통제 어휘(enum)는 규정서 열거형과 1:1이며, 0값은 항상 UNSPECIFIED = "unknown"(§2.6).
+// 통제 어휘(enum)는 규정서 열거형과 1:1이며, 0값은 항상 UNSPECIFIED = "unknown"(§2.5).
 
 syntax = "proto3";
 
@@ -20,7 +20,7 @@ option go_package = "github.com/pqcota/pqcota/gen/pqcota/common/v1;commonv1";
 // 암호 런타임 — 모든 finding·자산·조치의 1급 분기 필드.
 // 무엇을 런타임으로 받는지: docs/암호_런타임_수용_원칙.md
 enum CryptoRuntime {
-  CRYPTO_RUNTIME_UNSPECIFIED = 0; // unknown — 판별 불가 (§2.6)
+  CRYPTO_RUNTIME_UNSPECIFIED = 0; // unknown — 판별 불가 (§2.5)
   CRYPTO_RUNTIME_OPENSSL = 1;     // openssl
   CRYPTO_RUNTIME_JCA = 2;         // jca (Java JCE/JCA)
   // Windows CNG (Cryptography Next Generation) — provider(KSP/SSP) 아키텍처라 peer 런타임.
@@ -31,8 +31,8 @@ enum CryptoRuntime {
   // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG로 귀속(peer 아님) — 위 문서 참조.
 }
 
-// 탐지 방법 (규정서 §2.4 표의 detection_method 열). Collector가 신고한다.
-// evidence_strength는 이 값에서 결정론적으로 파생된다(코어 책임, §2.6 AUTO).
+// 탐지 방법 (규정서 §2.3 표의 detection_method 열). Collector가 신고한다.
+// evidence_strength는 이 값에서 결정론적으로 파생된다(코어 책임, §2.5 AUTO).
 enum DetectionMethod {
   DETECTION_METHOD_UNSPECIFIED = 0;      // unknown
   DETECTION_METHOD_SOURCE = 1;           // Hyperion 등 소스 스캔 → confirmed
@@ -46,16 +46,16 @@ enum DetectionMethod {
   DETECTION_METHOD_DYNAMIC_TRACE = 5;
 }
 
-// 증거 강도 (규정서 §2.4). detection_method에서 파생 — 원본이 아닌 파생 뷰(§0.2).
+// 증거 강도 (규정서 §2.3). detection_method에서 파생 — 원본이 아닌 파생 뷰(§1.2).
 // 코어 정규화 파이프라인만이 이 값을 채운다. Collector 출력에는 존재하지 않는다.
 enum EvidenceStrength {
-  EVIDENCE_STRENGTH_UNSPECIFIED = 0; // unknown (§2.6)
+  EVIDENCE_STRENGTH_UNSPECIFIED = 0; // unknown (§2.5)
   EVIDENCE_STRENGTH_CONFIRMED = 1;
   EVIDENCE_STRENGTH_INFERRED_HIGH = 2;
   EVIDENCE_STRENGTH_INFERRED_LOW = 3;
 }
 
-// 사용 맥락 (수용 원칙 §2.4). 소스 부재 시 열화될 수 있는 필드(§2.4).
+// 사용 맥락 (수용 원칙 §2.4). 소스 부재 시 열화될 수 있는 필드(§2.3).
 enum UsageContext {
   USAGE_CONTEXT_UNSPECIFIED = 0; // unknown / 열화됨
   USAGE_CONTEXT_SERVER = 1;
@@ -64,7 +64,7 @@ enum UsageContext {
   USAGE_CONTEXT_SIGNING = 4;
 }
 
-// 수집 계층 (규정서 §2.2 collector 지형). 완전성 맵의 단위(§2.7).
+// 수집 계층 (규정서 §2.2 collector 지형). 완전성 맵의 단위(§2.6).
 enum CollectionLayer {
   COLLECTION_LAYER_UNSPECIFIED = 0;
   COLLECTION_LAYER_SOURCE = 1;            // 소스/아티팩트 collector
@@ -92,7 +92,7 @@ enum JcaRegistrationMode {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Envelope (규정서 §2.7 · §3.1) — 모든 수집 산출물의 provenance
+// Envelope (규정서 §2.6 · §3.1) — 모든 수집 산출물의 provenance
 // ─────────────────────────────────────────────────────────────────────────
 
 message Envelope {
@@ -100,14 +100,14 @@ message Envelope {
   string collector_version = 2;                  // 예: "0.1.0"
   DetectionMethod detection_method = 3;          // 이 수집의 주 탐지 방법
   google.protobuf.Timestamp collected_at = 4;
-  string target_node_id = 5;                      // 스코프 마스터 앵커 = 권위 머신 ID (§0.4)
+  string target_node_id = 5;                      // 스코프 마스터 앵커 = 권위 머신 ID (§1.4)
   string scope_master_ref = 6;                    // 대조 대상 CMDB 스냅샷 참조
-  string signature = 7;                           // collector 서명 (예: "ed25519:...") (§2.7)
-  string collector_license = 8;                   // "Apache-2.0" | "GPL-3.0-or-later" (§6.3 UX)
-  MachineIdentity machine = 9;                    // 머신 상관 지문 — node_id 해소·검증·self-id (§0.4)
+  string signature = 7;                           // collector 서명 (예: "ed25519:...") (§2.6)
+  string collector_license = 8;                   // "Apache-2.0" | "GPL-3.0-or-later" (라이선스 정리 — 선택 UX)
+  MachineIdentity machine = 9;                    // 머신 상관 지문 — node_id 해소·검증·self-id (§1.4)
 }
 
-// MachineIdentity — 머신 상관·자동 UID 부여의 근거 지문(§0.4). collector(Ansible/수동 무관)가 채운다.
+// MachineIdentity — 머신 상관·자동 UID 부여의 근거 지문(§1.4). collector(Ansible/수동 무관)가 채운다.
 // 권위 ID(target_node_id=CMDB)를 이 지문으로 상관·검증하고, CMDB 없으면 여기서 결정론적 self-id를 파생한다.
 // IP는 ID가 아니라 로케이터 — 네트워크 관측을 노드로 해소하는 데만 쓴다.
 message MachineIdentity {
@@ -117,18 +117,18 @@ message MachineIdentity {
   string fqdn = 4;              // 정규화된 호스트명
   repeated string ips = 5;      // 관측 IP(들) — 로케이터(ID 아님)
 
-  // CMDB 미등재 시 지문에서 파생한 결정론적 self-id(§0.4 RegistrationRequest). 같은 머신→같은 값(중복 없음).
+  // CMDB 미등재 시 지문에서 파생한 결정론적 self-id(§1.4 RegistrationRequest). 같은 머신→같은 값(중복 없음).
   string self_assigned_id = 6;
   string derived_from = 7;      // self_assigned_id를 뽑은 지문 종류 (예: "machine-id", "cloud-instance-id")
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 완전성 맵 (규정서 §2.7) — 계층별 커버리지
+// 완전성 맵 (규정서 §2.6) — 계층별 커버리지
 // "실제 없음"과 "원리상 못 봄"을 혼동하지 않기 위한 핵심 구조.
 // ─────────────────────────────────────────────────────────────────────────
 
 message Completeness {
   repeated CollectionLayer layers_covered = 1;
-  repeated CollectionLayer layers_missing = 2; // 갭. 자동 "부재" 처리 금지 (§2.6, §2.7)
+  repeated CollectionLayer layers_missing = 2; // 갭. 자동 "부재" 처리 금지 (§2.5, §2.6)
   string note = 3;                             // 예: "프로세스 계층 미수집 — 대상 미실행"
 }

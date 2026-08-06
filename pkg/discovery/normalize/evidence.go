@@ -1,4 +1,4 @@
-// Package normalize implements the Discovery normalization pipeline (규정서 §2.5).
+// Package normalize implements the Discovery normalization pipeline (규정서 §2.4).
 // 강화·검증·동일성해소가 코어 단독 책임 — Collector는 강화하지 않는다(설계 문서 §3, contracts/README §1).
 package normalize
 
@@ -6,11 +6,11 @@ import commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 
 // EvidenceStrength derives the evidence strength from a detection method.
 //
-// 규정서 §2.4 표를 결정론적 함수로 고정한 것으로, evidence_strength의 유일 소스다
+// 규정서 §2.3 표를 결정론적 함수로 고정한 것으로, evidence_strength의 유일 소스다
 // (설계 문서 §3.2, 파이프라인 ③강화 단계). Collector 출력에는 존재하지 않으며,
-// 원본(detection_method)에서 항상 재계산 가능해야 한다(규정서 §0.2).
+// 원본(detection_method)에서 항상 재계산 가능해야 한다(규정서 §1.2).
 //
-// 미지정/미지 method는 UNSPECIFIED(=unknown)를 반환한다 — "unknown도 1급 증거"(§2.6).
+// 미지정/미지 method는 UNSPECIFIED(=unknown)를 반환한다 — "unknown도 1급 증거"(§2.5).
 func EvidenceStrength(m commonv1.DetectionMethod) commonv1.EvidenceStrength {
 	switch m {
 	case commonv1.DetectionMethod_DETECTION_METHOD_SOURCE,

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS pqcota_provisioning_record (
 CREATE INDEX IF NOT EXISTS idx_pqcota_prov_node ON pqcota_provisioning_record(node_id, seq);
 `
 
-// PgRecordStore — Postgres append-only 프로비저닝 레코드(§0.3 불변·§6A 롤백 근거 영속).
+// PgRecordStore — Postgres append-only 프로비저닝 레코드(§1.3 불변·§6A 롤백 근거 영속).
 type PgRecordStore struct{ pool *pgxpool.Pool }
 
 func NewPgRecordStore(ctx context.Context, dsn string) (*PgRecordStore, error) {

@@ -8,7 +8,7 @@
 // usage: pqcota-cbom-ingest <cbom.json | -> <target-node-id>
 //
 //	<cbom.json | ->   : CycloneDX CBOM 파일(또는 stdin '-')
-//	<target-node-id>  : 이 CBOM을 귀속할 스코프 노드 ID(§0.4 앵커). 없으면 스코프 판정 요청(SD-5).
+//	<target-node-id>  : 이 CBOM을 귀속할 스코프 노드 ID(§1.4 앵커). 없으면 스코프 판정 요청(SD-5).
 //	env PQCOTA_DSN     : (선택) 있으면 Postgres 영속화, 없으면 인메모리(요약만).
 package main
 
@@ -69,7 +69,7 @@ func main() {
 		fmt.Println("╚══════════════════════════════════════════════════╝")
 		fmt.Printf("✓ 수용: node=%s · detection_method=source/artifact · 자산 %d개 · 저장소 %s\n", nodeID, n, backing)
 	case ingest.NeedsScopeBinding:
-		fmt.Fprintf(os.Stderr, "✗ 앵커 없음: <target-node-id>가 스코프 마스터에 필요(§0.4·SD-5)\n")
+		fmt.Fprintf(os.Stderr, "✗ 앵커 없음: <target-node-id>가 스코프 마스터에 필요(§1.4·SD-5)\n")
 		os.Exit(1)
 	default: // Rejected
 		fmt.Fprintf(os.Stderr, "✗ 거부: CBOM 검증 실패(서명·구조·스펙 부적합, TV-CBOM-2)\n")

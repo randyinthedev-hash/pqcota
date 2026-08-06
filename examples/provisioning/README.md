@@ -40,7 +40,7 @@
 |---|---|---|---|
 | [`jca-native-config-only`](plans/jca-native-config-only.json) | JDK 네이티브 PQC | `CONFIG_ONLY` | `jdk.tls.namedGroups=…` 한 줄. provider 무등록 |
 | [`jca-provider-inject-bc`](plans/jca-provider-inject-bc.json) | PQC 없는 provider 체인 | `PROVIDER_INJECT` · `BC` | JAR 배치 + `security.provider.2=org.bouncycastle.jce.provider.BouncyCastleProvider` |
-| [`jca-fips-bcfips`](plans/jca-fips-bcfips.json) | **규제 자산** | `PROVIDER_INJECT` · `BCFIPS` | 같은 흐름이나 **등록 클래스가 다르다**(`BouncyCastleFipsProvider`) — §4.10 FIPS 라우팅 |
+| [`jca-fips-bcfips`](plans/jca-fips-bcfips.json) | **규제 자산** | `PROVIDER_INJECT` · `BCFIPS` | 같은 흐름이나 **등록 클래스가 다르다**(`BouncyCastleFipsProvider`) — FIPS 라우팅 |
 | [`jca-eol-jdk-upgrade`](plans/jca-eol-jdk-upgrade.json) | EOL JDK | `JDK_UPGRADE` | **아무것도 배치 안 함** — 수동 단계 주석 |
 
 **핵심**: `providerChoice`가 **등록 클래스명을 정한다.** 규제 여부에 따라 BC ↔ BC-FJA가 갈리는 게 계획 단계의 판정이다.

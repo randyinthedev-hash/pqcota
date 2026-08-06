@@ -1,5 +1,5 @@
 // Package ingest implements the CBOM import adapter (설계 문서 §2.3, SV-2·SD-7).
-// CBOMkit 등이 산출한 표준 CycloneDX를 "수신·처리"만 한다 — CBOMkit을 실행하지 않는다(§0.1).
+// CBOMkit 등이 산출한 표준 CycloneDX를 "수신·처리"만 한다 — CBOMkit을 실행하지 않는다(§1.1).
 package ingest
 
 import (
@@ -49,7 +49,7 @@ const (
 // (2) 구조 검증 → 실패 시 거부(TV-CBOM-2), (3) 스코프 바인딩 확인 → 없으면 판정 요청(TV-CBOM-3),
 // (4) detection_method=ARTIFACT(source/artifact 관측 레인) Envelope 부착 → 등재(TV-CBOM-1).
 //
-// evidence_strength는 코어 강화 단계가 detection_method에서 파생한다(Envelope엔 넣지 않음, §0.2).
+// evidence_strength는 코어 강화 단계가 detection_method에서 파생한다(Envelope엔 넣지 않음, §1.2).
 func ImportCBOM(raw []byte, targetNodeID string, verifySig func([]byte) bool) (Disposition, *commonv1.Envelope, string) {
 	if verifySig != nil && !verifySig(raw) {
 		return Rejected, nil, "signature mismatch"

@@ -1,5 +1,5 @@
 // Command pqcota-ingest — 중앙(인벤토리 호스트)에서 실행. 엣지 노드들이 낸 CollectionResult
-// JSON들을 취합해 스코프 게이트 → 정규화 → append-only 히스토리에 적재한다(§0.4·§2.5⑥).
+// JSON들을 취합해 스코프 게이트 → 정규화 → append-only 히스토리에 적재한다(§1.4·§2.4⑥).
 // 엣지↔중앙 경계를 넘어온 정규화된 계약을 실제로 "적재"하는 관문 — 데모의 휘발성 뷰를
 // 누적 중앙 인벤토리로 승격시킨다.
 //
@@ -8,8 +8,8 @@
 //	results-dir       : *.json (protojson CollectionResult) — Ansible/업로드로 회수된 것
 //	scope-master-file : (선택) 등재 노드 ID 목록(한 줄에 하나). 없으면 게이트 생략(로컬/데모).
 //	-scope-assets     : (선택) 자산 스코프 정책 CSV. 노드는 등재됐어도 그 안에서 **계속 관리할
-//	                    자산만** 남긴다(§0.4 노드 게이트를 자산 단위로). 제외분은 적재되지 않되
-//	                    몇 건인지 고지된다 — 제외는 부재가 아니다(§2.7).
+//	                    자산만** 남긴다(§1.4 노드 게이트를 자산 단위로). 제외분은 적재되지 않되
+//	                    몇 건인지 고지된다 — 제외는 부재가 아니다(§2.6).
 //	env PQCOTA_DSN     : (선택) 있으면 Postgres 영속화, 없으면 인메모리(요약만).
 package main
 
@@ -61,7 +61,7 @@ func main() {
 	store, closeFn, persistent := openStore()
 	defer closeFn()
 
-	// 서명 검증(§2.7) — PQCOTA_VERIFY_KEY(콤마 구분 base64 공개키)가 있으면. 없으면 생략.
+	// 서명 검증(§2.6) — PQCOTA_VERIFY_KEY(콤마 구분 base64 공개키)가 있으면. 없으면 생략.
 	var verifySig func(*discoveryv1.CollectionResult) bool
 	if pubs := envKeys("PQCOTA_VERIFY_KEY"); len(pubs) > 0 {
 		verifySig = func(r *discoveryv1.CollectionResult) bool { return sign.Verify(pubs, r) }
@@ -70,7 +70,7 @@ func main() {
 	// 밀리초까지 — 스냅샷 id(prefix+":"+node)는 -snapshot·-diff가 쓰는 사용자 손잡이라
 	// 유일해야 한다. 초 단위면 같은 초에 두 번 적재할 때 id가 충돌한다.
 	prefix := "ingest-" + time.Now().UTC().Format("20060102T150405.000Z")
-	// 자산 스코프 — 노드는 등재됐어도 그 안의 자산 중 관리 대상만 남긴다(§0.4를 자산 단위로).
+	// 자산 스코프 — 노드는 등재됐어도 그 안의 자산 중 관리 대상만 남긴다(§1.4를 자산 단위로).
 	assetPolicy, err := loadAssetPolicy(*scopeAssets)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -97,7 +97,7 @@ func main() {
 		fmt.Printf("스코프 게이트: 생략(CMDB 미지정)\n")
 	}
 	if verifySig != nil {
-		fmt.Printf("서명 검증: PQCOTA_VERIFY_KEY로 검증(불일치는 거부, §2.7)\n")
+		fmt.Printf("서명 검증: PQCOTA_VERIFY_KEY로 검증(불일치는 거부, §2.6)\n")
 	} else {
 		fmt.Printf("서명 검증: 생략(전송 보안에 의존)\n")
 	}
@@ -106,7 +106,7 @@ func main() {
 	fmt.Printf("\n적재 결과: 수용 %d · 미등재/앵커없음 %d · 서명거부 %d → 노드 %d개 관측(변화 %d · 동일 %d)\n",
 		rep.Accepted, rep.OffScope, rep.Rejected, rep.Snapshots, rep.Changed, rep.Snapshots-rep.Changed)
 	if rep.ExcludedByScope > 0 {
-		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 말한다(§2.7).
+		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 말한다(§2.6).
 		fmt.Printf("자산 스코프: 관리 대상 아님으로 %d건 제외(관측은 됐으나 적재 안 함)\n", rep.ExcludedByScope)
 	}
 

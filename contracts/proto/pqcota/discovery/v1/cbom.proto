@@ -46,20 +46,20 @@ message CngAxes {
 // Finding (수용 원칙 §2.4 · 규정서 §2.4) — 코어 정규화 파이프라인이 파생하는 뷰
 //
 // ★ Collector는 이 타입을 직접 생성하지 않는다. Collector는 표준 CycloneDX +
-//   Envelope만 반환하고(§6.1), 코어 파이프라인의 강화 단계(§2.5 step 3)가
+//   Envelope만 반환하고(§1.6), 코어 파이프라인의 강화 단계(§2.4 step 3)가
 //   detection_method → evidence_strength, version → pqc_readiness, fork 판별 등을
-//   부착해 Finding으로 파생한다. 파생 뷰이므로 원본에서 항상 재계산 가능(§0.2).
+//   부착해 Finding으로 파생한다. 파생 뷰이므로 원본에서 항상 재계산 가능(§1.2).
 // ─────────────────────────────────────────────────────────────────────────
 
 message Finding {
-  string id = 1;                       // 정규화 해시 — finding 동일성/dedup 앵커 (§2.5)
+  string id = 1;                       // 정규화 해시 — finding 동일성/dedup 앵커 (§2.4)
   pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (docs/암호_런타임_수용_원칙.md)
   pqcota.common.v1.UsageContext usage_context = 3;
-  string algorithm = 4;                // 비었으면 소스 부재로 열화됨 (§2.4)
+  string algorithm = 4;                // 비었으면 소스 부재로 열화됨 (§2.3)
 
-  // ─ evidence 메타데이터 (§2.4 핵심) ─
+  // ─ evidence 메타데이터 (§2.3 핵심) ─
   pqcota.common.v1.DetectionMethod detection_method = 5;   // Envelope에서 전파 (finding별로 다를 수 있음)
-  pqcota.common.v1.EvidenceStrength evidence_strength = 6; // detection_method에서 파생 (§2.6 AUTO)
+  pqcota.common.v1.EvidenceStrength evidence_strength = 6; // detection_method에서 파생 (§2.5 AUTO)
 
   // ─ 런타임별 분기 (수용 원칙 §2.4) ─
   oneof runtime_axes {
@@ -71,11 +71,11 @@ message Finding {
   }
 
   // ─ 공통 판정 축 (강화 단계 산출) ─
-  string pqc_readiness = 9;     // version→매핑 (§2.5 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
-  string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (§4.9)
-  string remediation_class = 11;// remediation taxonomy 분기 키 (§4.3/§4.4)
+  string pqc_readiness = 9;     // version→매핑 (§2.4 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
+  string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (§4.7)
+  string remediation_class = 11;// remediation taxonomy 분기 키 (프로비저닝 설계 §4.1·§4.2)
 
-  // ─ 파생 뷰 재현성 (§0.2) ─
+  // ─ 파생 뷰 재현성 (§1.2) ─
   string derived_from_snapshot_id = 12; // 어떤 원시 스냅샷에서 파생됐나
   string ruleset_version = 13;          // 어떤 강화 규칙 버전으로 파생됐나 (재계산 재현)
 

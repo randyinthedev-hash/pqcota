@@ -12,7 +12,7 @@ import (
 // ScanJVMs — 접근 가능한 모든 프로세스의 /proc를 스캔해 실행 중인 JVM을 열거한다(openssl
 // ScanHost와 대칭). "무엇이 실제로 도는가"를 collector가 직접 정찰하므로, 호출자가 PID·JDK를
 // 미리 알아 넘겨야 하던 비대칭이 사라진다. root(또는 동일 UID)면 그 사용자 프로세스를 본다.
-// 못 읽은 프로세스는 Denied로 세어 완전성 갭의 원천이 된다(§2.7 갭≠부재).
+// 못 읽은 프로세스는 Denied로 세어 완전성 갭의 원천이 된다(§2.6 갭≠부재).
 func ScanJVMs() ([]JVMProc, JVMScanStats) {
 	var st JVMScanStats
 	entries, err := os.ReadDir("/proc")

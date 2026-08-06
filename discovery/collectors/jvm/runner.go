@@ -7,7 +7,7 @@ import (
 )
 
 // SubprocessRunner — 실제 attach 사이드카(순수 Java)를 서브프로세스로 실행해 provider 출력을
-// 얻는다(§6.2 프로세스 분리). jvm.Service.Runner에 주입한다.
+// 얻는다(라이선스 정리 — 프로세스 분리). jvm.Service.Runner에 주입한다.
 //
 //	javaBin      : attach 가능 JDK의 java(jdk.attach 필요). ★ 이 경로는 **② 폴백**이다 —
 //	               1순위는 JDK 없이 붙는 Go 네이티브(NativeAttach). 여기 오는 건 네이티브가

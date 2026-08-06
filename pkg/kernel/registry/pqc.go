@@ -10,7 +10,7 @@ const (
 	KindSignature PQCKind = "signature"
 )
 
-// PQCMaturity — PQC 알고리즘의 표준화 성숙도. §4.10 FIPS 라우팅·remediation 분기의 입력.
+// PQCMaturity — PQC 알고리즘의 표준화 성숙도. FIPS 라우팅·remediation 분기의 입력.
 // posture(PQC vs 고전)에 "표준이냐 실험이냐" 축을 더한다.
 type PQCMaturity string
 
@@ -30,10 +30,10 @@ type PQCAlgorithm struct {
 	tokens   []string // 정규화(대문자·구분자 제거) 후 부분문자열 매칭 토큰
 }
 
-// FIPSValidatable — FIPS 검증 대상(최종 표준) 여부. 규제 자산 provider 라우팅(§4.10)의 게이트.
+// FIPSValidatable — FIPS 검증 대상(최종 표준) 여부. 규제 자산 provider 라우팅의 게이트.
 func (a PQCAlgorithm) FIPSValidatable() bool { return a.Maturity == MaturityFIPS }
 
-// DefaultPQCAlgorithms — 초기 시드(§4.4 v3, OpenSSL/OQS·JCA 공통 어휘). 표준→진행→실험→파훼 순.
+// DefaultPQCAlgorithms — 초기 시드(프로비저닝 설계 §4.2, OpenSSL/OQS·JCA 공통 어휘). 표준→진행→실험→파훼 순.
 var DefaultPQCAlgorithms = []PQCAlgorithm{
 	// ── FIPS 최종 표준 ──
 	{Family: "ML-KEM", Kind: KindKEM, Maturity: MaturityFIPS, Standard: "FIPS 203", tokens: []string{"MLKEM"}},

@@ -8,7 +8,7 @@
 
 ## 무슨 일이 일어나나
 
-### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§0.5)
+### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§1.5)
 입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
 ```
 node_id,name,ip,port,ssh_user,ssh_key,ssh_pass

@@ -25,7 +25,7 @@ func edgeResult(node string) *discoveryv1.CollectionResult {
 	}
 }
 
-// 스코프 게이트(§0.4) + Normalize + history 적재 + 엣지 부착을 종단 검증.
+// 스코프 게이트(§1.4) + Normalize + history 적재 + 엣지 부착을 종단 검증.
 func TestIngestResults(t *testing.T) {
 	master := scope.NewMaster([]string{"web-01"})
 	store := history.NewMemStore()
@@ -50,7 +50,7 @@ func TestIngestResults(t *testing.T) {
 	}
 }
 
-// 서명 검증 실패는 거부(§2.7).
+// 서명 검증 실패는 거부(§2.6).
 func TestIngestSignatureReject(t *testing.T) {
 	master := scope.NewMaster([]string{"web-01"})
 	store := history.NewMemStore()
@@ -85,7 +85,7 @@ func opensslResult(node, lib string) *discoveryv1.CollectionResult {
 	}
 }
 
-// TV-SCOPE-7 — 제외는 "없음"이 아니다(§2.7·§8.3). 정책으로 뺀 건수가 적재 요약과 인벤토리
+// TV-SCOPE-7 — 제외는 "없음"이 아니다(§2.6·§8.3). 정책으로 뺀 건수가 적재 요약과 인벤토리
 // 뷰 **양쪽**에 남아야 한다. 스코프가 조용히 자산을 지우면 인벤토리가 거짓말을 한다.
 func TestIngestReportsScopeExclusions(t *testing.T) {
 	policy, err := scope.LoadAssetPolicy(strings.NewReader(

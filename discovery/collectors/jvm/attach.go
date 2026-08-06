@@ -9,7 +9,7 @@ package jvm
 // ★ 클라이언트는 **대상 JVM의 java일 필요가 없다.** 붙는 쪽에 jdk.attach 모듈만 있으면 되므로,
 // 대상이 순수 JRE여도 같은 머신의 다른 JDK로 붙을 수 있다. 그래서 collector가 자체 런타임을
 // 동봉할 이유가 없다 — **있는 걸 찾아 쓴다**(collector 배포 설계 §2).
-// 하나도 없으면 "" — 그때는 attach를 포기하고 정적 폴백으로 정직히 내려간다(§2.6).
+// 하나도 없으면 "" — 그때는 attach를 포기하고 정적 폴백으로 정직히 내려간다(§2.5).
 func AttachClient(jvms []JVMProc) string {
 	for _, j := range jvms {
 		if j.AttachCapable && j.JavaBin != "" {
@@ -30,7 +30,7 @@ type AttachResult struct {
 type AttachStats struct {
 	Discovered int
 	Attached   int
-	Failed     int // attach 실패 — 조용한 0이 아니라 갭(§2.7 갭≠부재)
+	Failed     int // attach 실패 — 조용한 0이 아니라 갭(§2.6 갭≠부재)
 }
 
 // AttachAll — 발견한 JVM들에 각각 attach한다. 실패한 JVM은 버리지 않고 Err로 담아 갭으로 센다.

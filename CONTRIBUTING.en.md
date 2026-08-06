@@ -71,14 +71,14 @@ That is, **`pkg/`·`contracts/` split by stage, and so do the top-level executio
 ## Contract-first
 
 - To change a type/enum, **edit `contracts/*.proto` and `make generate`**. Do not touch `gen/` directly.
-- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (§0.2 — one place for the rules so they can be recomputed). Details: [contracts/README](contracts/README.md).
-- A controlled-vocabulary `*_UNSPECIFIED = 0` means "unknown" — don't leave it blank/missing (§2.6).
+- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (§1.2 — one place for the rules so they can be recomputed). Details: [contracts/README](contracts/README.md).
+- A controlled-vocabulary `*_UNSPECIFIED = 0` means "unknown" — don't leave it blank/missing (§2.5).
 
 ## Collector extension — the contract is the seam
 
 The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector** — without touching the core. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
 
-- A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (§0.2 — the rules live in one place so they can be recomputed).
+- A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (§1.2 — the rules live in one place so they can be recomputed).
 - Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](contracts/README.md)).
 - Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
 
@@ -90,18 +90,18 @@ This repo enforces **honesty and determinism in the code itself**. Below are the
 
 **Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs `buf lint` · `fmt-check` · `check-boundary` · `check-docs` · `go vet` · `build` (host + linux cross) · `build-jar` · `go test`, so everything must be **green** before a PR. `check-docs` gates the Markdown: broken links/anchors, sentences calling something "out of this repo" that this repo actually does, role-division prose (docs carry **function and usage** only), and personal dev-environment details. Follow standard Go idioms, but use the spec's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
 
-**Comments explain "why", with a §.** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong, anchored to a spec § (the original is Korean). This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie (§2.7)`.
+**Comments explain "why", with a §.** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong, anchored to a spec § (the original is Korean). This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie (§2.6)`.
 
 **Enforce honesty in code** — it must hold at runtime, not just in docs:
-- **unknown is first-class** (§2.6) — an undeterminable value is not a blank but `*_UNSPECIFIED` / an explicit "unknown". A controlled-vocabulary enum's `0` is always unknown.
-- **gap ≠ absence** (§2.7) — never silently drop what wasn't seen or what a policy excluded. **Count it, return it, and report it** (excluded counts, the completeness map, the `-diff` reverse-order warning, etc.).
+- **unknown is first-class** (§2.5) — an undeterminable value is not a blank but `*_UNSPECIFIED` / an explicit "unknown". A controlled-vocabulary enum's `0` is always unknown.
+- **gap ≠ absence** (§2.6) — never silently drop what wasn't seen or what a policy excluded. **Count it, return it, and report it** (excluded counts, the completeness map, the `-diff` reverse-order warning, etc.).
 - **no guessing or judgment** (§2.1) — don't fabricate what wasn't observed. If a diff is "no change", that *is* the answer.
 
-**Derived values must be recomputable from the source** (§0.2). Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/discovery/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
+**Derived values must be recomputable from the source** (§1.2). Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/discovery/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
 
 **Keep logic pure and testable.** Separate parsing/decision logic from I/O so it unit-tests without the real thing (process, DB, network) — e.g. `ParseProcMaps(reader)` runs without `/proc`. **Tests pin not just behavior but "why this invariant holds"** (a regression test comments the essence of the bug).
 
-**Don't depend on external tools.** Parse `/proc`·ELF directly in Go instead of shelling out to `ldd`·`lsof`·`ss`·`readelf` (minimal image/footprint, §2.4). Release binaries are `CGO_ENABLED=0` static builds. Tag code that touches OS primitives with `//go:build linux`, and split pure helpers out as OS-agnostic.
+**Don't depend on external tools.** Parse `/proc`·ELF directly in Go instead of shelling out to `ldd`·`lsof`·`ss`·`readelf` (minimal image/footprint, §2.3). Release binaries are `CGO_ENABLED=0` static builds. Tag code that touches OS primitives with `//go:build linux`, and split pure helpers out as OS-agnostic.
 
 **Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](contracts/README.md).
 

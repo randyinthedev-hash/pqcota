@@ -9,7 +9,7 @@ import (
 const sshMsgKexInit = 20
 
 // ParseSSHKexInit — SSH KEXINIT 패킷을 파싱해 제시된 KEX 알고리즘 목록을 뽑는다(TD-NETWORK-3).
-// SSH-2.0 바이너리 패킷: packet_length(4)+padding_length(1)+payload+padding. KEXINIT은 미암호화(§2.5).
+// SSH-2.0 바이너리 패킷: packet_length(4)+padding_length(1)+payload+padding. KEXINIT은 미암호화(§2.4).
 // 버전 문자열("SSH-...\r\n")이 앞에 붙어 있으면 스킵한다.
 func ParseSSHKexInit(b []byte) (*Handshake, error) {
 	if bytes.HasPrefix(b, []byte("SSH-")) {
@@ -46,7 +46,7 @@ func ParseSSHKexInit(b []byte) (*Handshake, error) {
 
 	// ★ NegotiatedGroup을 여기서 채우지 않는다. KEXINIT 하나는 **한쪽의 제안**일 뿐이고, 협상 결과는
 	// 양쪽 목록의 교집합(RFC 4253 §7.1)이라 이 함수만으로는 알 수 없다. 최선호를 negotiated로 넣으면
-	// 상대가 그 알고리즘을 지원하지 않는 연결까지 그걸로 협상됐다고 **거짓 보고**하게 된다(§2.1·§2.6).
+	// 상대가 그 알고리즘을 지원하지 않는 연결까지 그걸로 협상됐다고 **거짓 보고**하게 된다(§2.1·§2.5).
 	// 협상 계산은 NegotiateSSHKex가, 양쪽 KEXINIT을 모은 캡처 계층에서 한다.
 	return &Handshake{Protocol: "SSH", OfferedGroups: splitNameList(kexList)}, nil
 }

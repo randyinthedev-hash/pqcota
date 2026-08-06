@@ -48,7 +48,7 @@ func ConfigPath(jca bool) string {
 }
 
 // SplitConfigPath — 한 노드·런타임에 **서로 다른 조각이 둘 이상**일 때 조치별로 나눈 경로.
-// 같은 경로에 두 번 copy하면 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(§2.7 — 유실을 조용히 두지 않는다).
+// 같은 경로에 두 번 copy하면 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(§2.6 — 유실을 조용히 두지 않는다).
 // 어느 조각을 살릴지는 도구가 정하지 않는다 — 둘 다 놓고, 무엇을 참조할지는 활성화 훅이 정한다(§2.1).
 func SplitConfigPath(jca bool, actionID string) string {
 	base := ConfigPath(jca)

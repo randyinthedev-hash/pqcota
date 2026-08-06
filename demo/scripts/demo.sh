@@ -113,7 +113,7 @@ PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order
 echo "   ── 스냅샷 상세(-snapshot): 자산 + 그 스냅샷의 관측 엣지(누적 뷰는 합계만 낸다) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
-# 자산 스코프 — 노드는 등재됐어도(§0.4) 그 안에서 계속 관리할 자산만 남긴다. 시스템 기본
+# 자산 스코프 — 노드는 등재됐어도(§1.4) 그 안에서 계속 관리할 자산만 남긴다. 시스템 기본
 # 라이브러리·패키지 런타임이 섞이면 인벤토리가 잡음에 묻힌다.
 # 내용이 바뀌므로 새 스냅샷이 생긴다 → 바로 이게 -diff로 보일 "실제 변화"다.
 docker exec -i pqcota-ctl bash -lc "cat > /work/scope-assets.csv" <<'CSV'
@@ -143,7 +143,7 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-prune -keep-last 1'
 
 echo "▶ 6/6 프로비저닝 — 확정 계획 → L2/L3 플레이북 생성 → 적용 → 되돌림…"
 # 프로비저닝 대상 노드(PNODE) — openssl finding이 있는 노드를 인벤토리에서 고른다(공유 .so로 다중
-# 귀속된 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.6).
+# 귀속된 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.5).
 PNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where f ? 'openssl' order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, s.node_id limit 1" | tr -d '[:space:]')
 if [ -z "$PNODE" ]; then
@@ -191,7 +191,7 @@ docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-rollback.yml" | gr
 docker exec "$PNODE" sh -lc 'ls /opt/pqcota/oqsprovider.so /etc/pqcota/openssl-pqc.cnf 2>&1 || true' | sed 's/^/   /'
 
 # ── L3(활성화·재시작) — L2가 놓기만 한 조각을 실제로 **참조되게** 만들고 서비스를 다시 띄운다.
-# 활성화·재시작 방법은 환경마다 다르므로 도구가 추측하지 않는다(§2.6): 계획의 activation 훅에
+# 활성화·재시작 방법은 환경마다 다르므로 도구가 추측하지 않는다(§2.5): 계획의 activation 훅에
 # **사용자가 적은 명령**을 도구가 의미 순서로 배치할 뿐이다. 이 노드는 ssl-apps.sh로 서비스를
 # 관리하므로 훅이 그것을 가리킨다 — 현실의 systemd unit·사내 기동 스크립트에 해당한다.
 echo
@@ -221,7 +221,7 @@ PID_AFTER=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" 
 echo "   재시작 확인: 서비스 pid $PID_BEFORE → $PID_AFTER $([ "$PID_BEFORE" != "$PID_AFTER" ] && echo '(새 프로세스 = 새 설정으로 로드됨)' || echo '(pid 동일 — 재시작되지 않았다)')"
 echo "   ※ 이 노드의 OpenSSL은 이 조각의 PQC 그룹을 모른다 — 그래서 **능력이 바뀌었다고 말하지 않는다**."
 echo "     L3가 보이는 것은 활성화 지점 연결·재시작·가역성이다. 이 노드의 실제 조치는 fork 교체이며,"
-echo "     그건 config로 배포되지 않는다고 L2 플레이북이 이미 주석으로 말한다(§4.3)."
+echo "     그건 config로 배포되지 않는다고 L2 플레이북이 이미 주석으로 말한다(프로비저닝 설계 §4.1)."
 echo "   ── L3 되돌림(--rollback): 대칭 역순 — pre → 활성화 되돌림 → 파일 제거 → 재시작 ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-l3.json > /work/ansible/provision-l3-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
@@ -236,7 +236,7 @@ fi  # PNODE 가드 끝
 #
 # 대상은 6/6의 PNODE가 아니다 — 넣을 자리가 있는 노드는 **OpenSSL 3.0–3.4**뿐이다.
 # 1.1.1엔 provider라는 개념이 없고, 3.5+는 ML-KEM이 네이티브라 조치가 CONFIG_ONLY로 갈린다
-# (pkg/provisioning/openssl.go). 인벤토리에서 그 대역을 관측한 노드를 고르고, 없으면 생략한다(§2.6).
+# (pkg/provisioning/openssl.go). 인벤토리에서 그 대역을 관측한 노드를 고르고, 없으면 생략한다(§2.5).
 BAND="f->'openssl'->>'version' ~ '^3\.[0-4]([.]|$)'"
 if [ "${DEMO_REAL_PROVIDER:-0}" = "1" ]; then
 echo
@@ -312,7 +312,7 @@ echo "   ※ 능력은 분명히 늘었는데 인벤토리는 그대로다. 지�
 echo "     · OpenSSL은 provider 층을 관측하는 경로가 아직 없다 — /proc/maps의 libssl·libcrypto와"
 echo "       ELF 문자열(fork·버전)까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다."
 echo "     · 핸드셰이크도 안 바뀐다 — 협상은 양쪽이 알아야 하고, 이 토폴로지의 상대는 1.1.1이다."
-echo "     근거는 discovery/디스커버리_설계.md §2.1. 없는 것을 있는 척하지 않는 것이 이 도구의 전제다(§2.6)."
+echo "     근거는 discovery/디스커버리_설계.md §2.1. 없는 것을 있는 척하지 않는 것이 이 도구의 전제다(§2.5)."
 
 echo "   ── 되돌림(L3 → L2) — 노드를 원래대로 ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null
@@ -327,6 +327,6 @@ echo
 echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱귀속·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
 echo "   산출물: demo/.generated/topology.svg (색=posture) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
 echo "   ※ 생성물을 실제로 적용·활성화·되돌림까지 실행해 확인한 것 — 생성만 보면 깨끗한 노드에서 깨지는 플레이북도 통과한다."
-echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§0.5)."
+echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§1.5)."
 echo "   (선언 대비 3-상태 대조·거버넌스는 이 리포가 하지 않는다)"
 echo "   정리: ./demo/scripts/down.sh"

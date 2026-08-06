@@ -1,4 +1,4 @@
-// Package sign implements collector 리포트 서명·검증 (규정서 §2.7 — provenance).
+// Package sign implements collector 리포트 서명·검증 (규정서 §2.6 — provenance).
 // ed25519로 CollectionResult를 서명하고, 중앙 적재가 등록된 공개키로 검증한다.
 // 전송 보안(mTLS/SSH)이 없는 경로(T1 self-service·에어갭)에서 페이로드 신뢰의 앵커가 된다.
 package sign
@@ -31,8 +31,8 @@ func Generate() (pub, priv string, err error) {
 // 덮는다 — 서명 필드(envelope.signature) 자신만 뺀다.
 //
 // 왜 전부인가: 덮이지 않는 필드는 **변조해도 검증이 통과**한다. 특히 `completeness`가 빠지면
-// 갭 선언을 떼어내 "원리상 못 봤다"를 "없다"로 바꾸는 변조가 통과하는데(§2.7 정직성의 심장),
-// `raw_capture`가 빠지면 §0.2 재계산의 원본이 무보장이 된다. 좁게 덮는 서명은 "서명했다"는
+// 갭 선언을 떼어내 "원리상 못 봤다"를 "없다"로 바꾸는 변조가 통과하는데(§2.6 정직성의 심장),
+// `raw_capture`가 빠지면 §1.2 재계산의 원본이 무보장이 된다. 좁게 덮는 서명은 "서명했다"는
 // 말을 실제보다 강하게 들리게 만든다.
 //
 // ★ 계약(contracts)에 필드를 더하면 **여기도 함께 갱신**해야 한다. 잊으면 그 필드가 서명
@@ -48,7 +48,7 @@ func Canonical(res *discoveryv1.CollectionResult) []byte {
 	w(env.GetCollectorVersion())
 	w(env.GetDetectionMethod().String()) // evidence_strength 파생의 근거 — 바뀌면 판정이 바뀐다
 	w(env.GetCollectedAt().AsTime().UTC().Format(time.RFC3339Nano))
-	w(env.GetTargetNodeId()) // 스코프 앵커(§0.4)
+	w(env.GetTargetNodeId()) // 스코프 앵커(§1.4)
 	w(env.GetScopeMasterRef())
 	w(env.GetCollectorLicense())
 	w(machineCanon(env.GetMachine())) // 머신 지문 — node_id 해소·중복 검출의 근거
@@ -56,7 +56,7 @@ func Canonical(res *discoveryv1.CollectionResult) []byte {
 	w(res.GetRawFormat())
 	w(res.GetCyclonedxSpecVersion())
 	wb(res.GetCbomCyclonedx())
-	wb(res.GetRawCapture()) // §0.2 재계산의 원본
+	wb(res.GetRawCapture()) // §1.2 재계산의 원본
 	w(completenessCanon(res.GetCompleteness()))
 
 	edges := make([]string, 0, len(res.GetObservedEdges()))
@@ -117,7 +117,7 @@ func Sign(privB64 string, res *discoveryv1.CollectionResult) (string, error) {
 }
 
 // Verify — pub(base64) 목록 중 하나로 envelope.signature가 유효하면 true.
-// 등록된 공개키 provenance와 일치할 때만 통과(§2.7 "등록 provenance와 일치해야").
+// 등록된 공개키 provenance와 일치할 때만 통과(§2.6 "등록 provenance와 일치해야").
 func Verify(pubB64s []string, res *discoveryv1.CollectionResult) bool {
 	s := res.GetEnvelope().GetSignature()
 	if !strings.HasPrefix(s, Prefix) {
