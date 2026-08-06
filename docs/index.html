@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko" data-lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pqcota — PQC 마이그레이션 관리 플랫폼</title>
+<style>
+  :root{
+    --paper:#f4f6fa; --panel:#fff; --ink:#1a2233; --muted:#5b6678;
+    --line:#c3cbd8; --accent:#c0453e; --band:#eef1f6;
+    --sans:system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --paper:#0e1420; --panel:#161f2e; --ink:#e6ebf2; --muted:#9aa6ba;
+           --line:#33405a; --accent:#e0736b; --band:#111a28; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--paper);color:var(--ink);
+       font-family:var(--sans);line-height:1.65}
+  main{max-width:1000px;margin:0 auto}
+  h1{font-size:1.7rem;margin:0 0 6px}
+  h1 .ver{font-size:.55em;font-weight:500;color:var(--muted);margin-left:8px}
+  h2{font-size:1.1rem;margin:40px 0 4px;padding-top:20px;border-top:1px solid var(--line)}
+  p.lede{color:var(--muted);margin:0 0 8px;font-size:1.05rem}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--band);padding:1px 5px;border-radius:4px}
+  pre{font-family:var(--mono);font-size:.85rem;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:14px 16px;overflow-x:auto;line-height:1.5}
+  ul{color:var(--muted);padding-left:20px}
+  li{margin:5px 0}
+  li b{color:var(--ink)}
+  .note{margin-top:16px;padding:10px 14px;background:var(--band);
+        border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:.92rem}
+
+  /* 카드 — 구조도가 이 페이지의 목적이라 가장 크게 */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+  .card{display:block;padding:16px 18px;background:var(--panel);border:1px solid var(--line);
+        border-radius:10px;text-decoration:none;color:inherit}
+  .card:hover{border-color:var(--accent)}
+  .card b{display:block;font-size:1rem;margin-bottom:4px}
+  .card span{color:var(--muted);font-size:.9rem}
+  .card.wide{grid-column:1/-1}
+
+  .stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+  .stage{padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+  .stage b{display:block;margin-bottom:4px}
+  .stage span{color:var(--muted);font-size:.9rem}
+
+  /* 언어 토글 — data-lang이 어느 쪽을 보일지 정한다 */
+  .switch{display:flex;justify-content:flex-end;gap:0;margin-bottom:14px}
+  .switch button{font:inherit;font-size:.85rem;padding:5px 14px;cursor:pointer;
+    background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+  .switch button:first-child{border-radius:6px 0 0 6px}
+  .switch button:last-child{border-radius:0 6px 6px 0;border-left:0}
+  .switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  :root[data-lang="ko"] .en{display:none}
+  :root[data-lang="en"] .ko{display:none}
+</style>
+<main>
+<div class="switch">
+  <button type="button" data-set="ko" aria-pressed="true">한국어</button>
+  <button type="button" data-set="en" aria-pressed="false">English</button>
+</div>
+
+<h1>pqcota <span class="ver">v0.1.0 <span class="ko">준비 중</span><span class="en">in preparation</span></span></h1>
+<p class="lede">
+  <span class="ko">레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 <b>관측 → 인벤토리 → 전환물 생성</b> 세 단계로 다루는 오픈소스 플랫폼.</span>
+  <span class="en">An open-source platform that handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) in three stages: <b>observe → inventory → generate</b>.</span>
+</p>
+<p class="lede">
+  <span class="ko">이 소프트웨어는 교향악의 <i>단원</i>이지 마에스트로가 아니다 — 무엇을·언제 이관할지 지휘하는 것은 이 도구를 쓰는 사용자다.</span>
+  <span class="en">This software is a <i>player</i> in the orchestra, not the maestro — what to migrate and when is conducted by whoever wields it.</span>
+</p>
+
+<div class="cards">
+  <a class="card wide" href="architectures/platform-structure.html">
+    <b><span class="ko">📐 플랫폼 구조와 이해관계자</span><span class="en">📐 Platform structure and stakeholders</span></b>
+    <span class="ko">누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가 — 그림 두 장.</span>
+    <span class="en">Who supplies what, what the platform produces, and where execution happens — in two figures.</span>
+  </a>
+  <a class="card" href="https://github.com/randyinthedev-hash/pqcota">
+    <b><span class="ko">소스 · 리포지터리</span><span class="en">Source · repository</span></b>
+    <span class="ko">GitHub, Apache-2.0</span><span class="en">GitHub, Apache-2.0</span>
+  </a>
+  <a class="card" href="https://github.com/randyinthedev-hash/pqcota/blob/main/demo/README.md">
+    <b><span class="ko">데모로 써보기</span><span class="en">Try the demo</span></b>
+    <span class="ko">Docker만 있으면 전 범위가 한 번에 돈다</span>
+    <span class="en">With just Docker, the whole scope runs at once</span>
+  </a>
+  <a class="card" href="https://github.com/randyinthedev-hash/pqcota/blob/main/docs/README.md">
+    <b><span class="ko">설계 문서</span><span class="en">Design documents</span></b>
+    <span class="ko">규정 · 아키텍처 · 단계별 설계</span>
+    <span class="en">The regulation, architecture, and per-stage designs</span>
+  </a>
+</div>
+
+<h2><span class="ko">세 단계</span><span class="en">The three stages</span></h2>
+<div class="stages">
+  <div class="stage">
+    <b><span class="ko">① 관측 (Discovery)</span><span class="en">① Discovery</span></b>
+    <span class="ko">실행 중인 시스템이 <b>실제로</b> 어떤 암호를 쓰는지 본다 — 로드된 라이브러리, 살아있는 JVM의 provider 체인, 핸드셰이크에서 협상된 알고리즘.</span>
+    <span class="en">Sees what cryptography a running system <b>actually</b> uses — loaded libraries, a live JVM's provider chain, the algorithms negotiated in the handshake.</span>
+  </div>
+  <div class="stage">
+    <b><span class="ko">② 인벤토리 (Inventory)</span><span class="en">② Inventory</span></b>
+    <span class="ko">관측을 어느 노드·어느 앱의 것인지 이어 붙여 쌓는다. append-only라 지난 관측이 덮이지 않고, 스냅샷 사이의 변화를 그대로 낸다.</span>
+    <span class="en">Ties each observation to its node and apps and accumulates them. Append-only, so earlier observations survive and change between snapshots is shown as-is.</span>
+  </div>
+  <div class="stage">
+    <b><span class="ko">③ 전환물 생성 (Provisioning)</span><span class="en">③ Provisioning</span></b>
+    <span class="ko">확정된 계획에서 config 조각과 Ansible 플레이북을 만든다 — 적용용과 되돌림용이 <b>함께</b> 나온다. 돌리는 것은 사용자의 Ansible이다.</span>
+    <span class="en">Generates config fragments and Ansible playbooks from a finalized plan — apply and rollback come out <b>together</b>. Running them is your Ansible's job.</span>
+  </div>
+</div>
+
+<h2><span class="ko">써보기</span><span class="en">Try it</span></h2>
+<p class="lede">
+  <span class="ko">Docker만 있으면 컨테이너로 세운 노드를 실제로 관측하고, 생성한 플레이북을 적용했다가 되돌리는 것까지 한 번에 돈다.</span>
+  <span class="en">With just Docker it stands nodes up as containers, observes them for real, then applies the generated playbook and rolls it back — all in one run.</span>
+</p>
+<pre>git clone https://github.com/randyinthedev-hash/pqcota.git &amp;&amp; cd pqcota
+./demo/scripts/up.sh &amp;&amp; ./demo/scripts/demo.sh   <span class="ko"># 정리: ./demo/scripts/down.sh</span><span class="en"># tear down: ./demo/scripts/down.sh</span></pre>
+
+<div class="note">
+  <span class="ko"><b>못 본 것은 "없음"이 아니다.</b> 수집하지 못한 계층은 갭으로 남기고 증거의 강도를 함께 적는다.
+  플랫폼은 관측 사실만 내고, 무엇을 언제 바꿀지는 판단하지 않는다.</span>
+  <span class="en"><b>Not seen is not the same as not there.</b> A layer that could not be collected is recorded as a
+  gap, with the strength of the evidence beside it. The platform reports observed facts; what to change, and when,
+  is yours to decide.</span>
+</div>
+</main>
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll('.switch button').forEach(b => {
+    b.addEventListener('click', () => {
+      const lang = b.dataset.set;
+      root.dataset.lang = lang;
+      root.lang = lang;
+      document.querySelectorAll('.switch button')
+        .forEach(x => x.setAttribute('aria-pressed', String(x.dataset.set === lang)));
+    });
+  });
+</script>
+</html>
