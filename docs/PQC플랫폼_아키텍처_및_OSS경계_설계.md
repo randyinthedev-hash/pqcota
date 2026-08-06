@@ -1,9 +1,9 @@
 # PQC 마이그레이션 플랫폼 — 아키텍처 설계
 
-[프로세스 규정서](PQC플랫폼_단계별_프로세스규정.md)가 정한 규칙을 **어떤 모듈·인터페이스·스키마로**
+[규정서](PQC플랫폼_규정.md)가 정한 규칙을 **어떤 모듈·인터페이스·스키마로**
 구현할지 확정한다(기준: 규정서 v4).
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](PQC플랫폼_규정.md)의 절 번호다.
 
 **범위**: 3단계 종단 — Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 귀속) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(§6).
 
@@ -12,7 +12,7 @@
 > - **§2.3 provider 시그니처 레지스트리** = 디스커버리 강화 단계 입력. provider JAR/모듈 시그니처 → `pqc_readiness`·`fips_validation`·알고리즘 커버리지 자동 판정. §2.1 강화·§6.1 Phase 0에 반영.
 > - **§4.10 규제 자산 FIPS 라우팅** = `fips_validation` 요구가 provider 선택을 강제. 내부 provider는 OpenSSL·특수 케이스로 한정, Java 표준 PQC는 BC(허용적 라이선스 — GPL 격리 대상 아님) 채택.
 
-> 설계 원칙: 프로세스 규정서 §0(관통 원칙)은 코드에서도 불변 계약이다. 특히
+> 설계 원칙: 규정서 §0(관통 원칙)은 코드에서도 불변 계약이다. 특히
 > **원본 불변 + 파생 뷰**(§0.2), **Provenance Chain 4계열**(§0.3), **AUTO/PROPOSE/MANUAL 삼분**(§0.1),
 > **intake 계약으로 Collector 은닉**(§6.1)은 모듈 경계를 결정하는 1급 제약이다.
 
@@ -256,7 +256,7 @@ type ProviderSignature struct {
 
 `MatchPQC(name)`은 협상 그룹/알고리즘명을 정규화(대문자·구분자 제거)해 부분문자열 매칭 → `(PQCAlgorithm, ok)`. 예: `X25519MLKEM768`→ML-KEM(fips), `sntrup761x25519-sha512@openssh.com`→NTRU-Prime(experimental), `x25519`→(false, 고전).
 
-**성숙도 축은 등급 축과 직교한다** — `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §12.1) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(posture→registry).
+**성숙도 축은 등급 축과 직교한다** — `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §6.1) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(posture→registry).
 
 **§4.10 remediation 분기** — `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)`가 성숙도를 조치로 라우팅하고, `posture.Recommend(group, cipher, regulated)`가 엣지 하나에 대한 종합 권고를 낸다(고전·미관측 포함):
 
@@ -267,7 +267,7 @@ type ProviderSignature struct {
 | PQC 실험 | `replace` | 3 | 표준으로 교체 |
 | PQC 파훼 | `replace` | 4 | 즉시 교체 |
 | 고전(🔴) | `migrate` | 3 (규제=4) | 양자취약(HNDL) — PQC 하이브리드 도입 |
-| 미관측(⚪) | `none` | 0 | 판단 보류(§12.2 정직성 — 안 본 걸 단정 안 함) |
+| 미관측(⚪) | `none` | 0 | 판단 보류(§6.2 정직성 — 안 본 걸 단정 안 함) |
 
 목표 표준은 종류별로 갈린다 — KEM→ML-KEM(FIPS 203), 서명→ML-DSA(FIPS 204). 이 권고는 파생일 뿐 실행이 아니다.
 

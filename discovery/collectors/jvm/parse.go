@@ -134,7 +134,7 @@ func buildJcaCycloneDX(providerNames []string, detectionMethod, compName string,
 		{"pqcota:jca.provider_set", strings.Join(providerNames, ",")},
 		{"pqcota:jca.registration_mode", "dynamic"},
 	}
-	if len(appKeys) > 0 { // 다중 JVM 귀속(§4A.2와 같은 결) — 어느 JDK/앱의 체인인지
+	if len(appKeys) > 0 { // 다중 JVM 귀속(§0.5와 같은 결) — 어느 JDK/앱의 체인인지
 		props = append(props, prop{"pqcota:app_keys", strings.Join(appKeys, ",")})
 	}
 	c := comp{Type: "cryptographic-asset", Name: compName, Properties: props}

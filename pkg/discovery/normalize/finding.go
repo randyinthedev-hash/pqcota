@@ -72,7 +72,7 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 			f.FipsValidation, f.PqcReadiness = jcaEnrichment(providerSet)
 		}
 
-		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산 귀속(§4A.2) — 어느 앱(들)의 크립토인가
+		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산 귀속(§0.5) — 어느 앱(들)의 크립토인가
 		f.Id = findingID(node, c.Name, props)
 		out = append(out, f)
 	}

@@ -134,7 +134,7 @@ func main() {
 	for _, a := range plan.GetActions() {
 		node := a.GetTargetNodeId()
 		before := load(node)
-		var appKeys []string // 근거 Finding의 자산 귀속(§4A.2) — 공유 .so면 다중
+		var appKeys []string // 근거 Finding의 자산 귀속(§0.5) — 공유 .so면 다중
 		if f := findingByID[a.GetFindingId()]; f != nil {
 			appKeys = f.GetAppKeys()
 		}

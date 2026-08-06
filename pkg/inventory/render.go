@@ -52,7 +52,7 @@ func detailOf(f *discoveryv1.Finding) string {
 		detail = fmt.Sprintf("providers=%d %s", len(f.GetJca().GetProviderSet()), f.GetPqcReadiness())
 	}
 	if ak := f.GetAppKeys(); len(ak) > 0 {
-		detail += "  @" + strings.Join(ak, ",") // 자산 귀속(§4A.2) — 공유 .so면 다중 앱
+		detail += "  @" + strings.Join(ak, ",") // 자산 귀속(§0.5) — 공유 .so면 다중 앱
 	}
 	return detail
 }

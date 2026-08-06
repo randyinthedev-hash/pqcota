@@ -2,7 +2,7 @@
 
 실행 진입점(`discovery/cmd`·`inventory/cmd`·`provisioning/cmd`)이 **얇은 조립층**이고, 실제 로직은 여기 있다. 커맨드를 바꾸지 않고도 로직을 테스트·재사용할 수 있게 가른 것이다.
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/PQC플랫폼_규정.md)의 절 번호다.
 
 두 갈래다 — **단계별 패키지**와 **단계를 가로지르는 [`kernel`](kernel/README.md)**.
 
@@ -17,7 +17,7 @@
 | [`discovery/normalize`](discovery/normalize) | 정규화 파이프라인 후단 — Finding 파생, 동일성 해소, 완전성 병합, 자산 스코프 게이트 | [디스커버리 §2.5](../discovery/디스커버리_설계.md) |
 | [`discovery/history`](discovery/history) | append-only 히스토리 — 스냅샷·관측 기록 2층, 내용 지문, 보존 정책 절단 | [인벤토리 §13](../inventory/인벤토리_설계.md) |
 | [`inventory/ingest`](inventory/ingest) | 중앙 적재 관문 — 스코프 게이트, 서명 검증, 외부 CBOM 수신 | [위임 수신 설계](../inventory/위임수신_설계.md) |
-| [`discovery/procs`](discovery/procs) | 프로세스↔앱 귀속 해소 | [디스커버리 §4A](../discovery/디스커버리_설계.md) |
+| [`discovery/procs`](discovery/procs) | 프로세스↔앱 귀속 해소 | [디스커버리 §0.5](../discovery/디스커버리_설계.md) |
 | [`inventory`](inventory) | 읽기전용 뷰 렌더(누적·이력·상세·diff), 머신 메타데이터 스토어, hosts 파서 | [인벤토리 설계](../inventory/인벤토리_설계.md) |
 | [`inventory/declaration`](inventory/declaration) | 사용자 선언(CMDB) 임포트 — 관측 레인과 구분되는 선언 레인 | [인벤토리 §2](../inventory/인벤토리_설계.md) |
 | [`provisioning`](provisioning) | 확정 계획 게이트, taxonomy→config 아티팩트, 적용·롤백 플레이북 생성, before 캡처·롤백 레코드 | [프로비저닝 설계](../provisioning/프로비저닝_설계.md) |

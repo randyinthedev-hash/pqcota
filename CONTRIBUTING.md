@@ -4,7 +4,7 @@
 
 pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](docs/PQC플랫폼_규정.md)의 절 번호다.
 
 ## 사전 요구
 
@@ -144,4 +144,4 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 
 ## 설계를 먼저
 
-기능을 더하기 전에 근거 문서를 본다 — [docs/](docs/README.md)에 프로세스 규정서·서브시스템 설계가 있고, 코드의 `§` 참조는 전부 거기를 가리킨다.
+기능을 더하기 전에 근거 문서를 본다 — [docs/](docs/README.md)에 규정서·서브시스템 설계가 있고, 코드의 `§` 참조는 전부 거기를 가리킨다.

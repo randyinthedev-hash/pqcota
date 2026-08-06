@@ -23,7 +23,7 @@ if [ "${SSL_SERVER:-0}" = "1" ]; then
   OSSL="$(command -v openssl || command -v libressl-openssl || command -v libressl)"
   "$OSSL" req -x509 -newkey rsa:2048 -keyout /tmp/k.pem -out /tmp/c.pem \
     -days 3650 -nodes -subj "/CN=$NODE_NAME" >/dev/null 2>&1
-  # openssl 바이너리를 앱 이름으로 복사 → exe 경로가 곧 app_key(§4A.2). 같은 .so를 동적 링크하므로
+  # openssl 바이너리를 앱 이름으로 복사 → exe 경로가 곧 app_key(§0.5). 같은 .so를 동적 링크하므로
   # ScanHost가 그 .so를 여러 앱으로 **합집합** 귀속한다(공유 라이브러리 교체 영향 반경).
   mkdir -p /opt/apps
   port=4433

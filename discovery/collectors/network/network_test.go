@@ -225,7 +225,7 @@ func TestQUICUnknownPosture(t *testing.T) {
 		t.Error("QUIC는 협상 그룹 불명이어야(빈 문자열)")
 	}
 	if posture.Classify(e.GetNegotiatedGroup(), "") != discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED {
-		t.Error("불명은 ⚪ UNSPECIFIED — 고전으로 단정 금지(§12.2)")
+		t.Error("불명은 ⚪ UNSPECIFIED — 고전으로 단정 금지(§6.2)")
 	}
 }
 
