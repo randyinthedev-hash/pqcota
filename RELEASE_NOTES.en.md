@@ -4,7 +4,7 @@ English · [한국어](RELEASE_NOTES.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](RELEASE_NOTES.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/플랫폼_규정.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.md) (Korean).
 
 Records the **goals** and **results** per version. This is still before the first official release (v0.1.0); the document is updated as versions advance. (Newest version on top.)
 
@@ -12,14 +12,14 @@ Records the **goals** and **results** per version. This is still before the firs
 
 ## Roadmap — Upcoming releases (planned)
 
-Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/암호_런타임_수용_원칙.md) (Korean).
+Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.md) (Korean).
 
-- **v0.2.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".)
-- **v0.3.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done when this implementation is in hand (no speculative abstraction).
+- **v0.2.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.md) (Korean).
+- **v0.3.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.md) (Korean).
 
-- **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/검토_중인_설계.md) (Korean).
+- **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/under-review.md) (Korean).
 
-- **Signed binary release (planned · version TBD)** — per-arch static builds and `SHA256SUMS` **ship with releases from v0.1.0 on** (CI produces them when a tag is pushed). What remains is the **ed25519 signature and `pqcota-verify-bundle`** — the bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector_배포_설계.md) (Korean). Until then, verify integrity with `sha256sum -c`.
+- **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector-deployment.md) (Korean). Until then, verify integrity with `sha256sum -c`.
 
 ### Not on the roadmap — deliberately
 
@@ -33,7 +33,6 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Dynamic tracing** (eBPF · ltrace) | Invasive, so it isn't done. Observing the actual negotiation on the wire was chosen instead |
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 
-> **Why split it** — CNG's discovery half fits the current contract, but its provisioning half requires a new substrate. Each is completed honestly in order: schema → discovery → provisioning. Python · Go · .NET · Node are not peer runtimes — they resolve into OpenSSL/CNG — so they are not separate release targets (see the document above).
 
 ---
 

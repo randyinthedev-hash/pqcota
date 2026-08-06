@@ -2,7 +2,7 @@
 
 디스커버리 단계의 CLI(Go 바이너리)들. 이름이 비슷하니 **어느 걸 언제 쓰는지**를 세 범주로 나눠 정리한다. 관측은 전부 ②의 collector가 대상 머신에서 하고, 낸 결과를 중앙에 쌓는 일은 [inventory/cmd](../../inventory/cmd/README.md)가 맡는다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
 
 ## ① 접근 준비 — 사용자 hosts 파일에서 discovery 접근을 세팅
 discovery를 시작하기 전에, 접근 대상 노드들에 대한 접속 정보를 **사용자가 직접 작성한 hosts 파일**(CSV)로 정의한다. 접근 비밀(계정·SSH 키)은 이 파일에만 있고 **pqcota 인벤토리엔 적재하지 않는다**.
@@ -42,7 +42,7 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml
 
 JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다** — `pqcota-jvmscan --recon`으로 그 노드에 JVM이 있는지 먼저 보고, 있는 노드에만 보낸다.
 
-자기 인프라에 쓰려면 플레이북의 `collector_bin_dir`를 자기 빌드 산출(`dist/linux-amd64` 등)로 바꾸면 된다. 데모 전용은 트래픽 생성 헬퍼뿐이다. → [collector 배포 설계](../collector_배포_설계.md)
+자기 인프라에 쓰려면 플레이북의 `collector_bin_dir`를 자기 빌드 산출(`dist/linux-amd64` 등)로 바꾸면 된다. 데모 전용은 트래픽 생성 헬퍼뿐이다. → [collector 배포 설계](../collector-deployment.md)
 
 ### 필수인가 — **아니다. "원격으로 여러 노드를 훑을 때"만 필요하다**
 

@@ -8,7 +8,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/inventory/declaration"
 )
 
-// TC-S8 (디스커버리_테스트케이스.md). 선언 임포트 → 선언 레인.
+// TC-S8 (testcases.md). 선언 임포트 → 선언 레인.
 func TestImportCSV(t *testing.T) {
 	csv := "node_id,crypto_runtime,component\ncmdb://n1,openssl,libssl\ncmdb://n2,jca,jca-provider-chain\n"
 	results, err := declaration.ImportCSV(strings.NewReader(csv))

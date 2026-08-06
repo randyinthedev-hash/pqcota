@@ -2,9 +2,9 @@
 
 케이스는 단계별 명세에 있고 **케이스 번호가 곧 테스트 파일 링크**다. 이 문서는 그 셋을 합쳐 얼마나 덮여 있는지만 본다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
 
-찾는 것이 정해져 있다면 바로 간다 — [커널](커널_테스트케이스.md) · [디스커버리](../discovery/디스커버리_테스트케이스.md) · [인벤토리](../inventory/인벤토리_테스트케이스.md) · [프로비저닝](../provisioning/프로비저닝_테스트케이스.md) · [데모가 검증하는 것](../demo/통합_검증.md).
+찾는 것이 정해져 있다면 바로 간다 — [커널](kernel-testcases.md) · [디스커버리](../discovery/testcases.md) · [인벤토리](../inventory/testcases.md) · [프로비저닝](../provisioning/testcases.md) · [데모가 검증하는 것](../demo/integration-verification.md).
 
 ## 레벨 분포
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | **unit** | 120 | 어디서나. 입력은 테스트 내부 상수 |
 | **integration** | 6 | **리눅스** 필요 — 실 crypto/tls·실물 sshd·`CAP_NET_RAW`·실 JVM·Postgres |
-| **e2e** | 1 | 리눅스 + Docker — [데모](../demo/통합_검증.md) |
+| **e2e** | 1 | 리눅스 + Docker — [데모](../demo/integration-verification.md) |
 
 케이스는 **테스트 함수 단위**다 — 한 항목이 한 테스트(또는 한 테이블 테스트)에 대응한다. 그래서 테스트가 없는 항목은 감출 곳이 없다.
 
@@ -24,7 +24,7 @@
 
 대부분은 **외부 테스트 패키지**(`package foo_test`)라 공개 API로만 돈다 — 공개 표면만으로 실제로 쓸 수 있는지가 함께 확인된다. 비공개 로직을 직접 봐야 하는 여섯 파일만 내부(`package foo`)로 남았다: `parseDetectionMethod` · `mergeByPath` · `machineKey` · `edgeFor` 메서드 · JVM 정찰·attach 파서 둘.
 
-각 테스트 파일 첫 줄 주석이 자기 케이스 번호를 달고 있다 — 예: `// TD-OPENSSL-1 (디스커버리_테스트케이스.md §2)`.
+각 테스트 파일 첫 줄 주석이 자기 케이스 번호를 달고 있다 — 예: `// TD-OPENSSL-1 (testcases.md §2)`.
 
 ## 돌리는 법
 

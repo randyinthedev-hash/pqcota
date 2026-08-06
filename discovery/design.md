@@ -1,11 +1,11 @@
 # 디스커버리 서브시스템 설계 (Discovery Subsystem Design)
 
-**문서 성격**: Discovery 서브시스템의 기술 설계. 상황별 인수 기준은 [테스트케이스](디스커버리_테스트케이스.md)(SD-1–SD-7). 규정서 §2, [아키텍처 설계](../docs/아키텍처.md), [contracts SSOT](../contracts/)를 구현 레벨로 잇는다.
+**문서 성격**: Discovery 서브시스템의 기술 설계. 상황별 인수 기준은 [테스트케이스](testcases.md)(SD-1–SD-7). 규정서 §2, [아키텍처 설계](../docs/architecture.md), [contracts SSOT](../contracts/)를 구현 레벨로 잇는다.
 **범위**: Phase 0(읽기전용 Discovery + 정규화 + 인벤토리 뷰). 판단·remediation 없음.
 **설계 규율**: 직접 만드는 것은 **런타임 레인 collector(SD-1·SD-2·SD-3) + 정직한 증거 계층**뿐이다. 소스·아티팩트는 CI가 볼 수 있는 영역이라 collector를 두지 않는다.
 
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 **어느 규정을 구현하나** — 규정이 바뀌면 이 표로 고칠 절을 찾는다.
 
@@ -39,7 +39,7 @@
 
 | 축 | 값 | 영향 |
 |---|---|---|
-| 런타임 | OpenSSL / JCA(Java) | 수집법·스키마 분기 ([수용 원칙](../docs/암호_런타임_수용_원칙.md)) |
+| 런타임 | OpenSSL / JCA(Java) | 수집법·스키마 분기 ([수용 원칙](../docs/runtime-acceptance.md)) |
 | 증거 가용성 | 소스 / 아티팩트 / 바이너리만 / 실행 중 | `evidence_strength` (§2.3) |
 | 호스트 환경 | 베어메탈·VM / 컨테이너 / 에어갭·배치 | 배포·네임스페이스 (§2.3) |
 | 배포 티어 | T1 self-service / T2 substrate / T3 상주 | 신뢰장벽 (§2.3) |
@@ -131,7 +131,7 @@ type ForkSignature struct {
 **정찰이 선행한다 — openssl(§2.1)과 대칭.** openssl의 `ScanHost`가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, jvm도 `ScanJVMs`가 실행 중 JVM을 **직접 조사한다**(호출자가 PID·JDK를 미리 알아 넘기던 비대칭 제거). 접근 불가 프로세스는 `Denied`로 세어 완전성 갭의 원천으로(§2.5). `AttachAll`이 발견한 각 JVM에 attach하고, **attach 실패도 조용히 버리지 않고 갭으로** 센다(openssl의 프로세스별 탐지 합산과 대칭). 구현: `collectors/jvm/{procscan,attach}.go`.
 
 **다중 JVM 식별 — 앱 단위, PID 아님.** 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이어야 한다(하나가 dedup으로 사라지면 §2.6 정직성 위반 — 실제 자산 은폐). 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME. **PID는 쓰지 않는다** — 매 스캔 달라져 finding id가 흔들리고 이력이 "매번 새 자산"으로 깨진다(같은 JDK의 두 앱도 앱 키로 갈린다).
-**동봉물**: `introspect-agent.jar`(attach 사이드카)뿐. **런타임은 동봉하지 않는다** — attach 클라이언트는 대상의 java일 필요가 없어 **머신에 있는 JDK를 재사용**한다(대상이 JRE여도 무방). attach 가능 JDK가 전무하면 정적 폴백으로 정직히 강등 → [collector 배포 설계](collector_배포_설계.md).
+**동봉물**: `introspect-agent.jar`(attach 사이드카)뿐. **런타임은 동봉하지 않는다** — attach 클라이언트는 대상의 java일 필요가 없어 **머신에 있는 JDK를 재사용**한다(대상이 JRE여도 무방). attach 가능 JDK가 전무하면 정적 폴백으로 정직히 강등 → [collector 배포 설계](collector-deployment.md).
 
 **정책·아티팩트 병행 수집**(온호스트 파일):
 - `java.security` 등록 순서 + `jdk.tls.*` + `disabledAlgorithms` 파싱.
@@ -184,7 +184,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 - **귀속**: 스코프 밖 IP·NAT·프록시 → "등재 판정 요청"(§5).
 
 > **Phase 1 기능**(관측 병행 + shadow 발견). 이 엣지 관측이 인벤토리 reconciliation의
-> 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/인벤토리_설계.md) §12).
+> 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/design.md) §12).
 
 ---
 
@@ -262,7 +262,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 
 ### 6.1 collector 배포 저작권 ≠ remediation 저작권 (경계 원칙)
 
-collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/프로비저닝_설계.md)(§4.5) "스크립트 저작·서명=사용자"과 다르다 — 그건 *앱 재시작 로직이 사용자 도메인 지식·liability*라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
+collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/design.md)(§4.5) "스크립트 저작·서명=사용자"과 다르다 — 그건 *앱 재시작 로직이 사용자 도메인 지식·liability*라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
 
 **T1 가드레일(self-service)**: ① 최소 caps — root 아님, `CAP_NET_RAW`(network-collector)·`CAP_SYS_PTRACE`(/proc)만. ② 번들 digest 핀 + 서명 검증 + 멱등(포크 가능한 투명 아티팩트). 번들이 올바른 호출(caps·co-location·버전 핀·재시도)을 1회 인코딩. ③ 대상은 사용자 스코프 마스터(§1.4). 실행 주체가 pqcota가 되면 T3(상주 에이전트)가 되는데, 그건 만들지 않는다.
 

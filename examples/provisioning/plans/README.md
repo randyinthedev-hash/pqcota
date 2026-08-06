@@ -81,7 +81,7 @@ JCA에서 아는 이름이 아닌데 `providerClass`도 없으면, 등록 줄이
 | [pkcs11-provider](https://github.com/openssl-projects/pkcs11-provider) | ❌ 다른 모양 — 드라이버 경로 등 키가 더 필요 |
 | JCA 커스텀 | ✅ `providerClass`(FQCN)가 이미 일반 경로다 |
 
-❌ 인 것을 받으려면 도구가 그 모양을 알아야 한다 — [검토 중인 설계](../../../docs/검토_중인_설계.md)에서 다룬다.
+❌ 인 것을 받으려면 도구가 그 모양을 알아야 한다 — [검토 중인 설계](../../../docs/under-review.md)에서 다룬다.
 모듈 파일 자체는 어느 경우든 사용자가 구해 [`files/`](../files/README.md)에 둔다.
 
 **이름은 Ansible 변수명으로도 쓰인다.** `pqcota_module_src_<이름>`·`pqcota_module_sha256_<이름>`에서 `<이름>`은 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`) — Ansible 변수명에 하이픈을 쓸 수 없어서다. 하이픈을 그대로 준 변수는 **인식되지 않고 조용히 무시된다**(무결성 검사가 통째로 skip된다).

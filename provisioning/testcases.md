@@ -1,11 +1,11 @@
 # 프로비저닝 테스트케이스 명세 (Scenario-driven Acceptance Tests)
 
-[프로비저닝 설계](프로비저닝_설계.md)(규정서 §4)를 **검증 가능한 인수 기준**으로 옮긴 것이다. 구현은 이 테스트를 통과하는 것을 목표로 한다(TDD).
+[프로비저닝 설계](design.md)(규정서 §4)를 **검증 가능한 인수 기준**으로 옮긴 것이다. 구현은 이 테스트를 통과하는 것을 목표로 한다(TDD).
 
 프로비저닝은 확정 계획에서 **플레이북과 롤백 근거를 만들고 영속**한다. 그래서 다루는 것은 실행 게이트(finalized-only) · 조치 아티팩트 렌더(OpenSSL/JCA) · 계획 채움(결정론) · L1/L2/L3 플레이북 생성과 롤백 · before 캡처와 레코드다. 플릿 오케스트레이션(drain·rolling·헬스체크 게이트)은 **하지 않아** 검증 대상이 아니다.
 
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 ---
 
@@ -13,7 +13,7 @@
 
 **케이스는 전부 unit이다** — 실물 없이 어디서나 돈다. 예외는 TP-RECORD-3 하나로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
 
-생성→적용→되돌림 **종단**은 여기 케이스가 아니라 [데모 6/6](../demo/통합_검증.md)이 확인한다 — 생성물을 실제 노드에 적용하고 서비스 재시작·롤백까지 본다.
+생성→적용→되돌림 **종단**은 여기 케이스가 아니라 [데모 6/6](../demo/integration-verification.md)이 확인한다 — 생성물을 실제 노드에 적용하고 서비스 재시작·롤백까지 본다.
 
 ## 1. 상황 — 무엇이 생성되는지가 갈리는 지점
 
@@ -114,7 +114,7 @@
 | [TP-RECORD-2](../pkg/provisioning/record_test.go) | `TestMemRecordStore` — 여러 노드 레코드 append | before 캡처 + 초기 **STAGED** + `app_keys` 다중 귀속. **append-only**, 노드별 조회가 순서 보존·노드 간 격리 | 롤백 근거를 덮어쓰지 않는다 |
 | [TP-RECORD-3](../pkg/provisioning/record_pg_test.go) | `TestPgRecordStore` — 노드 둘에 레코드 append(`PQCOTA_TEST_DSN` 있을 때) | append 순서 보존·노드 간 격리, before 상태와 `app_keys`·STAGED가 왕복 | 저장소를 바꿨더니 순서가 섞이거나 노드가 새면, 되돌릴 때 무엇으로 돌아가야 하는지를 잘못 짚는다 |
 
-> **영속화**: `PgRecordStore`는 `PQCOTA_TEST_DSN`이 있을 때 TP-RECORD-3가 실 Postgres로 돌고, 종단은 [데모 6/6](../demo/통합_검증.md)이 `pqcota-records` 조회로 확인한다.
+> **영속화**: `PgRecordStore`는 `PQCOTA_TEST_DSN`이 있을 때 TP-RECORD-3가 실 Postgres로 돌고, 종단은 [데모 6/6](../demo/integration-verification.md)이 `pqcota-records` 조회로 확인한다.
 
 ---
 

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko" data-lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pqcota — 플랫폼 구조와 이해관계자</title>
+<style>
+  :root{
+    --paper:#f4f6fa; --panel:#fff; --ink:#1a2233; --muted:#5b6678;
+    --line:#c3cbd8; --accent:#c0453e; --band:#eef1f6;
+    --sans:system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --paper:#0e1420; --panel:#161f2e; --ink:#e6ebf2; --muted:#9aa6ba;
+           --line:#33405a; --accent:#e0736b; --band:#111a28; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 20px 64px;background:var(--paper);color:var(--ink);
+       font-family:var(--sans);line-height:1.65}
+  main{max-width:1000px;margin:0 auto}
+  h1{font-size:1.5rem;margin:0 0 6px}
+  h2{font-size:1.1rem;margin:40px 0 4px;padding-top:20px;border-top:1px solid var(--line)}
+  p.lede{color:var(--muted);margin:0 0 8px}
+  figure{margin:16px 0 0;padding:18px;background:var(--panel);
+         border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+  svg{max-width:100%;height:auto;display:block;margin:0 auto}
+  figcaption{margin-top:12px;color:var(--muted);font-size:.9rem}
+  code{font-family:var(--mono);font-size:.9em}
+  ul{color:var(--muted);padding-left:20px}
+  li{margin:4px 0}
+  li b{color:var(--ink)}
+  .note{margin-top:10px;padding:10px 14px;background:var(--band);
+        border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:.92rem}
+
+  /* 언어 토글 — data-lang이 어느 쪽을 보일지 정한다 */
+  .switch{display:flex;justify-content:flex-end;gap:0;margin-bottom:14px}
+  .switch button{font:inherit;font-size:.85rem;padding:5px 14px;cursor:pointer;
+    background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+  .switch button:first-child{border-radius:6px 0 0 6px}
+  .switch button:last-child{border-radius:0 6px 6px 0;border-left:0}
+  .switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  :root[data-lang="ko"] .en{display:none}
+  :root[data-lang="en"] .ko{display:none}
+</style>
+<main>
+<div class="switch">
+  <button type="button" data-set="ko" aria-pressed="true">한국어</button>
+  <button type="button" data-set="en" aria-pressed="false">English</button>
+</div>
+
+<h1><span class="ko">pqcota — 플랫폼 구조와 이해관계자</span><span class="en">pqcota — platform structure and stakeholders</span></h1>
+<p class="lede"><span class="ko">누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가.</span><span class="en">Who supplies what, what the platform produces, and where execution actually happens.</span></p>
+
+<h2><span class="ko">1. 이해관계자 — 무엇을 주고받나</span><span class="en">1. Stakeholders — what moves between them</span></h2>
+
+<figure>
+<svg viewBox="0 0 960 540" role="img"
+     aria-label="자산 등록부·운영자·provider 공급처가 플랫폼에 입력을 주고, 플랫폼은 관측 결과와 플레이북을 내며, 실행은 사용자의 배포 도구가 대상 노드에 수행한다">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <rect x="330" y="52" width="300" height="404" rx="10" fill="none" stroke="currentColor" stroke-width="2"/>
+  <text x="480" y="78" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">pqcota</text>
+  <text x="480" y="96" text-anchor="middle" font-size="11" fill="var(--muted)" class="ko">관측하고 · 쌓고 · 생성한다</text>
+  <text x="480" y="96" text-anchor="middle" font-size="11" fill="var(--muted)" class="en">observe · accumulate · generate</text>
+
+  <rect x="356" y="118" width="248" height="62" rx="7" fill="none" stroke="currentColor"/>
+  <text x="480" y="143" text-anchor="middle" font-size="12.5" fill="currentColor">Discovery</text>
+  <text x="480" y="162" text-anchor="middle" font-size="10.5" fill="var(--muted)">openssl · jvm · network collector</text>
+
+  <rect x="356" y="200" width="248" height="62" rx="7" fill="none" stroke="currentColor"/>
+  <text x="480" y="225" text-anchor="middle" font-size="12.5" fill="currentColor">Inventory</text>
+  <text x="480" y="244" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">append-only 히스토리 · 변화 diff</text>
+  <text x="480" y="244" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">append-only history · change diff</text>
+
+  <rect x="356" y="282" width="248" height="62" rx="7" fill="none" stroke="currentColor"/>
+  <text x="480" y="307" text-anchor="middle" font-size="12.5" fill="currentColor">Provisioning</text>
+  <text x="480" y="326" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">플레이북 · 롤백 레코드 <tspan font-weight="700">생성</tspan></text>
+  <text x="480" y="326" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en"><tspan font-weight="700">generates</tspan> playbooks · rollback records</text>
+
+  <line x1="480" y1="180" x2="480" y2="198" stroke="currentColor" marker-end="url(#ar)"/>
+  <line x1="480" y1="262" x2="480" y2="280" stroke="currentColor" marker-end="url(#ar)"/>
+
+  <rect x="356" y="368" width="248" height="60" rx="7" fill="none" stroke="currentColor" stroke-dasharray="4 3"/>
+  <text x="480" y="392" text-anchor="middle" font-size="11.5" fill="var(--muted)" class="ko">contracts/ — 계약 SSOT</text>
+  <text x="480" y="392" text-anchor="middle" font-size="11.5" fill="var(--muted)" class="en">contracts/ — single source of truth</text>
+  <text x="480" y="410" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">세 단계가 같은 어휘를 쓴다</text>
+  <text x="480" y="410" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">all three stages share one vocabulary</text>
+
+  <rect x="16" y="86" width="200" height="56" rx="7" fill="none" stroke="currentColor"/>
+  <text x="116" y="109" text-anchor="middle" font-size="12" fill="currentColor" class="ko">자산 등록부 (CMDB)</text>
+  <text x="116" y="109" text-anchor="middle" font-size="12" fill="currentColor" class="en">asset registry (CMDB)</text>
+  <text x="116" y="127" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">관리 대상의 권위 소스</text>
+  <text x="116" y="127" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">authority on what is in scope</text>
+
+  <rect x="16" y="196" width="200" height="56" rx="7" fill="none" stroke="currentColor"/>
+  <text x="116" y="219" text-anchor="middle" font-size="12" fill="currentColor" class="ko">운영자 · 리뷰어</text>
+  <text x="116" y="219" text-anchor="middle" font-size="12" fill="currentColor" class="en">operator · reviewer</text>
+  <text x="116" y="237" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">접근 정보 · 계획 · 승인</text>
+  <text x="116" y="237" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">access info · plan · approval</text>
+
+  <rect x="16" y="306" width="200" height="56" rx="7" fill="none" stroke="currentColor"/>
+  <text x="116" y="329" text-anchor="middle" font-size="12" fill="currentColor" class="ko">provider 공급처</text>
+  <text x="116" y="329" text-anchor="middle" font-size="12" fill="currentColor" class="en">provider source</text>
+  <text x="116" y="347" text-anchor="middle" font-size="10.5" fill="var(--muted)">oqsprovider · BouncyCastle …</text>
+
+  <line x1="216" y1="114" x2="352" y2="140" stroke="currentColor" marker-end="url(#ar)"/>
+  <text x="284" y="118" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">등재 노드만</text>
+  <text x="284" y="118" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">registered nodes only</text>
+
+  <line x1="216" y1="224" x2="352" y2="224" stroke="currentColor" marker-end="url(#ar)"/>
+  <text x="284" y="216" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">확정 계획 + 승인</text>
+  <text x="284" y="216" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">finalized plan + approval</text>
+
+  <line x1="216" y1="334" x2="352" y2="312" stroke="currentColor" marker-end="url(#ar)"/>
+  <text x="284" y="352" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">모듈 파일</text>
+  <text x="284" y="352" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">module file</text>
+
+  <rect x="744" y="86" width="200" height="56" rx="7" fill="none" stroke="currentColor"/>
+  <text x="844" y="109" text-anchor="middle" font-size="12" fill="currentColor" class="ko">대상 노드</text>
+  <text x="844" y="109" text-anchor="middle" font-size="12" fill="currentColor" class="en">target nodes</text>
+  <text x="844" y="127" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">OpenSSL · JVM 레거시</text>
+  <text x="844" y="127" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">legacy OpenSSL · JVM</text>
+
+  <rect x="744" y="282" width="200" height="62" rx="7" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="844" y="306" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="700" class="ko">사용자의 배포 도구</text>
+  <text x="844" y="306" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="700" class="en">your own deployment tooling</text>
+  <text x="844" y="324" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">Ansible · Salt · 사내 파이프라인</text>
+  <text x="844" y="324" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">Ansible · Salt · in-house pipeline</text>
+
+  <line x1="608" y1="140" x2="740" y2="114" stroke="currentColor" marker-end="url(#ar)"/>
+  <text x="676" y="116" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">관측</text>
+  <text x="676" y="116" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">observes</text>
+
+  <line x1="608" y1="312" x2="740" y2="312" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar-a)"/>
+  <text x="676" y="304" text-anchor="middle" font-size="10" fill="var(--accent)" class="ko">플레이북</text>
+  <text x="676" y="304" text-anchor="middle" font-size="10" fill="var(--accent)" class="en">playbook</text>
+
+  <line x1="844" y1="278" x2="844" y2="148" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar-a)"/>
+  <text x="852" y="216" font-size="10" fill="var(--accent)" class="ko">실행</text>
+  <text x="852" y="216" font-size="10" fill="var(--accent)" class="en">executes</text>
+
+  <path d="M844 82 L844 40 L480 40 L480 48" fill="none" stroke="currentColor" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="662" y="34" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">조치 뒤 재관측 — 변화가 인벤토리에 남는다</text>
+  <text x="662" y="34" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">re-observe after the change — the delta lands in the inventory</text>
+
+  <line x1="700" y1="60" x2="700" y2="460" stroke="var(--accent)" stroke-dasharray="7 5"/>
+  <text x="700" y="480" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="700" class="ko">실행 경계</text>
+  <text x="700" y="480" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="700" class="en">execution boundary</text>
+  <text x="700" y="497" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">왼쪽은 생성까지 · 오른쪽은 사용자가 실행</text>
+  <text x="700" y="497" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">left of it: generation · right of it: you run it</text>
+</svg>
+<figcaption>
+  <span class="ko">플랫폼은 <b>관측하고 쌓고 생성</b>한다. 붉은 선 오른쪽 — 노드를 실제로 바꾸는 일 — 은
+  사용자의 배포 도구가 한다. pqcota는 원격 실행 엔진을 두지 않는다.</span>
+  <span class="en">The platform <b>observes, accumulates, and generates</b>. Everything right of the red
+  line — actually changing a node — is done by your deployment tooling. pqcota ships no remote execution engine.</span>
+</figcaption>
+</figure>
+
+<ul class="ko">
+  <li><b>자산 등록부</b>가 관리 대상 경계를 정한다. 등재되지 않은 노드는 수집·실행 대상이 아니다.</li>
+  <li><b>운영자·리뷰어</b>가 접근 정보를 관리하고 계획을 확정한다. 확정되지 않은 계획으로는 아무것도 생성되지 않는다.</li>
+  <li><b>provider 공급처</b>는 도구 밖이다. 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 사용자다.</li>
+  <li><b>대상 노드</b>는 관측되기만 한다 — collector는 읽고, 상태를 바꾸지 않는다.</li>
+</ul>
+<ul class="en">
+  <li>The <b>asset registry</b> defines the managed boundary. A node that isn't registered is neither collected from nor acted on.</li>
+  <li>The <b>operator and reviewer</b> own access information and finalize plans. Nothing is generated from a plan that isn't finalized.</li>
+  <li>The <b>provider source</b> sits outside the tool. Choosing a provider and obtaining its file is yours to do.</li>
+  <li><b>Target nodes</b> are only observed — collectors read, they do not change state.</li>
+</ul>
+
+<div class="note">
+  <span class="ko"><b>접근 비밀은 인벤토리에 남지 않는다.</b> 계정·키는 사용자가 관리하는 파일에 두고, 도구는 그것을
+  읽어 <b>런타임 전용</b> 배포 인벤토리를 만든다. 중앙에는 접속 지점(이름·ip·port)만 남고 비밀 필드는
+  타입에 존재하지 않는다.</span>
+  <span class="en"><b>Access secrets never reach the inventory.</b> Accounts and keys live in a file you manage;
+  the tool reads it to build a <b>runtime-only</b> deployment inventory. What persists centrally is the
+  endpoint (name, ip, port) — the secret field does not exist on the type.</span>
+</div>
+
+<h2><span class="ko">2. 한 바퀴 — 관측에서 조치, 그리고 다시 관측</span><span class="en">2. One full loop — observe, act, observe again</span></h2>
+
+<figure>
+<svg viewBox="0 0 960 260" role="img"
+     aria-label="관측 결과가 정규화를 거쳐 히스토리에 쌓이고, 사용자가 확정한 계획으로 플레이북이 생성되며, 사용자가 실행한 뒤 재관측으로 변화가 인벤토리에 남는다">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="ar2-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <rect x="16" y="70" width="150" height="58" rx="7" fill="none" stroke="currentColor"/>
+  <text x="91" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="ko">관측</text>
+  <text x="91" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="en">observe</text>
+  <text x="91" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">/proc · ELF · 핸드셰이크</text>
+  <text x="91" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">/proc · ELF · handshakes</text>
+
+  <rect x="206" y="70" width="150" height="58" rx="7" fill="none" stroke="currentColor"/>
+  <text x="281" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="ko">정규화</text>
+  <text x="281" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="en">normalize</text>
+  <text x="281" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">강도 · 완전성 맵</text>
+  <text x="281" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">evidence · completeness map</text>
+
+  <rect x="396" y="70" width="150" height="58" rx="7" fill="none" stroke="currentColor"/>
+  <text x="471" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="ko">인벤토리</text>
+  <text x="471" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="en">inventory</text>
+  <text x="471" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">append-only · 변화 diff</text>
+  <text x="471" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">append-only · change diff</text>
+
+  <rect x="586" y="70" width="150" height="58" rx="7" fill="none" stroke="currentColor"/>
+  <text x="661" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="ko">확정 계획</text>
+  <text x="661" y="94" text-anchor="middle" font-size="12" fill="currentColor" class="en">finalized plan</text>
+  <text x="661" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">사람이 승인한다</text>
+  <text x="661" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">a person approves it</text>
+
+  <rect x="776" y="70" width="168" height="58" rx="7" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="860" y="94" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="700" class="ko">생성물</text>
+  <text x="860" y="94" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="700" class="en">artifacts</text>
+  <text x="860" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">플레이북 + 롤백</text>
+  <text x="860" y="112" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">playbook + rollback</text>
+
+  <line x1="166" y1="99" x2="202" y2="99" stroke="currentColor" marker-end="url(#ar2)"/>
+  <line x1="356" y1="99" x2="392" y2="99" stroke="currentColor" marker-end="url(#ar2)"/>
+  <line x1="546" y1="99" x2="582" y2="99" stroke="currentColor" marker-end="url(#ar2)"/>
+  <line x1="736" y1="99" x2="772" y2="99" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar2-a)"/>
+
+  <text x="184" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="ko">본 것 그대로</text>
+  <text x="184" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="en">raw, as seen</text>
+  <text x="374" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="ko">파생</text>
+  <text x="374" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="en">derived</text>
+  <text x="564" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="ko">근거</text>
+  <text x="564" y="62" text-anchor="middle" font-size="9.5" fill="var(--muted)" class="en">evidence</text>
+
+  <path d="M860 132 L860 190 L91 190 L91 134" fill="none" stroke="currentColor"
+        stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+  <text x="475" y="208" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">
+    적용 뒤 다시 관측 — 바뀐 것이 인벤토리에 이력으로 남는다</text>
+  <text x="475" y="208" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">
+    observe again after applying — the change becomes history in the inventory</text>
+  <text x="475" y="228" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">
+    (그 사이 실행은 사용자의 배포 도구가 한다)</text>
+  <text x="475" y="228" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">
+    (the applying in between is done by your own tooling)</text>
+</svg>
+<figcaption>
+  <span class="ko">원본은 덮이지 않는다 — 관측은 그대로 쌓이고, 등급·조치는 그 위에서 계산된다.
+  규칙이 좋아지면 원본에서 다시 계산한다.</span>
+  <span class="en">Raw observations are never overwritten — grades and remediations are computed on top of them,
+  so improving a rule means recomputing from the original.</span>
+</figcaption>
+</figure>
+
+<div class="note">
+  <span class="ko"><b>못 본 것은 "없음"이 아니다.</b> 수집하지 못한 계층은 갭으로 남기고, 증거의 강도를 함께 적는다.
+  플랫폼은 관측 사실만 내고 무엇을 언제 바꿀지는 판단하지 않는다.</span>
+  <span class="en"><b>Not seen is not the same as not there.</b> A layer that could not be collected is recorded as a
+  gap, with the strength of the evidence beside it. The platform reports observed facts; what to change, and when,
+  is yours to decide.</span>
+</div>
+</main>
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll('.switch button').forEach(b => {
+    b.addEventListener('click', () => {
+      const lang = b.dataset.set;
+      root.dataset.lang = lang;
+      root.lang = lang;
+      document.querySelectorAll('.switch button')
+        .forEach(x => x.setAttribute('aria-pressed', String(x.dataset.set === lang)));
+    });
+  });
+</script>
+</html>

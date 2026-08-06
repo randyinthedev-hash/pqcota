@@ -77,7 +77,7 @@ message RemediationAction {
   string target_node_id = 2; // 스코프 마스터 앵커(§1.4)
   string finding_id = 3;     // 근거 Finding(수용 원칙 §2.4)
 
-  pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기(docs/암호_런타임_수용_원칙.md)
+  pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기(docs/runtime-acceptance.md)
   RemediationKind kind = 5;                          // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
   DeployAutomationLevel automation_level = 6;        // L1/L2/L3 자산별(§4.3)
 

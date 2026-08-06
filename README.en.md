@@ -103,7 +103,7 @@ go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
 **③ The collectors that go on the target nodes** — just three, built statically **for the node's arch**
-→ [deployment design](discovery/collector_배포_설계.md) (Korean).
+→ [deployment design](discovery/collector-deployment.md) (Korean).
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
@@ -160,5 +160,5 @@ In development — before the first release (v0.1.0). **Per-version goals and re
 ## License
 
 - **Apache-2.0** — full text in [LICENSE](LICENSE)
-- Dependency licensing → [License notes](docs/라이선스_정리.md) (Korean)
+- Dependency licensing → [License notes](docs/licensing.md) (Korean)
 - Third-party notices → [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.en.md)

@@ -19,4 +19,4 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml
 
 `collector_bin_dir`를 자기 빌드 산출(`dist/linux-amd64` 등)로 바꾸면 된다 → [루트 README · 빌드](../../README.md#빌드). `become: true`가 필요한 이유는 `pqcota-netcap`의 `CAP_NET_RAW`와 `/proc` 전 프로세스 커버리지다.
 
-**fleet 규모로 플레이북을 찍어 주는 생성기는 없다.** 자체 원격 실행 엔진을 만들지 않고 사용자의 기존 substrate(Ansible·Salt 등)가 실행하는 모델이다 → [collector 배포 설계](../collector_배포_설계.md).
+**fleet 규모로 플레이북을 찍어 주는 생성기는 없다.** 자체 원격 실행 엔진을 만들지 않고 사용자의 기존 substrate(Ansible·Salt 등)가 실행하는 모델이다 → [collector 배포 설계](../collector-deployment.md).

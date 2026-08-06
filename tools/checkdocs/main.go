@@ -217,7 +217,7 @@ func main() {
 	// (8) 라이선스 표 ↔ 실제 링크되는 모듈. 손으로 관리하면 반드시 어긋난다(실제로 어긋났다).
 	if dep := checkLicenseTable(); len(dep) > 0 {
 		hits = append(hits, dep)
-		titles = append(titles, "라이선스 문서가 실제 의존성과 어긋난다 — docs/라이선스_정리.md §2를 고칠 것")
+		titles = append(titles, "라이선스 문서가 실제 의존성과 어긋난다 — docs/licensing.md §2를 고칠 것")
 	} else {
 		hits = append(hits, nil)
 		titles = append(titles, "")
@@ -281,7 +281,7 @@ func loc(file string, idx int, line string) string {
 // 일치하나. 버전까지 본다 — 버전이 어긋나면 "어느 버전을 검토했나"가 거짓이 된다.
 // 목록을 못 얻으면 그 사실을 실패로 낸다(조용히 통과시키지 않는다).
 func checkLicenseTable() []string {
-	const doc = "docs/라이선스_정리.md"
+	const doc = "docs/licensing.md"
 	b, err := os.ReadFile(doc)
 	if err != nil {
 		return nil // 문서가 없으면 이 검사 대상이 아니다
@@ -326,7 +326,7 @@ func checkLicenseTable() []string {
 // 규정서 자신은 면제한다 — 자기 절 번호를 자기가 가리키는 것이라 밝힐 대상이 없다.
 // 영문 문서는 「§ notation」으로 같은 일을 한다.
 func unexplainedSectionRefs(doc string, ls []string) []string {
-	if strings.HasSuffix(doc, "플랫폼_규정.md") {
+	if strings.HasSuffix(doc, "regulation.md") {
 		return nil
 	}
 	body := strings.Join(ls, "\n")

@@ -4,7 +4,7 @@ English · [한국어](CONTRIBUTING.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](CONTRIBUTING.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/플랫폼_규정.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.md) (Korean).
 
 For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.en.md) and [demo/](demo/).
 
@@ -113,7 +113,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector re
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh            # end-to-end discovery demo
 ```
 
-Acceptance criteria and implementation order: [discovery test cases](discovery/디스커버리_테스트케이스.md)·[inventory test cases](inventory/인벤토리_테스트케이스.md) (TDD).
+Acceptance criteria and implementation order: [discovery test cases](discovery/testcases.md)·[inventory test cases](inventory/testcases.md) (TDD).
 
 ## Language
 

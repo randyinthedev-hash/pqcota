@@ -7,7 +7,7 @@ import (
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 )
 
-// TK-EVIDENCE-2·3 (docs/커널_테스트케이스.md).
+// TK-EVIDENCE-2·3 (docs/kernel-testcases.md).
 //
 // 강도를 파생하기 전에 방법부터 정해야 한다. collector는 컴포넌트 프로퍼티
 // `pqcota:detection_method`에 방법을 적는데, 한 자산을 두 가지로 본 경우가 있어
