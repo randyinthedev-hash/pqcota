@@ -4,7 +4,7 @@ English · [한국어](RELEASE_NOTES.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](RELEASE_NOTES.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/PQC플랫폼_규정.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/플랫폼_규정.md) (Korean).
 
 Records the **goals** and **results** per version. This is still before the first official release (v0.1.0); the document is updated as versions advance. (Newest version on top.)
 

@@ -326,7 +326,7 @@ func checkLicenseTable() []string {
 // 규정서 자신은 면제한다 — 자기 절 번호를 자기가 가리키는 것이라 밝힐 대상이 없다.
 // 영문 문서는 「§ notation」으로 같은 일을 한다.
 func unexplainedSectionRefs(doc string, ls []string) []string {
-	if strings.HasSuffix(doc, "PQC플랫폼_규정.md") {
+	if strings.HasSuffix(doc, "플랫폼_규정.md") {
 		return nil
 	}
 	body := strings.Join(ls, "\n")

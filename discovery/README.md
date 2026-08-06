@@ -2,7 +2,7 @@
 
 실행 중인 시스템이 **실제로 어떤 암호 알고리즘을 쓰는지** 관측한다 — 암호 자체(암호문·키)가 아니라 **어떤 라이브러리·provider·알고리즘이 로드·등록·협상되는지**다. 정적 문서·소스 스캔이 못 보는 **런타임 실체**(동적 등록된 provider, 로드된 라이브러리, 협상된 통신 그룹)를 잡아, 각 자산에 양자내성 등급(🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명)를 부착한다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/PQC플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
 
 **왜 런타임인가** — 설정(`openssl.cnf`·`java.security`·nginx `ssl_ciphers`)은 *허용 목록*이라 실제와
 어긋난다. 거기 PQC 그룹을 적어둬도 상대가 지원하지 않으면 고전으로 떨어지고, `java.security`에 없는
@@ -76,4 +76,4 @@ collector가 어떻게 파싱하고 어디까지 열화되는지, 정규화 6단
 
 ## 더 보기
 
-규정서 §2 · [아키텍처 설계](../docs/PQC플랫폼_아키텍처_및_OSS경계_설계.md) · 정규화·히스토리 라이브러리 [`pkg/discovery/`](../pkg/discovery) · 실행 예제 [`examples/discovery/`](../examples/discovery)
+규정서 §2 · [아키텍처 설계](../docs/아키텍처.md) · 정규화·히스토리 라이브러리 [`pkg/discovery/`](../pkg/discovery) · 실행 예제 [`examples/discovery/`](../examples/discovery)
