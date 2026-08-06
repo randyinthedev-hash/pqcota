@@ -15,8 +15,8 @@
 
 | 파일 | 패키지 | 정의 | 규정서 근거 |
 |---|---|---|---|
-| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | §1.3, §2.4, §2.7, §3.1 |
-| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | §1.3, §2.4, §3.2 |
+| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | 수용 원칙 §2.4, §2.4, §2.7, §3.1 |
+| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | 수용 원칙 §2.4, §2.4, §3.2 |
 | `proto/pqcota/discovery/v1/collector.proto` | `pqcota.discovery.v1` | Collector intake gRPC 서비스 · CollectionResult | §6.1 |
 | `proto/pqcota/discovery/v1/edge.proto` | `pqcota.discovery.v1` | 통신 엣지 관측 · ObservedEdge · QuantumPosture | §12 |
 | `proto/pqcota/discovery/v1/asset.proto` | `pqcota.discovery.v1` | 자산 계층 · Application · ProcessMatch · LiveProcess (Machine→App→Process) | §0.4, §2 |
@@ -49,7 +49,7 @@ Collector  →  §2.5 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 채우지 못한 필드를 빈칸/누락으로 두지 말고 **명시적 0값**으로 남긴다.
 자동 "부재" 처리 금지 — "실제 없음"과 "원리상 못 봄"은 `Completeness.layers_missing`으로 구분한다.
 
-### 3. provider 시그니처 레지스트리가 강화를 구동 (규정서 §2.3 v3)
+### 3. provider 시그니처 레지스트리가 강화를 구동 (수용 원칙 §2.3)
 
 `JcaAxes.provider_set`(등록 순서 포함)은 Collector가 관측한 **원본**이다.
 코어 강화 단계가 이 값을 provider 시그니처 레지스트리와 대조해 `pqc_readiness`·`fips_validation`·
@@ -124,7 +124,7 @@ proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 �
 
 **판정 규칙을 바꿨다면** `ruleset_version`을 올리고, 과거 스냅샷은 원본에서 **재계산**해 새 판정을 얻는다(§0.2). 파생값은 저장된 값이 아니라 규칙의 함수다.
 
-**순서가 의미를 갖는 필드**에 주의한다 — `JcaAxes.provider_set`은 등록 순서가 우선순위 협상을 결정하므로(§1.2) 정렬·정규화 대상이 아니다.
+**순서가 의미를 갖는 필드**에 주의한다 — `JcaAxes.provider_set`은 등록 순서가 우선순위 협상을 결정하므로(수용 원칙 §2.2) 정렬·정규화 대상이 아니다.
 
 ## 코드 생성
 

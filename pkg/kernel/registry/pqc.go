@@ -21,7 +21,7 @@ const (
 	MaturityBroken       PQCMaturity = "broken"        // 파훼됨 (Rainbow·GeMSS·SIKE)
 )
 
-// PQCAlgorithm — PQC 알고리즘 참조 항목(공개 참조 데이터, §2.3). 협상 그룹/알고리즘명에서 매칭한다.
+// PQCAlgorithm — PQC 알고리즘 참조 항목(공개 참조 데이터, 수용 원칙 §2.3). 협상 그룹/알고리즘명에서 매칭한다.
 type PQCAlgorithm struct {
 	Family   string  // "ML-KEM", "Falcon" 등
 	Kind     PQCKind // KEM | signature

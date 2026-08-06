@@ -107,7 +107,7 @@ func TestDeriveFindings_JCA(t *testing.T) {
 	// JDK 네이티브만(SunJCE) → SLH-DSA 갭.
 	fs2, _ := normalize.DeriveFindings(jcaResult("cmdb://j2", "SUN,SunJCE"), "s", "r")
 	if got := fs2[0].GetPqcReadiness(); got != "provider-보강(SLH-DSA 갭)" {
-		t.Errorf("pqc_readiness = %q, want SLH-DSA 갭 (§2.3)", got)
+		t.Errorf("pqc_readiness = %q, want SLH-DSA 갭 (수용 원칙 §2.3)", got)
 	}
 }
 

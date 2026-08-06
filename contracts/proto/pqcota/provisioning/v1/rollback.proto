@@ -18,7 +18,7 @@ message CryptoState {
   // 로드/설치된 암호 모듈 + 버전. 예: "libcrypto.so.3@3.0.13", "oqsprovider@0.6.1", "bcprov-jdk18on@1.78.1".
   repeated string modules = 1;
   string config_digest = 2;             // 관련 config(openssl.cnf/java.security)의 해시 — 변화 감지
-  repeated string provider_chain = 3;   // JCA provider 등록 순서(§1.2(d)) 등
+  repeated string provider_chain = 3;   // JCA provider 등록 순서(수용 원칙 §2.2(d)) 등
   string config_snapshot_ref = 4;       // 롤백용 config 원문 보존 참조(내용/블롭 ID). 원본 복원의 근거.
 }
 

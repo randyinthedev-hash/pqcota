@@ -14,7 +14,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/pqcota/pqcota/gen/pqcota/common/v1;commonv1";
 
 // ─────────────────────────────────────────────────────────────────────────
-// 통제 어휘 (규정서 §1.3 · §2.4) — 전 단계 공유
+// 통제 어휘 (수용 원칙 §2.4 · 규정서 §2.4) — 전 단계 공유
 // ─────────────────────────────────────────────────────────────────────────
 
 // 암호 런타임 — 모든 finding·자산·조치의 1급 분기 필드.
@@ -55,7 +55,7 @@ enum EvidenceStrength {
   EVIDENCE_STRENGTH_INFERRED_LOW = 3;
 }
 
-// 사용 맥락 (규정서 §1.3). 소스 부재 시 열화될 수 있는 필드(§2.4).
+// 사용 맥락 (수용 원칙 §2.4). 소스 부재 시 열화될 수 있는 필드(§2.4).
 enum UsageContext {
   USAGE_CONTEXT_UNSPECIFIED = 0; // unknown / 열화됨
   USAGE_CONTEXT_SERVER = 1;
@@ -74,7 +74,7 @@ enum CollectionLayer {
   COLLECTION_LAYER_JVM_INTROSPECTION = 5; // JCA 전용 (§2.2 자체 구현 공백)
 }
 
-// OpenSSL 바인딩 방식 (규정서 §1.3).
+// OpenSSL 바인딩 방식 (수용 원칙 §2.4).
 enum OpensslBindingMode {
   OPENSSL_BINDING_MODE_UNSPECIFIED = 0; // unknown
   OPENSSL_BINDING_MODE_DYNAMIC = 1;
@@ -83,7 +83,7 @@ enum OpensslBindingMode {
   OPENSSL_BINDING_MODE_VENDORED = 4;
 }
 
-// JCA provider 등록 방식 (규정서 §1.2 (a)~(c), §1.3).
+// JCA provider 등록 방식 (수용 원칙 §2.2 (a)~(c) · §2.3).
 enum JcaRegistrationMode {
   JCA_REGISTRATION_MODE_UNSPECIFIED = 0; // unknown
   JCA_REGISTRATION_MODE_STATIC = 1;   // java.security 정적 순서 목록

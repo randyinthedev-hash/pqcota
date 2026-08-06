@@ -6,7 +6,7 @@ import (
 	"github.com/pqcota/pqcota/discovery/collectors/jvm"
 )
 
-// java.security 파싱 — 정적 등록 provider를 **N 순서대로**. 순서가 곧 우선순위라(§1.2)
+// java.security 파싱 — 정적 등록 provider를 **N 순서대로**. 순서가 곧 우선순위라(수용 원칙 §2.2)
 // 파일에 적힌 줄 순서가 아니라 숫자 순이 맞다.
 func TestParseJavaSecurity(t *testing.T) {
 	// 일부러 줄 순서를 뒤섞고, 주석·빈 줄·인자 붙은 값·무관한 키를 섞는다.

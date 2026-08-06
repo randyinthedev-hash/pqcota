@@ -35,7 +35,7 @@ func ContentHash(s *Snapshot) string {
 			fmt.Fprintf(h, "  O|%s|%s|%s|%d\n", o.GetLib(), o.GetFork(), o.GetVersion(), o.GetBindingMode())
 		}
 		if j := f.GetJca(); j != nil {
-			// provider_set은 **순서가 의미를 갖는다**(우선순위 협상, §1.2) — 정렬하지 않는다.
+			// provider_set은 **순서가 의미를 갖는다**(우선순위 협상, 수용 원칙 §2.2) — 정렬하지 않는다.
 			fmt.Fprintf(h, "  J|%s|%s|%s|%d\n", j.GetJdkVendor(), j.GetJdkVersion(),
 				strings.Join(j.GetProviderSet(), ","), j.GetRegistrationMode())
 		}

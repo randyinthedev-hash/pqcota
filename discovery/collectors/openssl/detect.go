@@ -73,7 +73,7 @@ func DetectForPID(pid int, sigs []registry.ForkSignature) ([]Detection, error) {
 	return out, nil
 }
 
-// bindingMode — 표준 시스템 라이브러리 경로면 dynamic, 그 밖(앱 번들 등)이면 vendored(§2.3).
+// bindingMode — 표준 시스템 라이브러리 경로면 dynamic, 그 밖(앱 번들 등)이면 vendored(수용 원칙 §2.4).
 func bindingMode(path string) string {
 	for _, sys := range []string{"/usr/lib/", "/lib/", "/usr/local/lib/", "/lib64/", "/usr/lib64/"} {
 		if strings.HasPrefix(path, sys) {

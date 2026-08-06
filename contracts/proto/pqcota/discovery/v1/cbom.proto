@@ -14,20 +14,20 @@ import "pqcota/common/v1/common.proto";
 option go_package = "github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1";
 
 // ─────────────────────────────────────────────────────────────────────────
-// 런타임별 분기 축 (규정서 §1.3)
+// 런타임별 분기 축 (수용 원칙 §2.4)
 // ─────────────────────────────────────────────────────────────────────────
 
 message OpensslAxes {
   string lib = 1;                     // libssl / libcrypto
   string version = 2;                 // "unknown" 대신 빈 문자열 + evidence로 표현
-  string fork = 3;                    // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, §1.2)
+  string fork = 3;                    // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, 수용 원칙 §2.2)
   pqcota.common.v1.OpensslBindingMode binding_mode = 4;
 }
 
 message JcaAxes {
   string jdk_vendor = 1;
   string jdk_version = 2;
-  // provider_set: 등록 "순서 포함". 우선순위 협상(§1.2 (d)) 판정의 근거.
+  // provider_set: 등록 "순서 포함". 우선순위 협상(수용 원칙 §2.2 (d)) 판정의 근거.
   // 목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider는 무시된다.
   repeated string provider_set = 3;
   pqcota.common.v1.JcaRegistrationMode registration_mode = 4;
@@ -35,7 +35,7 @@ message JcaAxes {
 
 // CngAxes — Windows CNG 분기축. **v0.1.0에서 스키마로만 예약**한다(단계적 도입):
 // 이 축을 채우는 콜렉터·정규화는 디스커버리 릴리스에서 온다. 지금은 어떤 코드도 이 축을 생성·소비하지
-// 않는다. 필드는 provider 동형성(§1.1)이 보장하는 것만 최소로 두고, 실물 관측이 정할 나머지(OS 빌드·
+// 않는다. 필드는 provider 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정할 나머지(OS 빌드·
 // 등록 방식 등)는 그때 **번호를 새로 부여해 추가**한다(proto3 additive — 하위호환). 상세: docs/런타임_확장_계약.md
 message CngAxes {
   // provider_set: 등록된 CNG provider(KSP/SSP) 목록. JcaAxes와 같이 **순서 유의미**(우선순위).
@@ -43,7 +43,7 @@ message CngAxes {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Finding (규정서 §1.3 · §2.4) — 코어 정규화 파이프라인이 파생하는 뷰
+// Finding (수용 원칙 §2.4 · 규정서 §2.4) — 코어 정규화 파이프라인이 파생하는 뷰
 //
 // ★ Collector는 이 타입을 직접 생성하지 않는다. Collector는 표준 CycloneDX +
 //   Envelope만 반환하고(§6.1), 코어 파이프라인의 강화 단계(§2.5 step 3)가
@@ -61,7 +61,7 @@ message Finding {
   pqcota.common.v1.DetectionMethod detection_method = 5;   // Envelope에서 전파 (finding별로 다를 수 있음)
   pqcota.common.v1.EvidenceStrength evidence_strength = 6; // detection_method에서 파생 (§2.6 AUTO)
 
-  // ─ 런타임별 분기 (§1.3) ─
+  // ─ 런타임별 분기 (수용 원칙 §2.4) ─
   oneof runtime_axes {
     OpensslAxes openssl = 7;
     JcaAxes jca = 8;
@@ -71,7 +71,7 @@ message Finding {
   }
 
   // ─ 공통 판정 축 (강화 단계 산출) ─
-  string pqc_readiness = 9;     // version→매핑 (§2.5 step 3). JCA는 "네이티브 ∨ provider보강" (§1.2)
+  string pqc_readiness = 9;     // version→매핑 (§2.5 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
   string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (§4.9)
   string remediation_class = 11;// remediation taxonomy 분기 키 (§4.3/§4.4)
 

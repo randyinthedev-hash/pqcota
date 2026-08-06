@@ -8,17 +8,17 @@ type ProviderSignature struct {
 	Match          string   // provider JAR/모듈 시그니처(부분 문자열 매칭)
 	Aliases        []string // 런타임 provider명(getProviders()의 name, 정확 일치). 예 BC·BCFIPS
 	Nature         string   // pure-java | fips-native | jdk-builtin | jni-bridge | internal
-	PQCAlgorithms  []string // 커버 알고리즘. JDK 네이티브는 SLH-DSA 없음(§2.3)
+	PQCAlgorithms  []string // 커버 알고리즘. JDK 네이티브는 SLH-DSA 없음(수용 원칙 §2.3)
 	FipsValidation string   // "140-3" | "none" | "jdk-dependent" | "module-dependent"
 	LicenseClass   string   // permissive(BC 표준) | fips-contract(BC-FJA) | gpl | internal
 }
 
-// DefaultProviderSignatures — 초기 시드(§2.3 v3 표). Match=JAR/모듈명, Aliases=런타임 provider명.
+// DefaultProviderSignatures — 초기 시드(수용 원칙 §2.3 표). Match=JAR/모듈명, Aliases=런타임 provider명.
 var DefaultProviderSignatures = []ProviderSignature{
 	{Match: "bcprov-jdk18on", Aliases: []string{"BC"}, Nature: "pure-java", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "none", LicenseClass: "permissive"},
 	{Match: "bc-fips", Aliases: []string{"BCFIPS", "BC-FJA"}, Nature: "fips-native", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "140-3", LicenseClass: "fips-contract"},
 	{Match: "openssl-jostle", Aliases: []string{"JOSTLE"}, Nature: "jni-bridge", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "module-dependent", LicenseClass: "permissive"},
-	// JDK 네이티브(24/25+): ML-KEM/ML-DSA만, SLH-DSA 없음(§2.3 핵심 규정).
+	// JDK 네이티브(24/25+): ML-KEM/ML-DSA만, SLH-DSA 없음(수용 원칙 §2.3).
 	{Match: "SunJCE", Aliases: []string{"SunEC"}, Nature: "jdk-builtin", PQCAlgorithms: []string{"ML-KEM", "ML-DSA"}, FipsValidation: "jdk-dependent", LicenseClass: "permissive"},
 }
 
@@ -48,7 +48,7 @@ func (p ProviderSignature) Covers(algo string) bool {
 	return false
 }
 
-// SLHDSAGap — SLH-DSA가 필요한데 provider가 커버하지 못하면 true (§2.3 규정).
+// SLHDSAGap — SLH-DSA가 필요한데 provider가 커버하지 못하면 true (수용 원칙 §2.3).
 // 이 경우 JDK 버전 무관하게 BC/jostle 의존으로 태깅해야 한다.
 func SLHDSAGap(p ProviderSignature) bool {
 	return !p.Covers("SLH-DSA")

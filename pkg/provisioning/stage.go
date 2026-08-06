@@ -215,7 +215,7 @@ func writeActionTasks(b *strings.Builder, a *provisioningv1.RemediationAction, c
 		b.WriteString("        mode: '0644'\n")
 
 		// 무결성 확인 — 타깃에서 암호 연산을 수행할 네이티브 코드를 심는 일이라, 무엇을 심었는지
-		// 고정할 수단이 필요하다(§2.3 RCE 대칭성). sha256을 주지 않으면 건너뛴다(하위호환).
+		// 고정할 수단이 필요하다(§4.5 "약속된 스크립트 실행=RCE" 계약). sha256을 주지 않으면 건너뛴다(하위호환).
 		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("provider 모듈 sha256 확인 ("+prov+")"))
 		fmt.Fprintf(b, "      ansible.builtin.stat: { path: %s, checksum_algorithm: sha256 }\n", yamlScalar(dest))
 		fmt.Fprintf(b, "      register: pqcota_stat_%s\n", sfx)
