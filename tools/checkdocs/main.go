@@ -44,7 +44,9 @@ var (
 	//     규칙은 `| 활동 | 고객 | 소프트웨어 | 서비스 |` 같은 **표 머리**를 통과시켰다(실제로
 	//     통과했다). '고객'·'벤더 서비스'는 어휘 자체를 막는다 — 읽는 사람은 사용자이지
 	//     고객이 아니고, 유료 대행은 이 문서들의 관심사가 아니다.
-	roleProse = regexp.MustCompile(`(사용자|고객|우리|도구)(의)? 몫|실행은 (사용자|고객)|(사용자|고객)가 실행한다|사용자 역할이다|고객|\[서비스\]|서비스 카탈로그|전문 서비스|벤더 인적 지원`)
+	// §N · §4A.3 · §0.5 같은 절 참조. 「§ 표기」 안내문 자신은 숫자가 안 붙어 걸리지 않는다.
+	sectionRef = regexp.MustCompile(`§[0-9]+[0-9A-Za-z.]*`)
+	roleProse  = regexp.MustCompile(`(사용자|고객|우리|도구)(의)? 몫|실행은 (사용자|고객)|(사용자|고객)가 실행한다|사용자 역할이다|고객|\[서비스\]|서비스 카탈로그|전문 서비스|벤더 인적 지원`)
 
 	// (4) 개인 식별자만. `/home/me` 같은 일반 플레이스홀더는 문서에 필요한 예시다.
 	// 머신 이름·경로·계정뿐 아니라 **내 개발 환경 구성**도 제품 문서에 남으면 안 된다 —
@@ -155,6 +157,7 @@ func main() {
 		`부정확한 표현 — 우리가 보는 것은 암호가 아니라 **알고리즘**이다(암호문·키를 읽지 않는다)`,
 		`제목만 있고 내용이 없는 절 — 옮기다 본문을 흘렸거나, 쓰다 만 자리다`,
 		"범위 표기의 `~` — GitHub이 취소선으로 읽어 문장 일부에 줄이 그어진다. `–`를 쓸 것",
+		"`§N`을 쓰면서 그게 어느 문서의 절인지 밝히지 않았다 — 처음 읽는 사람은 찾을 방법이 없다",
 	}
 	hits := make([][]string, len(titles))
 
@@ -207,6 +210,7 @@ func main() {
 		if isDoc {
 			hits[5] = append(hits[5], emptySections(d, ls)...)
 			hits[6] = append(hits[6], tildeRanges(d, ls)...)
+			hits[7] = append(hits[7], unexplainedSectionRefs(d, ls)...)
 		}
 	}
 
@@ -310,6 +314,31 @@ func checkLicenseTable() []string {
 		}
 	}
 	return miss
+}
+
+// unexplainedSectionRefs — `§2.6`·`§4A.3` 같은 절 참조를 쓰면서 **그게 어느 문서의 절인지**
+// 밝히지 않은 문서를 찾는다.
+//
+// 이 리포는 절 번호를 근거로 자주 든다. 쓰는 사람에겐 자명하지만 처음 읽는 사람에겐 찾을 방법이
+// 없는 기호다 — 링크가 아니라 검색으로도 안 걸린다. 이미 문서 열 곳이 「§ 표기」 한 줄로 밝히고
+// 있어, 관행은 서 있고 빠진 문서만 있는 상태였다. 그 한 줄을 게이트로 굳힌다.
+//
+// 규정서 자신은 면제한다 — 자기 절 번호를 자기가 가리키는 것이라 밝힐 대상이 없다.
+// 영문 문서는 「§ notation」으로 같은 일을 한다.
+func unexplainedSectionRefs(doc string, ls []string) []string {
+	if strings.HasSuffix(doc, "PQC플랫폼_단계별_프로세스규정.md") {
+		return nil
+	}
+	body := strings.Join(ls, "\n")
+	if strings.Contains(body, "§ 표기") || strings.Contains(body, "§ notation") {
+		return nil
+	}
+	for n, line := range ls {
+		if m := sectionRef.FindString(line); m != "" {
+			return []string{fmt.Sprintf("%s:%d: %s — 「§ 표기」 한 줄로 어느 문서의 절인지 밝힐 것", doc, n+1, m)}
+		}
+	}
+	return nil
 }
 
 // emptySections — 제목 다음에 본문도 하위 제목도 없는 절을 찾는다.

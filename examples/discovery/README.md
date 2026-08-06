@@ -1,5 +1,7 @@
 # examples/discovery — 접근 준비 + 두 수신 경로(① 직접 관측 · ② 위임 CBOM)
 
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+
 ```bash
 ./examples/discovery/run.sh
 ```

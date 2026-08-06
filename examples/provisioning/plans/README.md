@@ -68,6 +68,22 @@ pqcota-provision --level l2 plans/openssl-3.5-config-only.json > provision.yml
 
 JCA에서 아는 이름이 아닌데 `providerClass`도 없으면, 등록 줄이 `<이름: provider 문서의 정식 클래스명 확인>` placeholder로 나가고 경고가 함께 뜬다 — 지어내지 않는다는 뜻이다. [`custom-jca-missing-class`](custom-jca-missing-class.json)가 그 케이스다.
 
+#### 어떤 provider를 넣을 수 있나
+
+이름은 자유지만, **도구가 낼 수 있는 설정 조각의 모양은 하나**다 — `activate = 1` + `module = 경로`.
+그 모양으로 충분한 provider는 그대로 되고, 다른 모양을 요구하는 것은 아직 못 낸다.
+
+| 후보 | 되나 |
+|---|---|
+| [oqsprovider](https://github.com/open-quantum-safe/oqs-provider) | ✅ 현행 모양으로 충분 — 실물 확인됨(2026-08-06, OpenSSL 3.0.13) |
+| [wolfProvider](https://github.com/wolfSSL/wolfProvider) | ◐ 충분해 보이나 실물 미확인 |
+| OpenSSL 자체 `fips` 모듈 | ❌ 다른 모양 — `fipsinstall`이 만드는 `fipsmodule.cnf`를 끌어와야 한다 |
+| [pkcs11-provider](https://github.com/openssl-projects/pkcs11-provider) | ❌ 다른 모양 — 드라이버 경로 등 키가 더 필요 |
+| JCA 커스텀 | ✅ `providerClass`(FQCN)가 이미 일반 경로다 |
+
+❌ 인 것을 받으려면 도구가 그 모양을 알아야 한다 — [검토 중인 설계](../../../docs/검토_중인_설계.md)에서 다룬다.
+모듈 파일 자체는 어느 경우든 사용자가 구해 [`files/`](../files/README.md)에 둔다.
+
 **이름은 Ansible 변수명으로도 쓰인다.** `pqcota_module_src_<이름>`·`pqcota_module_sha256_<이름>`에서 `<이름>`은 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`) — Ansible 변수명에 하이픈을 쓸 수 없어서다. 하이픈을 그대로 준 변수는 **인식되지 않고 조용히 무시된다**(무결성 검사가 통째로 skip된다).
 
 ### `kind` — 무엇이 생성되는지를 가른다

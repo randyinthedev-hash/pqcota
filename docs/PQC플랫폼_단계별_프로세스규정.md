@@ -43,11 +43,13 @@
 **자산관리정보(사용자 CMDB/자산 등록부)가 관리 대상 경계의 유일한 권위 소스다.** 디스커버리 배포, 인벤토리 등재, 프로비저닝 실행 대상이 모두 이 마스터로 게이트된다. 마스터 미등재 노드는 원칙적으로 수집·실행 대상이 아니며, 관측으로 발견될 경우 "실행 대상"이 아니라 "등재 판정 요청 대상"으로 흐른다.
 
 ### 0.5 암호 런타임 추상 원칙
-플랫폼의 대상은 특정 라이브러리가 아니라 **"암호 provider를 갖는 런타임"**이라는 추상이다. OpenSSL(provider 아키텍처)과 JCA/JCE(Security Provider)가 첫 두 구현이며, 동일 패턴을 갖는 것들(.NET CNG, Python cryptography, Go crypto, Node 등)이 후속 확장 대상이다.
+플랫폼의 대상은 특정 라이브러리가 아니라 **"암호 provider를 갖는 런타임"**이라는 추상이다. OpenSSL(provider 아키텍처)과 JCA/JCE(Security Provider)가 첫 두 구현이다.
 
 - **프로세스 규정(3단계, AUTO/PROPOSE/MANUAL)은 런타임 무관하게 불변**이다.
-- 런타임별로 달라지는 것은 **(a) 디스커버리 수집 방법, (b) 버전·provider 축 스키마, (c) remediation taxonomy 분기** 세 가지 — 그리고 (a)–(c) 밑에 암묵으로 깔린 **(d) 프로비저닝 substrate**(아티팩트를 어디에·어떻게 배치·되돌리나)다. openssl·jca는 둘 다 POSIX 파일이라 (d)가 `jca` 2-way 스위치 뒤에 숨어 있었다. non-POSIX 런타임(예: Windows CNG의 레지스트리/GPO)은 이 (d)를 건드리므로 별도 취급이다. 상세·반례 테스트: [런타임 확장 계약](런타임_확장_계약.md).
-- 모든 finding·자산은 **`crypto_runtime`을 1급 필드**로 가진다(`openssl` / `jca` / …). 이 필드가 각 단계의 런타임 분기를 결정한다.
+- 런타임별로 달라지는 것은 넷이다 — **(a) 디스커버리 수집 방법, (b) 버전·provider 축 스키마, (c) remediation taxonomy 분기, (d) 프로비저닝 substrate.**
+- 모든 finding·자산은 **`crypto_runtime`을 1급 필드**로 가진다. 이 필드가 각 단계의 런타임 분기를 결정한다.
+
+무엇이 새 런타임으로 인정되는지, 어느 축에서 부러지는지는 [암호 런타임 추상 원칙](암호_런타임_추상_원칙.md)가 반례 셋으로 따진다.
 
 ---
 

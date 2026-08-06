@@ -3,9 +3,9 @@
 #
 # gen/ (proto 생성 코드)은 gitignore 대상 — 클론 후 `make generate` 필수.
 
-.PHONY: all generate lint fmt-check build build-jar test vet tools check-boundary check-docs
+.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs
 
-all: generate lint fmt-check check-boundary check-docs vet build build-jar test
+all: generate lint breaking fmt-check check-boundary check-docs vet build build-jar test
 
 # 전체 빌드 — Go(호스트 + **리눅스 타깃**) + Java 사이드카.
 #
@@ -79,6 +79,28 @@ generate:
 lint:
 	@command -v buf >/dev/null || { echo "✗ buf 없음 — https://buf.build/docs/installation"; exit 1; }
 	cd contracts && buf lint
+
+# 계약 하위호환 — **이미 릴리스한 계약**을 깨지 않는지 본다(buf.yaml의 `breaking: FILE`).
+#
+# 기준선은 마지막 릴리스 태그다. 직전 커밋이 아니라 태그인 이유: 릴리스 전에는 계약을 다시
+# 짜는 것이 정당하고, 받는 사람이 생긴 뒤부터 못 깨는 것이다. "새 런타임을 코어 무변경으로
+# 받는다"는 주장도 **published 계약 기준**이라야 뜻이 있다.
+# 태그가 없으면(v0.1.0 이전) 비교 대상이 없다 — 건너뛰되 **왜 건너뛰는지 찍는다**(스킵은 통과가 아니다).
+breaking:
+	@command -v buf >/dev/null || { echo "✗ buf 없음 — https://buf.build/docs/installation"; exit 1; }
+	@if [ -n "$(AGAINST)" ]; then \
+	  echo "· 계약 하위호환 기준선: $(AGAINST) (branch)"; \
+	  cd contracts && buf breaking --against "../.git#branch=$(AGAINST),subdir=contracts"; \
+	  exit $$?; \
+	fi; \
+	tag=$$(git tag -l 'v*' --sort=-v:refname | head -1); \
+	if [ -z "$$tag" ]; then \
+	  echo "· 계약 하위호환 검사 건너뜀 — 릴리스 태그가 아직 없다(첫 태그부터 기준선이 생긴다)"; \
+	  echo "  작업 중 브랜치를 main과 대조하려면: make breaking AGAINST=main"; \
+	else \
+	  echo "· 계약 하위호환 기준선: $$tag"; \
+	  cd contracts && buf breaking --against "../.git#tag=$$tag,subdir=contracts"; \
+	fi
 
 # 경계 표현 게이트 — 이 리포는 다른 티어를 **지목하지 않는다**. 여기 없는 기능은 "하지 않는다"로
 # 적고, 계획은 로드맵이 말한다(위치 선언은 check-docs 규칙 (2)가 따로 막는다). 사람 기억에만

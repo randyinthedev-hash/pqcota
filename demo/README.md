@@ -1,5 +1,7 @@
 # pqcota 데모 (OSS) — 접근준비 → 디스커버리 → 인벤토리 → 프로비저닝
 
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+
 **Docker만 있으면** 한 줄로 설치·수행·제거되는 종단 데모입니다. 단일 가상 네트워크에 묶인
 노드에서 pqcota가 **① 사용자 hosts 파일로 접근 준비(비밀 미영속) → ② Ansible/SSH로 OpenSSL·Java(JCA)·
 통신 핸드셰이크 디스커버리 → ③ 중앙 인벤토리(엔드포인트·프로필·앱 귀속·이력·자산 스코프) →
@@ -177,7 +179,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 본다 |
 | **되돌림** | L3→L2 순서로 되돌리면 다시 **0개** — 가역성도 같은 자로 잰다 |
 
-**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [검토 중인 설계 §2](../docs/검토_중인_설계.md#2-openssl-provider-관측--지금은-볼-수-없다)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
+**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/디스커버리_설계.md#21-openssl-collector-go--sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
 
 ## 접근 비밀 경계 (§4A.3)
 접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실린다. pqcota 인벤토리(Postgres)엔

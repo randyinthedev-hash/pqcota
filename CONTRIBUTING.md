@@ -2,6 +2,8 @@
 
 # 기여 안내 (CONTRIBUTING)
 
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+
 pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
 
 ## 사전 요구
@@ -43,11 +45,14 @@ go test ./...   # 단위
 > Go가 함께 제안하는 `go get github.com/pqcota/pqcota/gen/...`는 **답이 아니다** — 받을 수 있는
 > 모듈이 아니라 이 리포에서 만들어내는 코드다. `make generate`를 먼저 돌린다.
 
-계약을 바꿨으면 `make lint`(buf lint) + **리포 루트에서** 호환성 확인:
+계약을 바꿨으면 `make lint`(buf lint) + 하위호환 확인:
 
 ```bash
-buf breaking contracts --against '.git#branch=main,subdir=contracts'
+make breaking                  # 마지막 릴리스 태그와 대조 — 이미 나간 계약을 깨지 않는지 (CI가 도는 것)
+make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 ```
+
+릴리스 태그가 없는 동안(v0.1.0 전)에는 기준선이 없어 앞의 것이 건너뛴다 — 그 사실을 로그에 찍는다.
 
 그리고 [계약 변경 시 파급 점검](contracts/README.md)(서명 범위·변화 판정)을 함께 볼 것.
 
@@ -83,23 +88,16 @@ buf breaking contracts --against '.git#branch=main,subdir=contracts'
 
 ## 새 암호 런타임을 확장하려면
 
-새 무언가를 만났을 때, **그게 새 1급 런타임인지 먼저 판정하는 결정 트리**. 순서대로 물어라.
+새 무언가를 만났을 때 **그게 정말 새 1급 런타임인지부터 판정한다.** 대부분은 아니다 — Python·Node·.NET은
+openssl/CNG로, Go는 `REBUILD` taxonomy로, HSM은 provider의 backend target으로 흡수된다.
 
-1. **관측이 기존 collector가 이미 보는 것과 다른가?**
-   아니오 → **흡수**: 기존 런타임 finding에 `app_keys`·`usage_context`로 붙인다(새 enum 금지). *예: Python.*
-2. **remediation이 provider 주입·config로 표현되나, 아니면 `REBUILD`뿐인가?**
-   `REBUILD`뿐 → **taxonomy 흡수**, 새 render 불필요. *예: Go.*
-3. **배포 아티팩트가 POSIX 파일 + 경로 스테이징 + 파일 제거 롤백에 맞나?**
-   아니오 → **substrate 일반화가 선행**돼야 하는 별도 트랙. 그 일반화는 이 구현과 함께 한다. *예: Windows.*
-4. **remediation이 기존 openssl/jca provider를 어떤 *target*으로 가리키는 것인가?**
-   예 → 새 enum 아님, **backend target + 새 디스커버리 axis**. *예: HSM.*
+판정 기준(결정 트리)과 그렇게 판정한 근거는 **[암호 런타임 추상 원칙](docs/암호_런타임_추상_원칙.md)**에 있다 — 정적 Go·Windows CNG·HSM 셋으로 계약을 밀어붙여 어디가 부러지는지 본 기록이다.
 
-**넷을 다 통과**(관측 distinct + provider-주입형 remediation + POSIX 파일 아티팩트 + 자체 provider 모델)
-해야 비로소 **진짜 새 1급 `CryptoRuntime`** 이다. 그때 건드릴 곳:
+넷을 다 통과해 **진짜 새 1급 `CryptoRuntime`** 으로 판정됐다면, 건드릴 곳:
 
 | 층 | 파일 | 최소 산출 |
 |---|---|---|
-| 계약 | `contracts/.../common.proto`(enum), `.../cbom.proto`(oneof `XxxAxes`) | breaking 검사 통과 |
+| 계약 | `contracts/.../common.proto`(enum), `.../cbom.proto`(oneof `XxxAxes`) | 순수 additive — `make breaking`이 릴리스한 계약과 대조한다 |
 | 수집 | `discovery/collectors/<r>/` | `CollectionResult` emit + `detection_method` 표기 |
 | 정규화 | `pkg/discovery/normalize/`(강화 단계) | `detection_method`→`evidence_strength` 파생 |
 | 프로비저닝 | `pkg/provisioning/render.go`(분기) + `renderXxx` + `paths.go` | render + stage + **롤백 대칭** |
@@ -108,9 +106,6 @@ buf breaking contracts --against '.git#branch=main,subdir=contracts'
 귀속"으로 보이고, Go를 `REBUILD`로 흡수해도 "정적이라 재빌드 필요"로 정직히 고지된다 — 안 보이는 걸
 없다고 하지 않는다.
 
----
-
-> 이 판정의 근거 — 정적 Go·Windows CNG·HSM 셋으로 계약을 밀어붙여 어디가 부러지는지 본 기록 → [런타임 확장 계약](docs/런타임_확장_계약.md).
 
 ## 코딩 가이드라인
 
