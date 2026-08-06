@@ -95,7 +95,7 @@ Any collector attaches as long as it satisfies the intake contract (§1.6). Ther
 
 ### 2.3 Absence of source is the dominant case
 
-In enterprise legacy, absent source is **the default** (vendor binaries, lost source, shading/static linking, COTS). So the mainstay of discovery is not source scanning but **artifact and runtime first**.
+In a legacy estate, absent source is **the default** (vendor binaries, lost source, shading/static linking, COTS). So the mainstay of discovery is not source scanning but **artifact and runtime first**.
 
 **The key rule — absence of source is not absence of information but degradation of information.** Without source, "what is linked or loaded" is still caught, while "how it is used" (algorithm, usage_context) degrades. That degradation must always be stated through `evidence_strength`.
 
