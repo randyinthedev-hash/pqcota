@@ -19,7 +19,7 @@ func action(rt commonv1.CryptoRuntime, kind provisioningv1.RemediationKind, targ
 	}
 }
 
-// OpenSSL config-only (3.5+): 하이브리드 그룹 활성화만, provider 로드 없음(§4.3).
+// OpenSSL config-only (3.5+): 하이브리드 그룹 활성화만, provider 로드 없음(프로비저닝 설계 §4.1).
 func TestRenderOpenSSLConfigOnly(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", ""))
@@ -33,7 +33,7 @@ func TestRenderOpenSSLConfigOnly(t *testing.T) {
 	}
 }
 
-// OpenSSL provider-inject (3.0–3.4): provider 모듈 로드 + 활성화 + 그룹(§4.3).
+// OpenSSL provider-inject (3.0–3.4): provider 모듈 로드 + 활성화 + 그룹(프로비저닝 설계 §4.1).
 func TestRenderOpenSSLProviderInject(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "oqsprovider"))
@@ -68,7 +68,7 @@ func TestRenderOpenSSLConfigIsUsableStandalone(t *testing.T) {
 	}
 }
 
-// config로 주입 불가한 조치(포크 교체 등)는 정직하게 비-config 조치임을 명시(§4.3 "레거시 터치").
+// config로 주입 불가한 조치(포크 교체 등)는 정직하게 비-config 조치임을 명시(프로비저닝 설계 §4.1 "레거시 터치").
 func TestRenderOpenSSLNonConfig(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE, "ML-KEM (FIPS 203)", ""))
@@ -77,7 +77,7 @@ func TestRenderOpenSSLNonConfig(t *testing.T) {
 	}
 }
 
-// JCA config-only (JDK 네이티브): namedGroups config만, provider 등록 없음(§4.4).
+// JCA config-only (JDK 네이티브): namedGroups config만, provider 등록 없음(프로비저닝 설계 §4.2).
 func TestRenderJCAConfigOnly(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", "JDK-native"))
@@ -89,7 +89,7 @@ func TestRenderJCAConfigOnly(t *testing.T) {
 	}
 }
 
-// JCA provider-inject: provider 클래스 등록 + JAR 배치 + namedGroups(§4.4). BC/BCFIPS 라우팅.
+// JCA provider-inject: provider 클래스 등록 + JAR 배치 + namedGroups(프로비저닝 설계 §4.2). BC/BCFIPS 라우팅.
 func TestRenderJCAProviderInject(t *testing.T) {
 	bc := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC"))
@@ -105,7 +105,7 @@ func TestRenderJCAProviderInject(t *testing.T) {
 	}
 }
 
-// FillPlan — 계획의 모든 조치에 config_artifact를 결정론적으로 채운다(§0.2).
+// FillPlan — 계획의 모든 조치에 config_artifact를 결정론적으로 채운다(§1.2).
 func TestFillPlan(t *testing.T) {
 	p := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{
 		action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL, provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", ""),
@@ -169,7 +169,7 @@ func TestRenderJCAJarPlacementGuidance(t *testing.T) {
 
 // BC 기본 클래스의 정답은 **버전에 달렸다** — 실측: 1.80/1.81의 BouncyCastleProvider에는 ML-KEM
 // 서비스가 17개, 1.78.1에는 0개(Kyber는 BouncyCastlePQCProvider에 따로). 계획은 JAR 버전을
-// 말해주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 조용히 단언하지 않는다(§2.6).
+// 말해주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 조용히 단언하지 않는다(§2.5).
 func TestBCDefaultClassStatesVersionAssumption(t *testing.T) {
 	bc := action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC")

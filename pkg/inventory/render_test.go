@@ -75,7 +75,7 @@ func TestRenderEndToEnd(t *testing.T) {
 	}
 }
 
-// TV-HISTORY-6 — ruleset이 다르면 파생값 차이가 실제 변화가 아닐 수 있다(§0.2). 구현은 오래
+// TV-HISTORY-6 — ruleset이 다르면 파생값 차이가 실제 변화가 아닐 수 있다(§1.2). 구현은 오래
 // 있었지만 테스트가 양쪽 ruleset을 같게 두어 이 줄을 한 번도 타지 않았다.
 func TestRenderDiffWarnsOnRulesetChange(t *testing.T) {
 	mk := func(ruleset string, seq int64, day int) *history.Snapshot {

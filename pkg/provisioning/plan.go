@@ -15,7 +15,7 @@ var ErrNotFinalized = errors.New("plan not finalized — 프로비저닝 실행 
 // 규칙: FINALIZED 상태 + 승인 서명(§3.3③) + 조치 최소 1건. 파생이 아니라 실행 직전 관문이다.
 //
 // ★ 경계(§5): 이 함수는 전 컴포넌트가 공유하는 "실행 근거" 계약 규칙일 뿐이다.
-// 실제 단계적 실행·오케스트레이션(drain·rolling·게이트·롤백)은 하지 않는다(§4.5).
+// 실제 단계적 실행·오케스트레이션(drain·rolling·게이트·롤백)은 하지 않는다(§4.3).
 func Executable(p *provisioningv1.FinalizedPlan) error {
 	if p == nil {
 		return fmt.Errorf("%w: nil", ErrNotFinalized)
@@ -38,10 +38,10 @@ func Executable(p *provisioningv1.FinalizedPlan) error {
 // ★ 이건 Executable(거버넌스 게이트)이 **아니다** — 계획은 유효하고 플레이북도 정상 생성된다.
 // placeholder는 의도된 정직 경로다(FQCN을 추측하지 않고 사람이 채운다 — jca.go). 다만 산출물이
 // 그대로는 불완전하므로, 도구가 조용히 통과시키지 않도록 호출부(pqcota-provision)가 이걸 stderr에
-// 크게 알린다(§2.6 — 불명을 삼키지 않는다). 하드 블록은 "생성→사람이 FQCN 기입→적용"이라는
+// 크게 알린다(§2.5 — 불명을 삼키지 않는다). 하드 블록은 "생성→사람이 FQCN 기입→적용"이라는
 // 정당한 워크플로를 막으므로 하지 않는다.
 // ProviderSlotWarnings — provider 주입은 java.security의 **한 자리를 대체**한다. 조각 안 주석은
-// 열어봐야 보이므로, 무엇이 밀려나는지 여기서 크게 알린다(§2.7 — 유실을 조용히 두지 않는다).
+// 열어봐야 보이므로, 무엇이 밀려나는지 여기서 크게 알린다(§2.6 — 유실을 조용히 두지 않는다).
 func ProviderSlotWarnings(p *provisioningv1.FinalizedPlan) []string {
 	var out []string
 	for _, a := range p.GetActions() {

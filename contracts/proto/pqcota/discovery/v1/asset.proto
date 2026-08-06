@@ -1,7 +1,7 @@
 // PQC 마이그레이션 플랫폼 — 자산 계층 모델 (SSOT, DISCOVERY 단계)
 //
 // Machine → Application → Process 3계층. 식별의 안정성이 계층마다 다르다:
-//   Machine     = node_id(스코프 마스터, §0.4) — 안정·전역 유일.
+//   Machine     = node_id(스코프 마스터, §1.4) — 안정·전역 유일.
 //   Application = (node_id, app_key) — app_key는 머신 스코프 안정 키. 전역 유일(충돌·중복 없음).
 //   Process     = PID 휘발 → 저장 안 함. ProcessMatch로 프로비저닝 직전 "실시간 해소".
 // 크립토 Finding(cbom.proto)은 app_key로 애플리케이션에 귀속된다.
@@ -33,7 +33,7 @@ message ProcessMatch {
 // Application — 타깃 머신에서 동작하는 애플리케이션. 크립토 자산·프로비저닝의 1급 단위.
 // 전역 식별 = (node_id, app_key). node_id가 전역 유일이므로 다른 머신의 동명 앱과 충돌하지 않는다.
 message Application {
-  string node_id = 1; // 스코프 마스터 머신 앵커(§0.4)
+  string node_id = 1; // 스코프 마스터 머신 앵커(§1.4)
   string app_key = 2; // 머신 스코프 안정 키(systemd 유닛명·exe 경로 등)
   string name = 3;    // 표시명
   ApplicationKind kind = 4;

@@ -153,7 +153,7 @@ func TestManifest(t *testing.T) {
 	}
 }
 
-// ★ 정직성(§2.6) — 관측 못 하는 종류·못 띄우는 fork는 조용히 넘어가지 않고 거부한다.
+// ★ 정직성(§2.5) — 관측 못 하는 종류·못 띄우는 fork는 조용히 넘어가지 않고 거부한다.
 func TestValidateRejects(t *testing.T) {
 	cases := map[string]string{
 		"관측 못 하는 종류":       "nodes:\n  - {id: a, kind: dotnet}\n",

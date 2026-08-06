@@ -10,7 +10,7 @@ import (
 )
 
 // ErrCaptureUnavailable — 캡처 자체가 불가함(예: CAP_NET_RAW 없음). RPC 실패가 아니라
-// 완전성 갭으로 강등한다(§2.7). 라이브 소스가 소켓을 못 열면 이 오류로 감싸 반환한다.
+// 완전성 갭으로 강등한다(§2.6). 라이브 소스가 소켓을 못 열면 이 오류로 감싸 반환한다.
 var ErrCaptureUnavailable = errors.New("network: 캡처 불가(권한/인터페이스)")
 
 // Observation — 관측 소스가 내놓는 한 핸드셰이크(연결 튜플 + 파싱 결과).
@@ -27,17 +27,17 @@ type Source interface {
 
 // TruncatingSource — 관측 창을 끝까지 채우지 못한 소스가 그 사실을 알리는 선택 인터페이스.
 // Observe가 오류를 돌려주지 않아도(부분 관측은 성공이다) 창이 중단됐으면 결과가 창 전체를
-// 대표하지 않는다. 중단과 무관측을 같은 얼굴로 내보내면 결함이 갭으로 위장된다(§2.7).
+// 대표하지 않는다. 중단과 무관측을 같은 얼굴로 내보내면 결함이 갭으로 위장된다(§2.6).
 type TruncatingSource interface {
 	// WindowTruncated — 중단됐나, 그리고 사유. 중단되지 않았으면 (false, nil).
 	WindowTruncated() (bool, error)
 }
 
-// Service — network-collector를 intake 계약(§6.1)으로 노출한다. 코어는 뒤가 pcap인지 모른다.
+// Service — network-collector를 intake 계약(§1.6)으로 노출한다. 코어는 뒤가 pcap인지 모른다.
 type Service struct {
 	discoveryv1.UnimplementedCollectorServer
 	Source Source          // 관측 소스(주입)
-	Self   map[string]bool // 자기참조 회피용 자기 주소/노드 집합(§2.7)
+	Self   map[string]bool // 자기참조 회피용 자기 주소/노드 집합(§2.6)
 }
 
 func NewService(src Source, self map[string]bool) *Service {
@@ -55,7 +55,7 @@ func (s *Service) Describe(_ context.Context, _ *discoveryv1.DescribeRequest) (*
 			commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
 		},
 		License:  collectorLicense,
-		Invasive: false, // 수동·비침습(핸드셰이크 평문만, 복호화 없음, §2.5)
+		Invasive: false, // 수동·비침습(핸드셰이크 평문만, 복호화 없음, §2.4)
 	}, nil
 }
 
@@ -79,7 +79,7 @@ func (s *Service) Collect(req *discoveryv1.CollectRequest, stream grpc.ServerStr
 	order := []string{}
 	for _, o := range obs {
 		if o.HS == nil || !ShouldObserve(o.Conn, s.Self) {
-			continue // 자기참조·빈 관측 제외(§2.7)
+			continue // 자기참조·빈 관측 제외(§2.6)
 		}
 		n := o.Conn.SrcNode
 		if _, seen := byNode[n]; !seen {

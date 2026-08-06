@@ -135,7 +135,7 @@ func TestL3ActivationOrder(t *testing.T) {
 	}
 }
 
-// ★ 추측 금지(§2.6) — 훅이 비면 그 단계를 **만들지 않고**, 무엇이 안 일어나는지 고지한다.
+// ★ 추측 금지(§2.5) — 훅이 비면 그 단계를 **만들지 않고**, 무엇이 안 일어나는지 고지한다.
 func TestL3MissingHooksWarnButDoNotGuess(t *testing.T) {
 	bare := &provisioningv1.RemediationAction{
 		Id: "a1", TargetNodeId: "db-01", CryptoRuntime: commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
@@ -213,7 +213,7 @@ func TestL3HooksGroupedAndDeduped(t *testing.T) {
 }
 
 // 같은 노드·같은 런타임에 **서로 다른** 조각이 둘이면, 같은 경로에 두 번 copy해선 안 된다 —
-// 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(모듈만 놓이고 참조는 안 되는 상태로 배포됨, §2.7).
+// 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(모듈만 놓이고 참조는 안 되는 상태로 배포됨, §2.6).
 func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 	mk := func(id, kind string) *provisioningv1.RemediationAction {
 		k := provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY

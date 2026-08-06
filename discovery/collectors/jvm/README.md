@@ -20,7 +20,7 @@
 ⑤ 응답 읽기             첫 줄 = 리턴 코드(0=성공), 이후 = 메시지
 ```
 
-**이 절차는 언어 무관**이다. 그래서 이걸 **Go로 직접 구현**했다(`NativeAttach`) — openssl collector가 `ldd`·`readelf` 없이 `/proc`·ELF를 자체 파싱하는 것과 같은 원칙(외부 툴체인 비의존, §2.4).
+**이 절차는 언어 무관**이다. 그래서 이걸 **Go로 직접 구현**했다(`NativeAttach`) — openssl collector가 `ldd`·`readelf` 없이 `/proc`·ELF를 자체 파싱하는 것과 같은 원칙(외부 툴체인 비의존, §2.3).
 
 > ⚠️ **트리거 파일과 SIGQUIT은 둘 다, 이 순서로.** 파일 없이 SIGQUIT만 보내면 JVM은 평범한 스레드 덤프 요청으로 보고 **애플리케이션 stdout에 덤프를 쏟는다.** 신호 처리가 비동기라 **파일은 소켓이 열린 뒤에** 지워야 한다. (구현 중 실제로 이 실수를 했고 데모 실행이 잡아냈다.)
 
@@ -55,7 +55,7 @@
 |---|---|---|
 | **에이전트** (`IntrospectAgent.java`) | **Java (불가피)** | 대상 JVM **안에서** `Security.getProviders()` 조회 → 결과 파일 기록 |
 | 정적 폴백 (`StaticFallback.java`) | Java | attach 불가 시 `java.security` 정적 등록만 읽음 |
-| attach 클라이언트 ①·정찰·정규화 | **Go** | OS IPC로 직접 attach, `/proc` 정찰, 정규화된 CBOM Envelope 변환, intake 계약(§6.1) |
+| attach 클라이언트 ①·정찰·정규화 | **Go** | OS IPC로 직접 attach, `/proc` 정찰, 정규화된 CBOM Envelope 변환, intake 계약(§1.6) |
 | attach 클라이언트 ② (`Attacher.java`) | Java | 벤더 무관 폴백 경로에서만 쓰임 |
 
 > **제약은 "JVM"이지 특정 언어가 아니다.** 사이드카는 플랫폼 자신의 언어인 **순수 Java**로 쓴다 — Kotlin·Gradle 없이 `javac`+`jar`, 산출물은 이식적인 JAR 하나.
@@ -67,15 +67,15 @@
 openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **jvm도 실행 중인 JVM을 먼저 조사한다**(`ScanJVMs`, [procscan.go](procscan.go)). 머신에 JDK가 여럿일 수 있고 **어느 JVM을 보느냐가 결과를 바꾸므로**, 호출자가 PID·JDK 경로를 미리 알아야 하던 비대칭을 없앤다.
 
 - **식별**: `/proc/<pid>/exe`가 `java`거나 `/proc/<pid>/maps`에 `libjvm.so`가 있는 프로세스(래퍼로 재실행돼 exe가 java가 아니어도 잡는다).
-- **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값 — 추측하지 않는다(§2.6).
-- **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.7 갭 고지의 질), 나아가 [배포 결정](../../collector_배포_설계.md)의 입력.
-- **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로(§2.7). 조용한 0이 아니다.
+- **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값 — 추측하지 않는다(§2.5).
+- **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector_배포_설계.md)의 입력.
+- **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로(§2.6). 조용한 0이 아니다.
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다.
 
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).
 
 - **다중 JVM 구별**: 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이 된다 — 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME→exe. **PID는 안 쓴다**(매 스캔 달라져 이력이 "매번 새 자산"으로 깨진다). 한 JDK에 앱이 여럿이어도 dedup으로 하나가 사라지지 않는다.
-- **attach 실패는 갭**: 차단·권한 부족한 JVM은 조용히 버리지 않고 `AttachStats.Failed`로 센다(§2.7).
+- **attach 실패는 갭**: 차단·권한 부족한 JVM은 조용히 버리지 않고 `AttachStats.Failed`로 센다(§2.6).
 
 > **관측 경로 두 갈래**: **프로브**(경량)는 별도 JVM을 띄워 **정적 등록 체인만** 본다. **attach**는 실행 중 앱의 `addProvider()` **동적 등록까지** 본다. 정찰은 어느 쪽이든 대상을 찾아주는 선행 단계다.
 
@@ -92,10 +92,10 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 ③ 정적 폴백으로 내려가면:
 
 - `java.security`의 **정적 등록** provider만 읽는다.
-- **동적 등록은 이 경로의 사각지대**이며, 그 사실 자체를 **완전성 갭으로 보고**한다. "없다"고 말하지 않는다(§2.6).
+- **동적 등록은 이 경로의 사각지대**이며, 그 사실 자체를 **완전성 갭으로 보고**한다. "없다"고 말하지 않는다(§2.5).
 - `detection_method`: runtime-introspection → **artifact**, `evidence_strength`: confirmed → **inferred**로 내려간다.
 
-즉 **관측 실패가 증거 등급의 하락으로 정직하게 드러난다**(§2.7).
+즉 **관측 실패가 증거 등급의 하락으로 정직하게 드러난다**(§2.6).
 
 ---
 
@@ -146,7 +146,7 @@ provider 이름에서 `pqc_readiness`(전 표준 커버 / SLH-DSA 갭 등)를 �
 | `attach.go` | 다중 JVM attach 오케스트레이션 + `AttachClient`(②용 JDK 선택) |
 | `runner.go` | ② JDK 클라이언트 서브프로세스 실행(주입 가능) |
 | `parse.go` | 사이드카 출력 → 정규화된 CBOM Envelope. 순서·갭 보존 |
-| `service.go` | intake 계약(§6.1) 노출 — openssl-collector와 대칭 |
+| `service.go` | intake 계약(§1.6) 노출 — openssl-collector와 대칭 |
 | `collector/` | **순수 Java 사이드카** — `IntrospectAgent.java`(에이전트) · `Attacher.java`(② 클라이언트) · `StaticFallback.java`(③) |
 | `attach-poc/` | attach 가능성 검증용 최소 PoC(설계 근거 자료) |
 

@@ -30,7 +30,7 @@ func loadAgentRequest(agentJar, agentArgs string) string {
 }
 
 // parseAttachResponse — 응답의 첫 줄은 리턴 코드다. 0이면 성공, 아니면 뒤따르는 메시지가 사유.
-// 빈 응답은 성공으로 치지 않는다 — 대상이 아무 말도 안 했으면 로드됐는지 모른다(§2.6).
+// 빈 응답은 성공으로 치지 않는다 — 대상이 아무 말도 안 했으면 로드됐는지 모른다(§2.5).
 func parseAttachResponse(resp string) error {
 	s := strings.TrimLeft(resp, "\n")
 	if strings.TrimSpace(s) == "" {

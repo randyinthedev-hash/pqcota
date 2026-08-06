@@ -7,7 +7,7 @@ import (
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
 )
 
-// IdentityConflict — 사용자 제공 node_id와 물리 머신 지문이 어긋나는 경우(§0.4 혼선·중복).
+// IdentityConflict — 사용자 제공 node_id와 물리 머신 지문이 어긋나는 경우(§1.4 혼선·중복).
 type IdentityConflict struct {
 	Kind    string   // "duplicate"(한 물리머신을 여러 node_id로) | "collision"(한 node_id를 여러 머신에)
 	Key     string   // duplicate=물리머신 키 / collision=node_id
@@ -19,7 +19,7 @@ type IdentityConflict struct {
 //   - 한 물리머신 키 → 여러 node_id  = **중복**(같은 머신을 여러 이름으로 등록)
 //   - 한 node_id → 여러 물리머신 키  = **충돌**(한 이름을 다른 머신에, 재이미지·오라벨)
 //
-// 지문이 없는 결과는 검증 불가로 건너뛴다(§2.6 정직). 판정은 하지 않는다 — 여기선 surface만.
+// 지문이 없는 결과는 검증 불가로 건너뛴다(§2.5 정직). 판정은 하지 않는다 — 여기선 surface만.
 func CheckIdentity(results []*discoveryv1.CollectionResult) []IdentityConflict {
 	keyToNodes := map[string]map[string]bool{}
 	nodeToKeys := map[string]map[string]bool{}

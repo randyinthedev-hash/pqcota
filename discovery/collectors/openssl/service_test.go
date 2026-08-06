@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
-// intake 계약 gRPC 라운드트립 검증 — Describe + Collect (§6.1).
+// intake 계약 gRPC 라운드트립 검증 — Describe + Collect (§1.6).
 // 실제 프로세스 탐지는 Docker 통합에서 검증됨. 여기선 계약 배선을 검증한다.
 func TestCollectorServiceContract(t *testing.T) {
 	lis := bufconn.Listen(1 << 20)
@@ -61,7 +61,7 @@ func TestCollectorServiceContract(t *testing.T) {
 	if res.GetEnvelope().GetCollectorLicense() != "Apache-2.0" {
 		t.Errorf("collector_license = %q", res.GetEnvelope().GetCollectorLicense())
 	}
-	// pid 없으므로 PROCESS 계층이 갭이어야 함(§2.7 갭≠부재).
+	// pid 없으므로 PROCESS 계층이 갭이어야 함(§2.6 갭≠부재).
 	missing := res.GetCompleteness().GetLayersMissing()
 	if len(missing) == 0 {
 		t.Error("expected PROCESS layer gap when no pid provided")

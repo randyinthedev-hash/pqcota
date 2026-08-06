@@ -9,14 +9,14 @@ import (
 	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
 )
 
-// GenerateProvisioningPlaybook — 확정 계획의 조치를 L1/L2로 배포하는 Ansible 플레이북을 생성한다(§4.3 표준 substrate).
-// core는 **생성만** — 사용자 Ansible이 실행한다(§4.6, 자체 실행엔진 없음). 플레이북=데이터라 GPL 전염 없음.
+// GenerateProvisioningPlaybook — 확정 계획의 조치를 L1/L2로 배포하는 Ansible 플레이북을 생성한다(규정서 §4.4 표준 substrate).
+// core는 **생성만** — 사용자 Ansible이 실행한다(§4.4, 자체 실행엔진 없음). 플레이북=데이터라 GPL 전염 없음.
 //
 //	L1 Stage-only    : provider 모듈을 규칙 폴더에 배치(스테이지)만. config·활성화 없음.
 //	L2 Stage+Install : 모듈 + config 조각(config_artifact) 배치까지.
 //	L3 Full-auto     : 여기에 **활성화·재시작**까지. 명령은 계획의 ActivationHooks(사용자가 적은 것)를
 //	                   의미 순서로 배치한다 — pre → [배치] → activate → restart. 도구가 활성화 방법을
-//	                   추측하지 않는다(§2.6). 빈 훅은 그 단계를 만들지 않고 무엇이 빠졌는지 고지한다.
+//	                   추측하지 않는다(§2.5). 빈 훅은 그 단계를 만들지 않고 무엇이 빠졌는지 고지한다.
 //
 // config로 배포 불가한 조치(포크 교체·프록시·재빌드 등)는 주석으로 명시하고 건너뛴다(수동 단계).
 func GenerateProvisioningPlaybook(plan *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) string {
@@ -102,7 +102,7 @@ func hasJCAProviderInject(plan *provisioningv1.FinalizedPlan) bool {
 	return false
 }
 
-// ActionConfig — 조치의 config 조각 내용. 저장된 아티팩트가 없으면 재생성한다(§0.2 파생은 항상 재계산 가능).
+// ActionConfig — 조치의 config 조각 내용. 저장된 아티팩트가 없으면 재생성한다(§1.2 파생은 항상 재계산 가능).
 func ActionConfig(a *provisioningv1.RemediationAction) string {
 	if cfg := a.GetConfigArtifact(); cfg != "" {
 		return cfg
@@ -152,7 +152,7 @@ func ConfigDests(as []*provisioningv1.RemediationAction) map[string]string {
 }
 
 // ConfigConflictWarnings — 한 노드·런타임에 서로 다른 조각이 둘 이상이라 경로를 나눈 경우를 알린다.
-// 나누기만 하면 **어느 것도 참조되지 않는다** — 사용자가 활성화 훅에서 고를 수 있게 크게 알린다(§2.6).
+// 나누기만 하면 **어느 것도 참조되지 않는다** — 사용자가 활성화 훅에서 고를 수 있게 크게 알린다(§2.5).
 func ConfigConflictWarnings(plan *provisioningv1.FinalizedPlan) []string {
 	byNode := map[string][]*provisioningv1.RemediationAction{}
 	var order []string
@@ -190,7 +190,7 @@ func writeActionTasks(b *strings.Builder, a *provisioningv1.RemediationAction, c
 	inject := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT
 	cfgOnly := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
 	if !inject && !cfgOnly {
-		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포 불가 — 수동 단계(§4.3 레거시 터치)\n", a.GetId(), kind)
+		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포 불가 — 수동 단계(프로비저닝 설계 §4.1 레거시 터치)\n", a.GetId(), kind)
 		return
 	}
 
@@ -215,7 +215,7 @@ func writeActionTasks(b *strings.Builder, a *provisioningv1.RemediationAction, c
 		b.WriteString("        mode: '0644'\n")
 
 		// 무결성 확인 — 타깃에서 암호 연산을 수행할 네이티브 코드를 심는 일이라, 무엇을 심었는지
-		// 고정할 수단이 필요하다(§4.5 "약속된 스크립트 실행=RCE" 계약). sha256을 주지 않으면 건너뛴다(하위호환).
+		// 고정할 수단이 필요하다(§4.3 "약속된 스크립트 실행=RCE" 계약). sha256을 주지 않으면 건너뛴다(하위호환).
 		fmt.Fprintf(b, "    - name: %s\n", yamlScalar("provider 모듈 sha256 확인 ("+prov+")"))
 		fmt.Fprintf(b, "      ansible.builtin.stat: { path: %s, checksum_algorithm: sha256 }\n", yamlScalar(dest))
 		fmt.Fprintf(b, "      register: pqcota_stat_%s\n", sfx)
@@ -290,7 +290,7 @@ func yamlScalar(s string) string {
 	return "\"" + esc + "\""
 }
 
-// ActivationWarnings — L3인데 훅이 비어 무엇이 일어나지 **않는지** 알린다(§2.6·§2.7).
+// ActivationWarnings — L3인데 훅이 비어 무엇이 일어나지 **않는지** 알린다(§2.5·§2.6).
 // 생성을 막지는 않는다 — 사용자가 일부러 일부 단계만 맡길 수 있다. 다만 조용히 두지 않는다.
 func ActivationWarnings(p *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) []string {
 	if level != provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO {

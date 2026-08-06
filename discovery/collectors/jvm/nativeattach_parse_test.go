@@ -27,7 +27,7 @@ func TestLoadAgentRequest(t *testing.T) {
 	}
 }
 
-// 응답 파싱 — 첫 줄이 리턴 코드. 0만 성공이고, 침묵을 성공으로 치지 않는다(§2.6).
+// 응답 파싱 — 첫 줄이 리턴 코드. 0만 성공이고, 침묵을 성공으로 치지 않는다(§2.5).
 func TestParseAttachResponse(t *testing.T) {
 	if err := parseAttachResponse("0\n"); err != nil {
 		t.Errorf("코드 0은 성공이어야: %v", err)

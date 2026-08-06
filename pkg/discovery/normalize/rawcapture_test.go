@@ -13,7 +13,7 @@ import (
 
 // 불변식: **raw_format이 있으면 raw_capture도 있다.**
 //
-// 계약은 "강화 규칙이 좋아지면 원본에서 재정규화한다"고 적는다(§0.2·§2.5 step 1). 형식
+// 계약은 "강화 규칙이 좋아지면 원본에서 재정규화한다"고 적는다(§1.2·§2.4 step 1). 형식
 // 이름만 있고 내용이 없으면 재정규화할 것이 없어 그 약속이 거짓이 된다. 빌더는 늘어나기
 // 마련이고 원본을 채우는 것은 잊기 쉬우므로, 불변식으로 못 박는다.
 func TestRawFormatImpliesRawCapture(t *testing.T) {
@@ -38,7 +38,7 @@ func TestRawFormatImpliesRawCapture(t *testing.T) {
 	}
 }
 
-// 같은 관측이면 같은 바이트 — raw_capture는 서명이 덮는 값이라(§2.7) 흔들리면 검증이 깨진다.
+// 같은 관측이면 같은 바이트 — raw_capture는 서명이 덮는 값이라(§2.6) 흔들리면 검증이 깨진다.
 func TestRawCaptureDeterministic(t *testing.T) {
 	dets := []openssl.Detection{
 		{Lib: "libcrypto", Path: "/usr/lib/libcrypto.so.3", AppKeys: []string{"a", "b"}},

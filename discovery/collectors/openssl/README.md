@@ -25,12 +25,12 @@
 ## 정직성 — 못 본 것을 "없다"로 만들지 않는다
 
 - **fork를 못 가리면** 빈 문자열로 두고 `evidence_strength=INFERRED_LOW`로 낮춘다. 추정해서 채우지 않는다(TD-FORK-2).
-- **대상이 실행 중이 아니면** 자산 0이 아니라 **PROCESS 계층 갭**으로 보고한다 — "안 쓴다"가 아니라 "이번 창에서 못 봤다"(§2.7).
+- **대상이 실행 중이 아니면** 자산 0이 아니라 **PROCESS 계층 갭**으로 보고한다 — "안 쓴다"가 아니라 "이번 창에서 못 봤다"(§2.6).
 - 네임스페이스가 분리돼 `/proc`이 안 보이면 역시 **갭**이다(TD-CONTAINER-2). 수집 실패를 조용한 0으로 바꾸지 않는다.
 
 ## 경계 — collector는 관측까지
 
-`evidence_strength`·`pqc_readiness` 같은 **파생값은 코어가 채운다**(§0.2 — 규칙이 한 곳에 있어야 재계산으로 재현된다). collector는 본 것을 정규화된 CBOM Envelope로 낼 뿐이다.
+`evidence_strength`·`pqc_readiness` 같은 **파생값은 코어가 채운다**(§1.2 — 규칙이 한 곳에 있어야 재계산으로 재현된다). collector는 본 것을 정규화된 CBOM Envelope로 낼 뿐이다.
 
 ## 전제
 
@@ -46,7 +46,7 @@
 | `elfstrings.go` | ELF 문자열 섹션에서 fork 판별용 문자열 추출 |
 | `detect.go` · `scan.go` | 라이브러리별 탐지 결과 조립, 노드 단위 스캔 |
 | `build.go` | 정규화된 CBOM Envelope(`CollectionResult`) 생성 |
-| `service.go` | intake 계약(§6.1)으로 노출 |
+| `service.go` | intake 계약(§1.6)으로 노출 |
 | `integration/` | 실물 통합 테스트(Docker) — SD-1·SD-3·SD-4 |
 
 ## 돌려보기

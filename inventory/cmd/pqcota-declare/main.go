@@ -1,4 +1,4 @@
-// Command pqcota-declare — 사용자 선언 인벤토리(CMDB/CSV)를 선언 레인 CollectionResult로 임포트한다(§2.4, SV-1).
+// Command pqcota-declare — 사용자 선언 인벤토리(CMDB/CSV)를 선언 레인 CollectionResult로 임포트한다(§2.3, SV-1).
 // 관측이 아니라 선언(declared lane) — detection_method=UNSPECIFIED로 정직하게 표기(대조 기준선).
 // 산출을 pqcota-ingest가 관측 결과와 동일 경로로 적재하도록 CollectionResult JSON을 출력 디렉터리에 쓴다.
 //

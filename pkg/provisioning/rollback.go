@@ -76,7 +76,7 @@ func writeRollbackTasks(b *strings.Builder, a *provisioningv1.RemediationAction,
 	inject := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT
 	cfgOnly := kind == provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
 	if !inject && !cfgOnly {
-		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포하지 않았으므로 롤백도 수동(§4.3 레거시 터치)\n", a.GetId(), kind)
+		fmt.Fprintf(b, "    # 조치 %s(%s): config로 배포하지 않았으므로 롤백도 수동(프로비저닝 설계 §4.1 레거시 터치)\n", a.GetId(), kind)
 		return
 	}
 

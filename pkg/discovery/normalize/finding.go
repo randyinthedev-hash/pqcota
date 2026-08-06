@@ -22,9 +22,9 @@ type cyclonedxDoc struct {
 	} `json:"components"`
 }
 
-// DeriveFindings — 정규화 파이프라인 강화 단계(§2.5③). CollectionResult의 표준 CycloneDX +
+// DeriveFindings — 정규화 파이프라인 강화 단계(§2.4③). CollectionResult의 표준 CycloneDX +
 // Envelope를 타입드 Finding으로 파생한다. evidence_strength는 detection_method에서 결정론적으로
-// 부착되고(§2.6), 파생 뷰이므로 원본 재현을 위해 snapshotID·rulesetVersion을 기록한다(§0.2).
+// 부착되고(§2.5), 파생 뷰이므로 원본 재현을 위해 snapshotID·rulesetVersion을 기록한다(§1.2).
 //
 // ★ 이 강화는 코어 단독 책임 — Collector는 강화하지 않는다(설계 §3, contracts/README).
 func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersion string) ([]*discoveryv1.Finding, error) {
@@ -72,14 +72,14 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 			f.FipsValidation, f.PqcReadiness = jcaEnrichment(providerSet)
 		}
 
-		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산 귀속(§0.5) — 어느 앱(들)의 크립토인가
+		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산 귀속(§1.5) — 어느 앱(들)의 크립토인가
 		f.Id = findingID(node, c.Name, props)
 		out = append(out, f)
 	}
 	return out, nil
 }
 
-// findingID — finding 동일성 정규화 해시(§2.5⑤ dedup 앵커). 노드+컴포넌트+런타임+fork 기반.
+// findingID — finding 동일성 정규화 해시(§2.4⑤ dedup 앵커). 노드+컴포넌트+런타임+fork 기반.
 func findingID(node, name string, props map[string]string) string {
 	key := strings.Join([]string{
 		node, name,

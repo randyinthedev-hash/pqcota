@@ -156,7 +156,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 | 앱 귀속(systemd 유닛) | systemd가 도는 환경 | 유닛명 대신 **실행 파일 경로**로 귀속(upstart 시절 배포판) |
 | **컨테이너 안 JVM attach** | **4.1**(`/proc/<pid>/status`의 `NSpid`) | 호스트 PID로 폴백 — 그 JVM만 미관측(갭으로 고지) |
 
-하한 미만에서도 **조용히 틀리지 않는다**. 못 본 것은 완전성 갭으로 나가고(§2.7), `NSpid`가 없으면 호스트 PID를 그대로 쓴다.
+하한 미만에서도 **조용히 틀리지 않는다**. 못 본 것은 완전성 갭으로 나가고(§2.6), `NSpid`가 없으면 호스트 PID를 그대로 쓴다.
 
 **실측**(KVM VM — 컨테이너는 호스트 커널을 공유해 이 항목을 검증할 수 없다):
 

@@ -8,7 +8,7 @@ import (
 )
 
 // TK-EVIDENCE-1 (docs/커널_테스트케이스.md).
-// evidence_strength는 detection_method에서 결정론적으로 파생된다(규정서 §2.4/§2.6).
+// evidence_strength는 detection_method에서 결정론적으로 파생된다(규정서 §2.3/§2.5).
 //
 // source·dynamic-trace는 이 리포의 collector가 수집하지 않는다. 소스 스캔은 빌드 검사에
 // 맡기고 동적 추적은 침습적이라 하지 않으며, 그런 도구가 낸 CycloneDX를 받아도 ImportCBOM이

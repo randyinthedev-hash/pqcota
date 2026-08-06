@@ -1,4 +1,4 @@
-// Package history is the append-only discovery history (규정서 §2.5⑥, §0.2 원본 불변).
+// Package history is the append-only discovery history (규정서 §2.4⑥, §1.2 원본 불변).
 // MemStore(인메모리, 테스트·단일 실행) + PgStore(Postgres 영속화)를 제공한다.
 package history
 
@@ -12,7 +12,7 @@ import (
 )
 
 // Snapshot — 디스커버리 상태 스냅샷. 노드별 파생 Finding + 완전성 맵.
-// 파생 뷰이므로 어떤 규칙 버전으로 만들어졌는지(RulesetVersion) 함께 보관해 재현 가능(§0.2).
+// 파생 뷰이므로 어떤 규칙 버전으로 만들어졌는지(RulesetVersion) 함께 보관해 재현 가능(§1.2).
 type Snapshot struct {
 	// Seq·CreatedAt은 적재 시 저장소가 부여한다(호출자가 채우지 않는다). 이력의 시간축 —
 	// 이게 없으면 append-only로 쌓아도 "언제 무엇을 봤나"를 되짚을 수 없다.
@@ -20,14 +20,14 @@ type Snapshot struct {
 	ID             string
 	NodeID         string
 	Findings       []*discoveryv1.Finding
-	Edges          []*discoveryv1.ObservedEdge // 통신 엣지 관측 레인(§12, network-collector). 노드 내부 자산과 별도.
+	Edges          []*discoveryv1.ObservedEdge // 통신 엣지 관측 레인(인벤토리 설계 §6, network-collector). 노드 내부 자산과 별도.
 	Completeness   *commonv1.Completeness
 	RulesetVersion string
 	CreatedAt      time.Time
 
 	// ExcludedByScope — 자산 스코프 정책으로 **관리 대상에서 뺀** finding 수.
 	// 조용히 0으로 두면 인벤토리가 "그런 자산은 없다"고 거짓말한다 — 제외는 부재가 아니므로
-	// 반드시 세어서 뷰가 고지한다(§2.7).
+	// 반드시 세어서 뷰가 고지한다(§2.6).
 	ExcludedByScope int
 
 	// Created — 이번 Append가 **새 스냅샷을 만들었는지**. false면 실질 내용이 직전과 같아
@@ -44,7 +44,7 @@ type ObsStat struct {
 	Last  time.Time
 }
 
-// Store — append-only 히스토리. 원본은 절대 in-place 수정하지 않는다(§0.2). 2층 구조는 설계 §7.2.
+// Store — append-only 히스토리. 원본은 절대 in-place 수정하지 않는다(§1.2). 2층 구조는 설계 §7.2.
 //
 // 두 층으로 나뉜다:
 //   - **스냅샷**(무거움) — 실질 내용이 **바뀔 때만** 쌓인다. 변화 추적·재계산 재현의 근거.

@@ -37,7 +37,7 @@ func TestMatchPQC(t *testing.T) {
 	}
 }
 
-// FIPSValidatable — 최종 표준만 true (§4.10 규제 자산 라우팅 게이트).
+// FIPSValidatable — 최종 표준만 true (규제 자산 라우팅 게이트).
 func TestFIPSValidatable(t *testing.T) {
 	mlkem, _ := registry.MatchPQC("MLKEM768")
 	if !mlkem.FIPSValidatable() {

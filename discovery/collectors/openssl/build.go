@@ -21,7 +21,7 @@ func BuildResult(node string, dets []Detection) *discoveryv1.CollectionResult {
 		cyclone, _ = buildCycloneDX(dets)
 		note = ""
 	}
-	// 원본이 없으면 형식 이름도 비운다(§0.2 — 재정규화할 것이 없는데 있다고 하지 않는다).
+	// 원본이 없으면 형식 이름도 비운다(§1.2 — 재정규화할 것이 없는데 있다고 하지 않는다).
 	raw := RawCapture(dets)
 	rawFormat := "openssl-collector/native-v1"
 	if len(raw) == 0 {

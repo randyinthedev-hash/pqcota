@@ -14,10 +14,10 @@ import (
 // 왜 Go로도 필요한가: 기존 폴백은 `StaticFallback.java`라 **그걸 돌릴 java가 있어야** 했다.
 // 그런데 ②(JDK 클라이언트)는 `--add-modules jdk.attach`로 뜨므로 **순수 JRE에선 시작조차 못 하고**,
 // 그러면 폴백까지 함께 못 돌아 노드가 통째로 갭이 됐다. `java.security`는 그냥 텍스트 파일이라
-// Go가 직접 읽으면 그 구멍이 닫힌다 — "관측 실패가 조용한 0이 되지 않는다"(§2.6)를 끝까지 지킨다.
+// Go가 직접 읽으면 그 구멍이 닫힌다 — "관측 실패가 조용한 0이 되지 않는다"(§2.5)를 끝까지 지킨다.
 //
 // ★ 여전히 **정적 등록만** 본다. 동적 `addProvider`는 이 경로의 사각지대이고, 그 사실을
-// Degraded(=갭·강등)로 고지한다. 없는 걸 봤다고 하지 않는다(§2.7).
+// Degraded(=갭·강등)로 고지한다. 없는 걸 봤다고 하지 않는다(§2.6).
 
 // javaSecurityRel — java.security의 JAVA_HOME 기준 상대 경로. JDK 9+는 conf/, 8 이하는 lib/.
 var javaSecurityRel = []string{

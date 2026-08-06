@@ -82,13 +82,13 @@ func main() {
 			j.PID, nz(j.Version), nz(j.JavaHome), via)
 	}
 	if st.ProcUnavailable {
-		// "JVM 0개"와 "못 봤다"를 같은 얼굴로 내보내지 않는다(§2.7).
+		// "JVM 0개"와 "못 봤다"를 같은 얼굴로 내보내지 않는다(§2.6).
 		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc를 열 수 없어 프로세스를 열거하지 못했다 — JVM 부재가 아니라 갭이다(리눅스에서 실행할 것)")
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] 정찰: 접근 %d · 불가 %d(갭) · JVM %d\n", st.Accessible, st.Denied, st.WithJVM)
 
 	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
-	// 대상을 못 본 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.6).
+	// 대상을 못 본 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
 	if *pidOnly > 0 {
 		var only []jvm.JVMProc
 		for _, j := range jvms {
@@ -193,7 +193,7 @@ func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool
 }
 
 // emitRecon — 정찰 결과를 JSON 배열로 stdout에. 관측(attach·프로브)은 하지 않는다.
-// 접근 불가 프로세스 수까지 함께 내보내 "못 본 게 있다"를 오케스트레이터도 알 수 있게 한다(§2.7).
+// 접근 불가 프로세스 수까지 함께 내보내 "못 본 게 있다"를 오케스트레이터도 알 수 있게 한다(§2.6).
 func emitRecon() {
 	jvms, st := jvm.ScanJVMs()
 	type reconJVM struct {
@@ -230,12 +230,12 @@ func nz(s string) string {
 }
 
 // attachAll — 발견된 각 JVM에 attach(agent JAR)해 provider 체인을 관측하고 JVM별로 구별되는
-// CollectionResult를 모아 돌려준다. attach 실패는 갭으로 센다(조용히 0이 되지 않게 §2.6).
+// CollectionResult를 모아 돌려준다. attach 실패는 갭으로 센다(조용히 0이 되지 않게 §2.5).
 func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.CollectionResult {
 	// attach 경로는 3계층이다(collector 배포 설계 §2) — 앞이 막히면 뒤로, 다 막히면 정직히 갭.
 	//   ① Go 네이티브: JDK 없이 HotSpot 프로토콜로 직접. JRE·jlink·최소 컨테이너까지 커버.
 	//   ② JDK 클라이언트: 벤더 무관(OpenJ9 등 HotSpot 아닌 JVM). 머신에 JDK가 있어야.
-	//   ③ (호출부 밖) 정적 폴백 — 동적 등록은 사각으로 남고 갭·강등으로 고지(§2.6·§2.7).
+	//   ③ (호출부 밖) 정적 폴백 — 동적 등록은 사각으로 남고 갭·강등으로 고지(§2.5·§2.6).
 	client := jvm.AttachClient(jvms) // ②용 — 대상이 JRE여도 머신의 다른 JDK를 쓴다
 	attach := func(j jvm.JVMProc) (jvm.Collected, error) {
 		if c, err := jvm.NativeAttach(j.PID, agent, nativeOutPath(j.PID)); err == nil {
@@ -256,7 +256,7 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 			}
 		}
 		// ③ 정적 폴백 — java.security는 텍스트 파일이라 Go가 직접 읽는다. 어떤 JVM·런타임이어도
-		// 최소한 정적 등록 체인은 낸다(강등·갭 고지). 관측 실패가 조용한 0이 되지 않게(§2.6).
+		// 최소한 정적 등록 체인은 낸다(강등·갭 고지). 관측 실패가 조용한 0이 되지 않게(§2.5).
 		c, err := jvm.StaticFallbackGo(j.PID, j.JavaHome)
 		if err != nil {
 			return jvm.Collected{}, fmt.Errorf("attach 전 경로 실패, 정적 폴백도 불가: %w", err)

@@ -50,7 +50,7 @@ func TestParseDetectionMethod(t *testing.T) {
 		{"Envelope도 미지정 → 미지정", "", unspec, unspec},
 
 		// 아는 어휘가 하나도 없으면 Envelope로 폴백한다. 모르는 문자열을
-		// 그럴듯한 값으로 옮기지 않는다(§2.6 추측 금지).
+		// 그럴듯한 값으로 옮기지 않는다(§2.5 추측 금지).
 		{"모르는 어휘 → Envelope", "vendor-magic-scan", art, art},
 		{"모르는 어휘 + Envelope 미지정 → 미지정", "vendor-magic-scan", unspec, unspec},
 	}

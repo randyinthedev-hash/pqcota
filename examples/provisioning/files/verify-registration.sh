@@ -90,4 +90,4 @@ changed=$(diff <(sed -n '/등록된 provider/,/목표 알고리즘/p' "$work/bef
 echo
 echo '※ security.provider.2는 **끼워 넣지 않고 그 자리를 대체한다** — 위 대조에서 원래 2번이던'
 echo "   provider가 빠지는 것이 보인다. 그 provider가 담당하던 서비스(JDK 기본이면 RSA)는 새"
-echo "   provider 구현으로 넘어간다. 이것이 전역 변경의 영향 반경(§4.4)이다."
+echo "   provider 구현으로 넘어간다. 이것이 전역 변경의 영향 반경(프로비저닝 설계 §4.2)이다."

@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Service exposes jvm-collector via the intake 계약(§6.1) — openssl-collector와 대칭.
+// Service exposes jvm-collector via the intake 계약(§1.6) — openssl-collector와 대칭.
 // Runner는 실제 attach 사이드카(discovery/collectors/jvm/collector)를 실행해 provider 출력을 얻는다.
-// 테스트는 Runner를 주입하고, 실배포는 Java 사이드카 서브프로세스를 호출한다(§6.2 프로세스 분리).
+// 테스트는 Runner를 주입하고, 실배포는 Java 사이드카 서브프로세스를 호출한다(라이선스 정리 — 프로세스 분리 프로세스 분리).
 type Service struct {
 	discoveryv1.UnimplementedCollectorServer
 	Runner func(node string, opts map[string]string) (Collected, error)

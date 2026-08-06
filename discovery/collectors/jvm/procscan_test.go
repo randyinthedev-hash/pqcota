@@ -109,7 +109,7 @@ func TestAttachCapable(t *testing.T) {
 	if attachCapable("/opt/jre21", has) { // 순수 JRE엔 없다
 		t.Error("순수 JRE는 ② 클라이언트 후보가 아니어야(jdk.attach 없음)")
 	}
-	// JAVA_HOME을 못 짚었으면 '모른다' — 가능하다고 단정하지 않는다(§2.6).
+	// JAVA_HOME을 못 짚었으면 '모른다' — 가능하다고 단정하지 않는다(§2.5).
 	if attachCapable("", has) {
 		t.Error("JAVA_HOME 미상이면 attach 가능으로 단정하면 안 된다")
 	}

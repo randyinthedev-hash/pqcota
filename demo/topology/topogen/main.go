@@ -7,7 +7,7 @@
 //	groups.ini          Ansible 그룹(openssl/java) + 엣지→traffic 시나리오
 //	profiles.csv        CMDB 프로필(pqcota-profile 형식)
 //
-// ★ 정직성(§2.6): 지원 못 하는 조합(관측 불가 종류·s_server 없는 fork)은 조용히 깨진 노드를
+// ★ 정직성(§2.5): 지원 못 하는 조합(관측 불가 종류·s_server 없는 fork)은 조용히 깨진 노드를
 // 내지 않고 **명확한 오류로 거부**한다.
 //
 // Go인 이유 — 리포의 다른 실행물과 같은 툴체인을 쓴다(외부 런타임 불요, `go test`로 회귀를

@@ -38,7 +38,7 @@ security.provider.5=
 	}
 }
 
-// 빈 파일·provider 없음도 오류가 아니다 — 빈 목록 + 강등이 정직한 관측이다(§2.6).
+// 빈 파일·provider 없음도 오류가 아니다 — 빈 목록 + 강등이 정직한 관측이다(§2.5).
 func TestParseJavaSecurityEmpty(t *testing.T) {
 	c := jvm.ParseJavaSecurity("# 주석뿐\nsecurerandom.source=file:/dev/random\n")
 	if len(c.Providers) != 0 {

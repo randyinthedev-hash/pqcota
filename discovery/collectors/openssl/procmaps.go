@@ -1,5 +1,5 @@
 // Package openssl implements the OpenSSL runtime collector (설계 문서 §2.1, SD-1·SD-3).
-// /proc·ELF를 Go로 자체 파싱한다 — ldd/lsof/ss/readelf에 의존하지 않는다(최소 이미지·발자국, §2.4).
+// /proc·ELF를 Go로 자체 파싱한다 — ldd/lsof/ss/readelf에 의존하지 않는다(최소 이미지·발자국, §2.3).
 package openssl
 
 import (

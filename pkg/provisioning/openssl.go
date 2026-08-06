@@ -7,7 +7,7 @@ import (
 	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
 )
 
-// renderOpenSSL — OpenSSL remediation taxonomy(§4.3) → openssl.cnf 조각.
+// renderOpenSSL — OpenSSL remediation taxonomy(프로비저닝 설계 §4.1) → openssl.cnf 조각.
 //   - CONFIG_ONLY (3.5+ 네이티브)   : 하이브리드 그룹 활성화만. 레거시·provider 무터치.
 //   - PROVIDER_INJECT (3.0–3.4)     : provider 모듈 로드 + 활성화 + 그룹. cnf 롤백 가역.
 //   - 그 외(포크교체·프록시·재빌드·폐기): config로 안 되는 조치 → 주석 블록으로 정직하게.
@@ -31,7 +31,7 @@ func renderOpenSSL(a *provisioningv1.RemediationAction) string {
 // 무해하다(3.0.13에서 확인). 두 활성화 경로 중 하나만 되는 것보다 낫다.
 const initDirective = "openssl_conf = openssl_init\n\n"
 
-// groupsLine — 하이브리드 그룹 + 고전 폴백(하위호환 접속 유지, §4.3 검증 매트릭스).
+// groupsLine — 하이브리드 그룹 + 고전 폴백(하위호환 접속 유지, 프로비저닝 설계 §4.1 검증 매트릭스).
 func groupsLine(group string) string {
 	if group == "" {
 		return "# Groups: 목표가 KEM 하이브리드 그룹이 아님(서명·미상) — 수동 지정 필요\n"
@@ -41,7 +41,7 @@ func groupsLine(group string) string {
 
 func opensslConfigOnly(group, target string) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.5+ config-only — %s 하이브리드 활성화(§4.3)\n", target)
+	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.5+ config-only — %s 하이브리드 활성화(프로비저닝 설계 §4.1)\n", target)
 	b.WriteString("# 레거시·provider 무터치. 롤백=이 조각 제거.\n")
 	b.WriteString(initDirective)
 	b.WriteString("[openssl_init]\n")
@@ -55,10 +55,10 @@ func opensslConfigOnly(group, target string) string {
 
 func opensslProviderInject(group, target, provider string) string {
 	if provider == "" {
-		provider = "oqsprovider" // 3.0–3.4 표준 PQC provider 기본값(§4.4 특수 케이스는 내부 provider)
+		provider = "oqsprovider" // 3.0–3.4 표준 PQC provider 기본값(프로비저닝 설계 §4.2 특수 케이스는 내부 provider)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.0–3.4 provider 주입 — %s (provider=%s)(§4.3)\n", target, provider)
+	fmt.Fprintf(&b, "# pqcota 생성: OpenSSL 3.0–3.4 provider 주입 — %s (provider=%s)(프로비저닝 설계 §4.1)\n", target, provider)
 	b.WriteString("# 버전 유지 + provider 배치로 알고리즘 능력만 대체. 롤백=cnf 한 줄.\n")
 	b.WriteString(initDirective)
 	b.WriteString("[openssl_init]\n")
@@ -81,7 +81,7 @@ func opensslProviderInject(group, target, provider string) string {
 	return b.String()
 }
 
-// opensslNonConfig — config 주입으로 해결 불가한 조치. 무엇을·왜 수동인지 명시(§4.3 "레거시 터치").
+// opensslNonConfig — config 주입으로 해결 불가한 조치. 무엇을·왜 수동인지 명시(프로비저닝 설계 §4.1 "레거시 터치").
 func opensslNonConfig(a *provisioningv1.RemediationAction) string {
 	var reason string
 	switch a.GetKind() {

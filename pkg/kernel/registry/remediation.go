@@ -1,6 +1,6 @@
 package registry
 
-// RemediationAction — 관측된 암호 협상에 대한 권고 조치(§4.10 remediation 분기).
+// RemediationAction — 관측된 암호 협상에 대한 권고 조치(remediation 분기).
 type RemediationAction string
 
 const (
@@ -27,13 +27,13 @@ func standardTargetFor(k PQCKind) string {
 }
 
 // Remediate — 이미 PQC로 식별된 협상의 성숙도 기반 권고.
-// 규제 자산(regulated)은 표준이어도 FIPS 검증 provider 사용을 확인해야 한다(§4.10 게이트).
+// 규제 자산(regulated)은 표준이어도 FIPS 검증 provider 사용을 확인해야 한다.
 func (a PQCAlgorithm) Remediate(regulated bool) Remediation {
 	target := standardTargetFor(a.Kind)
 	switch a.Maturity {
 	case MaturityFIPS:
 		if regulated {
-			return Remediation{ActionNone, 1, target, "표준 PQC — 규제 자산: FIPS 검증 provider 사용 확인(§4.10)"}
+			return Remediation{ActionNone, 1, target, "표준 PQC — 규제 자산: FIPS 검증 provider 사용 확인"}
 		}
 		return Remediation{ActionNone, 0, target, "표준 PQC — 조치 불요"}
 	case MaturityDraft:

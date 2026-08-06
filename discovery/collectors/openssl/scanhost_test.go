@@ -28,7 +28,7 @@ func (f *fakeStream) Send(r *discoveryv1.CollectionResult) error {
 
 // TD-OPENSSL-5 — 호스트 훑기. 실물 `/proc`을 걷는 자리라 리눅스에서만 돈다. 무엇이 잡히는지는
 // 환경에 달렸으므로 개수를 단언하지 않고, **집계가 자기모순이 아닌지**와 못 본 것을
-// 못 봤다고 표시하는지를 본다(§2.7).
+// 못 봤다고 표시하는지를 본다(§2.6).
 func TestScanHostStatsAreConsistent(t *testing.T) {
 	dets, st := openssl.ScanHost(registry.DefaultForkSignatures)
 	if st.ProcUnavailable {
@@ -108,7 +108,7 @@ func TestExtractStringsOnRealELF(t *testing.T) {
 
 // TD-CONTAINER-2 — 네임스페이스가 갈리거나 권한이 없어 대상 프로세스를 **못 본** 경우와, 봤는데
 // OpenSSL이 **없던** 경우는 다르다. 한 문구로 뭉뚱그리면 결함이 갭처럼, 갭이 부재처럼
-// 읽힌다(§2.7).
+// 읽힌다(§2.6).
 func TestCollectSeparatesUnseenFromAbsent(t *testing.T) {
 	svc := openssl.NewService()
 	collect := func(opts map[string]string) *discoveryv1.CollectionResult {

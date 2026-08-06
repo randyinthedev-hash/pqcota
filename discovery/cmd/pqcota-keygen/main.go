@@ -1,4 +1,4 @@
-// Command pqcota-keygen — collector 리포트 서명용 ed25519 키쌍을 생성한다(§2.7).
+// Command pqcota-keygen — collector 리포트 서명용 ed25519 키쌍을 생성한다(§2.6).
 // 개인키는 노드 스캐너(PQCOTA_SIGN_KEY)에, 공개키는 중앙 적재(PQCOTA_VERIFY_KEY)에 등록한다.
 // usage: pqcota-keygen
 package main

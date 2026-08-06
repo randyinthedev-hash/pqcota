@@ -22,7 +22,7 @@ func TestCompleteness(t *testing.T) {
 			t.Fatalf("layers_missing = %v, want [PROCESS]", c.LayersMissing)
 		}
 		if c.Note == "" {
-			t.Error("갭 사유(note)가 비어 있으면 안 됨 — 자동 '부재' 처리 금지(§2.6)")
+			t.Error("갭 사유(note)가 비어 있으면 안 됨 — 자동 '부재' 처리 금지(§2.5)")
 		}
 	})
 
