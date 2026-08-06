@@ -14,7 +14,7 @@ A PQC migration management platform (OSS, [Apache-2.0](LICENSE)). It handles the
 
 **Name** — *pqcota* (pronounced **P-cota**) = **PQC** (post-quantum cryptography) + **Orchestra** (-ota). **This software is a *player* in the orchestra, not the maestro.** The **maestro who decides what to migrate and when is the user** wielding the tool; pqcota plays its own part (observe · normalize · generate) precisely.
 
-**The structure, drawn** — one page showing what the three stages hand to each other, and who outside them (CMDB · operators · provider suppliers · target nodes) supplies what. It also marks where this tool's execution boundary ends → [platform structure diagram](docs/architectures/platform-structure.html) (open it in a browser; it toggles between Korean and English).
+**The structure, drawn** → [platform structure diagram](docs/architectures/platform-structure.html)
 
 ---
 
