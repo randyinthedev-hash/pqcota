@@ -33,7 +33,7 @@ message JcaAxes {
   pqcota.common.v1.JcaRegistrationMode registration_mode = 4;
 }
 
-// CngAxes — Windows CNG 분기축. **v0.1.0에서 스키마로만 예약**한다(§0.5 단계적 도입):
+// CngAxes — Windows CNG 분기축. **v0.1.0에서 스키마로만 예약**한다(단계적 도입):
 // 이 축을 채우는 콜렉터·정규화는 디스커버리 릴리스에서 온다. 지금은 어떤 코드도 이 축을 생성·소비하지
 // 않는다. 필드는 provider 동형성(§1.1)이 보장하는 것만 최소로 두고, 실물 관측이 정할 나머지(OS 빌드·
 // 등록 방식 등)는 그때 **번호를 새로 부여해 추가**한다(proto3 additive — 하위호환). 상세: docs/런타임_확장_계약.md
@@ -53,7 +53,7 @@ message CngAxes {
 
 message Finding {
   string id = 1;                       // 정규화 해시 — finding 동일성/dedup 앵커 (§2.5)
-  pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (§0.5)
+  pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (docs/암호_런타임_수용_원칙.md)
   pqcota.common.v1.UsageContext usage_context = 3;
   string algorithm = 4;                // 비었으면 소스 부재로 열화됨 (§2.4)
 

@@ -1,9 +1,9 @@
 # PQC 마이그레이션 플랫폼 — 아키텍처 설계
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
-
 [프로세스 규정서](PQC플랫폼_단계별_프로세스규정.md)가 정한 규칙을 **어떤 모듈·인터페이스·스키마로**
 구현할지 확정한다(기준: 규정서 v4).
+
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
 
 **범위**: 3단계 종단 — Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 귀속) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(§6).
 
@@ -167,7 +167,7 @@
 // 런타임 무관 1급 필드 + 런타임별 분기 필드
 type Finding struct {
     ID             string        `json:"id"`              // 정규화 해시 (dedup 앵커, §2.5)
-    CryptoRuntime  string        `json:"crypto_runtime"`  // "openssl" | "jca"  ← 분기 결정 (§0.5)
+    CryptoRuntime  string        `json:"crypto_runtime"`  // "openssl" | "jca"  ← 분기 결정 (§1)
     UsageContext   string        `json:"usage_context"`   // server|client|at-rest|signing
     Algorithm      *string       `json:"algorithm"`       // nil 가능 (소스 부재 시 열화, §2.4)
 

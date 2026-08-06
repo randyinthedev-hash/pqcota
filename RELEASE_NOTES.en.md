@@ -2,9 +2,9 @@ English · [한국어](RELEASE_NOTES.md)
 
 # Release Notes — pqcota
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/PQC플랫폼_단계별_프로세스규정.md) (Korean).
-
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](RELEASE_NOTES.md) is authoritative.
+
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/PQC플랫폼_단계별_프로세스규정.md) (Korean).
 
 Records the **goals** and **results** per version. This is still before the first official release (v0.1.0); the document is updated as versions advance. (Newest version on top.)
 
@@ -12,7 +12,7 @@ Records the **goals** and **results** per version. This is still before the firs
 
 ## Roadmap — Upcoming releases (planned)
 
-Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Crypto Runtime Abstraction Principle](docs/암호_런타임_추상_원칙.md) (Korean).
+Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/암호_런타임_수용_원칙.md) (Korean).
 
 - **v0.2.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".)
 - **v0.3.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done when this implementation is in hand (no speculative abstraction).

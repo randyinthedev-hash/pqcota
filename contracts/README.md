@@ -1,8 +1,8 @@
 # pqcota/contracts — 계약 SSOT (Single Source of Truth)
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
-
 이 디렉터리는 PQC 마이그레이션 플랫폼의 **모든 컴포넌트가 의존하는 유일 계약**이다
+
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
 
 근거 문서:
 - [**데이터 모델 스키마**](데이터모델_스키마.md) — 전 메시지·enum의 목적·핵심 필드·관계 지도(사람용 레퍼런스). 아래 파일 목록보다 먼저 보면 전체 그림이 잡힌다.
@@ -55,7 +55,7 @@ Collector  →  §2.5 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 코어 강화 단계가 이 값을 provider 시그니처 레지스트리와 대조해 `pqc_readiness`·`fips_validation`·
 알고리즘 커버리지를 **파생**한다(BouncyCastle/BC-FJA/JDK-native/openssl-jostle/내부 식별).
 - **SLH-DSA는 JDK 네이티브에 없다** → 필요 자산은 JDK 버전 무관하게 BC/jostle 의존으로 태깅.
-- `fips_validation` 요구는 Deploy 단계에서 **provider 선택을 강제**한다(§4.10 규제 자산 FIPS 라우팅).
+- `fips_validation` 요구는 Deploy 단계에서 **FIPS 검증 provider를 쓰라는 권고로 나온다**(§4.10 규제 자산 FIPS 라우팅). 계획이 고른 provider를 도구가 막지는 않는다 — 검증서는 빌드 단위라 파일만 봐서 알 수 없다.
 - 레지스트리는 파생 규칙이므로 `ruleset_version`으로 고정, 개선 시 원본에서 재계산(§0.2).
 
 ### 4. `deploy_automation_level`은 Discovery가 아니라 계획 속성 (규정서 §4.5 v4)

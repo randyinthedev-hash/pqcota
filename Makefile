@@ -136,9 +136,16 @@ test:
 # 도구 설치 헬퍼 (buf는 릴리스 바이너리 권장)
 # 어디에 깔리는지 함께 알린다 — go install은 조용히 $(go env GOPATH)/bin에 넣는데, 거기가 PATH에
 # 없으면 다음 단계인 make generate가 "플러그인 없음"으로 넘어져 원인이 설치처럼 보인다.
+#
+# **버전을 고정한다.** `@latest`면 언제 깔았느냐로 생성 코드가 달라져, 같은 커밋에서 사람마다
+# 다른 gen/이 나온다(gen/은 커밋하지 않으므로 더 드러나지 않는다). PROTOC_GEN_GO는 go.mod의
+# google.golang.org/protobuf와 **같은 버전**이어야 한다 — 생성 코드가 그 런타임을 부른다.
+# 데모의 ctl 이미지도 같은 값으로 깐다(demo/Dockerfile).
+PROTOC_GEN_GO      := v1.36.11
+PROTOC_GEN_GO_GRPC := v1.5.1
 tools:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO)
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC)
 	@echo "✓ 설치 위치: $$(go env GOPATH)/bin"
 	@command -v protoc-gen-go >/dev/null \
 	  || echo "  ⚠ 이 디렉터리가 PATH에 없다 — make generate 전에 넣어야 한다: export PATH=\"\$$PATH:\$$(go env GOPATH)/bin\""

@@ -1,0 +1,19 @@
+# Dependabot 버전 업데이트.
+#
+# **GitHub Actions만 켠다.** 워크플로가 쓰는 액션(`actions/checkout` 등)은 `go.mod`을 건드리지
+# 않으므로 봇이 연 PR이 그대로 CI를 통과한다.
+#
+# **gomod는 켜지 않는다** — 문서 게이트가 [라이선스 정리](../docs/라이선스_정리.md) 표를 실제
+# 링크되는 모듈 목록(`go list -deps`)과 **버전까지** 대조한다(`tools/checkdocs`). 의존 버전이
+# 올라가면 그 표도 함께 고쳐야 하는데 봇은 그러지 못해, PR이 열려도 게이트에서 멈춘다.
+# 게이트가 결함인 것이 아니라 "어느 버전을 검토했나"를 사실로 유지하는 장치다.
+# 직접 의존이 다섯 개뿐이라 취약점 알림(Dependabot alerts)을 받고 손으로 올리는 편이 싸다.
+# 라이선스 표를 **생성**하도록 바꾸면 그때 gomod도 켤 수 있다.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly" # 액션은 자주 바뀌지 않는다 — 주간은 소음만 는다
+    commit-message:
+      prefix: "build" # 리포 커밋 관례(type: 무엇을 — 왜)에 맞춘다

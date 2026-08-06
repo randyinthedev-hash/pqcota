@@ -42,18 +42,11 @@
 
 **자산관리정보(사용자 CMDB/자산 등록부)가 관리 대상 경계의 유일한 권위 소스다.** 디스커버리 배포, 인벤토리 등재, 프로비저닝 실행 대상이 모두 이 마스터로 게이트된다. 마스터 미등재 노드는 원칙적으로 수집·실행 대상이 아니며, 관측으로 발견될 경우 "실행 대상"이 아니라 "등재 판정 요청 대상"으로 흐른다.
 
-### 0.5 암호 런타임 추상 원칙
-플랫폼의 대상은 특정 라이브러리가 아니라 **"암호 provider를 갖는 런타임"**이라는 추상이다. OpenSSL(provider 아키텍처)과 JCA/JCE(Security Provider)가 첫 두 구현이다.
-
-- **프로세스 규정(3단계, AUTO/PROPOSE/MANUAL)은 런타임 무관하게 불변**이다.
-- 런타임별로 달라지는 것은 넷이다 — **(a) 디스커버리 수집 방법, (b) 버전·provider 축 스키마, (c) remediation taxonomy 분기, (d) 프로비저닝 substrate.**
-- 모든 finding·자산은 **`crypto_runtime`을 1급 필드**로 가진다. 이 필드가 각 단계의 런타임 분기를 결정한다.
-
-무엇이 새 런타임으로 인정되는지, 어느 축에서 부러지는지는 [암호 런타임 추상 원칙](암호_런타임_추상_원칙.md)가 반례 셋으로 따진다.
-
----
-
 ## 1. 대상 런타임 모델
+
+플랫폼의 대상은 특정 라이브러리가 아니라 **"암호 provider를 갖는 런타임"**이라는 추상이다. 무엇을
+런타임으로 받는지, 받으려면 무엇을 만족해야 하는지는 [암호 런타임 수용 원칙](암호_런타임_수용_원칙.md)에 있다.
+
 두 런타임은 "provider로 알고리즘 능력을 주입한다"는 점에서 **개념적으로 동형**이다. 이 동형성이 "버전 안 올리고 내부 provider 주입" 전략을 양쪽에 성립시킨다.
 
 ### 1.1 provider 동형성
@@ -86,6 +79,10 @@
 - OpenSSL: `lib`, `version`, `fork`, `binding_mode`(dynamic/static/dlopen/vendored)
 - JCA: `jdk_vendor`, `jdk_version`, `provider_set`(등록 순서 포함), `registration_mode`(static/dynamic/explicit)
 - 공통: `usage_context`(server/client/at-rest/signing), `pqc_readiness`, `fips_validation`, `remediation_class`, **`evidence_strength`**, **`detection_method`**
+
+**축 (d) substrate는 아직 스키마로 서 있지 않다.** 배치 경로·config 위치는 필드가 아니라 openssl/jca
+**2-way 분기**로 갈린다 — 둘 다 POSIX 파일이라 이 축이 지금까지 드러나지 않았다. 레지스트리·GPO를
+쓰는 런타임은 그 2-way로 표현되지 않으므로, 일반화는 해당 런타임을 구현할 때 함께 한다.
 
 ---
 

@@ -2,9 +2,9 @@
 
 # 기여 안내 (CONTRIBUTING)
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
-
 pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
+
+> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
 
 ## 사전 요구
 
@@ -88,24 +88,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 ## 새 암호 런타임을 확장하려면
 
-새 무언가를 만났을 때 **그게 정말 새 1급 런타임인지부터 판정한다.** 대부분은 아니다 — Python·Node·.NET은
-openssl/CNG로, Go는 `REBUILD` taxonomy로, HSM은 provider의 backend target으로 흡수된다.
-
-판정 기준(결정 트리)과 그렇게 판정한 근거는 **[암호 런타임 추상 원칙](docs/암호_런타임_추상_원칙.md)**에 있다 — 정적 Go·Windows CNG·HSM 셋으로 계약을 밀어붙여 어디가 부러지는지 본 기록이다.
-
-넷을 다 통과해 **진짜 새 1급 `CryptoRuntime`** 으로 판정됐다면, 건드릴 곳:
-
-| 층 | 파일 | 최소 산출 |
-|---|---|---|
-| 계약 | `contracts/.../common.proto`(enum), `.../cbom.proto`(oneof `XxxAxes`) | 순수 additive — `make breaking`이 릴리스한 계약과 대조한다 |
-| 수집 | `discovery/collectors/<r>/` | `CollectionResult` emit + `detection_method` 표기 |
-| 정규화 | `pkg/discovery/normalize/`(강화 단계) | `detection_method`→`evidence_strength` 파생 |
-| 프로비저닝 | `pkg/provisioning/render.go`(분기) + `renderXxx` + `paths.go` | render + stage + **롤백 대칭** |
-
-각 층 최소 테스트 1. **흡수는 은폐가 아니다**: Python을 openssl로 흡수해도 뷰엔 "Python 앱
-귀속"으로 보이고, Go를 `REBUILD`로 흡수해도 "정적이라 재빌드 필요"로 정직히 고지된다 — 안 보이는 걸
-없다고 하지 않는다.
-
+[암호 런타임 수용 원칙](docs/암호_런타임_수용_원칙.md)을 보라.
 
 ## 코딩 가이드라인
 

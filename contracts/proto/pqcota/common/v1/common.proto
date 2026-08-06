@@ -17,7 +17,8 @@ option go_package = "github.com/pqcota/pqcota/gen/pqcota/common/v1;commonv1";
 // 통제 어휘 (규정서 §1.3 · §2.4) — 전 단계 공유
 // ─────────────────────────────────────────────────────────────────────────
 
-// 암호 런타임 추상 (규정서 §0.5). 모든 finding·자산·조치의 1급 분기 필드.
+// 암호 런타임 — 모든 finding·자산·조치의 1급 분기 필드.
+// 무엇을 런타임으로 받는지: docs/암호_런타임_수용_원칙.md
 enum CryptoRuntime {
   CRYPTO_RUNTIME_UNSPECIFIED = 0; // unknown — 판별 불가 (§2.6)
   CRYPTO_RUNTIME_OPENSSL = 1;     // openssl
