@@ -91,6 +91,11 @@ conversion. The generated `gen/` is gitignored.
 make tools && make generate     # contracts/*.proto → gen/
 ```
 
+> `make tools` puts the plugins in `$(go env GOPATH)/bin`. If that directory isn't on your `PATH`,
+> `make generate` fails with "plugin not found" — which looks like a failed install but really means
+> **it just isn't visible**. Both targets call that case out, but adding it to your shell profile
+> saves you from hitting it every time: `export PATH="$PATH:$(go env GOPATH)/bin"`.
+
 **② The CLIs you run on the controller** — ingest and query observations, generate playbooks.
 
 ```bash

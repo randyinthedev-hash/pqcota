@@ -85,6 +85,11 @@ pqcota는 **중앙 컨트롤러 노드** 하나와, 그 컨트롤러가 Ansible/
 make tools && make generate     # contracts/*.proto → gen/
 ```
 
+> `make tools`는 플러그인을 `$(go env GOPATH)/bin`에 넣는데, 그 디렉터리가 `PATH`에 없으면 `make
+> generate`가 "플러그인 없음"으로 넘어진다 — 설치가 실패한 것처럼 보이지만 **안 보이는 것뿐**이다.
+> 두 타깃 모두 그 상황을 짚어 주지만, 셸 설정에 미리 넣어 두면 매번 겪지 않는다:
+> `export PATH="$PATH:$(go env GOPATH)/bin"`.
+
 **② 컨트롤러에서 쓸 CLI** — 관측 결과를 적재·조회하고 플레이북을 생성하는 커맨드들.
 
 ```bash

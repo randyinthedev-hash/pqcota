@@ -59,6 +59,20 @@ generate:
 	@command -v buf >/dev/null || { \
 	  echo "✗ buf 없음 — proto 코드 생성 도구가 필요하다: https://buf.build/docs/installation"; \
 	  echo "  설치 후: make tools && make generate"; exit 1; }
+	@# buf는 플러그인을 **PATH에서** 찾는다. `make tools`가 방금 깔았어도 $$(go env GOPATH)/bin이
+	@# PATH에 없으면 "executable file not found"만 나와, 읽는 사람은 설치가 실패한 줄 안다.
+	@# 깔려 있는데 안 보이는 것인지, 아예 없는 것인지를 갈라서 말한다.
+	@for p in protoc-gen-go protoc-gen-go-grpc; do \
+	  command -v $$p >/dev/null && continue; \
+	  if [ -x "$$(go env GOPATH 2>/dev/null)/bin/$$p" ]; then \
+	    echo "✗ $$p 이 PATH에 없다 — 설치는 돼 있다($$(go env GOPATH)/bin)."; \
+	    echo "  buf는 플러그인을 PATH에서 찾으므로 그 디렉터리를 PATH에 넣어야 한다:"; \
+	    echo "    export PATH=\"\$$PATH:\$$(go env GOPATH)/bin\"     # zsh·bash — 셸 설정에 넣어 두면 매번 안 해도 된다"; \
+	    echo "    \$$env:Path += \";\$$(go env GOPATH)/bin\"          # Windows PowerShell (정방향 슬래시도 받는다)"; \
+	  else \
+	    echo "✗ $$p 없음 — 먼저 make tools 를 실행한다."; \
+	  fi; exit 1; \
+	done
 	cd contracts && buf generate
 
 # 계약 lint (STANDARD, 일부 오피니언 규칙 완화 — buf.yaml)
@@ -98,6 +112,11 @@ test:
 	go test ./...
 
 # 도구 설치 헬퍼 (buf는 릴리스 바이너리 권장)
+# 어디에 깔리는지 함께 알린다 — go install은 조용히 $(go env GOPATH)/bin에 넣는데, 거기가 PATH에
+# 없으면 다음 단계인 make generate가 "플러그인 없음"으로 넘어져 원인이 설치처럼 보인다.
 tools:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@echo "✓ 설치 위치: $$(go env GOPATH)/bin"
+	@command -v protoc-gen-go >/dev/null \
+	  || echo "  ⚠ 이 디렉터리가 PATH에 없다 — make generate 전에 넣어야 한다: export PATH=\"\$$PATH:\$$(go env GOPATH)/bin\""
