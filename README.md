@@ -104,7 +104,7 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 collector는 **리눅스 전용**이라 `GOOS=linux`와 `CGO_ENABLED=0`(정적 링크 — 배포판·libc 무관)은 고정이다.
 노드에 맞춰 바꾸는 것은 `GOARCH`뿐이며, 값 목록은 [Go 문서](https://go.dev/doc/install/source#environment)를 따른다.
 
-**노드 커널은 3.2 이상**이면 된다 — Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#지원-범위)에 있다.
+**노드 커널은 3.2 이상**이면 된다 — Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건--커널권한)에 있다.
 
 노드에서 collector를 돌릴 때의 권한·환경변수 → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
 
@@ -117,16 +117,18 @@ collector는 **리눅스 전용**이라 `GOOS=linux`와 `CGO_ENABLED=0`(정적 �
 - **Protobuf/gRPC** — 단계 사이를 잇는 계약([`contracts/`](contracts/))
 - **Postgres** — 여러 노드를 시간에 걸쳐 쌓고 조회할 때만. 단일 노드 관측에선 쓰지 않는다
 
-## 지원 범위
+## 무엇을 지원하나 — 단계별
 
-**관측**
+### 관측 (Discovery)
 
 | 무엇을 관측 | 대상 | 왜 |
 |---|---|---|
 | OpenSSL 자산 · 통신 엣지 | **Linux** (amd64·arm64) | `/proc`·ELF·AF_PACKET에 의존 |
 | JVM provider 체인 | **Java 8+**, JVM이 도는 곳 | attach는 OS 비의존(검증 범위는 Linux) |
 
-**전환(프로비저닝)** — 확정 계획의 조치 종류에 따라 갈린다.
+### 전환 (Provisioning)
+
+확정 계획의 조치 종류에 따라 갈린다.
 
 | 런타임 | 상황 | 생성물 |
 |---|---|---|

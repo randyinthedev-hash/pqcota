@@ -143,7 +143,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 | `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 정적 프로브로 떨어진다 | `PQCOTA_JVM_AGENT`=collector.jar 경로 — 주면 attach 경로, 없으면 정적 프로브 |
 
 
-### 지원 범위
+### 실행 요건 — 커널·권한
 
 **커널 하한은 3.2다.** Go 툴체인이 정하는 값이고(Go 1.24부터), 이 리포는 그보다 새 기능을 요구하지 않는다. 그 위라면 배포판·libc는 가리지 않는다 — 정적 링크라서다.
 
