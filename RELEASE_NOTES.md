@@ -17,7 +17,7 @@
   레지스트리/GPO라 `/opt/pqcota` 파일 스테이징·파일제거 롤백에 안 맞음) → `renderCNG`. 일반화는 이 구현이
   손에 있을 때 한다(투기적 추상화 금지).
 
-- **provider 생태계 수용 (검토 중 · 버전 미정)** — provider 선택·조달은 계획을 쓰는 사용자가 하고, 이 리포는 **그 provider가 요구하는 config 조각을 렌더가 아는 것**까지다. 지금 렌더는 `activate`+`module` 한 모양뿐이라 OpenSSL 자체 `fips` 모듈(`fipsinstall` 조각)·pkcs11-provider(드라이버 경로 키)는 못 낸다. 후보별 요구와 provider 관측·HSM 축은 [검토 중인 설계](docs/검토_중인_설계.md)에서 다룬다.
+- **provider 생태계 수용 (검토 중 · 버전 미정)** — 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다 — provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/검토_중인_설계.md)에서 다룬다.
 
 - **서명된 바이너리 릴리스 (계획 · 버전 미정)** — arch별 정적 빌드와 `SHA256SUMS`는 **v0.1.0부터 릴리스에 붙는다**(태그를 밀면 CI가 만든다). 남은 것은 **ed25519 서명과 `pqcota-verify-bundle`**이다 — 번들 구성·서명·검증 절차는 [collector 배포 설계](discovery/collector_배포_설계.md)에서 정해 뒀고, 그때까지 무결성 확인은 `sha256sum -c`로 한다.
 
@@ -54,7 +54,7 @@
 - **L3 활성화·재시작** — 계획의 `activation` 훅(pre·activate·deactivate·restart)에 **사용자가 적은 명령**을 의미 순서(내리고 → 바꾸고 → 켜고 → 재시작)로 배치하고, 롤백은 정확한 역순으로 낸다. 활성화 방법은 환경마다 달라 **도구가 추측하지 않는다** — 빈 훅은 만들지 않고 무엇이 일어나지 않는지 고지한다.
 - **CNG 스키마 예약** — `CRYPTO_RUNTIME_WIN_CNG` enum + `CngAxes`(oneof arm)를 계약에 추가(**미구현** — 채우는 콜렉터·정규화·프로비저닝은 v0.2.0/v0.3.0). 단계적 도입의 시작점이자, "코어 무변경으로 새 런타임을 받는다"는 계약 주장의 실증(순수 additive·하위호환 확인).
 - **검증** — 데모 6단계 종단(생성한 플레이북을 실제 노드에 **적용·활성화·되돌림**까지 실행해 확인), 단계별 examples, 전 패키지 테스트 그린, 문서 게이트(`make check-docs` — 링크·앵커·낡은 범위 표현·개인정보).
-- **실물 provider 확인 (선택 단계)** — `DEMO_REAL_PROVIDER=1`이면 데모가 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에 배치·활성화하고, **능력이 실제로 생겼는지**를 `openssl list`로 잰다(ML-KEM KEM 0개 → 14개, 되돌리면 다시 0개). 이 확인이 렌더 결함 하나를 잡았다 — 생성한 조각에 최상위 `openssl_conf = openssl_init`이 없어, 조각을 `OPENSSL_CONF`로 가리키는 환경에서 **배치도 sha256 게이트도 통과하는데 provider가 올라오지 않았다**. 고치고 회귀 테스트를 붙였다.
+- **실물 provider 확인 (선택 단계)** — `DEMO_REAL_PROVIDER=1`이면 데모가 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에 배치·활성화하고, **능력이 실제로 생겼는지**를 `openssl list`로 잰다(ML-KEM KEM 0개 → 14개, 되돌리면 다시 0개). 이 확인이 설정 파일을 만드는 쪽의 결함 하나를 잡았다 — 생성한 조각에 최상위 `openssl_conf = openssl_init`이 없어, 조각을 `OPENSSL_CONF`로 가리키는 환경에서 **배치도 sha256 게이트도 통과하는데 provider가 올라오지 않았다**. 고치고 회귀 테스트를 붙였다.
 
 ### 확정된 것 (v0.1.0 릴리스 전 과제였던 것)
 
