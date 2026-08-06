@@ -1,3 +1,5 @@
+한국어 · [English](data-model.en.md)
+
 # 데이터 모델 스키마 (contracts SSOT 레퍼런스)
 
 계약 파일·네임스페이스 목록과 CycloneDX property 매핑은 [contracts/README](README.md).

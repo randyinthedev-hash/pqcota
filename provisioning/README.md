@@ -1,3 +1,5 @@
+한국어 · [English](README.en.md)
+
 # Provisioning — 전환물 생성 (3단계)
 
 **확정된 계획**(`FinalizedPlan`)을 입력으로 받아 PQC 전환 아티팩트를 생성한다 — config 조각, Ansible 플레이북(L1/L2/L3, **적용·롤백 양방향**), 되돌림 근거(before 캡처·롤백 레코드).

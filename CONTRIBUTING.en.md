@@ -4,7 +4,7 @@ English · [한국어](CONTRIBUTING.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](CONTRIBUTING.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.en.md).
 
 For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.en.md) and [demo/](demo/).
 
@@ -15,7 +15,7 @@ You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refu
 Once the repo builds, the [examples](examples/) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
-Runtime requirements (Ansible, SSH) are in the [root README](README.en.md#requirements); demo requirements in [demo/](demo/README.md#요구-사항).
+Runtime requirements (Ansible, SSH) are in the [root README](README.en.md#requirements); demo requirements in [demo/](demo/README.en.md#requirements).
 
 ### Which OS can you build on
 
@@ -52,7 +52,7 @@ If you changed a contract, run `make lint` (buf lint) and check compatibility **
 buf breaking contracts --against '.git#branch=main,subdir=contracts'
 ```
 
-Also read [the ripple checklist for contract changes](contracts/README.md) (signature coverage, change detection).
+Also read [the ripple checklist for contract changes](contracts/README.en.md) (signature coverage, change detection).
 
 ## Code layout — top level = kind, stage = inside it
 
@@ -71,7 +71,7 @@ That is, **`pkg/`·`contracts/` split by stage, and so do the top-level executio
 ## Contract-first
 
 - To change a type/enum, **edit `contracts/*.proto` and `make generate`**. Do not touch `gen/` directly.
-- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (§1.2 — one place for the rules so they can be recomputed). Details: [contracts/README](contracts/README.md).
+- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (§1.2 — one place for the rules so they can be recomputed). Details: [contracts/README](contracts/README.en.md).
 - A controlled-vocabulary `*_UNSPECIFIED = 0` means "unknown" — don't leave it blank/missing (§2.5).
 
 ## Collector extension — the contract is the seam
@@ -79,7 +79,7 @@ That is, **`pkg/`·`contracts/` split by stage, and so do the top-level executio
 The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector** — without touching the core. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
 
 - A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (§1.2 — the rules live in one place so they can be recomputed).
-- Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](contracts/README.md)).
+- Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](contracts/README.en.md)).
 - Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
 
 > **The provisioning generator is not yet such a plugin seam** — the plan (`plan.proto`) is a public contract, but the generator itself is internal logic. To avoid confusion, only the collector side is presented as an extension point.
@@ -103,7 +103,7 @@ This repo enforces **honesty and determinism in the code itself**. Below are the
 
 **Don't depend on external tools.** Parse `/proc`·ELF directly in Go instead of shelling out to `ldd`·`lsof`·`ss`·`readelf` (minimal image/footprint, §2.3). Release binaries are `CGO_ENABLED=0` static builds. Tag code that touches OS primitives with `//go:build linux`, and split pure helpers out as OS-agnostic.
 
-**Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](contracts/README.md).
+**Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](contracts/README.en.md).
 
 ## Testing
 
@@ -119,13 +119,18 @@ Acceptance criteria and implementation order: [discovery test cases](discovery/t
 
 The **Korean** documents are authoritative; the English ones (`*.en.md`) are translations — machine-assisted, and where the two differ the Korean is correct.
 
+**When you edit a Korean document, re-translate its `*.en.md` counterpart against the new original.** Fixing only one
+side lets the translation go quietly stale, which turns "where the two differ the Korean is correct" into an excuse.
+Links inside an English document **point at the English counterpart when one exists**; otherwise they point at the
+Korean document and say so with `(Korean)`.
+
 **Issues and PRs are fastest in Korean.** The maintainer is a Korean speaker, so English goes through translation both ways — that isn't a refusal, it just makes the round trip longer. Code, logs, and error messages read the same in any language, so paste them verbatim.
 
 Translation contributions are welcome. The **source of truth stays Korean**, though — authoring two languages at once drifts apart in a one-person project.
 
 ## Issues · proposals
 
-**Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.md).
+**Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.en.md).
 
 Including this with a bug report speeds up reproduction:
 

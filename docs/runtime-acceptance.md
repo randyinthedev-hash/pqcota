@@ -1,3 +1,5 @@
+한국어 · [English](runtime-acceptance.en.md)
+
 # 암호 런타임 수용 원칙
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.

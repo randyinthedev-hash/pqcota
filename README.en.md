@@ -8,13 +8,13 @@ English · [한국어](README.md)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **Preparing v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
+> **Preparing v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
 
 A PQC migration management platform (OSS, [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
 
 **Name** — *pqcota* (pronounced **P-cota**) = **PQC** (post-quantum cryptography) + **Orchestra** (-ota). **This software is a *player* in the orchestra, not the maestro.** The **maestro who decides what to migrate and when is the user** wielding the tool; pqcota plays its own part (observe · normalize · generate) precisely.
 
----
+**The structure, drawn** — one page showing what the three stages hand to each other, and who outside them (CMDB · operators · provider suppliers · target nodes) supplies what. It also marks where this tool's execution boundary ends → [platform structure diagram](docs/architectures/platform-structure.html) (open it in a browser; it toggles between Korean and English).
 
 ---
 
@@ -49,9 +49,9 @@ The same observation is also rendered as a topology — color is posture.
 
 | Stage | What it does | Output |
 |---|---|---|
-| ① **[Discovery](discovery/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
-| ② **[Inventory](inventory/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
-| ③ **[Provisioning](provisioning/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
+| ① **[Discovery](discovery/README.en.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
+| ② **[Inventory](inventory/README.en.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
+| ③ **[Provisioning](provisioning/README.en.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
 
 ## Try it — demo
 
@@ -62,7 +62,7 @@ provisioning (generate, apply, roll back), against nodes it stands up as contain
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh   # tear down: ./demo/scripts/down.sh
 ```
 
-Setup, expected output, and how to point it at your own hosts → **[demo/](demo/README.md)** (Korean)
+Setup, expected output, and how to point it at your own hosts → **[demo/](demo/README.en.md)**
 
 ---
 
@@ -160,5 +160,5 @@ In development — before the first release (v0.1.0). **Per-version goals and re
 ## License
 
 - **Apache-2.0** — full text in [LICENSE](LICENSE)
-- Dependency licensing → [License notes](docs/licensing.md) (Korean)
+- Dependency licensing → [License notes](docs/licensing.en.md)
 - Third-party notices → [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.en.md)
