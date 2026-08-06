@@ -36,6 +36,7 @@
 |---|---|
 | [**데이터 모델 스키마**](../contracts/데이터모델_스키마.md) | 규격한 전 메시지·enum의 사람용 지도 — 목적·핵심 필드·관계·provenance 레인. contracts SSOT 레퍼런스 |
 | [contracts/README](../contracts/README.md) | protobuf 파일·네임스페이스 목록 + CycloneDX property 매핑 |
+| [검토 중인 설계](검토_중인_설계.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계 — provider 생태계 수용·OpenSSL FIPS·provider 관측·HSM 축. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
 | [런타임 확장 계약](런타임_확장_계약.md) | 새 암호 런타임을 코어 무변경으로 받는 계약(§0.5)을 3후보(정적 Go·Windows CNG·HSM)를 반례로 놓고 검증 — 어디가 버티고 어디가 부러지나 |
 
 [`contracts/`](../contracts/) — protobuf SSOT. 네임스페이스가 곧 단계.

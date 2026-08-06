@@ -17,6 +17,8 @@
   레지스트리/GPO라 `/opt/pqcota` 파일 스테이징·파일제거 롤백에 안 맞음) → `renderCNG`. 일반화는 이 구현이
   손에 있을 때 한다(투기적 추상화 금지).
 
+- **provider 생태계 수용 (검토 중 · 버전 미정)** — 지금 이름으로 확정하는 provider는 `oqsprovider`·`BC`·`BCFIPS` 셋이다. wolfProvider·pkcs11-provider 같은 후보를 어떻게 받을지, 규제 자산에 **OpenSSL 쪽 FIPS provider** 답이 없는 공백을 어떻게 메울지, 그리고 **OpenSSL provider를 관측할 방법**(JCA는 attach로 체인을 보는데 OpenSSL은 경로·버전까지다)을 [검토 중인 설계](docs/검토_중인_설계.md)에서 다룬다.
+
 - **서명된 바이너리 릴리스 (계획 · 버전 미정)** — arch별 정적 빌드와 `SHA256SUMS`는 **v0.1.0부터 릴리스에 붙는다**(태그를 밀면 CI가 만든다). 남은 것은 **ed25519 서명과 `pqcota-verify-bundle`**이다 — 번들 구성·서명·검증 절차는 [collector 배포 설계](discovery/collector_배포_설계.md)에서 정해 뒀고, 그때까지 무결성 확인은 `sha256sum -c`로 한다.
 
 ### 로드맵에 없는 것 — 안 만든다
