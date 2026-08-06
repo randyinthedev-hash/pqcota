@@ -1,4 +1,4 @@
-// Command pqcota-hosts — 사용자 관리 hosts 파일(CSV)을 읽어 discovery 접근을 준비한다(§4A.3).
+// Command pqcota-hosts — 사용자 관리 hosts 파일(CSV)을 읽어 discovery 접근을 준비한다(§0.5).
 //
 //	(a) 런타임 전용 Ansible 인벤토리 생성(--ansible-out; 비밀 포함, 미영속) → 이걸로 ansible-playbook 실행
 //	(b) 안전 엔드포인트(node_id·name·ip·port, 비밀 제외)를 stdout에 요약 → 인벤토리 재사용·수정용

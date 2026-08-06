@@ -4,11 +4,11 @@
 ./examples/discovery/run.sh
 ```
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/PQC플랫폼_규정.md)의 절 번호다.
 
 ## 무슨 일이 일어나나
 
-### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§4A.3)
+### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§0.5)
 입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
 ```
 node_id,name,ip,port,ssh_user,ssh_key,ssh_pass

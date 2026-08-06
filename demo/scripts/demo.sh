@@ -327,6 +327,6 @@ echo
 echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱귀속·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
 echo "   산출물: demo/.generated/topology.svg (색=posture) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
 echo "   ※ 생성물을 실제로 적용·활성화·되돌림까지 실행해 확인한 것 — 생성만 보면 깨끗한 노드에서 깨지는 플레이북도 통과한다."
-echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§4A.3)."
+echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§0.5)."
 echo "   (선언 대비 3-상태 대조·거버넌스는 이 리포가 하지 않는다)"
 echo "   정리: ./demo/scripts/down.sh"

@@ -69,7 +69,7 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 	return snap, nil
 }
 
-// edgeKey — 엣지 동일성(§12.2 dedup). 방향+프로토콜+협상그룹 기준.
+// edgeKey — 엣지 동일성(§6.2 dedup). 방향+프로토콜+협상그룹 기준.
 func edgeKey(e *discoveryv1.ObservedEdge) string {
 	dst := e.GetDstNodeId()
 	if dst == "" {

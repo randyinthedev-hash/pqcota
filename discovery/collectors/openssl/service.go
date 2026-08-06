@@ -143,7 +143,7 @@ func buildCycloneDX(dets []Detection) ([]byte, error) {
 				{"pqcota:openssl.version", d.Version},
 				{"pqcota:openssl.binding_mode", d.BindingMode},
 				{"pqcota:openssl.path", d.Path},
-				{"pqcota:app_keys", strings.Join(d.AppKeys, ",")}, // 자산 귀속(§4A.2) — 다중 앱이면 CSV
+				{"pqcota:app_keys", strings.Join(d.AppKeys, ",")}, // 자산 귀속(§0.5) — 다중 앱이면 CSV
 			},
 		})
 	}

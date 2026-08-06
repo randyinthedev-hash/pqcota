@@ -96,7 +96,7 @@ echo "node_id,name,ip,port,ssh_user,ssh_key" > "$HOSTSCSV"
     echo -n "{\"name\":\"$n\",\"ips\":[$ipsjson]}"
     first=0
     echo "   $n = ${allips% }" >&2
-    # hosts.csv: 접근 비밀(ssh_key)은 여기(사용자 파일)에만 — pqcota 인벤토리엔 적재 안 함(§4A.3).
+    # hosts.csv: 접근 비밀(ssh_key)은 여기(사용자 파일)에만 — pqcota 인벤토리엔 적재 안 함(§0.5).
     echo "$n,${HUMAN[$n]:-$n},$ip,22,root,/work/id_demo" >> "$HOSTSCSV"
   done
   echo ']'

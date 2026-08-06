@@ -2,7 +2,7 @@
 
 디스커버리가 낸 관측을 **중앙에 적재·영속·조회**한다. 여러 번의 수집을 누적해 자산 히스토리를 만들고, 머신 메타데이터(엔드포인트·프로필)와 **앱 귀속**을 붙여 "무엇이 · 어디서 · 어떤 암호 알고리즘을 쓰는지"를 조회 가능한 인벤토리로 만든다.
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/PQC플랫폼_규정.md)의 절 번호다.
 
 ## 한눈에
 
@@ -72,4 +72,4 @@ pqcota-declare cmdb.csv --out ./declared && pqcota-ingest ./declared   # CMDB �
 
 ## 더 보기
 
-프로세스 규정서 §3 · [아키텍처 설계](../docs/PQC플랫폼_아키텍처_및_OSS경계_설계.md) · 뷰·저장소·선언 임포트 라이브러리 [`pkg/inventory/`](../pkg/inventory) · 실행 예제 [`examples/inventory/`](../examples/inventory)
+규정서 §3 · [아키텍처 설계](../docs/PQC플랫폼_아키텍처_및_OSS경계_설계.md) · 뷰·저장소·선언 임포트 라이브러리 [`pkg/inventory/`](../pkg/inventory) · 실행 예제 [`examples/inventory/`](../examples/inventory)

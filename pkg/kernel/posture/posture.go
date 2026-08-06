@@ -1,5 +1,5 @@
 // Package posture classifies a negotiated key-exchange group into a quantum-resistance
-// posture (규정서 §12.1). 파생 뷰 — 관측된 협상 그룹 문자열에서 결정론적으로 판정한다(§0.2).
+// posture (인벤토리 설계 §6.1). 파생 뷰 — 관측된 협상 그룹 문자열에서 결정론적으로 판정한다(§0.2).
 // 공유 규칙: network-collector도, 대조 엔진도 같은 규칙을 써야 하므로 여기에 둔다.
 package posture
 
@@ -11,7 +11,7 @@ import (
 )
 
 // pqcTokens — 협상 그룹 이름에 이 토큰이 들어가면 PQC(하이브리드 포함)로 본다(🟢).
-// 하이브리드(X25519MLKEM768)든 순수 PQC(mlkem768)든 posture는 동일하게 PQC로 표기한다(§12.1).
+// 하이브리드(X25519MLKEM768)든 순수 PQC(mlkem768)든 posture는 동일하게 PQC로 표기한다(§6.1).
 var pqcTokens = []string{
 	"MLKEM", "KYBER", // ML-KEM (FIPS 203) / 구 Kyber
 	"SNTRUP",      // sntrup761 (OpenSSH)
@@ -30,7 +30,7 @@ var classicalTokens = []string{
 
 // Classify — 협상된 KEX 그룹(+cipher 보조)에서 양자내성 posture를 판정한다.
 //   - PQC 토큰 포함           → PQC_HYBRID (🟢). 하이브리드 X25519MLKEM768도 여기(고전+PQC 혼합이라도 PQC 보호).
-//   - 그룹 미상(빈 문자열)      → UNSPECIFIED (⚪ 불명·미관측). "고전"으로 단정하지 않는다(§12.2 정직성).
+//   - 그룹 미상(빈 문자열)      → UNSPECIFIED (⚪ 불명·미관측). "고전"으로 단정하지 않는다(§6.2 정직성).
 //   - 고전 토큰만              → CLASSICAL (🔴).
 //   - 알 수 없는 그룹          → UNSPECIFIED (⚪). 임의 추정 금지.
 func Classify(negotiatedGroup, cipher string) discoveryv1.QuantumPosture {
@@ -80,7 +80,7 @@ func GradeLabel(m registry.PQCMaturity) string {
 // PQC면 성숙도로 분기(registry.Remediate), 고전이면 마이그레이션, 미관측이면 보류.
 //   - PQC(표준/초안/실험/파훼) → registry.Remediate: 유지/상향/교체/즉시
 //   - CLASSICAL(🔴)           → migrate: 양자취약, PQC 하이브리드 도입
-//   - UNSPECIFIED(⚪)         → none: 미관측 — 판단 보류(§12.2 정직성)
+//   - UNSPECIFIED(⚪)         → none: 미관측 — 판단 보류(§6.2 정직성)
 func Recommend(negotiatedGroup, cipher string, regulated bool) registry.Remediation {
 	if a, ok := registry.MatchPQC(negotiatedGroup); ok {
 		return a.Remediate(regulated)
@@ -102,7 +102,7 @@ func Recommend(negotiatedGroup, cipher string, regulated bool) registry.Remediat
 	}
 }
 
-// Symbol — posture의 대시보드 기호(§12.1). 토폴로지 범례·요약에 쓴다.
+// Symbol — posture의 대시보드 기호(§6.1). 토폴로지 범례·요약에 쓴다.
 func Symbol(p discoveryv1.QuantumPosture) string {
 	switch p {
 	case discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID:

@@ -2,7 +2,7 @@
 
 `demo.sh`가 구동하는 Ansible 설정. 컨트롤러(pqcota-ctl)가 **SSH로 각 타깃 노드에 접속 → collector 실행 → 결과 JSON 회수**한다. 빌드 시 컨트롤러 이미지의 `/work/ansible`로 복사된다.
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../../../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../../../docs/PQC플랫폼_규정.md)의 절 번호다.
 
 | 파일 | 역할 |
 |---|---|
@@ -11,7 +11,7 @@
 | `targets.ini` | **생성물(커밋 안 됨)** — `pqcota-hosts`가 사용자 `hosts.csv`에서 만든다. `[targets]`에 `ansible_host`·`ansible_user`·`ansible_ssh_private_key_file`(**접속 비밀·런타임 전용·미영속**) |
 | `ansible.cfg` | host key·SSH 옵션만. **접속 user/key 기본값 없음** — 반드시 `targets.ini`(pqcota-hosts 산출)에서 온다 |
 
-디스커버리는 두 인벤토리를 **병합**해 실행한다: `ansible-playbook -i targets.ini -i groups.ini discover.yml`. 접속(정체성·비밀)은 `targets.ini`, 시나리오(트래픽·그룹)는 `groups.ini`가 담당 — 레인 분리(§4A.3).
+디스커버리는 두 인벤토리를 **병합**해 실행한다: `ansible-playbook -i targets.ini -i groups.ini discover.yml`. 접속(정체성·비밀)은 `targets.ini`, 시나리오(트래픽·그룹)는 `groups.ini`가 담당 — 레인 분리(§0.5).
 
 ## 자기 호스트로 데모를 돌리려면 — `hosts.csv`를 고친다(pqcota 인벤토리 아님)
 

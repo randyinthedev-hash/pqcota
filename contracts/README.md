@@ -2,11 +2,11 @@
 
 이 디렉터리는 PQC 마이그레이션 플랫폼의 **모든 컴포넌트가 의존하는 유일 계약**이다
 
-> **§ 표기**: 별도 언급이 없으면 [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/PQC플랫폼_규정.md)의 절 번호다.
 
 근거 문서:
 - [**데이터 모델 스키마**](데이터모델_스키마.md) — 전 메시지·enum의 목적·핵심 필드·관계 지도(사람용 레퍼런스). 아래 파일 목록보다 먼저 보면 전체 그림이 잡힌다.
-- [프로세스 규정서](../docs/PQC플랫폼_단계별_프로세스규정.md)
+- [규정서](../docs/PQC플랫폼_규정.md)
 - [아키텍처 & OSS 경계 설계](../docs/PQC플랫폼_아키텍처_및_OSS경계_설계.md)
 
 ## 파일
@@ -95,7 +95,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
 | `pqcota:jca.provider_set` | 등록 순서 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
-| `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산 귀속(§4A.2) |
+| `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산 귀속(§0.5) |
 
 > `evidence_strength`·`pqc_readiness`는 **여기 넣지 않는다** — 코어 파생 값이다(위 결정 1).
 
@@ -118,7 +118,7 @@ proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 �
 | 함께 볼 것 | 언제 | 잊으면 |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | `CollectionResult`·`Envelope`·`MachineIdentity`·`Completeness`·`ObservedEdge`에 **필드 추가** | 새 필드가 **서명 사각지대**가 된다 — 변조해도 검증이 통과.<br>범위를 넓히면 **기존 서명은 전부 무효**가 되므로 릴리스 후엔 마이그레이션 필요 |
-| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에서 조용히 사라진다**([인벤토리 설계 §13.3](../inventory/인벤토리_설계.md)) |
+| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에서 조용히 사라진다**([인벤토리 설계 §7.3](../inventory/인벤토리_설계.md)) |
 
 둘 다 **테스트가 지켜본다** — 필드 수가 바뀌면 `TestCanonicalCoversAllFields`가 실패하며 무엇을 해야 하는지 알려준다. 실패를 기대값 수정만으로 넘기지 말 것. 그게 바로 사각지대를 만드는 경로다.
 

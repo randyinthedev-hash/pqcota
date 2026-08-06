@@ -6,7 +6,7 @@
 //
 // 책임 경계(§6.1 유지):
 //   Collector = 원시 핸드셰이크 포집 + 협상 파라미터 추출 → ObservedEdge[] 반환.
-//   정규화     = posture 분류(§12.1)·선언 대조(§3.3)·토폴로지 렌더(§12.3). 파생 뷰.
+//   정규화     = posture 분류(§6.1)·선언 대조(§3.3)·토폴로지 렌더(§6.3). 파생 뷰.
 
 syntax = "proto3";
 
@@ -17,7 +17,7 @@ import "pqcota/common/v1/common.proto";
 
 option go_package = "github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1";
 
-// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(§12.1 ⚪).
+// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(§6.1 ⚪).
 enum NetworkProtocol {
   NETWORK_PROTOCOL_UNSPECIFIED = 0; // 불명 — 암호화된 핸드셰이크·캡처 창 밖
   NETWORK_PROTOCOL_TLS = 1;
@@ -32,7 +32,7 @@ enum EdgeRole {
   EDGE_ROLE_SERVER = 2; // src가 수신자
 }
 
-// 양자내성 posture (§12.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
+// 양자내성 posture (§6.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
 // Collector 출력에는 존재하지 않는다(§0.2, EvidenceStrength와 동일 원칙).
 enum QuantumPosture {
   QUANTUM_POSTURE_UNSPECIFIED = 0; // ⚪ 불명·미관측 (암호화 핸드셰이크·캡처 밖)
