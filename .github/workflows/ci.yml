@@ -22,7 +22,7 @@ jobs:
     steps:
       # 계약 하위호환 검사가 **릴리스 태그를 기준선**으로 쓴다 — 얕은 클론이면 태그가 없어
       # 검사가 조용히 건너뛴다. 게이트가 스스로 꺼지는 상태를 만들지 않는다.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -88,7 +88,7 @@ jobs:
       matrix:
         goarch: [amd64, arm64]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
