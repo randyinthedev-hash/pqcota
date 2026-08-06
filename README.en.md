@@ -8,6 +8,8 @@ English · [한국어](README.md)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
+> **Preparing v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
+
 A PQC migration management platform (OSS, [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
 
 **Name** — *pqcota* (pronounced **P-cota**) = **PQC** (post-quantum cryptography) + **Orchestra** (-ota). **This software is a *player* in the orchestra, not the maestro.** The **maestro who decides what to migrate and when is the user** wielding the tool; pqcota plays its own part (observe · normalize · generate) precisely.

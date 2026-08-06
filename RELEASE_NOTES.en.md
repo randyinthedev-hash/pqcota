@@ -15,10 +15,19 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 - **v0.2.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".)
 - **v0.3.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done when this implementation is in hand (no speculative abstraction).
 
-- **Signed binary release (planned · version TBD)** — per-arch build → SHA256SUMS → ed25519 signature →
-  `pqcota-verify-bundle`. The bundle layout, signing, and verification are settled in the
-  [collector deployment design](discovery/collector_배포_설계.md) (Korean); what remains is the workflow.
-  **Until then, users build from source too** → [Build](README.en.md#build).
+- **Signed binary release (planned · version TBD)** — per-arch static builds and `SHA256SUMS` **ship with releases from v0.1.0 on** (CI produces them when a tag is pushed). What remains is the **ed25519 signature and `pqcota-verify-bundle`** — the bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector_배포_설계.md) (Korean). Until then, verify integrity with `sha256sum -c`.
+
+### Not on the roadmap — deliberately
+
+These are **boundaries**, not directions. Written down so no one waits for them.
+
+| Not built | Instead |
+|---|---|
+| **Fleet orchestration** — drain · rolling · health gates | Standard Ansible playbooks come out, so your deployment tooling drives them |
+| **Remote execution engine** — resident agents, push channels | You run the generated artifacts on your own substrate |
+| **Source / artifact CBOM scanner** | CI already has the source. CycloneDX from CBOMkit and friends is **ingested** instead |
+| **Dynamic tracing** (eBPF · ltrace) | Invasive, so it isn't done. Observing the actual negotiation on the wire was chosen instead |
+| **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 
 > **Why split it** — CNG's discovery half fits the current contract, but its provisioning half requires a new substrate. Each is completed honestly in order: schema → discovery → provisioning. Python · Go · .NET · Node are not peer runtimes — they resolve into OpenSSL/CNG — so they are not separate release targets (see the document above).
 
@@ -26,7 +35,7 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 ## v0.1.0 — First release (unreleased · in development)
 
-**Goal** — a **three-stage end-to-end** you build from source and run. Distributing signed pre-built binaries is deferred to a later release (see the roadmap above).
+**Goal** — a **three-stage end-to-end** you can download and run. Per-arch static binaries and `SHA256SUMS` ship with the release; **signing** (ed25519) is deferred to a later release (see the roadmap above).
 
 ### Results (done)
 
@@ -40,10 +49,10 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 - **CNG schema reservation** — adds `CRYPTO_RUNTIME_WIN_CNG` enum + `CngAxes` (oneof arm) to the contract (**not implemented** — the collector, normalization, and provisioning that fill it come in v0.2.0/v0.3.0). This is both the starting point of the staged rollout and a proof of the contract claim that "a new runtime is accepted with no core change" (purely additive · backward compatibility verified).
 - **Verification** — the demo's 6-stage end-to-end (the generated playbook is actually **applied, activated, and rolled back** on a real node), per-stage examples, a green test suite across all packages, and a docs gate (`make check-docs` — links, anchors, stale scope claims, personal data).
 
-### Remaining (before the v0.1.0 release)
+### Settled (what used to block the v0.1.0 release)
 
-- **Pin and document the minimum supported kernel** — the static binaries don't care about distro or libc (verified on CentOS 7, Debian 8, Alpine), but the **kernel floor is set by the Go toolchain and is not yet stated.** Since the observed targets are legacy servers, this *is* coverage.
-- **Verify on legacy hardware** — actually run on an old-kernel machine/VM. Containers share the host kernel, so they **cannot verify this.**
+- **Minimum supported kernel = 3.2** (the floor the Go 1.24+ toolchain sets). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.md#지원-범위) (Korean).
+- **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real.
 
 ---
 
