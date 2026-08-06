@@ -4,7 +4,7 @@ English · [한국어](SECURITY.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](SECURITY.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.en.md).
 
 `pqcota` is a tool that observes and normalizes an enterprise intranet's crypto assets and generates migration artifacts. Because of the data it handles (endpoint and crypto-asset inventory) and the privileges it requires (packet observation by the collector, etc.), we take security reports seriously.
 

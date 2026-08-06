@@ -6,7 +6,7 @@ English · [한국어](THIRD-PARTY-NOTICES.md)
 
 Copyright and license notices for the third-party components **compiled and linked into** the binaries you build from this repo (collectors and CLIs). All are permissive (Apache-2.0 / BSD-3-Clause / MIT); the notices are reproduced below because they must be preserved when you pass those binaries on.
 
-> For the **full license landscape** — including build-time tools (buf · protoc-gen-*) and demo-environment components (Ansible · Temurin · OpenSSL · Graphviz, etc., which run as separate processes and are not linked) — see [docs/licensing.md](docs/licensing.md) (Korean).
+> For the **full license landscape** — including build-time tools (buf · protoc-gen-*) and demo-environment components (Ansible · Temurin · OpenSSL · Graphviz, etc., which run as separate processes and are not linked) — see [docs/licensing.md](docs/licensing.en.md).
 
 ---
 

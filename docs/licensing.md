@@ -1,3 +1,5 @@
+한국어 · [English](licensing.en.md)
+
 # 라이선스 정리 (Third-Party & Project Licensing)
 
 **문서 성격**: 현 시점 `pqcota`가 **내부적으로 사용하는 모든 라이선스**를 소비 형태별로 정리한다.

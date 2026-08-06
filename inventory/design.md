@@ -1,3 +1,5 @@
+한국어 · [English](design.en.md)
+
 # 인벤토리 서브시스템 설계 (Inventory Subsystem Design)
 
 규정서 §3(Inventory)의 기술 설계. Discovery 산출(정규화된 CBOM·완전성 맵)을 **읽기전용 인벤토리 뷰**로
@@ -170,7 +172,7 @@ type PlanItem struct {
 - **엣지 그래프**(파생 뷰): 리컨실리에이션 뷰의 그래프 표현. **DOT/Graphviz** 자동 생성 → SVG, 또는 웹 뷰(D3).
 - CONFIRMED/UNDECLARED/UNOBSERVED 3-상태(§3.3)가 그래프에 색·선형으로 매핑: UNDECLARED = **shadow 연결**(굵은 경고선), UNOBSERVED = 점선.
 
-### 6.4 한계 (Discovery §2.4 network-collector에서 상속)
+### 6.4 한계 (디스커버리 설계 §2.3 network-collector에서 상속)
 
 수동 관측 창·coverage 의존·암호화 한계 → **지도는 "본 것"이지 "존재하는 것 전체"가 아니다**. 이 부분성을 갭으로 정직히 표기하는 게 §1.2 감사 무결성과 일관된다. "가능한 한도내에서"가 정확한 프레이밍.
 
@@ -219,7 +221,7 @@ type PlanItem struct {
 
 ### 7.4 절단 정책 (`pqcota-prune`)
 
-13.2로 같은 상태의 반복은 이미 접히므로, 절단이 다루는 것은 **오래된 변화 지점**뿐이다. 저장된 스냅샷은 전부 변화 지점이라 "변화점 보존" 같은 축은 필요 없다.
+§7.2로 같은 상태의 반복은 이미 접히므로, 절단이 다루는 것은 **오래된 변화 지점**뿐이다. 저장된 스냅샷은 전부 변화 지점이라 "변화점 보존" 같은 축은 필요 없다.
 
 **불변식 셋:**
 

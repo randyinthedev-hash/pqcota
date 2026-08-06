@@ -1,3 +1,5 @@
+한국어 · [English](README.en.md)
+
 # pqcota/contracts — 계약 SSOT (Single Source of Truth)
 
 이 디렉터리는 PQC 마이그레이션 플랫폼의 **모든 컴포넌트가 의존하는 유일 계약**이다

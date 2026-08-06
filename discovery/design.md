@@ -1,3 +1,5 @@
+한국어 · [English](design.en.md)
+
 # 디스커버리 서브시스템 설계 (Discovery Subsystem Design)
 
 **문서 성격**: Discovery 서브시스템의 기술 설계. 상황별 인수 기준은 [테스트케이스](testcases.md)(SD-1–SD-7). 규정서 §2, [아키텍처 설계](../docs/architecture.md), [contracts SSOT](../contracts/)를 구현 레벨로 잇는다.
