@@ -4,7 +4,7 @@ English · [한국어](CONTRIBUTING.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](CONTRIBUTING.md) is authoritative.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/PQC플랫폼_규정.md) (Korean).
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/플랫폼_규정.md) (Korean).
 
 For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.en.md) and [demo/](demo/).
 
