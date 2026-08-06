@@ -1,3 +1,5 @@
+한국어 · [English](README.en.md)
+
 # docs/ — 설계·기여자(개발자) 문서
 
 > **이 폴더는 개발자·포크·기여자용**이다. 플랫폼을 *써보려는* 사용자는 루트 [README의 "써보기"](../README.md#써보기--데모)와 [demo/](../demo/)부터 보면 된다.
@@ -31,7 +33,7 @@
 ## 규정·경계 (먼저 읽기)
 | 문서 | 내용 |
 |---|---|
-| [규정서](regulation.md) | **무엇을 해야/하지 말아야 하나** — 관통 원칙 · 대상 런타임 · 단계 규정 · 자동화 경계(AUTO/PROPOSE/MANUAL) · 계약·라이선스 경계. 코드 §참조의 원본 |
+| [규정서](regulation.md) | **무엇을 해야/하지 말아야 하나** — 관통 원칙 · 단계 규정 · 자동화 경계(AUTO/PROPOSE/MANUAL) · 단계 간 핸드오프 계약. 코드 §참조의 원본 |
 | [아키텍처](architecture.md) | 규정을 **어떤 모듈·계약·스키마로** 구현하나 — 기술 스택 · 시스템 구성 · 정규화 CBOM Envelope · intake 계약 · 리포 구조 |
 | [라이선스 정리](licensing.md) | 무엇을 어떤 라이선스로 쓰나(소비 형태별) + **카피레프트 격리를 무엇이 강제하나** |
 
@@ -58,8 +60,8 @@
 |---|---|
 | [**데이터 모델 스키마**](../contracts/data-model.md) | 규격한 전 메시지·enum의 사람용 지도 — 목적·핵심 필드·관계·provenance 레인. contracts SSOT 레퍼런스 |
 | [contracts/README](../contracts/README.md) | protobuf 파일·네임스페이스 목록 + CycloneDX property 매핑 |
-| [검토 중인 설계](under-review.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계 — provider 수용(렌더의 config 어휘)·provider 관측·HSM 축. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
-| [암호 런타임 수용 원칙](runtime-acceptance.md) | 새 암호 런타임을 코어 무변경으로 받는 계약을 3후보(정적 Go·Windows CNG·HSM)를 반례로 놓고 검증 — 어디가 버티고 어디가 부러지나 |
+| [검토 중인 설계](under-review.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계 — provider 수용(만들 config 어휘)·provider 관측·HSM 축. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
+| [암호 런타임 수용 원칙](runtime-acceptance.md) | 무엇을 1급 암호 런타임으로 받나 — 수용된 둘(OpenSSL·JCA)이 왜 동형인지, 축 넷이 말하지 않는 수용 조건 셋, 새 후보를 만났을 때의 결정 트리 |
 
 [`contracts/`](../contracts/) — protobuf SSOT. 네임스페이스가 곧 단계.
 
