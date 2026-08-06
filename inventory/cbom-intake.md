@@ -1,14 +1,14 @@
 # 위임 수신 설계 (Delegated Intake — CBOM 임포트)
 
 **문서 성격**: discovery에서 **직접 만들지 않고 받기만 하는** 기능을 collector(직접 관측)와 분리해 다룬다. 소스·빌드 아티팩트 스캔은 기존 도구(CBOMkit 등)에 위임하고, pqcota는 그 표준 산출물(CycloneDX)을 **수신·검증·정규화**만 한다.
-**기준**: [디스커버리 설계](../discovery/디스커버리_설계.md) §2.3·SV-2·SD-7 · 규정서 §2.
+**기준**: [디스커버리 설계](../discovery/design.md) §2.3·SV-2·SD-7 · 규정서 §2.
 **구현**: `pkg/inventory/ingest`(수신 어댑터: 검증+임포트) · [`inventory/cmd/pqcota-cbom-ingest`](cmd/README.md)(수신·검증·적재 종단 CLI).
 
 > **왜 collector와 분리하나** — openssl·jvm·network collector는 **직접 만드는 런타임 관측(핵심 IP)**이다. CBOM 임포트는 정반대다 — 스캔은 남이 하고 pqcota는 결과를 받는다. 코드 형태(계약 뒤 얇은 어댑터)·유지보수·라이선스(GPL 격리)·서비스 경계가 collector와 모두 달라 별도 문서로 둔다.
 
 ---
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 ## 0. 핵심 경계 — CI 위임 / 런타임 자체제공 (§1.1)
 
@@ -43,7 +43,7 @@
 
 ## 4. 라이선스 경계 (GPL 격리)
 
-CBOMkit은 GPL 계열이다. pqcota는 **링크·번들하지 않고 파일(CycloneDX)만 교환**하므로 전염되지 않는다. CBOMkit을 직접 실행해야 한다면 **프로세스를 격리**해야 한다 — 코어(Apache-2.0)엔 넣지 않는다. → [라이선스 정리](../docs/라이선스_정리.md)
+CBOMkit은 GPL 계열이다. pqcota는 **링크·번들하지 않고 파일(CycloneDX)만 교환**하므로 전염되지 않는다. CBOMkit을 직접 실행해야 한다면 **프로세스를 격리**해야 한다 — 코어(Apache-2.0)엔 넣지 않는다. → [라이선스 정리](../docs/licensing.md)
 
 ## 5. 역할 분담 (SV-2 요약)
 

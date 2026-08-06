@@ -6,7 +6,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/kernel/registry"
 )
 
-// TD-FORK-1 (디스커버리_테스트케이스.md §2). fork 시그니처 매처.
+// TD-FORK-1 (testcases.md §2). fork 시그니처 매처.
 func TestMatchFork(t *testing.T) {
 	sigs := registry.DefaultForkSignatures
 	t.Run("BoringSSL 스트립 바이너리", func(t *testing.T) {

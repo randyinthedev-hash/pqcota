@@ -97,7 +97,7 @@ go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
 **③ 대상 노드에 올릴 collector** — 셋뿐이고 **노드 arch에 맞춰** 정적으로 만든다
-→ [배포 설계](discovery/collector_배포_설계.md).
+→ [배포 설계](discovery/collector-deployment.md).
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
@@ -157,5 +157,5 @@ Windows(CNG)는 [로드맵](RELEASE_NOTES.md)에 있다 — v0.1.0은 계약에 
 ## 라이선스
 
 - **Apache-2.0** — 원문 [LICENSE](LICENSE)
-- 의존성 라이선스 정리 → [라이선스 정리](docs/라이선스_정리.md)
+- 의존성 라이선스 정리 → [라이선스 정리](docs/licensing.md)
 - 서드파티 고지 → [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)

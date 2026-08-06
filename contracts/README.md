@@ -2,12 +2,12 @@
 
 이 디렉터리는 PQC 마이그레이션 플랫폼의 **모든 컴포넌트가 의존하는 유일 계약**이다
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 근거 문서:
-- [**데이터 모델 스키마**](데이터모델_스키마.md) — 전 메시지·enum의 목적·핵심 필드·관계 지도(사람용 레퍼런스). 아래 파일 목록보다 먼저 보면 전체 그림이 잡힌다.
-- [규정서](../docs/플랫폼_규정.md)
-- [아키텍처 & OSS 경계 설계](../docs/아키텍처.md)
+- [**데이터 모델 스키마**](data-model.md) — 전 메시지·enum의 목적·핵심 필드·관계 지도(사람용 레퍼런스). 아래 파일 목록보다 먼저 보면 전체 그림이 잡힌다.
+- [규정서](../docs/regulation.md)
+- [아키텍처 & OSS 경계 설계](../docs/architecture.md)
 
 ## 파일
 
@@ -64,12 +64,12 @@ Collector  →  §2.4 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 리뷰어가 자산별로 판정하는 계획·자산 속성(MANUAL)이며 확정 계획(plan) 엔티티에 실린다(워크플로는 계획 쪽에 있다).
 Discovery `Finding`에는 이 필드가 없다 — 단계 혼선을 막기 위한 의도적 분리.
 
-### 5. gRPC 경계 = GPL 전염 차단 경계 ([라이선스 정리](../docs/라이선스_정리.md))
+### 5. gRPC 경계 = GPL 전염 차단 경계 ([라이선스 정리](../docs/licensing.md))
 
 `Collector` 서비스 경계는 곧 라이선스 격리 경계다.
 GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실행되고
 **stdout CycloneDX만 교환**한다. 코어는 라이브러리로 링크하지 않는다.
-`CollectorCapabilities.license`로 사용자에게 함의를 표기한다([라이선스 정리](../docs/라이선스_정리.md)).
+`CollectorCapabilities.license`로 사용자에게 함의를 표기한다([라이선스 정리](../docs/licensing.md)).
 
 ### 6. 계획 스키마는 공개 계약 (규정서 §4.1)
 
@@ -79,7 +79,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 - **계획 저작·리뷰-확정**(§3.3③)과 **플릿 오케스트레이션**(§4.3)은 하지 않는다.
 - taxonomy(`RemediationKind`) → config 조각 생성은 결정론적 파생(§1.2)이라 OSS 생성기가 담당.
 > `DeployAutomationLevel`·계획 엔티티의 소관은 *워크플로 소유*를 뜻하며 *스키마 위치*가 아니다.
-> 상세: [프로비저닝 설계](../provisioning/프로비저닝_설계.md).
+> 상세: [프로비저닝 설계](../provisioning/design.md).
 
 ## CycloneDX `properties` 확장 키 규약 (§3.2)
 
@@ -118,7 +118,7 @@ proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 �
 | 함께 볼 것 | 언제 | 잊으면 |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | `CollectionResult`·`Envelope`·`MachineIdentity`·`Completeness`·`ObservedEdge`에 **필드 추가** | 새 필드가 **서명 사각지대**가 된다 — 변조해도 검증이 통과.<br>범위를 넓히면 **기존 서명은 전부 무효**가 되므로 릴리스 후엔 마이그레이션 필요 |
-| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에서 조용히 사라진다**([인벤토리 설계 §7.3](../inventory/인벤토리_설계.md)) |
+| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에서 조용히 사라진다**([인벤토리 설계 §7.3](../inventory/design.md)) |
 
 둘 다 **테스트가 지켜본다** — 필드 수가 바뀌면 `TestCanonicalCoversAllFields`가 실패하며 무엇을 해야 하는지 알려준다. 실패를 기대값 수정만으로 넘기지 말 것. 그게 바로 사각지대를 만드는 경로다.
 

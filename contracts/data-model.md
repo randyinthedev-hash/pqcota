@@ -2,7 +2,7 @@
 
 계약 파일·네임스페이스 목록과 CycloneDX property 매핑은 [contracts/README](README.md).
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 ## 0. 규약
 
@@ -31,7 +31,7 @@
 ### 통제 어휘 (enum) — 전 단계 공유
 | enum | 뜻 | 값(0=UNSPECIFIED 생략) |
 |---|---|---|
-| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/암호_런타임_수용_원칙.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG`(v0.1.0 **스키마 예약**, 미구현 — 채우는 코드는 v0.2.0+) |
+| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG`(v0.1.0 **스키마 예약**, 미구현 — 채우는 코드는 v0.2.0+) |
 | `DetectionMethod` | 탐지 방법. collector가 신고 → evidence 파생 근거 | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
 | `EvidenceStrength` | 증거 강도. **detection_method에서 파생**(core만 채움) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
 | `UsageContext` | 사용 맥락 | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
@@ -161,4 +161,4 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 
 ---
 
-관련 설계: [디스커버리](../discovery/디스커버리_설계.md) · [인벤토리](../inventory/인벤토리_설계.md) · [프로비저닝](../provisioning/프로비저닝_설계.md) · [아키텍처·OSS 경계](../docs/아키텍처.md). 실행 예제: [examples/](../examples).
+관련 설계: [디스커버리](../discovery/design.md) · [인벤토리](../inventory/design.md) · [프로비저닝](../provisioning/design.md) · [아키텍처·OSS 경계](../docs/architecture.md). 실행 예제: [examples/](../examples).

@@ -7,7 +7,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/discovery/normalize"
 )
 
-// TD-GAP-1 (디스커버리_테스트케이스.md §2). 완전성 맵 — 갭 ≠ 부재.
+// TD-GAP-1 (testcases.md §2). 완전성 맵 — 갭 ≠ 부재.
 func TestCompleteness(t *testing.T) {
 	proc := commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS
 	arti := commonv1.CollectionLayer_COLLECTION_LAYER_ARTIFACT

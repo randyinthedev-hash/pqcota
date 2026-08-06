@@ -53,7 +53,7 @@ message CngAxes {
 
 message Finding {
   string id = 1;                       // 정규화 해시 — finding 동일성/dedup 앵커 (§2.4)
-  pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (docs/암호_런타임_수용_원칙.md)
+  pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (docs/runtime-acceptance.md)
   pqcota.common.v1.UsageContext usage_context = 3;
   string algorithm = 4;                // 비었으면 소스 부재로 열화됨 (§2.3)
 

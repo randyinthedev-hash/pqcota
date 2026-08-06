@@ -3,10 +3,10 @@
 규정서 §3(Inventory)의 기술 설계. Discovery 산출(정규화된 CBOM·완전성 맵)을 **읽기전용 인벤토리 뷰**로
 제시하고 머신 메타데이터를 관리한다 — 관측을 노드·앱에 이어 붙이고 이력과 변화를 보여주는 부분이다.
 
-**기준**: 규정서 §3·§5 · [디스커버리 설계](../discovery/디스커버리_설계.md) · [아키텍처 설계](../docs/아키텍처.md) · [contracts](../contracts/).
+**기준**: 규정서 §3·§5 · [디스커버리 설계](../discovery/design.md) · [아키텍처 설계](../docs/architecture.md) · [contracts](../contracts/).
 
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 **어느 규정을 구현하나** — 규정이 바뀌면 이 표로 고칠 절을 찾는다.
 
@@ -126,7 +126,7 @@ type PlanItem struct {
 
 ## 4. 산출물 & Deploy 핸드오프 (§3.7·§5)
 
-> 핸드오프 대상(Deploy 서브시스템)의 계획 스키마·게이트·아티팩트 생성기 설계는 [프로비저닝 설계](../provisioning/프로비저닝_설계.md) 참조. 계획·판정 스키마의 정식 정의는 `contracts/plan.proto`·`decision.proto`([데이터 모델 스키마](../contracts/데이터모델_스키마.md)).
+> 핸드오프 대상(Deploy 서브시스템)의 계획 스키마·게이트·아티팩트 생성기 설계는 [프로비저닝 설계](../provisioning/design.md) 참조. 계획·판정 스키마의 정식 정의는 `contracts/plan.proto`·`decision.proto`([데이터 모델 스키마](../contracts/data-model.md)).
 
 | 산출물 | 성격 | 핸드오프 |
 |---|---|---|
@@ -144,7 +144,7 @@ type PlanItem struct {
 
 ## 6. 크립토 통신 토폴로지 그래프 (Phase 1) — 자동 완성 지도
 
-사용자가 준 레거시 IP 목록을 스코프 마스터로 구축한 뒤, 각 머신의 [network-collector](../discovery/디스커버리_설계.md#23-network-collector-go-af_packet--네트워크-계층-phase-1) 관측을 집계해 **크립토 통신 지도를 자동 생성**한다. reconciliation 뷰(§3.7)의 그래프 렌더링.
+사용자가 준 레거시 IP 목록을 스코프 마스터로 구축한 뒤, 각 머신의 [network-collector](../discovery/design.md#23-network-collector-go-af_packet--네트워크-계층-phase-1) 관측을 집계해 **크립토 통신 지도를 자동 생성**한다. reconciliation 뷰(§3.7)의 그래프 렌더링.
 
 ### 6.1 구성
 
@@ -272,7 +272,7 @@ type PlanItem struct {
 
 ### 시나리오
 
-- **상황**: 사용자가 기존 크립토 인벤토리·CMDB **선언** 보유. (※ CBOM 파일 아님 — 그건 [위임 수신](위임수신_설계.md))
+- **상황**: 사용자가 기존 크립토 인벤토리·CMDB **선언** 보유. (※ CBOM 파일 아님 — 그건 [위임 수신](cbom-intake.md))
 - **[사용자]** 기존 선언 데이터 제공.
 - **[pqcota]** 선언 임포트 → 정규 형식으로 정규화. **선언 레인**으로 라벨(관측과의 **대조는 하지 않는다**). ※ 구현은 인벤토리로 이동(`pkg/inventory/declaration`) — 선언은 대조 기준선이라 인벤토리 단계 소관.
 - **결과**: 선언 계열 확보(추후 reconciliation의 한 축).

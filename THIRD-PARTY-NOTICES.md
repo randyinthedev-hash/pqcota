@@ -7,7 +7,7 @@
 전달할 때 저작권 고지를 유지해야 하므로 아래에 원문을 둡니다.
 
 > 빌드 타임 도구(buf·protoc-gen-*)와 데모 환경 구성요소(Ansible·Temurin·OpenSSL·Graphviz 등, 별도 프로세스라
-> 링크되지 않음)를 포함한 **전체 라이선스 지형**은 [docs/라이선스_정리.md](docs/라이선스_정리.md)를 참조하세요.
+> 링크되지 않음)를 포함한 **전체 라이선스 지형**은 [docs/licensing.md](docs/licensing.md)를 참조하세요.
 
 ---
 

@@ -5,7 +5,7 @@
 통신 핸드셰이크 디스커버리 → ③ 중앙 인벤토리(엔드포인트·프로필·앱 귀속·이력·자산 스코프) →
 ④ 프로비저닝(L2 플레이북·롤백 레코드 **생성** → 적용 → 되돌림)** 까지 전 범위를 보여줍니다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 > **①은 이 데모의 구성 때문에 필요한 것이지, 관측의 전제가 아닙니다.** 데모는 컨트롤러에서 **여러 노드에
 > SSH로** 스캐너를 돌리므로 접속 인벤토리가 필요합니다. 한 노드를 그 자리에서 훑거나 결과 파일을 모아
@@ -44,7 +44,7 @@
 |---|---|---|
 | [`scripts/`](scripts) | **사용자가 실행**하는 것 — `up.sh`(설치) · `demo.sh`(수행) · `down.sh`(제거) | ✅ 이 3개 |
 | [`scripts/ansible/`](scripts/ansible) | demo.sh가 구동하는 디스커버리 **오케스트레이션** — SSH 인벤토리·플레이북(`discover.yml`) | ❌ |
-| [`통합_검증.md`](통합_검증.md) | **이 데모가 검증하는 통합 케이스**와 커버하지 않는 것 |
+| [`integration-verification.md`](integration-verification.md) | **이 데모가 검증하는 통합 케이스**와 커버하지 않는 것 |
 | [`scripts/internal/`](scripts/internal) | 컨테이너 **안에서** 도는 헬퍼(노드 부팅·서비스 기동/정지·트래픽 생성·관측). `ssl-apps.sh`는 L3 훅이 가리키는 서비스 관리 지점 | ❌ |
 | [`workloads/`](workloads) | 노드에 배포되는 **데모 크립토 워크로드**(스캔·관측 대상): `CryptoApp.java`(JCA/BouncyCastle) · `pqc-echo/`(PQC TLS 트래픽 생성기, Go) | ❌ |
 | [`expected-output/`](expected-output) | 실행 전 **예상 결과** 미리보기(콘솔·토폴로지 SVG) | ❌ |
@@ -157,7 +157,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 > **왜 적용까지 하나**: 생성만 하고 안 돌리면 **문법은 맞는데 실제로는 깨지는** 플레이북이 통과한다. 실제로 그런 결함이 있었다(config 디렉터리를 안 만들어 `copy`가 실패). 이 단계가 그 부류를 상시로 잡는다.
 >
-> **provider 모듈은 도구가 주지 않는다.** 데모는 배포 경로만 보이려 **빈 파일**을 쓴다 — 실제 암호 기능은 없다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입한다([커스텀 provider 절차](../provisioning/프로비저닝_설계.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 건 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서다.
+> **provider 모듈은 도구가 주지 않는다.** 데모는 배포 경로만 보이려 **빈 파일**을 쓴다 — 실제 암호 기능은 없다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입한다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 건 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서다.
 
 - **L2는 조각을 놓기만 한다** — 참조되게 만들지 않으므로 모든 산출물이 완전히 가역이다.
 - **L3는 여기에 활성화·재시작을 더한다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 쓴다 — 환경마다 활성화 지점이 다르므로 도구가 추측하지 않는다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킨다(현실의 systemd unit·사내 기동 스크립트에 해당).
@@ -179,7 +179,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 본다 |
 | **되돌림** | L3→L2 순서로 되돌리면 다시 **0개** — 가역성도 같은 자로 잰다 |
 
-**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/디스커버리_설계.md#21-openssl-collector-go--sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
+**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go--sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
 
 ## 접근 비밀 경계 (§1.5)
 접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실린다. pqcota 인벤토리(Postgres)엔

@@ -89,4 +89,4 @@ pqcota-records [node]
 
 > 로직은 `pkg/provisioning/`(계획 게이트·taxonomy→config 생성기·`GenerateProvisioningPlaybook`·`CaptureState`·`RecordStore` Mem/Pg)에 있고, 이 커맨드들은 그걸 조립하는 얇은 진입점이다.
 
-설계: [프로비저닝 설계](../프로비저닝_설계.md).
+설계: [프로비저닝 설계](../design.md).

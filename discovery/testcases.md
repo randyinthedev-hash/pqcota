@@ -1,13 +1,13 @@
 # 디스커버리 테스트케이스 명세 (Scenario-driven Acceptance Tests)
 
-[디스커버리 설계](디스커버리_설계.md)가 세운 상황(SD-1–SD-7)과 network-collector(설계 §2.3)를 **검증 가능한 인수 기준**으로 옮긴 것이다. 구현은 이 테스트를 통과하는 것을 목표로 한다(TDD).
+[디스커버리 설계](design.md)가 세운 상황(SD-1–SD-7)과 network-collector(설계 §2.3)를 **검증 가능한 인수 기준**으로 옮긴 것이다. 구현은 이 테스트를 통과하는 것을 목표로 한다(TDD).
 
 각 절은 **상황 · 사용자 준비 · 기대 결과**로 시작하고, 그 아래가 케이스 표다.
 
-관측 결과가 거치는 **파생 규칙**(증거 강도·정규화·등급)은 단계를 가로지르므로 [커널 테스트케이스](../docs/커널_테스트케이스.md)에 있다.
+관측 결과가 거치는 **파생 규칙**(증거 강도·정규화·등급)은 단계를 가로지르므로 [커널 테스트케이스](../docs/kernel-testcases.md)에 있다.
 
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
 ---
 
@@ -17,7 +17,7 @@
 |---|---|---|---|
 | **unit** | 결정론적 순수 로직. 실물 호스트 불필요 | 어디서나 | 테스트 내부 상수(`/proc` 스냅샷·ELF 바이트·`getProviders()` 출력·패킷) |
 | **integration** | 실물 바이너리/JVM/프로세스 필요 | **리눅스** | 실제 OpenSSL·JDK 등 |
-| **e2e** | 컨테이너 등 환경 조립 | 리눅스 + Docker | [데모](../demo/통합_검증.md) |
+| **e2e** | 컨테이너 등 환경 조립 | 리눅스 + Docker | [데모](../demo/integration-verification.md) |
 
 ---
 
@@ -25,7 +25,7 @@
 
 케이스 번호는 **`TD`(디스커버리) - 무엇을 보나 - 순번**이다 — `TD-OPENSSL` · `TD-JVM` · `TD-FORK` · `TD-CONTAINER` · `TD-SCOPE` · `TD-GAP` · `TD-SIGN` · `TD-NETWORK`. 번호는 그것을 검증하는 **테스트 파일로 이어진다**(링크가 없는 것은 데모가 본다).
 
-절 제목의 `SD-*`는 [디스커버리 설계](디스커버리_설계.md)가 매긴 **상황**(Scenario·Discovery) 번호이고, 표 안의 `TD-*`는 그 상황을 검증하는 **테스트** 번호다 — 다른 축이라 섞지 않는다.
+절 제목의 `SD-*`는 [디스커버리 설계](design.md)가 매긴 **상황**(Scenario·Discovery) 번호이고, 표 안의 `TD-*`는 그 상황을 검증하는 **테스트** 번호다 — 다른 축이라 섞지 않는다.
 
 ### SD-1. OpenSSL 실행중
 
@@ -38,7 +38,7 @@
 | [TD-OPENSSL-1](collectors/openssl/procmaps_test.go) | unit | `TestParseProcMaps` · `_none` — `/proc/<pid>/maps` 스냅샷 파싱 | 로드된 `libssl`/`libcrypto` 경로 목록. 없으면 빈 목록 | 실행 중인 프로세스에 로드된 lib을 잡아낸다 — 디스커버리의 출발점이다 |
 | [TD-OPENSSL-2](collectors/openssl/scan_test.go) | unit | `TestMergeByPathUnionsAppKeys` · `NoAppKeys` — 같은 `.so`를 여러 프로세스가 물고 있을 때 | 경로 하나로 합치고 `app_keys`는 **합집합**. 귀속이 없으면 `nil` | 공유 라이브러리를 프로세스 수만큼 중복 등재하지 않으면서, 그것을 쓰는 앱을 하나도 잃지 않는다 |
 | [TD-OPENSSL-3](collectors/openssl/service_test.go) | unit | `TestCollectorServiceContract` — Describe·Collect gRPC 왕복 | 능력 신고와 결과 스트림이 계약대로 | 코어가 collector를 계약으로만 부르는지 — 배선이 끊기면 실물이 멀쩡해도 아무것도 안 온다 |
-| TD-OPENSSL-4 | **integration** — [데모 2/6](../demo/통합_검증.md) | 실 OpenSSL 컨테이너 노드 수집 | 정규화된 CBOM, evidence_strength=CONFIRMED | 손으로 만든 스냅샷이 아니라 실물 호스트에서 같은 결과가 나오는지 확인한다 |
+| TD-OPENSSL-4 | **integration** — [데모 2/6](../demo/integration-verification.md) | 실 OpenSSL 컨테이너 노드 수집 | 정규화된 CBOM, evidence_strength=CONFIRMED | 손으로 만든 스냅샷이 아니라 실물 호스트에서 같은 결과가 나오는지 확인한다 |
 | [TD-OPENSSL-5](collectors/openssl/build_test.go) | unit | `TestBuildResult` · `NoDetection` · `RawCaptureRoundTripsAndIsStable` — 탐지 결과 → CollectionResult | CycloneDX 본문·원본·완전성이 채워지고, 탐지가 없으면 전 계층 갭 + 사유. 같은 관측이면 같은 바이트 | 조립이 비면 무엇을 봤든 코어에 도달하지 않는다. 원본이 흔들리면 서명이 깨진다(§2.6) |
 | [TD-OPENSSL-6](collectors/openssl/scanhost_test.go) | unit(linux) | `TestScanHostStatsAreConsistent` · `DetectForPIDMissingProcess` · `DetectForPIDSelf` · `ExtractStringsRejectsNonELF` · `ExtractStringsOnRealELF` — 실물 `/proc`·ELF | 집계가 자기모순이 아니고, 없는 PID는 오류. ELF가 아니면 문자열을 지어내지 않는다 | 호스트 훑기와 fork 판정의 입력이 실물에서 도는지 |
 
@@ -57,7 +57,7 @@
 | [TD-JVM-5](collectors/jvm/attach_test.go) | unit | `TestBuildResultForDistinguishesJVMs` · `IdentIsStable` — 서로 다른 JDK 둘 | 각 JVM이 **구별되는 finding**. 식별자는 PID가 아니라 앱(main·jar, 없으면 JAVA_HOME) | 한 노드의 JVM 여럿이 뭉개지지 않게, 그리고 재기동마다 새 자산이 되어 이력이 끊기지 않게 한다 |
 | [TD-JVM-6](collectors/jvm/staticfallback_test.go) | unit | `TestParseJavaSecurity` · `Empty` · `StaticFallbackNoJavaHome` — attach가 막혔을 때 | `java.security`를 **N 순서대로** 파싱. 빈 목록도 오류가 아님. JAVA_HOME 미상이면 오류 + 강등 | attach가 막힌 노드가 "provider 없음"이 아니라 "못 봤음"으로 남게 한다. 순서가 곧 우선순위다 |
 | [TD-JVM-7](collectors/jvm/jvm_test.go) | unit | `TestParseProviders` · `BuildResult` · `JvmServiceContract` — 사이드카 출력 → 정규화·계약 노출 | provider 순서 보존, 원본(`Raw`) 보관, Describe/Collect 왕복 | 사이드카가 본 것이 순서와 원본을 잃지 않고 코어까지 간다 |
-| TD-JVM-8 | **integration** — [데모 2/6](../demo/통합_검증.md) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
+| TD-JVM-8 | **integration** — [데모 2/6](../demo/integration-verification.md) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
 | [TD-JVM-9](collectors/jvm/disableattach_test.go) | **integration** | `TestDisabledAttachFallsBackToJavaSecurity` — `-XX:+DisableAttachMechanism`으로 띄운 실 JVM | attach 실패가 **갭으로 세어지고**, java.security 폴백이 provider를 읽어낸다(열화 표시 + 원본 보존) | attach가 막혔다고 "provider 없음"이 되면 못 본 것과 없는 것이 뒤섞인다 |
 
 ### SD-3. 바이너리 fork 매처 — IP
@@ -78,7 +78,7 @@
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
-| TD-CONTAINER-1 | **e2e** — [데모 2/6](../demo/통합_검증.md) | 대상 안에서 실행, 동일 PID namespace | `/proc` 가시 → CONFIRMED | 컨테이너 안에서 `/proc`이 보이는 조건을 확인한다 |
+| TD-CONTAINER-1 | **e2e** — [데모 2/6](../demo/integration-verification.md) | 대상 안에서 실행, 동일 PID namespace | `/proc` 가시 → CONFIRMED | 컨테이너 안에서 `/proc`이 보이는 조건을 확인한다 |
 | [TD-CONTAINER-2](collectors/openssl/scanhost_test.go) | unit(linux) | `TestCollectSeparatesUnseenFromAbsent` — 볼 수 없는 프로세스 / 읽을 수 있는 프로세스 | 못 봤으면 PROCESS를 **커버로 세지 않고** 사유 고지, 봤는데 없으면 커버로 센다 | 한 문구로 뭉뚱그리면 결함이 갭처럼, 갭이 부재처럼 읽힌다 |
 
 ### SD-5. 스코프 게이트·라우팅
@@ -156,7 +156,7 @@
 | 7 | **서명과 그 커버리지** | TD-SIGN-1–3 |
 | 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–15 |
 | 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-16–18 |
-| 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8 · [데모 2/6](../demo/통합_검증.md) |
+| 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8 · [데모 2/6](../demo/integration-verification.md) |
 | 11 | **못 본 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9 · TD-CONTAINER-2 · TD-NETWORK-19 |
 
 **관찰**: 순서 1–7이 전부 **unit** — 핵심 로직(정직한 증거·fork·라우팅·위임경계)이 실물 없이 TDD된다. 실물 의존은 리눅스가 필요하다. **가치 있는 로직을 먼저, 환경 리스크는 조기 PoC로.**

@@ -4,7 +4,7 @@
 
 pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
 
 ## 사전 요구
 
@@ -88,7 +88,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 ## 새 암호 런타임을 확장하려면
 
-[암호 런타임 수용 원칙](docs/암호_런타임_수용_원칙.md)을 보라.
+[암호 런타임 수용 원칙](docs/runtime-acceptance.md)을 보라.
 
 ## 코딩 가이드라인
 
@@ -119,7 +119,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh            # 종단 디스커버리 데모
 ```
 
-인수 기준·구현 순서는 [docs/디스커버리_테스트케이스](discovery/디스커버리_테스트케이스.md)·[인벤토리_테스트케이스](inventory/인벤토리_테스트케이스.md)(TDD).
+인수 기준·구현 순서는 [docs/디스커버리_테스트케이스](discovery/testcases.md)·[인벤토리_테스트케이스](inventory/testcases.md)(TDD).
 
 ## 언어
 

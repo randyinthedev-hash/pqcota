@@ -2,9 +2,9 @@
 
 **설계 목표**: 실행 중인 JVM에 붙어 `Security.getProviders()`의 **실체를 등록 순서까지** 본다. 이 관측은 **정적 분석으로 대체할 수 없다** — 코드가 런타임에 `Security.addProvider()`로 넣은 provider는 `java.security` 파일에도, JAR 목록에도 없기 때문이다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../../docs/플랫폼_규정.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](../../../docs/regulation.md)의 절 번호다.
 
-근거: [디스커버리 설계 §2.2](../../디스커버리_설계.md) · 인수 기준: [테스트케이스 SD-2](../../디스커버리_테스트케이스.md) · 배포: [collector 배포 설계](../../collector_배포_설계.md)
+근거: [디스커버리 설계 §2.2](../../design.md) · 인수 기준: [테스트케이스 SD-2](../../testcases.md) · 배포: [collector 배포 설계](../../collector-deployment.md)
 
 ---
 
@@ -43,7 +43,7 @@
 
 ### 배포에 미치는 영향
 
-①이 있으므로 노드엔 **Go 바이너리 + `collector.jar`(에이전트)** 만 있으면 된다. **미니 JDK 동봉은 불필요**하다 → [collector 배포 설계 §2](../../collector_배포_설계.md).
+①이 있으므로 노드엔 **Go 바이너리 + `collector.jar`(에이전트)** 만 있으면 된다. **미니 JDK 동봉은 불필요**하다 → [collector 배포 설계 §2](../../collector-deployment.md).
 
 ---
 
@@ -68,7 +68,7 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 
 - **식별**: `/proc/<pid>/exe`가 `java`거나 `/proc/<pid>/maps`에 `libjvm.so`가 있는 프로세스(래퍼로 재실행돼 exe가 java가 아니어도 잡는다).
 - **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값 — 추측하지 않는다(§2.5).
-- **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector_배포_설계.md)의 입력.
+- **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector-deployment.md)의 입력.
 - **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로(§2.6). 조용한 0이 아니다.
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다.
 
