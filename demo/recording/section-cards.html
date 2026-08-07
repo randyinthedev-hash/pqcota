@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>pqcota 시연영상 — 섹션 타이틀 카드 (템플릿)</title>
+<!--
+  각 실연 구간 앞에 3초쯤 붙이는 카드. "지금부터 무엇을 보는가"를 먼저 알려준다.
+  ?s=1|2|3 으로 한 장씩 연다(자동 캡처용). 터미널 클립과 같은 팔레트.
+-->
+<style>
+  :root{
+    --paper:#0e1420; --ink:#e6ebf2; --muted:#8b97ab; --line:#2a3548;
+    --accent:#e0736b; --ok:#7fc08a;
+    --sans:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:"DejaVu Sans Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       display:grid;place-items:center;overflow:hidden}
+  .stage{width:100vw;height:100vh;max-width:177.78vh;max-height:56.25vw;
+         display:grid;place-content:center;gap:2.6vh;padding:0 10%}
+  .card{display:none}
+  .card.on{display:grid;gap:2.6vh}
+  .num{font-family:var(--mono);font-size:2.6vh;color:var(--accent);letter-spacing:.24em}
+  h1{font-size:6.6vh;font-weight:700;letter-spacing:-.01em}
+  .sub{font-size:3.2vh;color:var(--muted);line-height:1.6}
+  .sub b{color:var(--ink);font-weight:600}
+  .line{height:1px;background:var(--line);width:22%}
+  .what{font-family:var(--mono);font-size:2.4vh;color:var(--ok)}
+</style>
+<div class="stage">
+
+  <section class="card" data-n="1">
+    <div class="num">STEP 01</div>
+    <h1>관측 — 실행 중인 것을 본다</h1>
+    <div class="line"></div>
+    <div class="sub">설정 파일에는 없는 provider가 <b>실행 중인 JVM 체인에는 있다.</b><br>
+      같은 노드에 같은 시각, 두 방법으로 물어본다.</div>
+    <div class="what">java.security  vs  attach → getProviders()</div>
+  </section>
+
+  <section class="card" data-n="2">
+    <div class="num">STEP 02</div>
+    <h1>전환물 생성 — 계획에서 배포물을</h1>
+    <div class="line"></div>
+    <div class="sub">사람이 쓰는 것은 <b>어느 노드에 어떤 provider를 넣을지 적은 JSON 하나</b>.<br>
+      도구가 config 조각과 적용·되돌림 플레이북을 만들고,<br>
+      그것이 <b>실제 암호 알고리즘으로 반영되는지</b> 확인한다.</div>
+    <div class="what">plan.json  →  pqcota-provision  →  provision.yml  →  ML-KEM 0 → 14 → 0</div>
+  </section>
+
+  <section class="card" data-n="3">
+    <div class="num">STEP 03</div>
+    <h1>정직성 — 관측하지 못한 것</h1>
+    <div class="line"></div>
+    <div class="sub">권한이 없어 보지 못한 계층을 <b>"없음"으로 적지 않는다.</b><br>
+      갭으로 남기고, 그 갭이 중앙까지 가도록 종료코드는 0이다.</div>
+    <div class="what">layersMissing = [NETWORK]   ·   exit 0</div>
+  </section>
+
+</div>
+<script>
+  const n = parseInt(new URLSearchParams(location.search).get('s') || '1', 10);
+  const cards = [...document.querySelectorAll('.card')];
+  cards.forEach(c => c.classList.toggle('on', +c.dataset.n === n));
+</script>
+</html>

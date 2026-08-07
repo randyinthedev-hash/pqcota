@@ -85,7 +85,23 @@ cp -r demo/recording ~/my-pqcota-video && cd ~/my-pqcota-video
 |---|---|---|
 | [`script.md`](script.md) | 대본·컷 시트 — 컷별 화면·내레이션·자막 | 분량, 강조할 것, 내레이션 문장 |
 | [`edit-sheet.md`](edit-sheet.md) | 편집 지시서 — 타임라인·배속·자막 타이밍 | 클립 실측 길이(다시 찍으면 바뀐다) |
-| [`intro-slides.html`](intro-slides.html) | 도입 슬라이드 — 브라우저로 열어 화면 녹화 | 슬라이드 문구 |
+| [`intro-slides.html`](intro-slides.html) | 도입 — 질문을 던지고 문제를 세운다 | 슬라이드 문구 |
+| [`section-cards.html`](section-cards.html) | 각 실연 앞에 붙이는 예고 카드 셋 | 단계 이름·한 줄 설명 |
+| [`outro-card.html`](outro-card.html) | 마무리 — 명령 한 줄과 리포 주소 | 주소·라이선스 |
+
+세 HTML은 **브라우저로 열어 화면을 잡는 것이 아니라 캡처해서 붙인다.** 정지 화면이 단계별로
+켜지는 구조라 녹화할 이유가 없다 — 헤드리스로 각 상태를 뜨면 커서도 흔들림도 없고, 다시 뽑아도
+같은 파일이 나온다. `?s=N`으로 그 상태만 바로 연다:
+
+```bash
+CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"   # 리눅스면 google-chrome
+for s in 0 1 2 3 4 5 6 7 8; do
+  "$CH" --headless --disable-gpu --hide-scrollbars --window-size=1920,1080 \
+    --screenshot="s$s.png" --virtual-time-budget=1500 "file://$PWD/intro-slides.html?s=$s"
+done
+```
+
+뜬 PNG를 `ffmpeg`의 `xfade`로 이으면 도입 클립이 된다(각 상태를 몇 초 보일지는 대본에서 정한다).
 
 ### 왜 템플릿인가
 
