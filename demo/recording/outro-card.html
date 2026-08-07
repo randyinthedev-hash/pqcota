@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>pqcota 시연영상 — 마무리 카드 (템플릿)</title>
+<!--
+  영상 마지막 3초. 명령 한 줄만 크게 보이고 끝난다.
+  터미널 클립·도입 슬라이드와 같은 팔레트라 컷이 튀지 않는다. 문구만 고쳐 쓴다.
+-->
+<style>
+  :root{
+    --paper:#0e1420; --ink:#e6ebf2; --muted:#8b97ab; --line:#2a3548;
+    --accent:#e0736b; --ok:#7fc08a;
+    --sans:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:"DejaVu Sans Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       display:grid;place-items:center;overflow:hidden}
+  .stage{width:100vw;height:100vh;max-width:177.78vh;max-height:56.25vw;
+         display:grid;place-content:center;gap:3.4vh;padding:0 8%}
+  h1{font-size:6.4vh;font-weight:700;letter-spacing:-.01em}
+  h1 .dim{color:var(--muted);font-weight:500;font-size:.42em;margin-left:1.4vh}
+  .cmd{font-family:var(--mono);font-size:3.4vh;color:var(--ok);
+       background:#141d2c;border:1px solid var(--line);border-radius:10px;
+       padding:2.6vh 3.4vh;display:inline-block}
+  .meta{display:flex;gap:2.6vh;align-items:baseline;color:var(--muted);font-size:2.5vh}
+  .meta b{color:var(--ink);font-weight:600}
+  .meta .url{font-family:var(--mono);color:var(--accent)}
+  .line{height:1px;background:var(--line);width:26%}
+</style>
+<div class="stage">
+  <h1>pqcota <span class="dim">PQC + Orchestra · "P-cota"</span></h1>
+  <div class="line"></div>
+  <div class="cmd">./demo/scripts/up.sh &amp;&amp; ./demo/scripts/demo.sh</div>
+  <div class="meta">
+    <span><b>Docker만 있으면</b> 그대로 재현됩니다</span>
+    <span><b>Apache-2.0</b></span>
+  </div>
+  <div class="meta"><span class="url">github.com/randyinthedev-hash/pqcota</span></div>
+</div>
+</html>
