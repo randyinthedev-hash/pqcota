@@ -24,7 +24,7 @@ usage() {
 
   컷    observe    정적(java.security) vs 런타임(attach) 대조 + 자산·엣지 표
         provision  ML-KEM 0개 → 14개 → 0개 (기본)
-        gap        권한이 없어 관측하지 못한 계층을 갭으로 낸다
+        gap        권한이 없어 관측하지 못한 계층을 따로 낸다
 
   노드  provision 컷의 대상 (기본: 인벤토리에서 OpenSSL 3.0–3.4 노드를 자동 선택)
 
@@ -238,7 +238,7 @@ take_gap() {
 		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null' 2>&1 | head -4
 	cut_mark
 
-	say "그런데 종료코드는 0이고, 결과에는 이것이 담긴다"
+	say "그런데 수집은 실패가 아니라 정상 종료로 끝난다 — 결과에는 이것이 담긴다"
 	type_cmd "echo \$?"
 	docker exec -u nobody pqcota-ctl bash -lc \
 		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null 2>&1; echo "$?"'
@@ -251,8 +251,8 @@ d=json.load(sys.stdin)
 print(json.dumps(d.get(\"completeness\",{}), ensure_ascii=False, indent=1))"'
 	printf '\n'
 	note "   layersMissing = [NETWORK].  \"엣지 0개\"가 아니라 \"이 계층을 관측하지 못했다\"이다."
-	note "   종료코드가 0인 이유 — 실패로 끝내면 이 갭이 중앙까지 가지 못하고,"
-	note "   인벤토리에는 '이 노드엔 링크가 없다'로 읽힌다. 없는 것과 관측하지 못한 것은 다르다."
+	note "   실패가 아니라 정상 종료로 보고하는 이유 — 오류로 끝내면 이 기록이 중앙까지 가지"
+	note "   못하고, 인벤토리에는 '이 노드엔 링크가 없다'로 읽힌다. 없는 것과는 다른 사실이다."
 }
 
 case "${1:-provision}" in
