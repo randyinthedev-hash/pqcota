@@ -17,7 +17,7 @@
 |---|---|---|
 | `observe` | `java.security`에 없는 provider가 실행 중 체인에는 있다 — 정적 스캔과 런타임 관측의 차이 | 약 16초 |
 | `provision` | 도구가 만든 config가 실제 암호 알고리즘으로 반영되고(ML-KEM 0→14), 되돌리면 원상복귀(→0) | 약 55초 |
-| `gap` | 권한이 없어 관측하지 못한 계층을 갭으로 낸다. 종료코드는 0 — 갭이 중앙까지 가야 한다 | 약 9초 |
+| `gap` | 권한이 없어 관측하지 못한 계층을 따로 낸다. 수집은 실패가 아니라 정상 종료 — 그래야 그 기록이 중앙까지 간다 | 약 9초 |
 
 ```bash
 ./demo/scripts/up.sh && DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh   # 한 번만 (생성물이 남는다)
@@ -93,6 +93,9 @@ cp -r demo/recording ~/my-pqcota-video && cd ~/my-pqcota-video
 | [`intro-slides.html`](intro-slides.html) | 도입 — 질문을 던지고 문제를 세운다 | 슬라이드 문구 |
 | [`section-cards.html`](section-cards.html) | 각 실연 앞에 붙이는 예고 카드 셋 | 단계 이름·한 줄 설명 |
 | [`outro-card.html`](outro-card.html) | 마무리 — 명령 한 줄과 리포 주소 | 주소·라이선스 |
+| [`browser-frame.html`](browser-frame.html) | 웹 화면을 브라우저 창으로 감싼다 | 주소·캡처 파일 |
+| [`topology-frame.html`](topology-frame.html) | demo가 만든 `topology.svg`를 화면 폭에 맞춰 키운다 | 제목 문구 |
+| [`assemble.sh`](assemble.sh) | 조립 — 클립·카드를 타임라인대로 잇는다 | **타임라인 표** |
 
 카드 HTML들은 **브라우저로 열어 화면을 잡는 것이 아니라 캡처해서 붙인다.** 정지 화면이 단계별로
 켜지는 구조라 녹화할 이유가 없다 — 헤드리스로 각 상태를 뜨면 커서도 흔들림도 없고, 다시 뽑아도
@@ -108,6 +111,14 @@ done
 
 뜬 PNG를 `ffmpeg`의 `xfade`로 이으면 도입 클립이 된다(각 상태를 몇 초 보일지는 대본에서 정한다).
 
+전체 조립은 [`assemble.sh`](assemble.sh)가 한다. **타임라인을 고치는 곳은 그 스크립트의 표
+하나뿐이다** — 손으로 이어 붙이면 그 명령이 어디에도 남지 않아, 클립 하나를 다시 찍을 때마다
+전체를 기억에서 복원해야 한다.
+
+```bash
+./assemble.sh .        # clips/{intro,observe,provision,gap,outro}.mp4 + .cap/*.png → final.mp4
+```
+
 ### 왜 템플릿인가
 
 시연영상은 만들 때마다 목적이 다르다. 대회에 내는 것, 발표 자리에서 트는 것, 리포를 소개하는
@@ -119,7 +130,7 @@ done
    (0개 → 14개 → 0개)다. 기능을 하나씩 소개하다 보면 3분이 금방 지나간다.
 2. **말로 주장하지 말고 화면으로 보인다.** "정적 스캔이 관측되지 않는 것을 본다"고 쓰는 대신,
    `java.security`에는 없는 provider가 관측된 체인에는 있는 두 출력을 나란히 놓는다.
-3. **관측하지 못한 것을 없다고 하지 않는 장면도 넣는다.** 갭 화면은 몇 초 안 되지만, 이 도구가
+3. **관측하지 못한 것을 없다고 하지 않는 장면도 넣는다.** 그 화면은 몇 초 안 되지만, 이 도구가
    무엇을 하지 않는지 보여 주는 유일한 컷이다.
 
 ### 피할 것
