@@ -75,7 +75,7 @@
    [디스커버리 히스토리] append-only, 재현가능(§1.2)  ──▶ 읽기전용 인벤토리 뷰
 ```
 
-**계약 하나**: `Collector` intake 계약(§1.6) 뒤에 무엇이 있든 코어는 모른다 — collector가 늘어도 코어는 그대로다. 결과가 어떻게 얻어진 것인지는 `Envelope.detection_method`로만 드러난다.
+**계약 하나**: collector가 결과를 넘기는 창구는 `Collector` intake 계약(§1.6) 하나뿐이다. 그 창구 뒤에 무엇이 있는지를 **코어**(정규화·인벤토리·API를 맡는 중앙 서비스 — [아키텍처 §1.2](../docs/architecture.md#12-추천-조합))는 알지 못한다 — collector가 늘어도 코어는 그대로다. 결과가 어떻게 얻어진 것인지는 `Envelope.detection_method`로만 드러난다.
 
 ---
 

@@ -76,7 +76,7 @@ A scenario is a combination of the axes below. The combination is what determine
    [discovery history] append-only, reproducible (§1.2)  ──▶ read-only inventory views
 ```
 
-**One contract**: the core does not know what sits behind the `Collector` intake contract (§1.6) — collectors can multiply and the core stays the same. How a result was obtained is revealed only through `Envelope.detection_method`.
+**One contract**: a collector hands its results over through exactly one opening — the `Collector` intake contract (§1.6). What sits behind that opening is unknown to the **core** (the central service that owns normalization, the inventory, and the API — [architecture §1.2](../docs/architecture.en.md#12-the-recommended-combination)) — collectors can multiply and the core stays the same. How a result was obtained is revealed only through `Envelope.detection_method`.
 
 ---
 

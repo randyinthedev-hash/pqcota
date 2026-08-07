@@ -60,7 +60,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 - **Alignment with the eBPF ecosystem**: `cilium/ebpf` is the de facto standard, directly relevant to the crypto-tracer family in regulation §2.2.
 - **Deployment simplicity**: an on-host agent as a single static binary → favorable to regulation §4.4's "avoid locking yourself out".
 - **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, mTLS, gRPC momentum.
-- **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It hides behind the intake contract, so it can be swapped without touching the core. Start in Go and promote it if needed.
+- **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and promote it if needed.
 
 ---
 
