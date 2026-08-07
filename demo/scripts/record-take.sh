@@ -235,7 +235,7 @@ take_gap() {
 	# stdout(결과 JSON)은 버리고 **stderr만** 보인다 — 둘을 섞으면 JSON 조각이 사람에게
 	# 하는 말 사이에 끼어 화면이 지저분해진다. 결과 본문은 다음 컷에서 따로 보인다.
 	docker exec -u nobody pqcota-ctl bash -lc \
-		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null' 2>&1 | head -4
+		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null' 2>&1 | head -5
 	cut_mark
 
 	say "그런데 수집은 실패가 아니라 정상 종료로 끝난다 — 결과에는 이것이 담긴다"
