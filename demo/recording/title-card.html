@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>pqcota 시연영상 — 제목 카드</title>
+<!--
+  영상 맨 앞 4초. 무엇을 보게 되는지와 언제 찍은 것인지를 먼저 말한다.
+  제작 시기를 넣는 이유: 이 리포는 관측 결과를 화면에 그대로 내보이므로, 그 화면이
+  **언제의 것인지**가 근거의 일부다(버전·provider는 시간이 지나면 달라진다).
+-->
+<style>
+  :root{
+    --paper:#0e1420; --ink:#e6ebf2; --muted:#8b97ab; --line:#2a3548;
+    --accent:#e0736b; --ok:#7fc08a;
+    --sans:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:"DejaVu Sans Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       display:grid;place-items:center;overflow:hidden}
+  .stage{width:100vw;height:100vh;max-width:177.78vh;max-height:56.25vw;
+         display:grid;place-content:center;gap:3vh;padding:0 10%;text-align:center;justify-items:center}
+  h1{font-size:8.6vh;font-weight:700;letter-spacing:-.015em}
+  h1 .n{color:var(--accent)}
+  .sub{font-size:3.4vh;color:var(--muted)}
+  .sub b{color:var(--ink);font-weight:600}
+  .line{height:1px;background:var(--line);width:24%}
+  .meta{display:flex;gap:2.4vh;align-items:baseline;color:var(--muted);
+        font-family:var(--mono);font-size:2.3vh}
+  .meta .date{color:var(--ink)}
+</style>
+<div class="stage">
+  <h1><span class="n">pqcota</span> 데모 시연</h1>
+  <div class="line"></div>
+  <div class="sub">레거시 암호 런타임의 PQC 이관 — <b>관측 → 인벤토리 → 전환물 생성</b></div>
+  <div class="meta">
+    <span class="date">2026. 08.</span>
+    <span>·</span>
+    <span>Apache-2.0</span>
+    <span>·</span>
+    <span>github.com/randyinthedev-hash/pqcota</span>
+  </div>
+</div>
+</html>
