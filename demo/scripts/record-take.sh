@@ -92,8 +92,9 @@ take_observe() {
 
 	say "실행 중인 JVM에 attach해서 물으면 — 같은 노드, 같은 시각"
 	type_cmd "pqcota-discover-view /work/results"
+	# 범위의 끝줄(다음 절 제목)은 빼고 낸다 — 남기면 엣지 절 제목이 두 번 나온다.
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
-		sed -n '/발견 자산/,/관측 통신 엣지/p' | head -14
+		sed -n '/발견 자산/,/관측 통신 엣지/p' | sed '$d' | head -14
 	note "   체인 마지막의 BC — 앱이 실행 중에 addProvider()로 등록한 것이다."
 	note "   파일을 아무리 읽어도 안 나온다. 이것이 런타임 관측의 이유다."
 	cut_mark
@@ -196,11 +197,17 @@ take_gap() {
 
 	say "핸드셰이크 관측을 시도한다 — 권한 없이"
 	type_cmd "pqcota-netcap demo-node eth0 2"
+	# stdout(결과 JSON)은 버리고 **stderr만** 보인다 — 둘을 섞으면 JSON 조각이 사람에게
+	# 하는 말 사이에 끼어 화면이 지저분해진다. 결과 본문은 다음 컷에서 따로 보인다.
 	docker exec -u nobody pqcota-ctl bash -lc \
-		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/tmp/gap.json 2>&1 || true; cat /tmp/gap.json | grep -v "^[{ ]" | head -5' || true
+		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null' 2>&1 | head -4
 	cut_mark
 
 	say "그런데 종료코드는 0이고, 결과에는 이것이 담긴다"
+	type_cmd "echo \$?"
+	docker exec -u nobody pqcota-ctl bash -lc \
+		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null 2>&1; echo "$?"'
+	printf '\n'
 	type_cmd "pqcota-netcap … | jq .completeness"
 	docker exec -u nobody pqcota-ctl bash -lc \
 		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 2>/dev/null | python3 -c "
