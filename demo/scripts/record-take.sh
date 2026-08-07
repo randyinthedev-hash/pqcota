@@ -44,6 +44,11 @@ type_cmd() {
 	sleep 0.4
 }
 say() { printf '\n\033[1;36m# %s\033[0m\n' "$1"; }
+
+# Ansible의 PLAY RECAP 한 줄은 100자를 넘어 화면에서 접힌다 — 접힌 줄은 영상에서 지저분하고,
+# 정작 봐야 하는 것은 `changed`(무엇을 바꿨나)와 `failed=0`(깨지지 않았나) 둘뿐이다.
+# 나머지 칸(unreachable·skipped·rescued·ignored)은 이 촬영에서 늘 0이라 정보가 없다.
+recap() { sed -nE 's/^([^ ]+) +: +(ok=[0-9]+) +(changed=[0-9]+).* (failed=[0-9]+).*/  \1  \2 \3 \4/p'; }
 cut_mark() { printf '\n\033[2m%s\033[0m\n\n' "────────────────────────────────────────────────────────"; sleep "$PAUSE"; }
 big() { printf '\n\033[1;33m%s\033[0m\n' "$1"; sleep "$PAUSE"; }
 
@@ -88,10 +93,13 @@ cut_mark
 # ── 컷 C — 적용. 사용자의 Ansible로 돌린다 ────────────────────────────────────
 say "적용 — 생성된 플레이북을 사용자의 Ansible로 (L2 배치 + L3 활성화)"
 type_cmd "ansible-playbook -i targets.ini provision-real.yml"
-docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$SHA provision-real.yml" |
-	grep -E "TASK|ok=|changed=|failed=" | tail -8
+# 한 번만 돌리고 두 가지를 뽑는다 — 무엇을 했는지(TASK)와 결과 요약(recap).
+# 임시 파일을 두지 않는 것은 촬영 중 남는 것을 만들지 않기 위해서다.
+APPLY=$(docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$SHA provision-real.yml")
+printf '%s\n' "$APPLY" | grep -E "^TASK" | sed -E 's/ \*+$//' | tail -6
+printf '%s\n' "$APPLY" | recap
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" |
-	grep -E "ok=|changed=|failed=" | tail -2
+	recap
 cut_mark
 
 # ── 컷 D — 놓인 것은 새 파일 둘뿐. 원본은 건드리지 않았다 ────────────────────────
@@ -115,9 +123,9 @@ cut_mark
 say "되돌림 — 원본을 덮어쓴 적이 없으므로 파일을 지우는 것이 곧 복원이다"
 type_cmd "ansible-playbook -i targets.ini provision-real-l3-rollback.yml provision-real-rollback.yml"
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" |
-	grep -E "ok=|changed=|failed=" | tail -1
+	recap
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" |
-	grep -E "ok=|changed=|failed=" | tail -1
+	recap
 sleep 1
 type_cmd "openssl list -kem-algorithms | grep -ci mlkem"
 BACK=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
