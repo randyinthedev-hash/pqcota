@@ -122,7 +122,7 @@ type PlanItem struct {
 
 ## 3. 상태 어휘 (뷰 렌더링에 쓰는 것)
 
-- **상태 어휘**(뷰 렌더링에 필요한 스키마 의미): `CONFIRMED` = 선언 ∩ 관측, `UNDECLARED` = 관측 only(**shadow 통신**), `UNOBSERVED` = 선언 only. `UNOBSERVED`가 "실제 없음"인지 "완전성 맵상 갭(원리상 못 봄)"인지는 Discovery **완전성 맵**(§2.6 갭≠부재)으로 갈린다 — 갭이면 재수집, 아니면 사람 판정.
+- **상태 어휘**(뷰 렌더링에 필요한 스키마 의미): `CONFIRMED` = 선언 ∩ 관측, `UNDECLARED` = 관측 only(**shadow 통신**), `UNOBSERVED` = 선언 only. `UNOBSERVED`가 "실제 없음"인지 "완전성 맵상 갭(원리상 관측하지 못함)"인지는 Discovery **완전성 맵**(§2.6 갭≠부재)으로 갈린다 — 갭이면 재수집, 아니면 사람 판정.
 
 ---
 

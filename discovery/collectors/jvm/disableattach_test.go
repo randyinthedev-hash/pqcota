@@ -91,7 +91,7 @@ func TestDisabledAttachFallsBackToJavaSecurity(t *testing.T) {
 		t.Fatalf("정적 폴백 실패(JAVA_HOME=%s): %v", home, err)
 	}
 	if len(col.Providers) == 0 {
-		t.Fatal("attach가 막혔다고 provider가 0건이 되면 안 된다 — 못 본 것과 없는 것이 뒤섞인다")
+		t.Fatal("attach가 막혔다고 provider가 0건이 되면 안 된다 — 관측하지 못한 것과 없는 것이 뒤섞인다")
 	}
 	if !col.Degraded {
 		t.Error("정적 폴백 결과는 열화로 표시돼야 한다(runtime-introspection 아님)")

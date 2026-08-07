@@ -91,7 +91,7 @@ func (s *Service) Collect(req *discoveryv1.CollectRequest, stream grpc.ServerStr
 	if ts, ok := s.Source.(TruncatingSource); ok {
 		if cut, cause := ts.WindowTruncated(); cut {
 			// 창이 중단됐으면 관측 결과가 창 전체를 대표하지 않는다 — 엣지가 없더라도
-			// "핸드셰이크 없음"이 아니라 "끝까지 못 봤음"이다.
+			// "핸드셰이크 없음"이 아니라 "끝까지 관측하지 못했음"이다.
 			note = "관측 창이 중단됐다 — 이 결과는 창 전체를 대표하지 않는다(미관측 ≠ 부재)"
 			if cause != nil {
 				note += ": " + cause.Error()

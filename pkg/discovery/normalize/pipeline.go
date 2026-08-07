@@ -79,7 +79,7 @@ func edgeKey(e *discoveryv1.ObservedEdge) string {
 }
 
 // mergeCompleteness — 여러 collector의 완전성을 합친다. covered는 합집합, missing은
-// (a.missing ∪ b.missing) \ covered. 한 collector가 못 본 계층을 다른 collector가 커버하면 갭 아님.
+// (a.missing ∪ b.missing) \ covered. 한 collector가 관측하지 못한 계층을 다른 collector가 커버하면 갭 아님.
 func mergeCompleteness(a, b *commonv1.Completeness) *commonv1.Completeness {
 	if a == nil {
 		a = &commonv1.Completeness{}

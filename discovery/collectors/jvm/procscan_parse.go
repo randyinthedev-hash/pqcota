@@ -46,7 +46,7 @@ type JVMScanStats struct {
 	WithJVM    int // JVM으로 식별된 프로세스
 
 	// ProcUnavailable — `/proc`를 열 수 없었나(마운트 안 된 컨테이너·chroot·비-리눅스).
-	// 이때 "JVM 0개"는 **없다가 아니라 못 봤다**이다. 구별하지 않으면 결함이 갭으로 위장된다(§2.6).
+	// 이때 "JVM 0개"는 **없다가 아니라 관측하지 못했다**이다. 구별하지 않으면 결함이 갭으로 위장된다(§2.6).
 	ProcUnavailable bool
 }
 

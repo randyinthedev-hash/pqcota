@@ -20,7 +20,7 @@ openssl collector가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, **jvm-
 | | 정적 프로브 | **attach** |
 |---|---|---|
 | 보는 것 | `java.security` 정적 등록 체인 | 실행 중 JVM의 **실체**(동적 `addProvider` 포함) |
-| 이 예제의 동적 BC | ❌ 못 봄 | ✅ 포착 |
+| 이 예제의 동적 BC | ❌ 관측하지 못함 | ✅ 포착 |
 
 `PQCOTA_JVM_AGENT`(collector JAR)가 있으면 attach, 없으면 프로브로 정직히 폴백한다.
 

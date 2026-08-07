@@ -49,7 +49,7 @@ Collector  →  §2.4 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 
 모든 enum의 `*_UNSPECIFIED = 0`은 "판별 불가 = unknown"을 의미한다.
 채우지 못한 필드를 빈칸/누락으로 두지 말고 **명시적 0값**으로 남긴다.
-자동 "부재" 처리 금지 — "실제 없음"과 "원리상 못 봄"은 `Completeness.layers_missing`으로 구분한다.
+자동 "부재" 처리 금지 — "실제 없음"과 "원리상 관측하지 못함"은 `Completeness.layers_missing`으로 구분한다.
 
 ### 3. provider 시그니처 레지스트리가 강화를 구동 (수용 원칙 §2.3)
 

@@ -80,7 +80,7 @@ func main() {
 		fmt.Fprintf(w, "== pqcota Discovery — %s (읽기전용·저장 안 함) ==\n", node)
 		fmt.Fprintf(w, "스캔: 접근가능 %d · 접근불가/종료 %d · OpenSSL lib %d\n\n", st.Accessible, st.Denied, len(dets))
 		fmt.Fprint(w, tbl)
-		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵의 갭 — root 없이는 타 사용자 /proc을 못 본다, 부재 아님 §2.6)\n", st.Denied)
+		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵의 갭 — root 없이는 타 사용자 /proc을 관측하지 못한다, 부재 아님 §2.6)\n", st.Denied)
 	}
 	fmt.Fprintf(os.Stderr, "[nodescan] %s: 접근가능 %d · 거부 %d · OpenSSL lib %d\n",
 		node, st.Accessible, st.Denied, len(dets))

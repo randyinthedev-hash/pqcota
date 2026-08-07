@@ -166,7 +166,7 @@ attach를 기본 차단** — 3단 전략으로 대응한다:
 **기술적 근거 — 복호화 없이 관측**: 핸드셰이크의 알고리즘 협상은 **평문**이다.
 - **TLS**: ClientHello `supported_groups`·`key_share`, ServerHello 선택 그룹 → KEX 그룹(X25519MLKEM768 등)·cipher·버전 관측.
 - **SSH**: KEXINIT의 KEX 알고리즘(예 `sntrup761x25519` PQC 여부) — 레거시는 SSH 비중이 커 큰 가치.
-- QUIC·TLS1.3 인증서 서명 등 암호화 부분은 못 봄 → `unknown`으로 정직 표기.
+- QUIC·TLS1.3 인증서 서명 등 암호화 부분은 관측하지 못함 → `unknown`으로 정직 표기.
 
 **구현**:
 ```
@@ -248,7 +248,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 
 - Collector `Describe`(커버 가능 계층) vs `Collect`(실제 커버) **차이 = 갭**(`Completeness.layers_missing`).
 - **배치/간헐 노드**: 수집 시점 미실행 → **갭 기록, 자동 "부재" 금지**(§2.5). 시간대별 반복 수집(§2.3)으로 dlopen·배치 누락 방지.
-- 이 구분이 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 못 봄"을 가르는 근거(§2.6).
+- 이 구분이 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 관측하지 못함"을 가르는 근거(§2.6).
 
 ## 6. Collector 배포 (호스트 도달) — 시나리오별
 

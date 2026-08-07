@@ -52,7 +52,7 @@ func TestBuildResult(t *testing.T) {
 	}
 }
 
-// 탐지가 하나도 없을 때가 위험하다 — "없다"로 읽히면 안 되고 "못 봤다"로 남아야 한다.
+// 탐지가 하나도 없을 때가 위험하다 — "없다"로 읽히면 안 되고 "관측하지 못했다"로 남아야 한다.
 func TestBuildResultNoDetection(t *testing.T) {
 	res := openssl.BuildResult("cmdb://web-01", nil)
 	if len(res.GetCbomCyclonedx()) != 0 || len(res.GetRawCapture()) != 0 {

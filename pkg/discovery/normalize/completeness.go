@@ -6,7 +6,7 @@ import commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 // 실제 커버한(covered) 계층의 차집합 = 갭 (규정서 §2.6).
 //
 // 이 갭은 "부재"가 아니다 — 자동 "부재" 처리는 금지된다(§2.5). downstream(Inventory의
-// UNOBSERVED 판정, §3.3)이 "실제 없음"과 "원리상 못 봄"을 구분하는 근거가 된다.
+// UNOBSERVED 판정, §3.3)이 "실제 없음"과 "원리상 관측하지 못함"을 구분하는 근거가 된다.
 func MissingLayers(declared, covered []commonv1.CollectionLayer) []commonv1.CollectionLayer {
 	seen := make(map[commonv1.CollectionLayer]bool, len(covered))
 	for _, c := range covered {

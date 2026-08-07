@@ -78,7 +78,7 @@ func TestTamperBreaksVerification(t *testing.T) {
 		"raw_format":                  func(r *discoveryv1.CollectionResult) { r.RawFormat = "other/v1" },
 		"cbom_cyclonedx":              func(r *discoveryv1.CollectionResult) { r.CbomCyclonedx = []byte(`{"bomFormat":"x"}`) },
 		"cyclonedx_spec_version":      func(r *discoveryv1.CollectionResult) { r.CyclonedxSpecVersion = "1.7" },
-		// ★ 갭 선언 제거 — "원리상 못 봤다"를 "없다"로 바꾸는 변조(§2.6). 반드시 잡혀야 한다.
+		// ★ 갭 선언 제거 — "원리상 관측하지 못했다"를 "없다"로 바꾸는 변조(§2.6). 반드시 잡혀야 한다.
 		"completeness.layers_missing 제거": func(r *discoveryv1.CollectionResult) { r.Completeness.LayersMissing = nil },
 		"completeness.note":              func(r *discoveryv1.CollectionResult) { r.Completeness.Note = "" },
 		"completeness 통째 제거":             func(r *discoveryv1.CollectionResult) { r.Completeness = nil },

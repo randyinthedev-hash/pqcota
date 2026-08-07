@@ -28,7 +28,7 @@ type ScanStats struct {
 	WithSSL    int // libssl/libcrypto 로드 프로세스
 
 	// ProcUnavailable — `/proc` 자체를 열 수 없었나(비-리눅스, 마운트 안 됨).
-	// 이때 결과가 비는 것은 **"없다"가 아니라 "못 봤다"**이다. 구별하지 않으면 결함이 갭으로
+	// 이때 결과가 비는 것은 **"없다"가 아니라 "관측하지 못했다"**이다. 구별하지 않으면 결함이 갭으로
 	// 위장된다(§2.6) — netcap이 CAP_NET_RAW 부재를 강등으로 내는 것과 같은 자리.
 	ProcUnavailable bool
 }

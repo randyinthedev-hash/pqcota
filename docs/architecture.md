@@ -159,7 +159,7 @@
   "findings": [ /* §3.2 evidence 메타데이터가 부착된 정규화된 finding[] */ ],
   "completeness": {                       // §2.6 완전성 맵 — collector별·계층별 분리
     "layers_covered": ["artifact", "runtime-introspection"],
-    "layers_missing": ["process"],        // "실제 없음" ≠ "원리상 못 봄" 구분 (§2.6)
+    "layers_missing": ["process"],        // "실제 없음" ≠ "원리상 관측하지 못함" 구분 (§2.6)
     "note": "프로세스 계층 미수집 — 대상 미실행"
   }
 }

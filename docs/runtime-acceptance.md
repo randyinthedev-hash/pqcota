@@ -53,7 +53,7 @@
 **JCA/JCE**
 - 아티팩트: JAR/WAR/EAR 내 provider JAR(`bcprov-*` 등) + Maven/Gradle **의존성 그래프** 파싱
 - 정책 파싱: `java.security` 등록 순서 + `jdk.tls.*` + `disabledAlgorithms`
-- 런타임 인트로스펙션(ground truth): 실행 중 JVM에 attach → `getProviders()`·로드된 provider 체인 조회 (정적으로 못 보는 동적 등록·명시 지목 포착)
+- 런타임 인트로스펙션(ground truth): 실행 중 JVM에 attach → `getProviders()`·로드된 provider 체인 조회 (정적으로 관측되지 않는 동적 등록·명시 지목 포착)
 - 동적 등록 사각지대: `addProvider()`는 바이트코드/소스 호출지점 분석 또는 실행 중 조회로만
 
 **provider 시그니처 레지스트리** — crypto-registry에 아래 provider 시그니처를 등록해 디스커버리가 버전·FIPS·알고리즘 커버리지를 자동 판정한다. 각 provider가 서로 다른 `pqc_readiness`·`fips_validation`·알고리즘 커버리지를 함의한다.
