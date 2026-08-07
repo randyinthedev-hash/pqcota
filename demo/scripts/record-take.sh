@@ -186,14 +186,24 @@ take_provision() {
 	note "   기존 /etc/ssl/openssl.cnf는 열지도 않았다 — 그래서 되돌림이 파일 제거로 끝난다."
 	cut_mark
 
-	say "조치 후 — 같은 노드에 같은 질문"
-	type_cmd "openssl list -providers | grep -A2 oqs"
+	# ★ 파일만 놓아서는 아무것도 안 바뀐다. 그 조각을 **읽게 만드는 것**이 L3 활성화이고,
+	#   그 방법은 환경마다 달라 계획의 activation 훅에 사용자가 적는다. 이 컷이 없으면
+	#   "파일을 떨구니 능력이 생겼다"로 읽혀 기전이 마술처럼 보인다.
+	say "그런데 파일만 놓으면 아무것도 안 바뀐다 — 그 조각을 읽게 만들어야 한다"
+	type_cmd "cat /etc/pqcota/service.env"
+	docker exec "$NODE" sh -lc 'cat /etc/pqcota/service.env 2>/dev/null || echo "(L2까지만 — 활성화 안 됨)"'
+	note "   L3 활성화가 이 한 줄을 쓰고 서비스를 재시작했다. 명령은 계획의 activation 훅에"
+	note "   사용자가 적은 것이다 — 활성화 지점은 환경마다 달라 도구가 추측하지 않는다."
+	cut_mark
+
+	say "조치 후 — 그 설정을 가리킨 채로, 같은 노드에 같은 질문"
+	type_cmd "OPENSSL_CONF=/etc/pqcota/openssl-pqc.cnf openssl list -providers | grep -A2 oqs"
 	docker exec "$NODE" sh -lc "$ACT openssl list -providers 2>/dev/null | grep -A2 -i oqs | head -4"
 	sleep 1
-	type_cmd "openssl list -kem-algorithms | grep -ci mlkem"
+	type_cmd "OPENSSL_CONF=/etc/pqcota/openssl-pqc.cnf openssl list -kem-algorithms | grep -ci mlkem"
 	AFTER=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 	big "$AFTER"
-	note "   ${BEFORE}개 → ${AFTER}개.  바뀐 것은 도구가 만든 설정 조각 하나다."
+	note "   ${BEFORE}개 → ${AFTER}개.  바뀐 것은 도구가 만든 설정 조각 하나와, 그것을 가리킨 한 줄이다."
 	cut_mark
 
 	say "되돌림 — 원본을 덮어쓴 적이 없으므로 파일을 지우는 것이 곧 복원이다"
@@ -201,7 +211,7 @@ take_provision() {
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" | recap
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | recap
 	sleep 1
-	type_cmd "openssl list -kem-algorithms | grep -ci mlkem"
+	type_cmd "OPENSSL_CONF=… openssl list -kem-algorithms | grep -ci mlkem   # 조각이 사라졌다"
 	BACK=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 	big "$BACK"
 	note "   ${BEFORE} → ${AFTER} → ${BACK}.  적용과 되돌림이 같은 계획에서 대칭으로 나온다."
