@@ -82,13 +82,13 @@ func main() {
 			j.PID, nz(j.Version), nz(j.JavaHome), via)
 	}
 	if st.ProcUnavailable {
-		// "JVM 0개"와 "못 봤다"를 같은 얼굴로 내보내지 않는다(§2.6).
+		// "JVM 0개"와 "관측하지 못했다"를 같은 얼굴로 내보내지 않는다(§2.6).
 		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc를 열 수 없어 프로세스를 열거하지 못했다 — JVM 부재가 아니라 갭이다(리눅스에서 실행할 것)")
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] 정찰: 접근 %d · 불가 %d(갭) · JVM %d\n", st.Accessible, st.Denied, st.WithJVM)
 
 	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
-	// 대상을 못 본 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
+	// 대상을 관측하지 못한 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
 	if *pidOnly > 0 {
 		var only []jvm.JVMProc
 		for _, j := range jvms {
@@ -193,7 +193,7 @@ func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool
 }
 
 // emitRecon — 정찰 결과를 JSON 배열로 stdout에. 관측(attach·프로브)은 하지 않는다.
-// 접근 불가 프로세스 수까지 함께 내보내 "못 본 게 있다"를 오케스트레이터도 알 수 있게 한다(§2.6).
+// 접근 불가 프로세스 수까지 함께 내보내 "관측하지 못한 게 있다"를 오케스트레이터도 알 수 있게 한다(§2.6).
 func emitRecon() {
 	jvms, st := jvm.ScanJVMs()
 	type reconJVM struct {

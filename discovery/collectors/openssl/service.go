@@ -75,8 +75,8 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 			dets, err := DetectForPID(pid, registry.DefaultForkSignatures)
 			switch {
 			case err != nil:
-				// 대상 프로세스를 **못 봤다**. 컨테이너 네임스페이스가 갈렸거나 권한이 없다.
-				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 못 본 것은 부재가 아니다(§2.6).
+				// 대상 프로세스를 **관측하지 못했다**. 컨테이너 네임스페이스가 갈렸거나 권한이 없다.
+				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 관측하지 못한 것은 부재가 아니다(§2.6).
 				note = "대상 프로세스를 볼 수 없다(네임스페이스 분리·권한 등) — 미관측 ≠ 부재: " + err.Error()
 			case len(dets) == 0:
 				// 봤는데 없었다. 이건 관측 결과이므로 계층은 커버된 것이다.

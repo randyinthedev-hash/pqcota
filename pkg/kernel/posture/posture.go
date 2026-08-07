@@ -36,7 +36,7 @@ var classicalTokens = []string{
 func Classify(negotiatedGroup, cipher string) discoveryv1.QuantumPosture {
 	g := strings.ToUpper(strings.TrimSpace(negotiatedGroup))
 	if g == "" {
-		return discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED // ⚪ 관측 못 함 ≠ 고전
+		return discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED // ⚪ 관측하지 못함 ≠ 고전
 	}
 	for _, t := range pqcTokens {
 		if strings.Contains(g, t) {

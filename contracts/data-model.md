@@ -10,7 +10,7 @@
 
 - **네임스페이스 = 단계**: `pqcota.common.v1`(공유) · `pqcota.discovery.v1` · `pqcota.inventory.v1` · `pqcota.provisioning.v1`. 생성 Go 패키지는 `commonv1`·`discoveryv1`·`inventoryv1`·`provisioningv1`.
 - **protojson 표현**: 필드는 **camelCase**(`target_node_id`→`targetNodeId`), `bytes`는 **base64 문자열**(`cbom_cyclonedx`), enum은 **이름 문자열**(`"DETECTION_METHOD_RUNTIME_INTROSPECTION"`), `Timestamp`는 RFC3339.
-- **enum 0 = `*_UNSPECIFIED` = "unknown"**(§2.5). "없음"이 아니라 "판별 못 함" — 완전성 맵과 함께 "실제 없음"과 "원리상 못 봄"을 가른다.
+- **enum 0 = `*_UNSPECIFIED` = "unknown"**(§2.5). "없음"이 아니라 "판별 못 함" — 완전성 맵과 함께 "실제 없음"과 "원리상 관측하지 못함"을 가른다.
 - **하위호환**: 필드 번호 재사용 금지, 삭제는 `reserved`, enum 값은 끝에만 추가, 파괴 변경은 `v2` 신설.
 
 ## 1. 모델을 관통하는 4가지 원칙

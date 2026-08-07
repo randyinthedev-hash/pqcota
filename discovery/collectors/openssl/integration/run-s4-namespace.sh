@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SD-4 컨테이너: collector가 별도 컨테이너의 프로세스를 PID 네임스페이스 공유로 탐지(사이드카/hostPID).
-# 양성: --pid=container:target 공유 시 교차 탐지. 음성: 공유 없으면 못 봄 → 갭.
+# 양성: --pid=container:target 공유 시 교차 탐지. 음성: 공유 없으면 관측하지 못함 → 갭.
 # 전제: pqcota-test/openssl-collector-it 이미지 존재(discovery/collectors/openssl/integration/run.sh로 빌드).
 set -u
 IMG="pqcota-test/openssl-collector-it:latest"
@@ -28,8 +28,8 @@ else
 fi
 
 echo
-echo "########## 음성: 네임스페이스 분리 → 못 봄 = 갭 (TD-CONTAINER-2) ##########"
-# 공유 없이 자기 PID 1(대상 아님)을 보면 libssl 없음 → '원리상 못 봄'(부재 아님).
+echo "########## 음성: 네임스페이스 분리 → 관측하지 못함 = 갭 (TD-CONTAINER-2) ##########"
+# 공유 없이 자기 PID 1(대상 아님)을 보면 libssl 없음 → '원리상 관측하지 못함'(부재 아님).
 OUT2=$(docker run --rm --label pqcota-test "$IMG" /usr/local/bin/openssl-collector 1)
 echo "$OUT2"
 if echo "$OUT2" | grep -q "no OpenSSL"; then

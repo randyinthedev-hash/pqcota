@@ -27,8 +27,8 @@ func (f *fakeStream) Send(r *discoveryv1.CollectionResult) error {
 }
 
 // TD-OPENSSL-5 — 호스트 훑기. 실물 `/proc`을 걷는 자리라 리눅스에서만 돈다. 무엇이 잡히는지는
-// 환경에 달렸으므로 개수를 단언하지 않고, **집계가 자기모순이 아닌지**와 못 본 것을
-// 못 봤다고 표시하는지를 본다(§2.6).
+// 환경에 달렸으므로 개수를 단언하지 않고, **집계가 자기모순이 아닌지**와 관측하지 못한 것을
+// 관측하지 못했다고 표시하는지를 본다(§2.6).
 func TestScanHostStatsAreConsistent(t *testing.T) {
 	dets, st := openssl.ScanHost(registry.DefaultForkSignatures)
 	if st.ProcUnavailable {
@@ -57,7 +57,7 @@ func TestScanHostStatsAreConsistent(t *testing.T) {
 // 없는 PID는 오류로 돌려준다 — 빈 결과로 삼키면 "그 프로세스엔 없다"가 된다.
 func TestDetectForPIDMissingProcess(t *testing.T) {
 	if _, err := openssl.DetectForPID(1<<22, registry.DefaultForkSignatures); err == nil {
-		t.Error("없는 PID인데 오류가 아니다 — 못 본 것과 없는 것이 구분되지 않는다")
+		t.Error("없는 PID인데 오류가 아니다 — 관측하지 못한 것과 없는 것이 구분되지 않는다")
 	}
 }
 
@@ -106,7 +106,7 @@ func TestExtractStringsOnRealELF(t *testing.T) {
 	}
 }
 
-// TD-CONTAINER-2 — 네임스페이스가 갈리거나 권한이 없어 대상 프로세스를 **못 본** 경우와, 봤는데
+// TD-CONTAINER-2 — 네임스페이스가 갈리거나 권한이 없어 대상 프로세스를 **관측하지 못한** 경우와, 봤는데
 // OpenSSL이 **없던** 경우는 다르다. 한 문구로 뭉뚱그리면 결함이 갭처럼, 갭이 부재처럼
 // 읽힌다(§2.6).
 func TestCollectSeparatesUnseenFromAbsent(t *testing.T) {
@@ -123,24 +123,24 @@ func TestCollectSeparatesUnseenFromAbsent(t *testing.T) {
 		return fs.sent[0]
 	}
 
-	// ① 못 봄 — 없는 PID. PROCESS는 커버되지 않고 갭으로 남아야 한다.
+	// ① 관측하지 못함 — 없는 PID. PROCESS는 커버되지 않고 갭으로 남아야 한다.
 	unseen := collect(map[string]string{"pid": "4194304"})
 	cu := unseen.GetCompleteness()
 	if !strings.Contains(cu.GetNote(), "볼 수 없다") {
-		t.Errorf("못 본 사유가 고지되지 않았다: %q", cu.GetNote())
+		t.Errorf("관측하지 못한 사유가 고지되지 않았다: %q", cu.GetNote())
 	}
 	if hasLayer(cu.GetLayersCovered(), commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS) {
-		t.Error("못 봤는데 PROCESS를 커버로 셌다 — 갭이 사라진다")
+		t.Error("관측하지 못했는데 PROCESS를 커버로 셌다 — 갭이 사라진다")
 	}
 	if !hasLayer(cu.GetLayersMissing(), commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS) {
-		t.Errorf("못 본 계층이 갭으로 남아야: %v", cu.GetLayersMissing())
+		t.Errorf("관측하지 못한 계층이 갭으로 남아야: %v", cu.GetLayersMissing())
 	}
 
 	// ② 봤는데 없음 — 자기 프로세스(읽을 수 있다). PROCESS는 커버로 세야 한다.
 	seen := collect(map[string]string{"pid": strconv.Itoa(os.Getpid())})
 	cs := seen.GetCompleteness()
 	if strings.Contains(cs.GetNote(), "볼 수 없다") {
-		t.Errorf("읽을 수 있는 프로세스인데 못 봤다고 한다: %q", cs.GetNote())
+		t.Errorf("읽을 수 있는 프로세스인데 관측하지 못했다고 한다: %q", cs.GetNote())
 	}
 	if !hasLayer(cs.GetLayersCovered(), commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS) {
 		t.Errorf("관측했으면 PROCESS는 커버여야: %v", cs.GetLayersCovered())

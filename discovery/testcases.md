@@ -46,7 +46,7 @@
 
 - **상황**: 구동 중인 Java 앱, BouncyCastle 동적 등록 여부 정적으로 불명.
 - **[사용자]** 대상 JVM과 **동일 UID** 접근 보장 · attach 허용(`DisableAttachMechanism` 아님) 확인 · JDK 동봉 배포 승인.
-- **결과**: 정적으로 못 보는 동적 등록·명시 지목 포착(§2.3).
+- **결과**: 정적으로 관측되지 않는 동적 등록·명시 지목 포착(§2.3).
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
@@ -55,7 +55,7 @@
 | [TD-JVM-3](collectors/jvm/procscan_test.go) | unit | `TestDeriveJavaHome` · `ParseReleaseVersion` · `JavaBinFor` · `IsJavaExe` · `ParseMainId` · `Ident` · `AttachCapable` — 정찰 파싱 | JAVA_HOME·버전·앱 식별자를 뽑고, 못 짚으면 빈 값 | 정찰이 못 짚은 값을 뒤 단계가 사실로 이어받지 않게 한다 |
 | [TD-JVM-4](collectors/jvm/attach_test.go) | unit | `TestAttachAll` · `AttachAllEmpty` · `AttachClient` — 발견 JVM 여럿에 주입된 attach 실행 | 성공은 체인 수집, 실패는 **갭으로 카운트**. 클라이언트는 머신의 attach 가능 JDK를 재사용 | attach에 실패한 JVM이 조용히 사라져 "깨끗함"으로 남지 않게 한다(§2.6) |
 | [TD-JVM-5](collectors/jvm/attach_test.go) | unit | `TestBuildResultForDistinguishesJVMs` · `IdentIsStable` — 서로 다른 JDK 둘 | 각 JVM이 **구별되는 finding**. 식별자는 PID가 아니라 앱(main·jar, 없으면 JAVA_HOME) | 한 노드의 JVM 여럿이 뭉개지지 않게, 그리고 재기동마다 새 자산이 되어 이력이 끊기지 않게 한다 |
-| [TD-JVM-6](collectors/jvm/staticfallback_test.go) | unit | `TestParseJavaSecurity` · `Empty` · `StaticFallbackNoJavaHome` — attach가 막혔을 때 | `java.security`를 **N 순서대로** 파싱. 빈 목록도 오류가 아님. JAVA_HOME 미상이면 오류 + 강등 | attach가 막힌 노드가 "provider 없음"이 아니라 "못 봤음"으로 남게 한다. 순서가 곧 우선순위다 |
+| [TD-JVM-6](collectors/jvm/staticfallback_test.go) | unit | `TestParseJavaSecurity` · `Empty` · `StaticFallbackNoJavaHome` — attach가 막혔을 때 | `java.security`를 **N 순서대로** 파싱. 빈 목록도 오류가 아님. JAVA_HOME 미상이면 오류 + 강등 | attach가 막힌 노드가 "provider 없음"이 아니라 "관측하지 못했음"으로 남게 한다. 순서가 곧 우선순위다 |
 | [TD-JVM-7](collectors/jvm/jvm_test.go) | unit | `TestParseProviders` · `BuildResult` · `JvmServiceContract` — 사이드카 출력 → 정규화·계약 노출 | provider 순서 보존, 원본(`Raw`) 보관, Describe/Collect 왕복 | 사이드카가 본 것이 순서와 원본을 잃지 않고 코어까지 간다 |
 | TD-JVM-8 | **integration** — [데모 2/6](../demo/integration-verification.md) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
 | [TD-JVM-9](collectors/jvm/disableattach_test.go) | **integration** | `TestDisabledAttachFallsBackToJavaSecurity` — `-XX:+DisableAttachMechanism`으로 띄운 실 JVM | attach 실패가 **갭으로 세어지고**, java.security 폴백이 provider를 읽어낸다(열화 표시 + 원본 보존) | attach가 막혔다고 "provider 없음"이 되면 관측하지 못한 것과 없는 것이 뒤섞인다 |
@@ -79,7 +79,7 @@
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
 | TD-CONTAINER-1 | **e2e** — [데모 2/6](../demo/integration-verification.md) | 대상 안에서 실행, 동일 PID namespace | `/proc` 가시 → CONFIRMED | 컨테이너 안에서 `/proc`이 보이는 조건을 확인한다 |
-| [TD-CONTAINER-2](collectors/openssl/scanhost_test.go) | unit(linux) | `TestCollectSeparatesUnseenFromAbsent` — 볼 수 없는 프로세스 / 읽을 수 있는 프로세스 | 못 봤으면 PROCESS를 **커버로 세지 않고** 사유 고지, 봤는데 없으면 커버로 센다 | 한 문구로 뭉뚱그리면 결함이 갭처럼, 갭이 부재처럼 읽힌다 |
+| [TD-CONTAINER-2](collectors/openssl/scanhost_test.go) | unit(linux) | `TestCollectSeparatesUnseenFromAbsent` — 볼 수 없는 프로세스 / 읽을 수 있는 프로세스 | 관측하지 못했으면 PROCESS를 **커버로 세지 않고** 사유 고지, 봤는데 없으면 커버로 센다 | 한 문구로 뭉뚱그리면 결함이 갭처럼, 갭이 부재처럼 읽힌다 |
 
 ### SD-5. 스코프 게이트·라우팅
 
@@ -95,7 +95,7 @@
 
 - **상황**: 야간 배치·주기 기동 노드라 수집 시점에 미실행.
 - **[사용자]** 배치 윈도우·기동 스케줄 정보 제공.
-- **결과**: "실제 없음" ≠ "원리상 못 봄" 구분 유지(§2.6).
+- **결과**: "실제 없음" ≠ "원리상 관측하지 못함" 구분 유지(§2.6).
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|

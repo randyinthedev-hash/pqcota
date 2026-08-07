@@ -131,7 +131,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 ## 디스커버리 (Ansible/SSH, 모두 실물)
 1. **OpenSSL 자산** — `pqcota-nodescan`: `/proc` 스캔으로 로드된 libssl/libcrypto.
-2. **JCA provider 체인** — `pqcota-jvmscan`: **정찰→attach**. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 본다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡는다 — java.security엔 정적 등록이 없어 **정적 스캔으론 못 보는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
+2. **JCA provider 체인** — `pqcota-jvmscan`: **정찰→attach**. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 본다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡는다 — java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
 3. **통신 엣지** — `pqcota-netcap`: AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측.
 
 `pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**를 낸다:

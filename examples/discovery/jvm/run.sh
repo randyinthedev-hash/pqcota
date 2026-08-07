@@ -65,5 +65,5 @@ fi
 INNER
 
 echo
-echo "✅ 정찰→attach 예제 완료. 프로브(정적)로는 이 동적 BC를 못 본다 — attach만 잡는다."
+echo "✅ 정찰→attach 예제 완료. 프로브(정적)로는 이 동적 BC를 관측하지 못한다 — attach만 잡는다."
 echo "   전체 종단(Ansible/SSH·다중 노드)은 demo/ 6단계가 보인다."

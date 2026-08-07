@@ -77,7 +77,7 @@ func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote stri
 }
 
 // DegradedResult — 캡처 자체가 불가할 때(예: CAP_NET_RAW 없음) 관측 대신 완전성 갭을 낸다(TD-NETWORK-13).
-// NETWORK 계층을 layers_missing으로 표기 — "관측 못 함"을 "연결 없음/부재"로 처리 금지(§2.6).
+// NETWORK 계층을 layers_missing으로 표기 — "관측하지 못함"을 "연결 없음/부재"로 처리 금지(§2.6).
 func DegradedResult(node, reason string) *discoveryv1.CollectionResult {
 	return &discoveryv1.CollectionResult{
 		Envelope: &commonv1.Envelope{

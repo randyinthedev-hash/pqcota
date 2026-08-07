@@ -219,7 +219,7 @@ func TestBuildEdge(t *testing.T) {
 
 // ── TD-NETWORK-5: 암호화된 핸드셰이크(QUIC) → 그룹 불명, 고전 단정 금지 ──
 func TestQUICUnknownPosture(t *testing.T) {
-	hs := &network.Handshake{Protocol: "QUIC", NegotiatedGroup: ""} // 협상 파라미터 못 봄
+	hs := &network.Handshake{Protocol: "QUIC", NegotiatedGroup: ""} // 협상 파라미터 관측하지 못함
 	e := network.BuildEdge(network.ConnTuple{SrcNode: "web", DstAddr: "203.0.113.5:443"}, hs)
 	if e.GetNegotiatedGroup() != "" {
 		t.Error("QUIC는 협상 그룹 불명이어야(빈 문자열)")

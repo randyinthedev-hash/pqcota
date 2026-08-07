@@ -310,7 +310,7 @@ else
 fi
 echo "   ※ 능력은 분명히 늘었는데 인벤토리는 그대로다. 지어낸 결과가 아니라 **관측 범위의 사실**이다:"
 echo "     · OpenSSL은 provider 층을 관측하는 경로가 아직 없다 — /proc/maps의 libssl·libcrypto와"
-echo "       ELF 문자열(fork·버전)까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다."
+echo "       ELF 문자열(fork·버전)까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못한다."
 echo "     · 핸드셰이크도 안 바뀐다 — 협상은 양쪽이 알아야 하고, 이 토폴로지의 상대는 1.1.1이다."
 echo "     근거는 discovery/design.md §2.1. 없는 것을 있는 척하지 않는 것이 이 도구의 전제다(§2.5)."
 

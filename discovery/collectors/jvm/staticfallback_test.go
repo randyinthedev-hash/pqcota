@@ -45,7 +45,7 @@ func TestParseJavaSecurityEmpty(t *testing.T) {
 		t.Errorf("provider가 없어야: %+v", c.Providers)
 	}
 	if !c.Degraded {
-		t.Error("빈 결과여도 강등 표시는 남아야 — '없다'가 아니라 '이 경로에선 못 본다'")
+		t.Error("빈 결과여도 강등 표시는 남아야 — '없다'가 아니라 '이 경로에선 관측하지 못한다'")
 	}
 }
 

@@ -3,7 +3,7 @@
 // Command pqcota-netcap — 타깃 노드에서 실행. 관측 창 동안 TLS/SSH 핸드셰이크를 AF_PACKET으로
 // 수동 관측해 통신 엣지를 CollectionResult JSON으로 stdout에 낸다(디스커버리 §2.4).
 // CAP_NET_RAW 필요. 없으면 **관측이 안 된다** — 그 사실을 stderr로 분명히 알리고, stdout으로는
-// 완전성 갭(DegradedResult)을 낸다. 갭을 중앙까지 보내야 인벤토리가 "못 봤다"와 "링크가 없다"를
+// 완전성 갭(DegradedResult)을 낸다. 갭을 중앙까지 보내야 인벤토리가 "관측하지 못했다"와 "링크가 없다"를
 // 구분한다(§2.6). 종료코드는 0이라 fleet 실행(Ansible)이 그 갭을 회수한다 — --strict면 1.
 // usage: pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 // env: NETCAP_IFACE, NETCAP_WINDOW_SEC
@@ -65,7 +65,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, `[netcap] ✗ 관측하지 못했다 — AF_PACKET 소켓을 열 수 없다(CAP_NET_RAW 없음).
           부여: sudo setcap cap_net_raw+ep %s   (또는 root로 실행)
           지금 낸 것은 관측값이 아니라 **갭 기록**이다 — 이 노드에 링크가 없다는 뜻이 아니다.
-          종료코드는 0이다: 이 갭을 중앙까지 보내야 인벤토리가 "못 봤다"와 "없다"를 구분한다.
+          종료코드는 0이다: 이 갭을 중앙까지 보내야 인벤토리가 "관측하지 못했다"와 "없다"를 구분한다.
           실패로 끝내려면 --strict.
 `, exe)
 			if *strict {

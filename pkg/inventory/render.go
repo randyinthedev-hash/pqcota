@@ -12,7 +12,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/kernel/posture"
 )
 
-// Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 못 봄"으로 명시(§2.6).
+// Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 관측하지 못함"으로 명시(§2.6).
 func Render(snap *history.Snapshot) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "노드 %s  (스냅샷 %s · ruleset %s)\n", snap.NodeID, snap.ID, snap.RulesetVersion)
@@ -35,7 +35,7 @@ func Render(snap *history.Snapshot) string {
 		for _, l := range c.GetLayersMissing() {
 			g = append(g, short(l.String(), "COLLECTION_LAYER_"))
 		}
-		fmt.Fprintf(&b, "갭(원리상 못 봄 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
+		fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
 	}
 	return b.String()
 }
@@ -110,7 +110,7 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 			len(s.Findings), len(s.Edges), obs, window, gapOf(s), s.ID)
 	}
 	b.WriteString("\n(스냅샷은 내용이 바뀔 때만 쌓인다 — obs·observed가 그 상태를 몇 번·언제까지 재확인했는지 말한다.\n")
-	b.WriteString(" gap = 원리상 못 본 계층으로 \"부재\"가 아니다. snapshot 값을 -snapshot·-diff에 그대로 쓴다.)\n")
+	b.WriteString(" gap = 원리상 관측하지 못한 계층으로 \"부재\"가 아니다. snapshot 값을 -snapshot·-diff에 그대로 쓴다.)\n")
 	return b.String()
 }
 
@@ -180,7 +180,7 @@ func RenderDiff(a, b *history.Snapshot) string {
 		fmt.Fprintf(&sb, "\n관측 엣지: %d → %d\n", la, lb)
 	}
 	if ga, gb := gapOf(a), gapOf(b); ga != gb {
-		fmt.Fprintf(&sb, "갭(원리상 못 봄): %s → %s\n", ga, gb)
+		fmt.Fprintf(&sb, "갭(원리상 관측하지 못함): %s → %s\n", ga, gb)
 	}
 	return sb.String()
 }
