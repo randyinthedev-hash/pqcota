@@ -91,7 +91,7 @@ Any collector attaches as long as it satisfies the intake contract (§1.6). Ther
 | **Network** | the groups negotiated by TLS/SSH/QUIC |
 | **Runtime introspection** | the reality obtained by asking a running process |
 
-**No single collector is complete** — a layer that was not seen is left as a gap, not as "absent" (§2.6).
+**No single collector is complete** — a layer that was not observed is left as a gap, not as "absent" (§2.6).
 
 ### 2.3 Absence of source is the dominant case
 
@@ -134,7 +134,7 @@ In a legacy estate, absent source is **the default** (vendor binaries, lost sour
 ### 2.6 Outputs / integrity
 
 - **A canonical CBOM + Envelope**: the body (the fields in acceptance principles §2.4) plus an Envelope (collector id and version, collection method, time, target node, **the collector's signature**)
-- **A completeness map**: coverage against scope — **recorded separately per collector and per layer** ("scanned by Theia, process layer not collected"). Only then does Inventory's UNOBSERVED verdict avoid confusing "genuinely not there" with "impossible to see in principle".
+- **A completeness map**: coverage against scope — **recorded separately per collector and per layer** ("scanned by Theia, process layer not collected"). Only then does Inventory's UNOBSERVED verdict avoid confusing "genuinely not there" with "impossible to observe in principle".
 - Collection channel: mTLS authentication plus signed reports. Avoid self-reference (the management-plane crypto is separated from and stated apart from the data plane)
 
 ---

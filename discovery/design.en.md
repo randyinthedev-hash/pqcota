@@ -31,7 +31,7 @@ Automation grades (AUTO/PROPOSE/MANUAL) are set by §2.5 and taken as given here
 
 - **The observed lane vs the declared lane** — what a collector *saw* (observed) and what a user *reported* (declared/CMDB) are labeled apart by the Envelope's `detection_method`. That label is the basis on which the inventory keeps them separate.
 - **`evidence_strength`** — `confirmed` (the running reality) → `inferred` (a static inference) → `unknown`. Attached deterministically according to how it was observed.
-- **The completeness map (gap ≠ absence)** — a layer that was not seen is not declared "absent"; it is stated as a **gap**. That honesty is the basis of audit integrity and reproducibility.
+- **The completeness map (gap ≠ absence)** — a layer that was not observed is not declared "absent"; it is stated as a **gap**. That honesty is the basis of audit integrity and reproducibility.
 - **The provider signature registry** — provider and module signatures → automatic determination of PQC maturity, FIPS status, and algorithm coverage.
 
 ---
@@ -247,7 +247,7 @@ Identity stability differs by layer:
 
 - The difference between a collector's `Describe` (the layers it can cover) and its `Collect` (what it actually covered) **is the gap** (`Completeness.layers_missing`).
 - **Batch and intermittent nodes**: not running at collection time → **record a gap; never treat it automatically as "absent"** (§2.5). Repeat collection across time windows (§2.3) to avoid missing dlopen and batch cases.
-- This distinction is what lets Inventory's UNOBSERVED verdict separate "genuinely not there" from "impossible to see in principle" (§2.6).
+- This distinction is what lets Inventory's UNOBSERVED verdict separate "genuinely not there" from "impossible to observe in principle" (§2.6).
 
 ## 6. Collector deployment (reaching the host) — per scenario
 

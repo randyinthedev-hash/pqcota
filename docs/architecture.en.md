@@ -160,7 +160,7 @@ This fixes regulation §3.2's **"CycloneDX CBOM (the standard body) + Envelope (
   "findings": [ /* canonical finding[] with §3.2 evidence metadata attached */ ],
   "completeness": {                       // the §2.6 completeness map — separated per collector and per layer
     "layers_covered": ["artifact", "runtime-introspection"],
-    "layers_missing": ["process"],        // separating "genuinely not there" from "impossible to see" (§2.6)
+    "layers_missing": ["process"],        // separating "genuinely not there" from "impossible to observe" (§2.6)
     "note": "process layer not collected — the target was not running"
   }
 }
@@ -272,7 +272,7 @@ Where §3.3 deals with **a provider's capability** (which algorithms it implemen
 | PQC experimental | `replace` | 3 | replace with a standard |
 | PQC broken | `replace` | 4 | replace immediately |
 | Classical (🔴) | `migrate` | 3 (regulated = 4) | quantum-vulnerable (HNDL) — introduce a PQC hybrid |
-| Unobserved (⚪) | `none` | 0 | judgment withheld (inventory design §6.2 honesty — do not assert about what was not seen) |
+| Unobserved (⚪) | `none` | 0 | judgment withheld (inventory design §6.2 honesty — do not assert about what was not observed) |
 
 The target standard differs by kind — KEM→ML-KEM (FIPS 203), signature→ML-DSA (FIPS 204). This recommendation is a derivation, not an execution.
 
@@ -319,7 +319,7 @@ message CollectionResult {
 
 1. **The output is always a canonical CBOM Envelope** — whatever the backend, everything downstream (reconciliation, review, provisioning) behaves identically.
 2. **The scope master gate is the core's responsibility** — the core filters the target nodes before handing them to a collector (§1.4). A collector collects only what it was given.
-3. **Completeness is declared per layer** — a collector declares the layers it covers with `Describe` and reports what it actually covered with `Collect`. The core records "what was not seen" as a gap (§2.6).
+3. **Completeness is declared per layer** — a collector declares the layers it covers with `Describe` and reports what it actually covered with `Collect`. The core records "what was not observed" as a gap (§2.6).
 
 ### 4.3 The same mechanism as GPL isolation
 

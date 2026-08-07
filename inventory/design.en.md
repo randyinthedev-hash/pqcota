@@ -163,7 +163,7 @@ After building the scope master from the legacy IP list the user supplied, the [
 
 ### 6.2 The honesty rules (what makes this graph trustworthy)
 
-**"Observed" and "impossible to see in principle" are kept apart** (§2.6, §3.3):
+**"Observed" and "impossible to observe in principle" are kept apart** (§2.6, §3.3):
 - **An unobserved edge is never drawn as "no connection"** — it is marked "unobserved" with a dashed line or ⚪, tied to the completeness map.
 - **Coverage is shown**: a node without a collector is greyed out (only half of that node's edges are visible).
 - **A capability vs actual overlay**: a node's "a PQC-capable library is loaded" (a discovery Finding) is overlaid on an edge's "actually negotiated classical" (observed) → which surfaces **the precise next action**, such as *"PQC is available but it is falling back to classical"*.

@@ -49,7 +49,7 @@ Normalization →  §2.4 steps 3–6 : enrich → validate → resolve identity 
 
 Every enum's `*_UNSPECIFIED = 0` means "could not determine = unknown".
 A field you could not fill is left as an **explicit zero value**, not blank or missing.
-Do not silently treat it as "absent" — "genuinely not there" and "impossible to see in principle" are distinguished by `Completeness.layers_missing`.
+Do not silently treat it as "absent" — "genuinely not there" and "impossible to observe in principle" are distinguished by `Completeness.layers_missing`.
 
 ### 3. The provider signature registry drives enrichment (acceptance principles §2.3)
 

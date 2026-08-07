@@ -58,7 +58,7 @@
 | [TD-JVM-6](collectors/jvm/staticfallback_test.go) | unit | `TestParseJavaSecurity` · `Empty` · `StaticFallbackNoJavaHome` — attach가 막혔을 때 | `java.security`를 **N 순서대로** 파싱. 빈 목록도 오류가 아님. JAVA_HOME 미상이면 오류 + 강등 | attach가 막힌 노드가 "provider 없음"이 아니라 "못 봤음"으로 남게 한다. 순서가 곧 우선순위다 |
 | [TD-JVM-7](collectors/jvm/jvm_test.go) | unit | `TestParseProviders` · `BuildResult` · `JvmServiceContract` — 사이드카 출력 → 정규화·계약 노출 | provider 순서 보존, 원본(`Raw`) 보관, Describe/Collect 왕복 | 사이드카가 본 것이 순서와 원본을 잃지 않고 코어까지 간다 |
 | TD-JVM-8 | **integration** — [데모 2/6](../demo/integration-verification.md) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
-| [TD-JVM-9](collectors/jvm/disableattach_test.go) | **integration** | `TestDisabledAttachFallsBackToJavaSecurity` — `-XX:+DisableAttachMechanism`으로 띄운 실 JVM | attach 실패가 **갭으로 세어지고**, java.security 폴백이 provider를 읽어낸다(열화 표시 + 원본 보존) | attach가 막혔다고 "provider 없음"이 되면 못 본 것과 없는 것이 뒤섞인다 |
+| [TD-JVM-9](collectors/jvm/disableattach_test.go) | **integration** | `TestDisabledAttachFallsBackToJavaSecurity` — `-XX:+DisableAttachMechanism`으로 띄운 실 JVM | attach 실패가 **갭으로 세어지고**, java.security 폴백이 provider를 읽어낸다(열화 표시 + 원본 보존) | attach가 막혔다고 "provider 없음"이 되면 관측하지 못한 것과 없는 것이 뒤섞인다 |
 
 ### SD-3. 바이너리 fork 매처 — IP
 
@@ -126,7 +126,7 @@
 | [TD-NETWORK-3](collectors/network/network_test.go) | unit | `TestParseSSHKexInit` — SSH KEXINIT | KEX 목록에서 `sntrup761x25519` 관측, protocol=SSH | SSH는 TLS와 프레이밍이 달라 같은 파서로 못 읽는다 |
 | [TD-NETWORK-4](collectors/network/network_test.go) | unit | `TestNegotiateSSHKex` — 클라이언트는 제안, **서버는 미지원** | 협상 결과는 **고전** — 양쪽 교집합으로 판정 | 제안만 보고 PQC로 보고하면 레거시 서버(OpenSSH 8.2)와의 SSH가 🟢로 나간다 — 서버가 지원하지 않아 실제로는 고전인데도 |
 | [TD-NETWORK-5](collectors/network/network_test.go) | unit | `TestBuildEdge` — 파싱 결과 → 엣지 | `ObservedEdge`{src_node · dst_addr:port · protocol · negotiated_group · role} | 관측이 자산과 이어지려면 노드·상대·프로토콜이 한 레코드에 함께 있어야 한다 |
-| [TD-NETWORK-6](collectors/network/network_test.go) | unit | `TestQUICUnknownPosture` — 암호화된 핸드셰이크 | `negotiated_group`="" → **불명**(코어에서 등급 ⚪) | 못 본 것을 고전으로 단정하지 않는다 |
+| [TD-NETWORK-6](collectors/network/network_test.go) | unit | `TestQUICUnknownPosture` — 암호화된 핸드셰이크 | `negotiated_group`="" → **불명**(코어에서 등급 ⚪) | 관측하지 못한 것을 고전으로 단정하지 않는다 |
 | [TD-NETWORK-7](collectors/network/network_test.go) | unit | `TestBuildResult` — CollectionResult 조립 | `crypto_runtime` **미귀속**, `layers_covered`=[NETWORK], `observed_edges` 채움 | 그 연결이 무엇으로 구현됐는지는 회선에서 안 보인다 — TLS 엣지를 OpenSSL 자산에 귀속하지 않는다 |
 | [TD-NETWORK-8](collectors/network/network_test.go) | unit | `TestBuildResult_windowNote` — 창 안에 트래픽이 없던 링크 | completeness에 관측창 갭 note(§2.6) | 창 안에 없던 것을 "암호를 안 쓴다"로 보지 않는다 |
 | [TD-NETWORK-9](collectors/network/network_test.go) | unit | `TestShouldObserve_selfReference` · `TestCollect_filtersSelf` — 자기 노드/자기 트래픽 | 엣지에서 **제외** | 관측 도구가 만든 트래픽이 결과에 섞이면 토폴로지가 자기 자신을 가리킨다 |
@@ -157,6 +157,6 @@
 | 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–15 |
 | 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-16–18 |
 | 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8 · [데모 2/6](../demo/integration-verification.md) |
-| 11 | **못 본 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9 · TD-CONTAINER-2 · TD-NETWORK-19 |
+| 11 | **관측하지 못한 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9 · TD-CONTAINER-2 · TD-NETWORK-19 |
 
 **관찰**: 순서 1–7이 전부 **unit** — 핵심 로직(정직한 증거·fork·라우팅·위임경계)이 실물 없이 TDD된다. 실물 의존은 리눅스가 필요하다. **가치 있는 로직을 먼저, 환경 리스크는 조기 PoC로.**

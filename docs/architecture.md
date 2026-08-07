@@ -318,7 +318,7 @@ message CollectionResult {
 
 1. **출력은 항상 정규화된 CBOM Envelope** — 어느 백엔드든 downstream(reconcile·리뷰·프로비저닝)이 백엔드 무관하게 동일 동작(라이선스 정리).
 2. **스코프 마스터 게이트는 코어 책임** — Collector에 넘기기 전 코어가 대상 노드를 필터(§1.4). Collector는 받은 노드만 수집.
-3. **완전성은 계층별로 신고** — Collector가 `Describe`로 커버 계층을 선언하고 `Collect`로 실제 커버를 보고. "못 본 것"을 코어가 갭으로 기록(§2.6).
+3. **완전성은 계층별로 신고** — Collector가 `Describe`로 커버 계층을 선언하고 `Collect`로 실제 커버를 보고. "관측하지 못한 것"을 코어가 갭으로 기록(§2.6).
 
 ### 4.3 GPL 격리와 동일 메커니즘
 
