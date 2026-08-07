@@ -45,7 +45,7 @@ func main() {
 	// `/proc`를 못 열었으면 "OpenSSL 없음"이 아니라 **관측 자체가 불가**다. 빈 결과를 그대로
 	// 내보내면 부재로 읽히므로 완전성 노트에 남기고 크게 알린다(§2.6).
 	if st.ProcUnavailable {
-		const note = "/proc를 열 수 없어 관측하지 못했다 — 부재가 아니라 갭이다(리눅스에서 실행할 것)"
+		const note = "/proc를 열 수 없어 관측하지 못했다 — 없는 것이 아니라 관측하지 못한 것이다(리눅스에서 실행할 것)"
 		if c := res.GetCompleteness(); c != nil {
 			c.Note = note
 		}
@@ -80,7 +80,7 @@ func main() {
 		fmt.Fprintf(w, "== pqcota Discovery — %s (읽기전용·저장 안 함) ==\n", node)
 		fmt.Fprintf(w, "스캔: 접근가능 %d · 접근불가/종료 %d · OpenSSL lib %d\n\n", st.Accessible, st.Denied, len(dets))
 		fmt.Fprint(w, tbl)
-		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵의 갭 — root 없이는 타 사용자 /proc을 관측하지 못한다, 부재 아님 §2.6)\n", st.Denied)
+		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵에 \"관측하지 못함\"으로 남는다 — root 없이는 타 사용자 /proc을 볼 수 없다, 부재 아님 §2.6)\n", st.Denied)
 	}
 	fmt.Fprintf(os.Stderr, "[nodescan] %s: 접근가능 %d · 거부 %d · OpenSSL lib %d\n",
 		node, st.Accessible, st.Denied, len(dets))

@@ -83,9 +83,9 @@ func main() {
 	}
 	if st.ProcUnavailable {
 		// "JVM 0개"와 "관측하지 못했다"를 같은 얼굴로 내보내지 않는다(§2.6).
-		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc를 열 수 없어 프로세스를 열거하지 못했다 — JVM 부재가 아니라 갭이다(리눅스에서 실행할 것)")
+		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc를 열 수 없어 프로세스를 열거하지 못했다 — JVM이 없는 것이 아니라 관측하지 못한 것이다(리눅스에서 실행할 것)")
 	}
-	fmt.Fprintf(os.Stderr, "[jvmscan] 정찰: 접근 %d · 불가 %d(갭) · JVM %d\n", st.Accessible, st.Denied, st.WithJVM)
+	fmt.Fprintf(os.Stderr, "[jvmscan] 정찰: 접근 %d · 불가 %d(관측하지 못함) · JVM %d\n", st.Accessible, st.Denied, st.WithJVM)
 
 	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
 	// 대상을 관측하지 못한 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
@@ -120,7 +120,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "[jvmscan] pid=%d 정적 폴백 실패: %v\n", j.PID, err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 갭)\n",
+		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 관측하지 못함)\n",
 			j.PID, len(c.Providers))
 		emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResultFor(node, c, j.Ident())}, false)
 		return
@@ -215,7 +215,7 @@ func emitRecon() {
 	}
 	os.Stdout.Write(b)
 	os.Stdout.Write([]byte("\n"))
-	fmt.Fprintf(os.Stderr, "[jvmscan -recon] JVM %d개 · 접근 %d · 불가 %d(갭)\n", len(out), st.Accessible, st.Denied)
+	fmt.Fprintf(os.Stderr, "[jvmscan -recon] JVM %d개 · 접근 %d · 불가 %d(관측하지 못함)\n", len(out), st.Accessible, st.Denied)
 }
 
 // nativeOutPath — 에이전트가 **대상 안에서** 쓸 출력 경로. 대상의 /tmp 기준이라 PID로 갈라
@@ -261,7 +261,7 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 		if err != nil {
 			return jvm.Collected{}, fmt.Errorf("attach 전 경로 실패, 정적 폴백도 불가: %w", err)
 		}
-		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 갭)\n",
+		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 관측하지 못함)\n",
 			j.PID, len(c.Providers))
 		return c, nil
 	}
