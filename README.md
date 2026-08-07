@@ -14,6 +14,8 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 **구조를 그림으로** → [플랫폼 구조도](docs/architectures/platform-structure.html)
 
+**움직이는 것을 보려면** → [시연영상 (2분 55초)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — 관측부터 전환물 적용·되돌림까지, 실제 노드에서 ML-KEM이 **0개 → 14개 → 0개**로 바뀐다.
+
 ---
 
 ## 무엇이 나오나
