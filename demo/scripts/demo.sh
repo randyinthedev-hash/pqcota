@@ -15,7 +15,7 @@ usage() {
 인자는 받지 않는다. 조정은 환경변수로 한다:
 
   DEMO_REAL_PROVIDER=1   선택 단계를 켠다 — 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에
-                         배치·활성화하고, 조치가 **실제로 암호 능력을 만드는지**까지 확인한다.
+                         배치·활성화하고, 조치가 **실제 암호 알고리즘으로 반영되는지**까지 확인한다.
                          기본 데모는 빈 파일로 배포 경로만 보인다. 첫 실행은 빌드로 수 분 더 걸린다.
   OQS_BUILD_BASE=<이미지> 그 provider를 빌드할 베이스. 노드 이미지와 같아야 ABI가 맞는다
                          (기본 ubuntu:24.04 — 기본 토폴로지의 OpenSSL 3 노드와 같다).
@@ -292,7 +292,7 @@ docker exec "$RNODE" sh -lc "$ACT openssl list -providers 2>/dev/null | grep -A2
 docker exec "$RNODE" sh -lc "$ACT openssl list -kem-algorithms 2>/dev/null | grep -i mlkem | head -3" | sed 's/^/   /'
 AFTER_G=$(docker exec "$RNODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 if [ "${AFTER_G:-0}" -gt "${BEFORE_G:-0}" ]; then
-  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개. 도구가 낸 config + 배치가 **실제 암호 능력**을 만들었다."
+  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개. 도구가 낸 config + 배치가 **실제 암호 알고리즘으로 반영**됐다."
 else
   echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개 — 늘지 않았다. 모듈이 로드되지 않은 것이다."
   echo "     확인할 곳: 모듈의 미해결 의존(\`ldd\`)과 cnf의 module 경로. 안 된 것을 됐다고 적지 않는다."

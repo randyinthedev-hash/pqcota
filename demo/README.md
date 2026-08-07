@@ -171,7 +171,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 ```
 
-빈 파일로는 못 보이는 것이 하나 남는다: **도구가 낸 config와 배치가 정말 암호 능력을 만드는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인한다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용된다.
+빈 파일로는 못 보이는 것이 하나 남는다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인한다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용된다.
 
 대상은 6단계의 pay-db가 **아니다** — provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없다. 인벤토리에서 3.x를 관측한 노드를 골라 같은 L2/L3 산출물로 배치·활성화한 뒤,
 
