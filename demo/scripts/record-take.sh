@@ -145,7 +145,7 @@ take_provision() {
 	#   플레이북만 돌리는 화면은 이 도구가 무엇을 했는지 말해 주지 않는다.
 	say "사람이 쓰는 것은 계획 한 장뿐이다 — 어느 노드의 무엇을, 어떤 provider로"
 	type_cmd "cat plan-real.json"
-	docker exec pqcota-ctl bash -lc "python3 -m json.tool /work/plan-real.json | head -18"
+	docker exec pqcota-ctl bash -lc "python3 -m json.tool --no-ensure-ascii /work/plan-real.json | head -18"
 	cut_mark
 
 	say "도구가 그 계획에서 배포물을 만든다 — 적용용과 되돌림용이 함께"
