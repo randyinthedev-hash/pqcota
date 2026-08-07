@@ -17,7 +17,7 @@
 |---|---|---|
 | `observe` | `java.security`에 없는 provider가 실행 중 체인에는 있다 — 정적 스캔과 런타임 관측의 차이 | 약 16초 |
 | `provision` | 도구가 만든 config가 실제 암호 능력을 만들고(ML-KEM 0→14), 되돌리면 원상복귀(→0) | 약 55초 |
-| `gap` | 권한이 없어 관측 못 한 계층을 갭으로 낸다. 종료코드는 0 — 갭이 중앙까지 가야 한다 | 약 9초 |
+| `gap` | 권한이 없어 관측하지 못한 계층을 갭으로 낸다. 종료코드는 0 — 갭이 중앙까지 가야 한다 | 약 9초 |
 
 ```bash
 ./demo/scripts/up.sh && DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh   # 한 번만 (생성물이 남는다)
