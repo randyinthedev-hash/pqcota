@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <meta charset="utf-8">
-<title>pqcota 시연영상 — 섹션 타이틀 카드 (템플릿)</title>
+<title>pqcota 시연영상 — 섹션 타이틀 카드</title>
 <!--
   각 실연 구간 앞에 3초쯤 붙이는 카드. "지금부터 무엇을 보는가"를 먼저 알려준다.
   ?s=1|2|3 으로 한 장씩 연다(자동 캡처용). 터미널 클립과 같은 팔레트.
@@ -43,10 +43,10 @@
     <div class="num">STEP 02</div>
     <h1>전환물 생성 — 계획에서 배포물을</h1>
     <div class="line"></div>
-    <div class="sub">사람이 쓰는 것은 <b>어느 노드에 어떤 provider를 넣을지 적은 JSON 하나</b>.<br>
+    <div class="sub">사람이 준비하는 것은 둘 — <b>계획 JSON</b>과 <b>provider 모듈 파일</b>.<br>
       도구가 config 조각과 적용·되돌림 플레이북을 만들고,<br>
       그것이 <b>실제 암호 알고리즘으로 반영되는지</b> 확인한다.</div>
-    <div class="what">plan.json  →  pqcota-provision  →  provision.yml  →  ML-KEM 0 → 14 → 0</div>
+    <div class="what">plan.json + oqsprovider.so  →  pqcota-provision  →  provision.yml  →  ML-KEM 0 → 14 → 0</div>
   </section>
 
   <section class="card" data-n="3">

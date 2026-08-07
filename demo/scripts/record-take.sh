@@ -148,6 +148,16 @@ take_provision() {
 	docker exec pqcota-ctl bash -lc "python3 -m json.tool --no-ensure-ascii /work/plan-real.json | head -18"
 	cut_mark
 
+	# 사람이 준비하는 것은 둘이다 — 계획과 **모듈 파일**. 이 컷이 없으면 .so가 어디선가
+	# 튀어나온 것처럼 보이고, "도구가 provider도 준다"는 오해가 남는다(§4.2 — 선택·조달은 사용자).
+	say "그리고 provider 모듈 — 도구가 주지 않는다. 사용자가 빌드하거나 벤더에서 받아 둔다"
+	type_cmd "ls -l ansible/files/oqsprovider.so"
+	docker exec pqcota-ctl bash -lc 'ls -l /work/ansible/files/oqsprovider.so | sed "s|/work/ansible/files/||"'
+	type_cmd "sha256sum ansible/files/oqsprovider.so"
+	docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -c1-24' | sed 's/$/…/'
+	note "   이 해시를 플레이북에 넘긴다 — 배치된 것이 그 파일이 아니면 멈춘다."
+	cut_mark
+
 	say "도구가 그 계획에서 배포물을 만든다 — 적용용과 되돌림용이 함께"
 	type_cmd "pqcota-provision --level l2 plan-real.json > provision-real.yml"
 	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
