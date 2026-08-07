@@ -16,6 +16,8 @@ A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-
 
 **The structure, drawn** → [platform structure diagram](docs/architectures/platform-structure.html)
 
+**To see it move** → [demo video (2 min 55 s)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — from observation through applying and rolling back the generated artifacts: ML-KEM goes **0 → 14 → 0** on a real node.
+
 ---
 
 ## What it looks like
