@@ -100,7 +100,7 @@ pqcota-jvmscan --recon
 | `--recon` | only reconnoiter, emitting the JVMs found as JSON (no observation) |
 | `--output` | output format → [shared, below](#--output--shared-by-nodescan-and-jvmscan) |
 
-If the PID given by `--pid` is not among the running JVMs it **fails instead of falling back to scanning everything** — what was not seen is a gap, not something to substitute another target for.
+If the PID given by `--pid` is not among the running JVMs it **fails instead of falling back to scanning everything** — what was not observed is a gap, not something to substitute another target for.
 
 `--recon` is the basis on which an orchestrator decides whether to send the agent JAR to a node. With no JVM it emits `[]`.
 
@@ -121,7 +121,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 
 **Without `CAP_NET_RAW` there is no observation.** In that case netcap reports the fact and how to grant it (`setcap cap_net_raw+ep`) on stderr, and emits on stdout a **gap record** with `layers_missing=[NETWORK]`. The default exit code is **0**.
 
-It is 0 because that gap has to reach the center. When Ansible drives many nodes, an exit code of 1 makes the task a failure, so the result file is not retrieved and **nothing at all** is recorded centrally for that node. Then the inventory view reads as "this node has no TLS links" — when in fact it was simply not seen. Carrying the gap through is what keeps "not seen" apart from "not there".
+It is 0 because that gap has to reach the center. When Ansible drives many nodes, an exit code of 1 makes the task a failure, so the result file is not retrieved and **nothing at all** is recorded centrally for that node. Then the inventory view reads as "this node has no TLS links" — when in fact it simply was not observed. Carrying the gap through is what keeps "not observed" apart from "not there".
 
 If you are running it by hand and want it to fail, pass `--strict` (the gap still goes to stdout).
 
@@ -140,7 +140,7 @@ Progress and warnings go to stderr in both cases — stdout carries only what yo
 
 ### Privileges · environment variables
 
-What you need when running on a node. Insufficient privilege means **the visible range shrinks, or that command cannot run at all**. What was not seen is reported through the completeness map, but it is better to have the privilege in the first place.
+What you need when running on a node. Insufficient privilege means **the visible range shrinks, or that command cannot run at all**. What was not observed is reported through the completeness map, but it is better to have the privilege in the first place.
 
 | Command | Privilege | Environment variables |
 |---|---|---|
@@ -160,7 +160,7 @@ What you need when running on a node. Insufficient privilege means **the visible
 | app attribution (systemd units) | an environment where systemd runs | attribution falls back to the **executable path** instead of a unit name (upstart-era distros) |
 | **JVM attach inside a container** | **4.1** (`NSpid` in `/proc/<pid>/status`) | falls back to the host PID — only that JVM goes unobserved (reported as a gap) |
 
-Even below the floor it **never goes silently wrong**. What was not seen goes out as a completeness gap (§2.6), and without `NSpid` the host PID is used as-is.
+Even below the floor it **never goes silently wrong**. What was not observed goes out as a completeness gap (§2.6), and without `NSpid` the host PID is used as-is.
 
 **Measured** (in KVM VMs — containers share the host kernel, so this item cannot be verified there):
 

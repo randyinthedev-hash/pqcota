@@ -12,7 +12,7 @@ openssl collector가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, **jvm-
 
 1. **정찰**(`ScanJVMs`) — `/proc`로 실행 중 JVM을 찾아 PID·JAVA_HOME·버전·앱을 뽑는다. 호출자가 PID·JDK를 미리 몰라도 된다.
 2. **attach** — 발견한 PID에 붙어 `Security.getProviders()` **실체**를 관측한다.
-3. **동적 등록 포착** — 예제 앱은 `java.security`에 BC를 **정적으로 안 심고** 런타임에 `addProvider(BouncyCastle)`만 한다. **정적 스캔(프로브)으론 이걸 못 본다 — attach만 잡는다**(`detection=runtime-introspection`).
+3. **동적 등록 포착** — 예제 앱은 `java.security`에 BC를 **정적으로 안 심고** 런타임에 `addProvider(BouncyCastle)`만 한다. **정적 스캔(프로브)으론 이걸 관측하지 못한다 — attach만 잡는다**(`detection=runtime-introspection`).
 4. **JSON Lines 적재** — attach 경로는 JVM별로 한 줄씩 낸다(다중 JVM 대비). `pqcota-ingest`가 `*.jsonl`을 읽어 적재한다.
 
 ## 핵심 — 프로브 vs attach

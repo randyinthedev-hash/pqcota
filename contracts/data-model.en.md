@@ -12,7 +12,7 @@ For the list of contract files and namespaces and the CycloneDX property mapping
 
 - **Namespace = stage**: `pqcota.common.v1` (shared) · `pqcota.discovery.v1` · `pqcota.inventory.v1` · `pqcota.provisioning.v1`. The generated Go packages are `commonv1`, `discoveryv1`, `inventoryv1`, `provisioningv1`.
 - **protojson representation**: fields are **camelCase** (`target_node_id`→`targetNodeId`), `bytes` is a **base64 string** (`cbom_cyclonedx`), enums are **name strings** (`"DETECTION_METHOD_RUNTIME_INTROSPECTION"`), and `Timestamp` is RFC3339.
-- **enum 0 = `*_UNSPECIFIED` = "unknown"** (§2.5). Not "absent" but "could not determine" — together with the completeness map it separates "genuinely not there" from "impossible to see in principle".
+- **enum 0 = `*_UNSPECIFIED` = "unknown"** (§2.5). Not "absent" but "could not determine" — together with the completeness map it separates "genuinely not there" from "impossible to observe in principle".
 - **Backward compatibility**: never reuse a field number, mark removals `reserved`, append enum values only at the end, and make breaking changes as a new `v2`.
 
 ## 1. Four principles that run through the model

@@ -82,7 +82,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 - collector가 하는 일은 **관측 → `CollectionResult` emit**까지다. `evidence_strength`·`pqc_readiness` 같은 파생값은 **채우지 않는다** — 코어가 계약 입력에서 파생한다(§1.2 — 규칙이 한 곳에 있어야 재계산으로 재현된다).
 - 계약만 맞추면 언어도 자유다(레퍼런스도 Go·Java 폴리글랏). 도구 고유 enrichment는 표준 `properties` 확장 키(규약: [contracts/README](contracts/README.md))에 싣는다.
-- 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors) 참고 — 새 collector도 같은 틀(관측까지·못 본 건 갭으로·추측 금지)을 따른다.
+- 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors) 참고 — 새 collector도 같은 틀(관측까지·관측하지 못한 건 갭으로·추측 금지)을 따른다.
 
 > **provisioning 생성기는 아직 이런 플러그인 seam이 아니다** — 계획(`plan.proto`)은 공개 계약이지만 생성기 자체는 내부 로직이다. 오해 없게 collector 쪽만 확장 지점으로 둔다.
 
@@ -100,7 +100,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 **정직성을 코드로 강제한다** — 문서가 아니라 실행에서 지켜져야 한다:
 - **unknown은 1급**(§2.5) — 판별 불가는 빈칸이 아니라 `*_UNSPECIFIED`/명시적 "미상"으로 둔다. 통제 어휘 enum의 `0`은 항상 unknown.
-- **갭 ≠ 부재**(§2.6) — 못 본 것·정책으로 뺀 것을 조용히 드롭하지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
+- **갭 ≠ 부재**(§2.6) — 관측하지 못한 것·정책으로 뺀 것을 조용히 드롭하지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
 - **추측·판정 금지**(§2.1) — 관측 안 한 걸 지어내지 않는다. diff가 "변화 없음"이면 그게 정답이다.
 
 **파생값은 원본에서 재계산 가능하게**(§1.2). `evidence_strength` 같은 파생은 collector가 아니라 코어가 원본(`detection_method`)에서 결정론적으로 만든다 — 규칙이 한 곳(`pkg/discovery/normalize`)에 있어야 재현된다. **서명·정규화 경로엔 벽시계·난수를 넣지 않는다**(같은 입력→같은 바이트). 내용 지문은 휘발 필드(관측 횟수·`last_seen`)를 뺀다.

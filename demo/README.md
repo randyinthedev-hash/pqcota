@@ -181,7 +181,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 본다 |
 | **되돌림** | L3→L2 순서로 되돌리면 다시 **0개** — 가역성도 같은 자로 잰다 |
 
-**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 못 본다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go--sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
+**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다 — JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못한다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go--sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
 
 ## 접근 비밀 경계 (§1.5)
 접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실린다. pqcota 인벤토리(Postgres)엔

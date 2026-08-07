@@ -44,7 +44,7 @@
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TK-POSTURE-1](../pkg/kernel/posture/posture_test.go) | `TestClassify` — 협상 그룹(하이브리드·순수 PQC·고전·빈 값·미지) | 하이브리드/순수 PQC는 🟢, 고전은 🔴, **빈 값과 미지 그룹은 ⚪** | 못 본 것을 고전으로 단정하지 않는다. 모르는 새 그룹도 마찬가지다(§2.5) |
+| [TK-POSTURE-1](../pkg/kernel/posture/posture_test.go) | `TestClassify` — 협상 그룹(하이브리드·순수 PQC·고전·빈 값·미지) | 하이브리드/순수 PQC는 🟢, 고전은 🔴, **빈 값과 미지 그룹은 ⚪** | 관측하지 못한 것을 고전으로 단정하지 않는다. 모르는 새 그룹도 마찬가지다(§2.5) |
 | [TK-POSTURE-2](../pkg/kernel/posture/posture_test.go) | `TestGrade`(+`GradeLabel`) — 같은 PQC라도 표준·초안·실험 | `X25519MLKEM768`=표준, `Kyber768Draft00`=초안, `sntrup761`=실험. 고전·불명은 등급 없음 | PQC냐 아니냐만으로는 부족하다 — 초안·실험 그룹은 나중에 다시 바꿔야 한다 |
 | [TK-POSTURE-3](../pkg/kernel/posture/posture_test.go) | `TestRecommend` — 성숙도 × 규제 자산 여부 | 표준=조치 없음, 초안=상향, 실험=교체, 고전=마이그레이션, 미관측=관측 먼저 | 등급이 조치로 이어지는 분기다. 여기가 틀리면 멀쩡한 자산을 건드리거나 위험한 자산을 넘긴다 |
 | [TK-POSTURE-4](../pkg/kernel/posture/posture_test.go) | `TestSymbol` — posture 열거값 | 🟢 / 🔴 / ⚪ 표시 | 사람이 보는 유일한 요약이라, 기호가 어긋나면 뷰 전체가 잘못 읽힌다 |
