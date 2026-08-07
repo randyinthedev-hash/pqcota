@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pqcota 시연영상 — 도입 슬라이드 (템플릿)</title>
+<!--
+  시연영상의 도입 두 컷. **문구를 고쳐 쓰는 템플릿**이다 — 아래 <section>의 텍스트만 바꾸면 된다.
+  구조: .slide 하나가 한 컷이고, 그 안의 .step 하나가 → 한 번에 켜지는 한 줄이다.
+  조작: → / 클릭 = 다음, ← = 이전, F = 전체화면, R = 처음부터.
+  촬영: 전체화면으로 열고 2초 기다린 뒤(시작은 검은 화면이다) → 를 3초 간격으로 누른다.
+-->
+<style>
+  /* 촬영용이라 다크 고정 — 뒤에 붙는 터미널 클립과 같은 톤이어야 컷이 튀지 않는다. */
+  :root{
+    --paper:#0e1420; --ink:#e6ebf2; --muted:#8b97ab; --line:#2a3548;
+    --accent:#e0736b; --ok:#7fc08a;
+    --sans:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:"DejaVu Sans Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       display:grid;place-items:center;overflow:hidden;cursor:none}
+
+  /* 16:9 무대. 화면 크기와 무관하게 같은 구도로 나오도록 vmin 기준. */
+  .stage{width:100vw;height:100vh;max-width:177.78vh;max-height:56.25vw;
+         position:relative;display:grid;place-items:center}
+  .slide{position:absolute;inset:0;display:none;place-content:center;
+         padding:0 8%;gap:2.2vh}
+  .slide.on{display:grid}
+
+  /* 등장 — 각 줄이 step에 따라 하나씩 켜진다. 페이드만, 움직임 없음(영상에서 산만하다). */
+  .step{opacity:0;transition:opacity .55s ease}
+  .step.shown{opacity:1}
+
+  h1{font-size:5.2vh;font-weight:600;line-height:1.45;letter-spacing:-.01em}
+  h1.big{font-size:7.4vh;font-weight:700}
+  .dim{color:var(--muted);font-weight:400}
+  .accent{color:var(--accent)}
+
+  .rule{height:1px;background:var(--line);width:34%;margin:1.4vh 0}
+
+  pre{font-family:var(--mono);font-size:2.9vh;line-height:1.75;color:var(--ink);
+      background:#141d2c;border:1px solid var(--line);border-radius:10px;
+      padding:2.4vh 3vh;padding-right:9vh;position:relative}
+  pre .cmt{color:var(--muted)}
+  pre .key{color:var(--ok)}
+  .mark{position:absolute;right:2.4vh;top:50%;transform:translateY(-50%);
+        color:var(--accent);font-size:5.4vh;font-weight:700}
+
+  .verdict{font-size:4.2vh;font-weight:600;display:flex;gap:1.2vh;align-items:baseline}
+  .verdict .x{color:var(--accent);font-size:3.6vh}
+
+  /* 조작 안내 — 녹화 시작 전에만 보이고 첫 입력에서 사라진다. */
+  .hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);
+        color:var(--muted);font-size:1.8vh;font-family:var(--mono);
+        border:1px solid var(--line);border-radius:6px;padding:.8vh 1.6vh}
+  .hint.gone{display:none}
+</style>
+
+<div class="stage">
+
+  <!-- ── 컷 1 (0:00–0:12) — 훅 ─────────────────────────────────────────── -->
+  <section class="slide on" data-steps="3">
+    <h1 class="step dim">양자컴퓨터가 오기 전에</h1>
+    <h1 class="step dim">먼저 답해야 하는 질문이 있습니다.</h1>
+    <div class="step"><div class="rule"></div></div>
+    <h1 class="big step">우리 서버는 지금 <span class="accent">무슨 암호</span>를 쓰고 있나?</h1>
+  </section>
+
+  <!-- ── 컷 2 (0:12–0:34) — 문제: 설정은 허용 목록일 뿐 ──────────────────── -->
+  <section class="slide" data-steps="4">
+    <h1 class="step dim" style="font-size:3.8vh">설정 파일을 열어 봐도 답이 나오지 않습니다.</h1>
+
+    <pre class="step">
+<span class="cmt"># openssl.cnf</span>
+<span class="key">Groups</span> = X25519MLKEM768:x25519   <span class="cmt">← 적어 두면 그렇게 쓰이나?</span>
+<span class="mark">✗</span></pre>
+
+    <pre class="step">
+<span class="cmt"># java.security</span>
+<span class="key">security.provider.1</span>=SUN
+<span class="key">security.provider.2</span>=SunRsaSign        <span class="cmt">← 실행 중 등록된 provider는 여기 없다</span>
+<span class="mark">✗</span></pre>
+
+    <div class="step verdict">
+      <span class="x">✗</span>
+      <span>설정은 <span class="accent">허용 목록</span>일 뿐 — 실제로 무엇이 협상됐는지가 아니다.</span>
+    </div>
+  </section>
+
+</div>
+
+<div class="hint">→ / 클릭 : 다음  ·  ← : 이전  ·  F : 전체화면  ·  R : 처음부터</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const hint = document.querySelector('.hint');
+  let si = 0, step = 0;
+
+  // 한 슬라이드 안에서 step만큼 줄을 켠다. 슬라이드를 넘기면 다음 슬라이드는 0부터.
+  function render() {
+    slides.forEach((s, i) => s.classList.toggle('on', i === si));
+    const items = slides[si].querySelectorAll('.step');
+    items.forEach((el, i) => el.classList.toggle('shown', i < step));
+  }
+  function forward() {
+    const n = slides[si].querySelectorAll('.step').length;
+    if (step < n) { step++; }
+    else if (si < slides.length - 1) { si++; step = 1; }
+    render();
+  }
+  function back() {
+    if (step > 1) { step--; }
+    else if (si > 0) { si--; step = slides[si].querySelectorAll('.step').length; }
+    render();
+  }
+  function reset() { si = 0; step = 0; render(); }
+
+  addEventListener('keydown', e => {
+    hint.classList.add('gone');
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); forward(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); back(); }
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key === 'r' || e.key === 'R') { reset(); }
+  });
+  addEventListener('click', () => { hint.classList.add('gone'); forward(); });
+  render();
+</script>
+</html>
