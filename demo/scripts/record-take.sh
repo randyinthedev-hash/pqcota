@@ -141,9 +141,22 @@ take_provision() {
 	big "$BEFORE"
 	cut_mark
 
-	say "도구가 계획에서 만든 것 — 적용용과 되돌림용이 함께 나온다"
-	type_cmd "ls /work/ansible/provision-real*.yml"
+	# ★ 이 세 컷이 "우리가 만든다"를 보인다. 없으면 영상이 앤서블 사용법으로 읽힌다 —
+	#   플레이북만 돌리는 화면은 이 도구가 무엇을 했는지 말해 주지 않는다.
+	say "사람이 쓰는 것은 계획 한 장뿐이다 — 어느 노드의 무엇을, 어떤 provider로"
+	type_cmd "cat plan-real.json"
+	docker exec pqcota-ctl bash -lc "python3 -m json.tool /work/plan-real.json | head -18"
+	cut_mark
+
+	say "도구가 그 계획에서 배포물을 만든다 — 적용용과 되돌림용이 함께"
+	type_cmd "pqcota-provision --level l2 plan-real.json > provision-real.yml"
+	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 	docker exec pqcota-ctl bash -lc 'ls -1 /work/ansible/provision-real*.yml'
+	cut_mark
+
+	say "만들어진 것 — 사람이 쓴 적 없는 config 조각과 무결성 게이트가 들어 있다"
+	type_cmd "grep -A3 'config 조각\|sha256' provision-real.yml"
+	docker exec pqcota-ctl bash -lc "grep -E 'name:|module|sha256|state:' /work/ansible/provision-real.yml | head -10"
 	cut_mark
 
 	say "적용 — 생성된 플레이북을 사용자의 Ansible로 (L2 배치 + L3 활성화)"

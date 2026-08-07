@@ -125,6 +125,16 @@
     else if (e.key === 'r' || e.key === 'R') { reset(); }
   });
   addEventListener('click', () => { hint.classList.add('gone'); forward(); });
-  render();
+
+  // ?s=N — 그 단계로 바로 연다. 자동 캡처용이다: 헤드리스 브라우저는 키를 못 누르므로
+  // 상태를 URL로 지정할 수 있어야 각 단계를 스크린샷으로 뜰 수 있다(영상 조립용).
+  // 사람이 쓸 때도 "그 장면부터 다시" 하기 편하다.
+  const want = parseInt(new URLSearchParams(location.search).get('s') || '0', 10);
+  if (want > 0) {
+    hint.classList.add('gone');
+    for (let i = 0; i < want; i++) forward();
+  } else {
+    render();
+  }
 </script>
 </html>
