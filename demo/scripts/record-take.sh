@@ -143,7 +143,7 @@ take_provision() {
 
 	# ★ 이 세 컷이 "우리가 만든다"를 보인다. 없으면 영상이 앤서블 사용법으로 읽힌다 —
 	#   플레이북만 돌리는 화면은 이 도구가 무엇을 했는지 말해 주지 않는다.
-	say "사람이 쓰는 것은 계획 한 장뿐이다 — 어느 노드의 무엇을, 어떤 provider로"
+	say "사람이 쓰는 것은 계획 파일 하나뿐이다 — 어느 노드에 어떤 provider를 넣을지 적는다"
 	type_cmd "cat plan-real.json"
 	docker exec pqcota-ctl bash -lc "python3 -m json.tool --no-ensure-ascii /work/plan-real.json | head -18"
 	cut_mark
@@ -169,9 +169,11 @@ take_provision() {
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" | recap
 	cut_mark
 
-	say "노드에 놓인 것 — 새 파일 둘뿐이다. 기존 openssl.cnf는 건드리지 않았다"
+	# L3까지 돌린 뒤라 활성화 지점(service.env)도 함께 놓인다 — "둘"이라고 적으면 화면과 어긋난다.
+	say "노드에 놓인 것 — provider 모듈(.so) · 설정 조각(.cnf) · 활성화 지점(service.env) 셋뿐이다"
 	type_cmd "ls /opt/pqcota /etc/pqcota"
 	docker exec "$NODE" sh -lc 'ls -1 /opt/pqcota /etc/pqcota'
+	note "   기존 /etc/ssl/openssl.cnf는 열지도 않았다 — 그래서 되돌림이 파일 제거로 끝난다."
 	cut_mark
 
 	say "조치 후 — 같은 노드에 같은 질문"
