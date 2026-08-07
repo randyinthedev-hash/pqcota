@@ -61,11 +61,14 @@ fi
 docker inspect "$NODE" >/dev/null 2>&1 || { echo "컨테이너 '$NODE'가 없다." >&2; exit 1; }
 
 SHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
-ACT='. /etc/pqcota/service.env 2>/dev/null; export OPENSSL_CONF;'
+# 활성화 지점을 읽되 **없어도 죽지 않아야 한다** — 되돌린 뒤에는 이 파일이 사라지고,
+# 그때 물어보는 것이 이 촬영의 마지막 컷이다. `.`은 대상이 없으면 비대화형 sh를 종료시키므로
+# 반드시 존재 확인을 앞에 둔다(없으면 그냥 기본 설정으로 묻는다 — 그게 원상복귀의 정의다).
+ACT='[ -f /etc/pqcota/service.env ] && . /etc/pqcota/service.env; export OPENSSL_CONF;'
 KEMQ='openssl list -kem-algorithms 2>/dev/null | grep -ci mlkem || true'
 VER=$(docker exec "$NODE" sh -lc 'openssl version' 2>/dev/null)
 
-clear
+clear 2>/dev/null || printf '\033[2J\033[H' # TERM이 없는 환경(CI·비대화형)에서도 화면은 지운다
 printf '\033[1m대상 노드: %s  (%s)\033[0m\n' "$NODE" "$VER"
 sleep "$PAUSE"
 
