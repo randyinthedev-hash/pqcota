@@ -215,7 +215,7 @@ import json,sys
 d=json.load(sys.stdin)
 print(json.dumps(d.get(\"completeness\",{}), ensure_ascii=False, indent=1))"'
 	printf '\n'
-	note "   layersMissing = [NETWORK].  \"엣지 0개\"가 아니라 \"이 계층을 못 봤다\"이다."
+	note "   layersMissing = [NETWORK].  \"엣지 0개\"가 아니라 \"이 계층을 관측하지 못했다\"이다."
 	note "   종료코드가 0인 이유 — 실패로 끝내면 이 갭이 중앙까지 가지 못하고,"
 	note "   인벤토리에는 '이 노드엔 링크가 없다'로 읽힌다. 없는 것과 관측하지 못한 것은 다르다."
 }
