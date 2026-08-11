@@ -37,9 +37,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # buf 버전을 고정한다 — gen/이 커밋돼 있으므로, 버전이 바뀌어 출력이 달라지면
+      # 아래 드리프트 검사가 코드 변경 없이도 실패한다.
       - uses: bufbuild/buf-action@v1
         with:
           setup_only: true
+          version: 1.69.0
 
       # 계약이 SSOT다 — 생성 코드가 proto와 어긋나면 여기서 끊는다.
       - name: generate
@@ -93,9 +96,12 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      # buf 버전을 고정한다 — gen/이 커밋돼 있으므로, 버전이 바뀌어 출력이 달라지면
+      # 아래 드리프트 검사가 코드 변경 없이도 실패한다.
       - uses: bufbuild/buf-action@v1
         with:
           setup_only: true
+          version: 1.69.0
       - run: make tools && make generate
       - name: collector 정적 빌드 (${{ matrix.goarch }})
         env:
