@@ -8,7 +8,7 @@ English · [한국어](README.md)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **Preparing v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
+> **v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
 
 A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
 
@@ -165,7 +165,10 @@ Windows (CNG) is on the [roadmap](RELEASE_NOTES.en.md) — v0.1.0 reserves the s
 
 ## Status · version
 
-In development — before the first release (v0.1.0). **Per-version goals and results** are in the [release notes](RELEASE_NOTES.en.md).
+**v0.1.0** — per-architecture static binaries and `SHA256SUMS` are attached to the
+[releases](https://github.com/randyinthedev-hash/pqcota/releases). Verify what you download with
+`sha256sum -c SHA256SUMS`; signed releases are on the [roadmap](RELEASE_NOTES.en.md).
+Per-version goals and results are in the [release notes](RELEASE_NOTES.en.md).
 
 ## License
 
