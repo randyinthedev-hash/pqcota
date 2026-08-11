@@ -403,7 +403,7 @@ This repo goes **as far as generation**. After that it splits three ways:
 - **Not in this repo (another engine, joined through the public contracts in `contracts/`)** — **reconciling against a declaration (CMDB)**: three-state reconciliation and confidence scoring, review-and-finalize governance, staged deployment orchestration and safety rails (L3 drain, rolling, fleet), dynamic provisioning, the deployment channel. *Diffing change between snapshots, though, is observed fact rather than reconciliation, so it is in this repo (per §6).*
 - **PROPOSE, off by default** — dynamic-trace (invasive eBPF, §2.5).
 
-> **This repo covers only the core track**: the **CORE track** (OSS: observe, normalize, persist, generate) unfolds along a capability axis — ① a Discovery MVP → ② the central inventory (ingest, persist, query + machine metadata [endpoints, profiles] and **app attribution**) → ③ provisioning generation (L1/L2 playbooks + before and **rollback records**). The seam is the `contracts/` SSOT — the core produces observations, and consumers consume them only through the contract.
+> **Capability grows in this order** — ① a Discovery MVP → ② the central inventory (ingest, persist, query + machine metadata [endpoints, profiles] and **app attribution**) → ③ provisioning generation (L1/L2 playbooks + before and **rollback records**). The only join to anything outside is `contracts/`. This repository puts observations out; whatever picks them up sits on the far side of that contract — which is exactly what was excluded above.
 
 ### 6.3 The definition of done
 

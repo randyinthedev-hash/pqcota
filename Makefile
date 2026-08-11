@@ -107,10 +107,11 @@ breaking:
 # 맡기면 새어 들어가므로 빌드에서 막는다.
 #   허용 예외: "Community Edition"(이 리포 자신의 이름), "enterprise intranet"(기업 내부망의 영문).
 #   EE는 단어 경계로만 — 영문 문서의 feed·between 같은 낱말에 걸리지 않게.
+#   "CORE 트랙"류도 막는다 — 트랙을 나누는 순간 다른 트랙이 있다는 전제가 깔린다(실제로 새어 들었다).
 check-boundary:
 	@hits=$$( { grep -rnwE 'EE' --include='*.md' --include='*.go' \
 	              --exclude-dir=.git --exclude-dir=gen . ; \
-	            grep -rnE '[Ee]nterprise|상용|해자|moat|프리미엄' --include='*.md' --include='*.go' \
+	            grep -rnE '[Ee]nterprise|상용|해자|moat|프리미엄|[Cc]ore 트랙|CORE track|core track' --include='*.md' --include='*.go' \
 	              --exclude-dir=.git --exclude-dir=gen . ; } \
 	          | grep -vE 'Community Edition|enterprise intranet' || true ); \
 	if [ -n "$$hits" ]; then \
