@@ -113,6 +113,7 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 |---|---|---|
 | `DecisionStatus` | the verdict lifecycle (§3.3③) | `DRAFT`·`IN_REVIEW`·`FINALIZED` |
 | `DecisionConclusion` | the reviewer's conclusion (especially for UNOBSERVED items) | `EXISTS`·`STALE`·`EXCLUDED`·`APPROVED` |
+| **`ReconState`** | the result of reconciling a declaration against observation (vocabulary only — **the engine is not in this repository**) | `CONFIRMED` (declared ∩ observed) · `UNDECLARED` (observed only = shadow) · `UNOBSERVED` (declared only — no machine decides this) |
 | **`Decision`** | one verdict | `subject` (an edge or policy ID)·`conclusion`·`status`·`reviewer`·`signature`·`basis_hash` (invalidated when the basis changes)·`derived_from_snapshot_id` |
 
 ---

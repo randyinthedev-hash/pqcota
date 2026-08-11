@@ -111,7 +111,8 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 |---|---|---|
 | `DecisionStatus` | 판정 lifecycle(§3.3③) | `DRAFT`·`IN_REVIEW`·`FINALIZED` |
 | `DecisionConclusion` | 리뷰어 결론(특히 UNOBSERVED 항목) | `EXISTS`·`STALE`·`EXCLUDED`·`APPROVED` |
-| **`Decision`** | 판정 한 건 | `subject`(엣지/정책 ID)·`conclusion`·`status`·`reviewer`·`signature`·`basis_hash`(근거 변하면 무효화)·`derived_from_snapshot_id` |
+| **`ReconState`** | 선언과 관측을 대조한 결과 (어휘만 — **대조 엔진은 이 리포에 없다**) | `CONFIRMED`(선언∩관측)·`UNDECLARED`(관측만=shadow)·`UNOBSERVED`(선언만 — 기계가 확정하지 않는다) |
+| **`Decision`** | 판정 한 건 | `subject`(엣지/정책 ID)·**`state`**(무엇에 대한 판정인가)·`conclusion`·`status`·`reviewer`·`signature`·`basis_hash`(근거 변하면 무효화)·`derived_from_snapshot_id` |
 
 ---
 
