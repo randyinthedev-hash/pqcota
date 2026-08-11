@@ -81,3 +81,116 @@ The remediation is usually ***pointing* openssl (`pkcs11-provider`) or jca (`Sun
 
 The conditions and how to decide are set by the [crypto runtime acceptance principles](runtime-acceptance.en.md).
 What is here is **the result of holding three specific candidates against those conditions** — as candidates accumulate, they attach here.
+
+---
+
+## 3. Moving the case ↔ test correspondence into a gate
+
+`checkdocs` blocks links, anchors, empty sections and the licence table — yet **the one thing this
+repository leans on to claim coverage is left to human hands.** The counts in the
+[test map](test-map.md) (Korean) can drift from the links in the case tables and the build still passes.
+
+| | State |
+|---|---|
+| Case ID → test file link | present in the case tables, but only the generic link check sees it |
+| Case ID → test **function** name | written in the case tables, **never verified** |
+| Test file → its own case ID | **absent** |
+| Per-level counts (unit/integration) | written by hand in the docs |
+
+One rule would cover it — scrape `TD-`, `TV-`, `TP-`, `TK-` IDs with their links and function names out
+of the case tables, then check that the file really contains that function. Whether to force the reverse
+direction (a first-line comment in each test file) is a separate question: weigh the cost of annotating
+55 files against the risk of those annotations going stale.
+
+**Why not yet** — every gate added also raises the bar for contributors. While the case tables are
+maintained by hand, a rule may block people more than it catches. Add it once the tables have settled.
+
+---
+
+## 4. Letting a person correct identity resolution
+
+**Identity resolution**, the fifth step of the six-step normalization, runs on rules alone today — same
+path, soname and hash means one asset, otherwise they stay apart. There are real cases the rules cannot
+merge.
+
+| Situation | Today's result |
+|---|---|
+| The same library lives at different paths on different nodes | they stay separate assets |
+| A vendor-renamed build and the original are the same thing | they stay separate assets |
+| An app loaded the real file behind a symlink | different paths, so they stay separate |
+
+There is no way for an operator to say "these two are the same". The inventory can therefore show more
+assets than really exist, and whoever plans the migration has to track that duplication by hand.
+
+**This is correcting an observation, not passing judgment.** It differs from the tool deciding what is
+vulnerable or what to change first — "these two observations point at the same thing" is a statement of
+fact, so it does not collide with the [no-judgment principle](architecture.en.md#6-the-no-judgment-principle).
+
+**Three things it would have to honour**
+
+1. **The original is never edited** — merging happens only in the derived view. The raw observation has to
+   survive so that a better rule can split it again on recomputation (reproducibility).
+2. **Who merged, and when, is recorded** — a judgment a person entered has to stay distinguishable from an
+   observation. Just as `detection_method` records where an observation came from, a merge needs its own.
+3. **It can be undone** — there has to be a path back out of a wrong merge.
+
+**Why not yet** — honouring those three needs a new place in the derived view for facts a person entered,
+and putting that in `contracts/` widens the contract. Better to settle it after real cases have shown
+where the rules actually fail — building the schema first would be speculative abstraction, the same
+reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
+
+---
+
+## 5. Attributing edges to apps
+
+The two observations **meet only at the node** today.
+
+| Observation | Attributed to |
+|---|---|
+| `Finding` from the openssl and jvm collectors | `app_keys` — **per app (process)** |
+| `ObservedEdge` from netcap | `src_node_id`, `dst_node_id`, `port` — **per node** |
+
+`ObservedEdge` has no `app_key`. So when two server processes on one node use the same libcrypto and one
+edge is observed, **the inventory does not know which process opened that connection.**
+
+There is a reason in principle. netcap observes the wire passively through `AF_PACKET`, and packets carry
+no PID for the socket that opened them. The port allows a guess, and this repository does not write
+guesses down as facts.
+
+**What that costs today** — you cannot tell in advance which edge will follow when one app is moved to
+PQC. It has to be confirmed by observing again afterwards. The closed loop is what covers that gap.
+
+### 5.1 The automatic path — one more observation
+
+Correlating socket inodes from `/proc/net/tcp` (and `tcp6`) against `/proc/*/fd` at capture time yields
+the PID that opened the connection. netcap already runs on that node, so the place is right, and the
+contract change is purely additive — one `app_key` field on `ObservedEdge`, no existing field numbers or
+types touched.
+
+The limit is clear: **the socket has to be alive at the moment of capture.** Short-lived connections are
+missed. What is missed stays blank with a lower `evidence_strength` — as long as it is not written down
+as absent.
+
+### 5.2 The manual path — reuse the declared lane
+
+For what the automatic path misses, an operator supplies it. This has the same shape as something that
+already exists: `pqcota-declare` imports CMDB declarations as `detection_method=UNSPECIFIED`, keeping them
+distinguishable from observations. An attribution a person entered can arrive through the same lane and
+never mix with what was observed. A CSV line is enough.
+
+### 5.3 No admin UI
+
+Facts entered by people already arrive as files here — `hosts.csv`, `scope-assets.csv`, machine profiles,
+the finalized plan JSON, `pqcota-declare`. Five formats already work that way. **A UI would add
+convenience, not capability.**
+
+The real reason to leave it out is elsewhere. Build a screen and **the review queue and the sign-off
+button follow.** Both are [explicitly excluded](architecture.en.md#62-explicit-exclusions--boundaries),
+and on a screen "let people approve it here too" is the natural next step. At that moment an observation
+tool becomes a judgment tool.
+
+### 5.4 Why not yet
+
+5.1 touches the contract and 5.2 adds another input format. **Both wait until the demo produces a case
+that actually needs them** — adding them now would be the same speculative abstraction as
+[deferring the CNG substrate](#2-runtime-candidates-not-yet-accepted).

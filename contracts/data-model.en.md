@@ -163,6 +163,12 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 
 **Seen again as lanes**: observed (`CollectionResult`, `ObservedEdge`) → derived (`Finding`, `QuantumPosture`) → declared/metadata (`MachineProfile`, `Decision`) → action (`ProvisioningRecord`). `node_id` is the anchor threading every lane, and `app_key(s)` attributes crypto assets to apps, flowing from discovery all the way to provisioning.
 
+> **`app_key` is not everywhere.** `Finding` and `ProvisioningRecord` attribute to an app, but
+> **`ObservedEdge` stops at the node** — passive observation of the wire carries no PID for the socket
+> that opened the connection. So when two processes on one node use the same library, which of them
+> owns an observed edge is unknown. The two observations meet only at `node_id`
+> ([under review — attributing edges to apps](../docs/under-review.en.md) (Korean for §5)).
+
 ---
 
 Related designs: [discovery](../discovery/design.en.md) · [inventory](../inventory/design.en.md) · [provisioning](../provisioning/design.en.md) · [architecture and the OSS boundary](../docs/architecture.en.md). Runnable examples: [examples/](../examples).
