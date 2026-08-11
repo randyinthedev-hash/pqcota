@@ -1,5 +1,5 @@
 # pqcota — 빌드·테스트
-# 전제: go(>=1.24), buf, protoc-gen-go 설치. PATH에 $GOPATH/bin 포함(`make tools`).
+# 전제: go(go.mod의 toolchain 이상 — 지금은 1.26.4), buf, protoc-gen-go 설치. PATH에 $GOPATH/bin 포함(`make tools`).
 #
 # gen/ (proto 생성 코드)은 gitignore 대상 — 클론 후 `make generate` 필수.
 

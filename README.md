@@ -26,6 +26,8 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 ──────── ① 발견 자산 (노드별) ────────
   pay-app
     • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+        ↑ 이 BC는 java.security에 한 줄도 없다 (grep 0건).
+          앱이 실행 중에 등록한 것이라 정적 스캔으로는 안 보인다.
     • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
   pay-db
     • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
@@ -52,6 +54,11 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 | ① **[Discovery](discovery/README.md)** | 실행 중인 시스템이 **어떤 암호 알고리즘을 쓰는지 관측**한다 — 로드된 라이브러리, JVM provider 체인, 핸드셰이크에서 협상된 알고리즘 | 노드별 관측 결과(정규화된 CBOM) |
 | ② **[Inventory](inventory/README.md)** | 관측을 **어느 노드·어느 앱의 것인지 이어 붙여 쌓는다** — 머신 메타데이터, 스냅샷 간 변화 diff | 중앙 인벤토리(append-only) |
 | ③ **[Provisioning](provisioning/README.md)** | 확정된 계획에서 **PQC 전환 산출물을 만든다** — config 조각, 적용·롤백 Ansible 플레이북(L1/L2/L3), 롤백 근거 | 플레이북 + before 레코드 |
+
+**하지 않는 것** — 선언(CMDB) 대조·리뷰 확정 거버넌스·플릿 오케스트레이션은 **이 리포에 없다.**
+계약([`contracts/`](contracts/README.md))으로 자리만 잡아 두었고, 판정 엔진은 만들지 않는다 —
+도구가 대신 판단하면 "🔴는 판정이 아니라 관측"이라는 선이 무너진다. 무엇을 만들고 무엇을 만들지
+않았는지의 결정판은 [아키텍처 — 명시적 제외/경계](docs/architecture.md#62-명시적-제외--경계)다.
 
 ## 써보기 — 데모
 

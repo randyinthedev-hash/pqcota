@@ -128,6 +128,18 @@ Korean document and say so with `(Korean)`.
 
 Translation contributions are welcome. The **source of truth stays Korean**, though — authoring two languages at once drifts apart in a one-person project.
 
+**How far does the English go** — not all the way. This is a one-person project, and keeping both
+languages at the same breadth would leave neither current. So the scope is fixed.
+
+| Has an English version | Korean only |
+|---|---|
+| The front door — README, CONTRIBUTING, SECURITY, RELEASE_NOTES | test case lists, the test map, kernel cases |
+| The regulation, architecture, per-stage designs, contracts | collector deployment design, each `cmd/README` |
+| Licensing, runtime acceptance, under review | the demo and every example |
+
+When an English document points at something with no English counterpart, it says `(Korean)`. Contributions
+that widen this table are welcome — just start knowing that widening it also widens the upkeep.
+
 ## Issues · proposals
 
 **Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.en.md).

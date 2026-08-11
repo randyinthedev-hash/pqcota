@@ -28,6 +28,8 @@ Observations are tied to nodes and apps, and the **group actually negotiated on 
 ──────── ① discovered assets (per node) ────────
   pay-app
     • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+        ↑ this BC appears nowhere in java.security (grep: 0 hits).
+          The app registered it at runtime — invisible to static scans.
     • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
   pay-db
     • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
@@ -54,6 +56,12 @@ The same observation is also rendered as a topology — color is posture.
 | ① **[Discovery](discovery/README.en.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
 | ② **[Inventory](inventory/README.en.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
 | ③ **[Provisioning](provisioning/README.en.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
+
+**What it does not do** — declaration (CMDB) reconciliation, review-and-sign-off governance and
+fleet orchestration are **not in this repository.** The contracts ([`contracts/`](contracts/README.en.md))
+hold their place, and no judgment engine is built — once the tool decides for you, the line that
+"🔴 is an observation, not a verdict" collapses. What is built and what is not is settled in
+[architecture — explicit exclusions / boundaries](docs/architecture.en.md#62-explicit-exclusions--boundaries).
 
 ## Try it — demo
 
