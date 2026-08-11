@@ -167,7 +167,7 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 > **`ObservedEdge` stops at the node** — passive observation of the wire carries no PID for the socket
 > that opened the connection. So when two processes on one node use the same library, which of them
 > owns an observed edge is unknown. The two observations meet only at `node_id`
-> ([under review — attributing edges to apps](../docs/under-review.en.md) (Korean for §5)).
+> ([under review — attributing edges to apps](../docs/under-review.en.md), planned for v0.4.0).
 
 ---
 

@@ -21,6 +21,11 @@
   함께 한다(투기적 추상화 금지). seam을 어디에 그을지는 아직 정하지 않았다 —
   [검토 중인 설계 §2.2](docs/under-review.md).
 
+- **v0.4.0 (계획)** — **엣지를 앱에 귀속**: 지금 `ObservedEdge`는 노드까지만 간다. 한 노드에서 두 앱이
+  같은 lib을 쓰면 관측된 엣지가 어느 쪽 것인지 알 수 없다. 캡처 시점에 소켓 inode(`/proc/net/tcp`)와
+  `/proc/*/fd`를 대조해 `app_key`를 채운다(계약은 순수 additive). 자동으로 못 잡는 것은 선언 레인으로
+  받고, 관리 UI는 만들지 않는다 — 설계와 그 이유: [검토 중인 설계](docs/under-review.md).
+
 - **provider 생태계 수용 (검토 중 · 버전 미정)** — 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다 — provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/under-review.md)에서 다룬다.
 
 - **릴리스 서명 (계획 · 버전 미정)** — **ed25519 서명과 `pqcota-verify-bundle`**. 번들 구성·서명·검증
