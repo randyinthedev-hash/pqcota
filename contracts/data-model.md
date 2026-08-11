@@ -164,7 +164,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 > **`app_key`가 어디에나 있는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 앱에 귀속되지만
 > **`ObservedEdge`는 노드까지만** 간다 — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없기 때문이다.
 > 그래서 한 노드의 두 프로세스가 같은 lib을 쓸 때, 관측된 엣지가 그중 어느 쪽 것인지는 알 수 없다.
-> 두 관측은 `node_id`에서만 만난다([검토 중 — 엣지를 앱에 귀속시키는 일](../docs/under-review.md)).
+> 두 관측은 `node_id`에서만 만난다 — 잇는 일은 [v0.4.0 예정](../docs/under-review.md)이다.
 
 ---
 
