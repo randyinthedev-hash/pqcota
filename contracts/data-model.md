@@ -161,6 +161,11 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 
 **레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 귀속시켜 discovery→provisioning까지 흐른다.
 
+> **`app_key`가 어디에나 있는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 앱에 귀속되지만
+> **`ObservedEdge`는 노드까지만** 간다 — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없기 때문이다.
+> 그래서 한 노드의 두 프로세스가 같은 lib을 쓸 때, 관측된 엣지가 그중 어느 쪽 것인지는 알 수 없다.
+> 두 관측은 `node_id`에서만 만난다([검토 중 — 엣지를 앱에 귀속시키는 일](../docs/under-review.md)).
+
 ---
 
 관련 설계: [디스커버리](../discovery/design.md) · [인벤토리](../inventory/design.md) · [프로비저닝](../provisioning/design.md) · [아키텍처·OSS 경계](../docs/architecture.md). 실행 예제: [examples/](../examples).
