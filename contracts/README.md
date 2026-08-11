@@ -29,6 +29,30 @@
 
 > `common`은 pkg/kernel의 계약판 — 한 단계에 속하지 않는 공유 어휘(CryptoRuntime·DetectionMethod·Envelope·Completeness 등)만. 생성 Go 패키지: `gen/pqcota/{common,discovery,inventory,provisioning}/v1` → `commonv1`·`discoveryv1`·`inventoryv1`·`provisioningv1`. `Decision`·`FinalizedPlan` **스키마는 SSOT**(소비자 엔진이 같은 어휘를 쓰도록).
 
+## 소비자가 쓰는 법
+
+**생성 코드(`gen/`)를 커밋해 둔다.** 계약이 SSOT라는 말이 성립하려면 그 코드가 받아지는
+자리에 있어야 한다 — 소비자에게 `buf`와 protoc 플러그인을 깔라고 요구하면 계약이 아니라
+빌드 절차를 나눠 갖는 셈이다.
+
+```go
+import (
+	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+)
+```
+
+> **모듈 경로 주의** — `go.mod`가 선언한 경로(`github.com/pqcota/pqcota`)와 현재 리포 주소
+> (`github.com/randyinthedev-hash/pqcota`)가 다르다. 정리 전까지 소비자는 `replace`로 우회한다:
+>
+> ```
+> require github.com/pqcota/pqcota v0.1.1
+> replace github.com/pqcota/pqcota => github.com/randyinthedev-hash/pqcota v0.1.1
+> ```
+
+생성 코드는 손으로 고치지 않는다. proto를 고치고 `make generate`를 돌린다 — CI가 둘이
+어긋나는지 매 변경 검사한다.
+
 ## 핵심 설계 결정 (읽고 시작할 것)
 
 ### 1. 책임 경계 — Collector는 강화하지 않는다
