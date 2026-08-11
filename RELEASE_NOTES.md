@@ -47,6 +47,21 @@
 
 ---
 
+## v0.1.2 — 대조 상태를 어휘에 올린다 (2026-08-11)
+
+`decision.proto`가 판정의 **결론**과 **lifecycle**은 계약에 두면서, 정작 **무엇에 대한 판정인지**를
+정의하지 않았다. 주석이 `UNOBSERVED`를 가리키는데 그 값이 계약 어디에도 없었다([#3](https://github.com/randyinthedev-hash/pqcota/issues/3)).
+
+- **`ReconState` 추가** — `CONFIRMED`(선언∩관측) · `UNDECLARED`(관측만 = shadow) ·
+  `UNOBSERVED`(선언만). **대조 엔진은 이 리포에 없다** — `DecisionConclusion`·`FinalizedPlan`과
+  같은 논리로, 소비자 엔진이 같은 어휘를 쓰게 하려고 스키마만 둔다.
+- **`Decision.state`(필드 10) 추가** — 판정이 어떤 상태를 두고 내려졌는지 담는다. 이것이 없으면
+  소비자가 `conclusion`만 받고 그 근거가 된 상태를 모른다.
+
+순수 additive다 — 기존 필드 번호·타입이 그대로라 `buf breaking` 기준선에 걸리지 않는다.
+
+---
+
 ## v0.1.1 — 계약을 받아 쓸 수 있게 (2026-08-11)
 
 **고친 것** — 생성 코드(`gen/`)가 `.gitignore`에 있어, 계약을 소비하려는 쪽이 `go get`으로

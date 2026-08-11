@@ -42,6 +42,23 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.1.2 — Putting reconciliation state in the vocabulary (2026-08-11)
+
+`decision.proto` had the **conclusion** and the **lifecycle** of a verdict in the contract, but never
+defined **what the verdict is about**. A comment pointed at `UNOBSERVED` while that value existed
+nowhere in the contract ([#3](https://github.com/randyinthedev-hash/pqcota/issues/3)).
+
+- **`ReconState` added** — `CONFIRMED` (declared ∩ observed), `UNDECLARED` (observed only = shadow),
+  `UNOBSERVED` (declared only). **The reconciliation engine is not in this repository** — like
+  `DecisionConclusion` and `FinalizedPlan`, only the schema lives here, so that consumer engines
+  speak the same vocabulary.
+- **`Decision.state` (field 10) added** — which state the verdict was made against. Without it a
+  consumer receives a `conclusion` with no idea what it was about.
+
+Purely additive — existing field numbers and types are untouched, so the `buf breaking` baseline holds.
+
+---
+
 ## v0.1.1 — Making the contract consumable (2026-08-11)
 
 **What was wrong** — the generated code (`gen/`) sat in `.gitignore`, so anyone trying to consume
