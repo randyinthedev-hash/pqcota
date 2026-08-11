@@ -42,6 +42,25 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.1.1 — Making the contract consumable (2026-08-11)
+
+**What was wrong** — the generated code (`gen/`) sat in `.gitignore`, so anyone trying to consume
+the contract got no types from `go get`. `contracts/README.md` said the schemas were SSOT "so that
+consumer engines speak the same vocabulary", yet that vocabulary could not be imported. The first
+outside consumer surfaced it.
+
+- **`gen/` is committed** — `go get` alone now gives you `commonv1`, `discoveryv1`, `inventoryv1`
+  and `provisioningv1`. Hand-edited generated code is cut by the CI generate-drift check, which
+  only now has anything to check.
+- **buf pinned** (CI, 1.69.0) — with generated code committed, a tool version change could fail the
+  drift check without any code change.
+- How to consume it, and the module-path workaround, are written up in
+  [contracts/README](contracts/README.md) (Korean).
+
+The contract itself (proto) did not change — the `buf breaking` baseline is untouched.
+
+---
+
 ## v0.1.0 — First release (2026-08-11)
 
 **Goal** — a **three-stage end-to-end** you can download and run. Per-arch static binaries and `SHA256SUMS` ship with the release; **signing** (ed25519) is deferred to a later release (see the roadmap above).
