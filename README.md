@@ -12,7 +12,7 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 **이름** — *pqcota*(발음 **P-cota**) = **PQC**(양자내성암호) + **Orchestra**(-ota). **이 소프트웨어는 교향악의 *단원*이지 마에스트로가 아니다.** 무엇을·언제 이관할지 지휘하는 **마에스트로는 이 도구를 쓰는 사용자**이고, pqcota는 제 파트(관측·정규화·생성)를 정확히 연주한다.
 
-**구조를 그림으로** → [플랫폼 구조도](docs/architectures/platform-structure.html)
+**구조를 그림으로** → [플랫폼 구조도](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)
 
 **움직이는 것을 보려면** → [시연영상 (2분 55초)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — 관측부터 전환물 적용·되돌림까지, 실제 노드에서 ML-KEM이 **0개 → 14개 → 0개**로 바뀐다.
 

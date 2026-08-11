@@ -28,7 +28,7 @@
 [라이선스 정리](licensing.md)(무엇을 쓰고 무엇이 격리를 강제하나) ·
 [검토 중인 설계](under-review.md)(아직 안 정한 것).
 
-> **한눈에 보기**: [플랫폼 구조와 이해관계자](architectures/platform-structure.html) — 누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가.
+> **한눈에 보기**: [플랫폼 구조와 이해관계자](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html) — 누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가.
 
 ## 규정·경계 (먼저 읽기)
 | 문서 | 내용 |
