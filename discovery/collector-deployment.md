@@ -123,7 +123,7 @@ pqcota-verify-bundle SHA256SUMS SHA256SUMS.sig <pubkey>   # 진정성(로드맵)
 > **실측** — 커널 **3.2**(Ubuntu 12.04)와 **3.10**(CentOS 7.9) VM에서 세 collector가 모두 정상 종료했다.
 > 하한 그 자체에서 돌고, 둘 다 `/proc/<pid>/status`에 `NSpid`가 없어 호스트 PID 폴백까지 실물로 확인됐다.
 > 결과 표는 [discovery/cmd — 지원 범위](cmd/README.md#실행-요건--커널권한),
-> 릴리스 기록은 [RELEASE_NOTES](../RELEASE_NOTES.md)의 「확정된 것」이다.
+> 릴리스 기록은 [RELEASE_NOTES](../RELEASE_NOTES.md)의 「알아낸 것」이다.
 >
 > RHEL 6(2.6.32)은 하한 **아래**다 — 돌지 않는다. 그 사실을 아는 것이 확정의 값이다.
 
