@@ -419,7 +419,7 @@ For one real node (OpenSSL installed, a JVM running):
 ## 7. Where things stand
 
 What of §1–§6 is standing and what remains is tracked in one place only —
-the "Results", "Not on the roadmap" and "Roadmap" sections of [RELEASE_NOTES](../RELEASE_NOTES.en.md).
+the "What was built", "What was established", "Not on the roadmap" and "Roadmap" sections of [RELEASE_NOTES](../RELEASE_NOTES.en.md).
 A design document still carrying finished work as "next actions" is exactly the state where the
 implementation has run ahead and the documentation has fallen behind.
 

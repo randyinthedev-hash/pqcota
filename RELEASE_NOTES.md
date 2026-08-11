@@ -46,7 +46,7 @@
 
 **목표** — 받아서 바로 쓸 수 있는 **3단계 종단**. arch별 정적 바이너리와 `SHA256SUMS`가 릴리스에 붙는다. **서명**(ed25519)은 이후 릴리스로 미뤘다(위 로드맵).
 
-### 성과 (완료)
+### 만든 것
 
 - **계약 SSOT** — protobuf 4 네임스페이스(`common`·`discovery`·`inventory`·`provisioning`), `make generate`로 코드 생성.
 - **Discovery** — 레퍼런스 collector 셋. **openssl·jvm은 `/proc` 선행 정찰**로 시작한다 — openssl은 로드된 lib을, jvm은 실행 중 JVM을 열거해 attach하고 다중 JVM을 앱 단위로 구별한다. **network는 `/proc`을 쓰지 않고** `AF_PACKET`으로 회선을 수동 관측한다. 그 위에 정규화 파이프라인(evidence·완전성 맵), 히스토리 적재·ed25519 서명(collector 주장 전부 서명), CBOM 위임 수신.
@@ -61,7 +61,7 @@
 
 - **릴리스 발행** — 태그를 밀면 CI가 arch별 정적 바이너리(`linux-amd64`·`linux-arm64`)와 `collector.jar`를 만들고 `SHA256SUMS`를 붙인다. 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다.
 
-### 확정된 것 (v0.1.0 릴리스 전 과제였던 것)
+### 알아낸 것
 
 - **지원 커널 하한 = 3.2** (Go 툴체인이 정하는 값 — 1.24에서 이 값이 됐고 이후 유지된다. 빌드에 필요한 Go는 `go.mod` 기준 1.26.4다). 이 리포는 그보다 새 기능을 요구하지 않고, 기능별 추가 요구는 컨테이너 안 JVM attach의 `NSpid`(4.1) 하나뿐이며 그마저 호스트 PID로 폴백한다. 표는 [discovery/cmd — 지원 범위](discovery/cmd/README.md#실행-요건--커널권한).
 - **레거시 실기 확인 완료** — 커널 **3.2**(Ubuntu 12.04)와 **3.10**(CentOS 7.9) VM에서 세 collector 실행. 하한 그 자체에서 돌고, 둘 다 `NSpid`가 없어 호스트 PID 폴백까지 실물로 확인됐다. 3.2에는 systemd가 없어 앱 귀속이 실행 파일 경로로 떨어지는 것도 관측됐다.
