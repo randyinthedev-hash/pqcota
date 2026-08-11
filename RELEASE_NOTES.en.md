@@ -36,7 +36,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.1.0 — First release (unreleased · in development)
+## v0.1.0 — First release (2026-08-11)
 
 **Goal** — a **three-stage end-to-end** you can download and run. Per-arch static binaries and `SHA256SUMS` ship with the release; **signing** (ed25519) is deferred to a later release (see the roadmap above).
 
