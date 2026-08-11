@@ -140,6 +140,26 @@ languages at the same breadth would leave neither current. So the scope is fixed
 When an English document points at something with no English counterpart, it says `(Korean)`. Contributions
 that widen this table are welcome — just start knowing that widening it also widens the upkeep.
 
+### Write Korean, do not carry English sentences over
+
+The canonical documents are Korean. Thinking in English and translating produces sentences that are
+correct and unreadable. These are real examples from this repository.
+
+| Not this | This | The English behind it |
+|---|---|---|
+| the **axis** it unfolds along is capability | capability **grows in this order** | unfolds along a capability axis |
+| the **seam** is `contracts/` | the only **join** to anything outside is `contracts/` | the seam is |
+| **consumers consume** it through the contract | **whatever picks it up** sits beyond the contract | consumers consume |
+| order **has meaning** | order **is** the priority | order has meaning |
+| it **has** two kinds | it **splits in two** | has two kinds |
+
+Words like `축` (axis) that have settled into Korean technical writing are fine — the problem is not
+vocabulary but **carrying English sentence structure across**. Nominalising verbs into `~을 가진다`
+or `~을 제공한다` is usually a sign that a sentence was translated rather than written.
+
+**No gate catches this.** `make check-docs` checks links, anchors and scope wording, not the grain of a
+sentence. Read it aloud; if it sounds off, that is the evidence.
+
 ## Issues · proposals
 
 **Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.en.md).

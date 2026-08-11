@@ -65,7 +65,7 @@ Discovery의 `Finding`(노드 내부 크립토 자산)에 더해, Inventory는 *
 
 ### 2.0 머신 메타데이터 — 식별과 분리 (계약: `inventory/v1 machine.proto`)
 
-인벤토리가 관리하는 머신 정보는 **기술 식별(node_id·지문)과 분리**된 두 종류를 가진다 — 식별은 기계가 관측(디스커버리 §1.5), 이 둘은 **선언(CMDB)/리뷰어가 채우고 사용자가 수정**한다:
+인벤토리가 관리하는 머신 정보는 **기술 식별(node_id·지문)과 분리**돼 둘로 나뉜다 — 식별은 기계가 관측(디스커버리 §1.5), 이 둘은 **선언(CMDB)/리뷰어가 채우고 사용자가 수정**한다:
 
 - **`MachineEndpoint`**(node_id·name·ip·port) — discovery 재접속용 **재사용 연결 메타데이터**. 사용자 hosts 파일에서 안전 부분집합만 적재(§1.5). **접근 비밀은 미적재**(타입에 비밀 필드 없음).
 - **`MachineProfile`**(display_name·environment·role·owner·location·`labels` map·source) — **사람이 보고 구분**하는 시각 메타데이터. UI 그룹핑·필터·색상. `labels`로 임의 축(팀·규제·티어) 확장. 출처(cmdb/reviewer/observed) provenance.
