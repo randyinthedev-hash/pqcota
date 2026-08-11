@@ -74,14 +74,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
+          REPO_URL="https://github.com/$GITHUB_REPOSITORY"
           {
-            echo "릴리스 내용은 [RELEASE_NOTES.md](RELEASE_NOTES.md)를 본다."
+            echo "**pqcota** — 실행 중인 시스템이 실제로 쓰는 암호를 관측하고, 그 관측을 근거로 PQC 전환"
+            echo "산출물을 만드는 오픈소스 플랫폼. 관측 → 인벤토리 → 전환물 생성 3단계가 리눅스에서 종단으로 동작한다."
             echo
-            echo "**노드에 올리는 것**은 \`pqcota-linux-<arch>.tar.gz\` 안의 세 바이너리다 — \`pqcota-nodescan\`·\`pqcota-netcap\`·\`pqcota-jvmscan\`. 정적 링크라 배포판·libc를 가리지 않고, **커널 3.2 이상**이면 된다."
+            echo "### 받는 것"
             echo
-            echo "JVM attach 경로를 쓰려면 \`collector.jar\`도 함께 받는다."
+            echo "| 파일 | 무엇 |"
+            echo "|---|---|"
+            echo "| \`pqcota-linux-amd64.tar.gz\` · \`pqcota-linux-arm64.tar.gz\` | **노드에 올리는 collector 3종** — \`pqcota-nodescan\` · \`pqcota-netcap\` · \`pqcota-jvmscan\` |"
+            echo "| \`collector.jar\` | JVM attach 경로를 쓸 때만. 실행 중 JVM의 provider 체인을 조회하는 사이드카 |"
+            echo "| \`SHA256SUMS\` | 무결성 확인용 — \`sha256sum -c SHA256SUMS\` |"
             echo
-            echo "받은 뒤 \`sha256sum -c SHA256SUMS\`로 확인할 수 있다. 서명된 릴리스는 로드맵에 있다."
+            echo "정적 링크라 배포판·libc를 가리지 않는다. **커널 3.2 이상**이면 된다. 운영자 CLI는 중앙에서만"
+            echo "쓰므로 이 번들에 없다."
+            echo
+            echo "### 먼저 돌려보려면"
+            echo
+            echo "Docker만 있으면 전 범위가 한 번에 돈다 — 관측부터 전환물 생성·적용·되돌림까지."
+            echo
+            echo '```bash'
+            echo "git clone $REPO_URL && cd ${GITHUB_REPOSITORY#*/}"
+            echo "./demo/scripts/up.sh && ./demo/scripts/demo.sh"
+            echo '```'
+            echo
+            echo "실물 provider로 능력이 실제로 생기는지까지 재려면 \`DEMO_REAL_PROVIDER=1\`을 붙인다."
+            echo
+            echo "버전별 목표와 성과: [RELEASE_NOTES.md]($REPO_URL/blob/$TAG/RELEASE_NOTES.md)"
           } > /tmp/relnotes.md
           # v0.1.0-rc.1 처럼 하이픈이 붙은 태그는 사전 릴리스다 — 안정판으로 올라가면
           # 받는 사람이 시험용을 정식으로 착각한다.
