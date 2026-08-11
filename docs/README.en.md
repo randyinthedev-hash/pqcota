@@ -29,7 +29,7 @@ On the side: [crypto runtime acceptance principles](runtime-acceptance.en.md) (w
 [license notes](licensing.en.md) (what is used, and what enforces isolation) ·
 [designs under review](under-review.md) (what is not decided yet, Korean).
 
-> **At a glance**: [platform structure and stakeholders](architectures/platform-structure.html) — who supplies what, what the platform produces, and where execution happens.
+> **At a glance**: [platform structure and stakeholders](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html) — who supplies what, what the platform produces, and where execution happens.
 
 ## Rules and boundaries (read first)
 | Document | Contents |

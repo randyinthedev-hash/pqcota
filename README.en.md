@@ -14,7 +14,7 @@ A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-
 
 **Name** — *pqcota* (pronounced **P-cota**) = **PQC** (post-quantum cryptography) + **Orchestra** (-ota). **This software is a *player* in the orchestra, not the maestro.** The **maestro who decides what to migrate and when is the user** wielding the tool; pqcota plays its own part (observe · normalize · generate) precisely.
 
-**The structure, drawn** → [platform structure diagram](docs/architectures/platform-structure.html)
+**The structure, drawn** → [platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)
 
 **To see it move** → [demo video (2 min 55 s)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — from observation through applying and rolling back the generated artifacts: ML-KEM goes **0 → 14 → 0** on a real node.
 
