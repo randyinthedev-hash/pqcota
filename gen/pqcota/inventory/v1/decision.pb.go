@@ -84,6 +84,62 @@ func (DecisionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_pqcota_inventory_v1_decision_proto_rawDescGZIP(), []int{0}
 }
 
+// 선언(CMDB)과 관측을 대조한 결과 (§3.3①).
+//
+// 스키마만 여기 둔다 — **대조 엔진은 구현하지 않는다**(§6.2). DecisionConclusion·FinalizedPlan과
+// 같은 논리다: 소비자 엔진이 같은 어휘를 쓰게 하려는 것.
+type ReconState int32
+
+const (
+	ReconState_RECON_STATE_UNSPECIFIED ReconState = 0
+	ReconState_RECON_STATE_CONFIRMED   ReconState = 1 // 선언 ∩ 관측
+	ReconState_RECON_STATE_UNDECLARED  ReconState = 2 // 관측만 — 선언에 없는 통신(shadow). 보안에서 먼저 본다
+	ReconState_RECON_STATE_UNOBSERVED  ReconState = 3 // 선언만 — 실존·stale·관측 갭 중 하나. 기계가 확정하지 않는다
+)
+
+// Enum value maps for ReconState.
+var (
+	ReconState_name = map[int32]string{
+		0: "RECON_STATE_UNSPECIFIED",
+		1: "RECON_STATE_CONFIRMED",
+		2: "RECON_STATE_UNDECLARED",
+		3: "RECON_STATE_UNOBSERVED",
+	}
+	ReconState_value = map[string]int32{
+		"RECON_STATE_UNSPECIFIED": 0,
+		"RECON_STATE_CONFIRMED":   1,
+		"RECON_STATE_UNDECLARED":  2,
+		"RECON_STATE_UNOBSERVED":  3,
+	}
+)
+
+func (x ReconState) Enum() *ReconState {
+	p := new(ReconState)
+	*p = x
+	return p
+}
+
+func (x ReconState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReconState) Descriptor() protoreflect.EnumDescriptor {
+	return file_pqcota_inventory_v1_decision_proto_enumTypes[1].Descriptor()
+}
+
+func (ReconState) Type() protoreflect.EnumType {
+	return &file_pqcota_inventory_v1_decision_proto_enumTypes[1]
+}
+
+func (x ReconState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReconState.Descriptor instead.
+func (ReconState) EnumDescriptor() ([]byte, []int) {
+	return file_pqcota_inventory_v1_decision_proto_rawDescGZIP(), []int{1}
+}
+
 // 리뷰어의 결론 — 특히 UNOBSERVED(선언 only) 항목의 판정(§3.3①: 실존 vs stale vs 갭).
 type DecisionConclusion int32
 
@@ -124,11 +180,11 @@ func (x DecisionConclusion) String() string {
 }
 
 func (DecisionConclusion) Descriptor() protoreflect.EnumDescriptor {
-	return file_pqcota_inventory_v1_decision_proto_enumTypes[1].Descriptor()
+	return file_pqcota_inventory_v1_decision_proto_enumTypes[2].Descriptor()
 }
 
 func (DecisionConclusion) Type() protoreflect.EnumType {
-	return &file_pqcota_inventory_v1_decision_proto_enumTypes[1]
+	return &file_pqcota_inventory_v1_decision_proto_enumTypes[2]
 }
 
 func (x DecisionConclusion) Number() protoreflect.EnumNumber {
@@ -137,7 +193,7 @@ func (x DecisionConclusion) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DecisionConclusion.Descriptor instead.
 func (DecisionConclusion) EnumDescriptor() ([]byte, []int) {
-	return file_pqcota_inventory_v1_decision_proto_rawDescGZIP(), []int{1}
+	return file_pqcota_inventory_v1_decision_proto_rawDescGZIP(), []int{2}
 }
 
 // 판정 한 건 (인벤토리 설계 §2 Decision). 리뷰어가 리컨실리에이션 항목·정책 템플릿에 내린다.
@@ -152,8 +208,11 @@ type Decision struct {
 	BasisHash             string                 `protobuf:"bytes,7,opt,name=basis_hash,json=basisHash,proto3" json:"basis_hash,omitempty"`                                         // 판정 근거 증거의 해시 → 근거 변하면 무효화 트리거(§3.6 델타 리뷰)
 	DerivedFromSnapshotId string                 `protobuf:"bytes,8,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"` // 어떤 리컨실리에이션 스냅샷에 대한 판정인가(§1.2)
 	DecidedAt             *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// 무엇에 대한 판정인가 — 대조 결과. 이것이 없으면 소비자가 conclusion만 받고
+	// 그 판정이 어떤 상태를 두고 내려진 것인지 알 수 없다.
+	State         ReconState `protobuf:"varint,10,opt,name=state,proto3,enum=pqcota.inventory.v1.ReconState" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Decision) Reset() {
@@ -249,11 +308,18 @@ func (x *Decision) GetDecidedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Decision) GetState() ReconState {
+	if x != nil {
+		return x.State
+	}
+	return ReconState_RECON_STATE_UNSPECIFIED
+}
+
 var File_pqcota_inventory_v1_decision_proto protoreflect.FileDescriptor
 
 const file_pqcota_inventory_v1_decision_proto_rawDesc = "" +
 	"\n" +
-	"\"pqcota/inventory/v1/decision.proto\x12\x13pqcota.inventory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x87\x03\n" +
+	"\"pqcota/inventory/v1/decision.proto\x12\x13pqcota.inventory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbe\x03\n" +
 	"\bDecision\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asubject\x18\x02 \x01(\tR\asubject\x12G\n" +
@@ -267,12 +333,20 @@ const file_pqcota_inventory_v1_decision_proto_rawDesc = "" +
 	"basis_hash\x18\a \x01(\tR\tbasisHash\x127\n" +
 	"\x18derived_from_snapshot_id\x18\b \x01(\tR\x15derivedFromSnapshotId\x129\n" +
 	"\n" +
-	"decided_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tdecidedAt*\x8a\x01\n" +
+	"decided_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tdecidedAt\x125\n" +
+	"\x05state\x18\n" +
+	" \x01(\x0e2\x1f.pqcota.inventory.v1.ReconStateR\x05state*\x8a\x01\n" +
 	"\x0eDecisionStatus\x12\x1f\n" +
 	"\x1bDECISION_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15DECISION_STATUS_DRAFT\x10\x01\x12\x1d\n" +
 	"\x19DECISION_STATUS_IN_REVIEW\x10\x02\x12\x1d\n" +
-	"\x19DECISION_STATUS_FINALIZED\x10\x03*\xbc\x01\n" +
+	"\x19DECISION_STATUS_FINALIZED\x10\x03*|\n" +
+	"\n" +
+	"ReconState\x12\x1b\n" +
+	"\x17RECON_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15RECON_STATE_CONFIRMED\x10\x01\x12\x1a\n" +
+	"\x16RECON_STATE_UNDECLARED\x10\x02\x12\x1a\n" +
+	"\x16RECON_STATE_UNOBSERVED\x10\x03*\xbc\x01\n" +
 	"\x12DecisionConclusion\x12#\n" +
 	"\x1fDECISION_CONCLUSION_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aDECISION_CONCLUSION_EXISTS\x10\x01\x12\x1d\n" +
@@ -292,23 +366,25 @@ func file_pqcota_inventory_v1_decision_proto_rawDescGZIP() []byte {
 	return file_pqcota_inventory_v1_decision_proto_rawDescData
 }
 
-var file_pqcota_inventory_v1_decision_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_pqcota_inventory_v1_decision_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_pqcota_inventory_v1_decision_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_pqcota_inventory_v1_decision_proto_goTypes = []any{
 	(DecisionStatus)(0),           // 0: pqcota.inventory.v1.DecisionStatus
-	(DecisionConclusion)(0),       // 1: pqcota.inventory.v1.DecisionConclusion
-	(*Decision)(nil),              // 2: pqcota.inventory.v1.Decision
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(ReconState)(0),               // 1: pqcota.inventory.v1.ReconState
+	(DecisionConclusion)(0),       // 2: pqcota.inventory.v1.DecisionConclusion
+	(*Decision)(nil),              // 3: pqcota.inventory.v1.Decision
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_pqcota_inventory_v1_decision_proto_depIdxs = []int32{
-	1, // 0: pqcota.inventory.v1.Decision.conclusion:type_name -> pqcota.inventory.v1.DecisionConclusion
+	2, // 0: pqcota.inventory.v1.Decision.conclusion:type_name -> pqcota.inventory.v1.DecisionConclusion
 	0, // 1: pqcota.inventory.v1.Decision.status:type_name -> pqcota.inventory.v1.DecisionStatus
-	3, // 2: pqcota.inventory.v1.Decision.decided_at:type_name -> google.protobuf.Timestamp
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 2: pqcota.inventory.v1.Decision.decided_at:type_name -> google.protobuf.Timestamp
+	1, // 3: pqcota.inventory.v1.Decision.state:type_name -> pqcota.inventory.v1.ReconState
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_inventory_v1_decision_proto_init() }
@@ -321,7 +397,7 @@ func file_pqcota_inventory_v1_decision_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_inventory_v1_decision_proto_rawDesc), len(file_pqcota_inventory_v1_decision_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
