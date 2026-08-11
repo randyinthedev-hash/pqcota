@@ -31,13 +31,17 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 | Capability required (basis in the regulation) | Technical constraint |
 |---|---|
-| `/proc/*/maps`, `lsof`, `ss`, `ldd`/`readelf` (§2.3 OpenSSL) | syscalls and native tooling. The Go/Rust/C family |
+| Reading `/proc/*/maps` and `/proc/*/exe` (§2.3 OpenSSL) | syscalls and native tooling. The Go/Rust/C family |
 | Determining fork and version from static ELF symbols and string signatures (§2.3) | an ELF parser. Both Go (`debug/elf`) and Rust (`goblin`) are strong |
-| eBPF dynamic tracing (§2.2 crypto-tracer, §2.3 dynamic-trace) | **the eBPF loader ecosystem = Go (cilium/ebpf) is the de facto standard** |
 | **JVM attach → querying the reality of `Security.getProviders()` (§2.2, §2.3)** | **possible only from inside the JVM — the JVM is forced (its platform language is Java). No way around it** |
 | CycloneDX CBOM (ECMA-424) input/output (§2.4, §3.2) | needs mature libraries. Maturity runs JVM > JS > Go |
 | Ansible/Salt substrate orchestration (§4.4) | subprocesses and SSH. Language-agnostic; Go is comfortable |
-| The review queue and inventory dashboard UI (§3.7) | TypeScript/React |
+| The review queue and inventory dashboard UI (§3.7) | TypeScript/React — **not in this repository** (§6.2) |
+
+> **One requirement was dropped** — dynamic tracing (eBPF, ltrace) is invasive, so it is not done
+> ([RELEASE_NOTES](../RELEASE_NOTES.en.md#not-on-the-roadmap--deliberately)). Observing what the wire
+> actually negotiated was chosen instead, so it comes off this table. The detection-method taxonomy in
+> regulation §2.5 still lists `dynamic-trace` — the vocabulary is a contract, separate from what is built.
 
 **The key observation**: JVM introspection (§2.2's "the gap where we implement ourselves") **cannot be worked around in any language — it must run inside the JVM.** That is what makes polyglot unavoidable. Everything else in system collection is covered by Go alone.
 
@@ -45,20 +49,26 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 | Layer | Language/technology | Rationale |
 |---|---|---|
-| **Core services** (normalization, review queue, inventory, API) | **Go** | single static binary distribution, gRPC, concurrency, systems tooling, a permissive license (no contagion) |
-| **The OpenSSL/system collector** | **Go** | the same language as the core. `/proc`, ELF (`debug/elf`), and eBPF (`cilium/ebpf`) are all native |
+| **Core services** (normalization, inventory, API) | **Go** | single static binary distribution, gRPC, concurrency, systems tooling, a permissive license (no contagion) |
+| **The OpenSSL/system collector** | **Go** | the same language as the core. `/proc` and ELF (`debug/elf`) are parsed directly — no dependency on external tools such as `ldd` or `readelf` |
 | **The JVM collector** (a separate sidecar) | **Java** (pure) | attaches to a live JVM through the JVM Attach API (JVMTI/Attach) and queries `getProviders()`. **The unavoidable polyglot point is the JVM**, not a language — written in the platform language Java, built with `javac`, no Kotlin or Gradle |
-| **eBPF programs** | **C → loaded from Go** | CO-RE, injected through cilium/ebpf |
-| **UI** | **TypeScript + React** | the standard for review queues and reconciliation views |
+| ~~**UI**~~ | ~~TypeScript + React~~ | **Not in this repository** (§6.2). The review queue and sign-off governance are out of scope, so their UI is too |
 | **Storage** | **PostgreSQL** (JSONB) | the four append-only history lanes + CBOM JSONB. Friendly to event sourcing |
 | **The contract between runtimes** | **gRPC + Protobuf** (+ a CLI/stdout fallback) | the intake contract and subprocess isolation through one mechanism |
 
-**In one line**: **a Go core + Go system collectors + a JVM collector sidecar (pure Java) + C/eBPF + a TS/React UI + Postgres.** — what is forced is *the JVM*, not a particular language (the polyglot point is the JVM). The sidecar is written in the platform language Java with no Kotlin or Gradle dependency.
+**In one line**: **a Go core + Go system collectors + a JVM collector sidecar (pure Java) + Postgres.** — what is forced is *the JVM*, not a particular language (the polyglot point is the JVM). The sidecar is written in the platform language Java with no Kotlin or Gradle dependency.
 
 ### 1.3 Why a Go core (versus Rust)
 
-- **Alignment with the eBPF ecosystem**: `cilium/ebpf` is the de facto standard, directly relevant to the crypto-tracer family in regulation §2.2.
-- **Deployment simplicity**: an on-host agent as a single static binary → favorable to regulation §4.4's "avoid locking yourself out".
+- **It leaves no footprint on legacy hosts**: `CGO_ENABLED=0` yields a single static binary with no
+  runtime dependency. The targets are old servers where neither sources nor package management can be
+  assumed — copy it, run it, delete it. This is also where the kernel floor comes from: whatever the Go
+  toolchain requires (3.2) becomes this repository's floor (§4.4, avoid locking yourself out).
+- **Cross-compilation needs no build infrastructure**: `GOOS=linux GOARCH=arm64` is the whole story, and
+  CI verifies static linking per architecture.
+- **It digs into `/proc` and ELF on its own**: `debug/elf` is in the standard library. Never calling `ldd`
+  or `readelf` means observation does not wobble when the target host lacks those tools — or has them with
+  a different output format.
 - **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, mTLS, gRPC momentum.
 - **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and promote it if needed.
 
@@ -67,6 +77,11 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 ## 2. System architecture
 
 ### 2.1 The module map — the regulation's three stages plus cross-cutting principles, projected into code
+
+> **This map is the platform as a whole; the scope of this repository is [§6](#6-scope-boundary).**
+> Of the boxes below, the Reconciliation Engine, Confidence Scoring, the Review Queue and the Decision
+> Service are **not in this repository** — the contracts (`contracts/`) merely hold their place. §6.2 is
+> decisive on what is built and what is not.
 
 ```
                          ┌─────────────────────────────────────────────┐
@@ -401,9 +416,11 @@ For one real node (OpenSSL installed, a JVM running):
 
 ---
 
-## 7. Next actions (proposed)
+## 7. Where things stand
 
-1. **Settle `contracts/` first** — the collector intake protobuf and the CBOM Envelope schema are the SSOT for everything. Once they harden, collectors and the core can be developed independently in parallel.
-2. **Skeletons for the two reference collectors** — `openssl-collector` (Go) and `jvm-collector` (pure Java). The JVM side is the community draw, so it ranks higher.
-3. **Bootstrap the repo** — the `pqcota` monorepo + an Apache-2.0 LICENSE + CONTRIBUTING/GOVERNANCE.
-4. **A skeleton of the six-step normalization pipeline** — starting from each step's interface.
+What of §1–§6 is standing and what remains is tracked in one place only —
+the "Results", "Not on the roadmap" and "Roadmap" sections of [RELEASE_NOTES](../RELEASE_NOTES.en.md).
+A design document still carrying finished work as "next actions" is exactly the state where the
+implementation has run ahead and the documentation has fallen behind.
+
+Designs still under consideration, belonging to neither side yet, live in [under-review](under-review.en.md).

@@ -32,11 +32,14 @@
 |---|---|
 | `/proc/*/maps`·`lsof`·`ss`, `ldd`/`readelf` (§2.3 OpenSSL) | 시스템 콜·네이티브 툴링. Go/Rust/C 계열 |
 | 정적 ELF 심볼·문자열 시그니처로 fork·version 판별 (§2.3, §2.3) | ELF 파서. Go(`debug/elf`)·Rust(`goblin`) 둘 다 강함 |
-| eBPF 동적 트레이스 (§2.2 crypto-tracer, §2.3 dynamic-trace) | **eBPF 로더 생태계 = Go(cilium/ebpf)가 사실상 표준** |
 | **JVM attach → `Security.getProviders()` 실체 조회 (§2.2, §2.3)** | **JVM 내부에서만 가능 — JVM 강제(플랫폼 언어 Java). 우회 불가** |
 | CycloneDX CBOM(ECMA-424) 입출력 (§2.4, §3.2) | 성숙 라이브러리 필요. JVM·JS·Go 순으로 성숙 |
 | Ansible/Salt substrate 오케스트레이션 (§4.4) | 서브프로세스·SSH. 언어 무관, Go 편함 |
-| 리뷰 큐·인벤토리 대시보드 UI (§3.7) | TypeScript/React |
+| 리뷰 큐·인벤토리 대시보드 UI (§3.7) | TypeScript/React — **이 리포에 없다**(§6.2) |
+
+> **폐기된 요구 하나** — 동적 추적(eBPF·ltrace)은 침습적이라 하지 않기로 했다([RELEASE_NOTES](../RELEASE_NOTES.md#로드맵에-없는-것--안-만든다)).
+> 회선에서 실제 협상을 관측하는 쪽을 택했으므로 이 표에서 내렸다. 규정서 §2.5의 탐지 방법 분류에는
+> `dynamic-trace`가 남아 있다 — 어휘는 계약이고, 구현 여부와 별개다.
 
 **핵심 관찰**: JVM 인트로스펙션(§2.2 "자체 구현 공백 영역")은 **어떤 언어로도 우회 불가 — 반드시 JVM 안에서 실행**되어야 한다. 이것이 폴리글랏을 불가피하게 만든다. 나머지 시스템 수집은 Go 하나로 전부 커버된다.
 
@@ -45,20 +48,24 @@
 | 레이어 | 언어/기술 | 근거 |
 |---|---|---|
 | **코어 서비스** (정규화·리뷰 큐·인벤토리·API) | **Go** | 단일 정적 바이너리 배포, gRPC, 동시성, 시스템 툴링, 허용적 라이선스(전염 없음) |
-| **OpenSSL/시스템 Collector** | **Go** | 코어와 동일 언어. `/proc`·ELF(`debug/elf`)·eBPF(`cilium/ebpf`) 전부 네이티브 |
+| **OpenSSL/시스템 Collector** | **Go** | 코어와 동일 언어. `/proc`·ELF(`debug/elf`) 자체 파싱 — `ldd`·`readelf` 같은 외부 도구에 의존하지 않는다 |
 | **JVM Collector** (별도 사이드카) | **Java**(순수) | JVM Attach API(JVMTI/Attach)로 살아있는 JVM에 붙어 `getProviders()` 조회. **불가피한 폴리글랏 지점은 JVM**(언어 아님) — 플랫폼 언어 Java로, Kotlin·Gradle 없이 `javac` 빌드 |
-| **eBPF 프로그램** | **C → Go에서 로드** | CO-RE, cilium/ebpf로 주입 |
-| **UI** | **TypeScript + React** | 리뷰 큐·리컨실리에이션 뷰 표준 |
+| ~~**UI**~~ | ~~TypeScript + React~~ | **이 리포에 없다**(§6.2). 리뷰 큐·확정 거버넌스가 범위 밖이라 그 UI도 없다 |
 | **저장소** | **PostgreSQL** (JSONB) | append-only 히스토리 4계열 + CBOM JSONB. 이벤트소싱 친화 |
 | **런타임 간 계약** | **gRPC + Protobuf** (+ CLI/stdout 폴백) | intake 계약(라이선스 정리)·서브프로세스 격리(라이선스 정리)를 동일 메커니즘으로 |
 
-**한 줄 요약**: **Go 코어 + Go 시스템 Collector + JVM Collector 사이드카(순수 Java) + C/eBPF + TS/React UI + Postgres.** — 강제되는 건 *JVM*이지 특정 언어가 아니다(폴리글랏 지점=JVM). 사이드카는 플랫폼 언어 Java로 쓰고 Kotlin·Gradle 의존이 없다.
+**한 줄 요약**: **Go 코어 + Go 시스템 Collector + JVM Collector 사이드카(순수 Java) + Postgres.** — 강제되는 건 *JVM*이지 특정 언어가 아니다(폴리글랏 지점=JVM). 사이드카는 플랫폼 언어 Java로 쓰고 Kotlin·Gradle 의존이 없다.
 
 ### 1.3 왜 Go 코어인가 (Rust 대비)
 
-- **eBPF 생태계 정렬**: `cilium/ebpf`가 사실상 표준. 규정서 §2.2의 crypto-tracer 계열과 직결.
-- **배포 단순성**: 온호스트 에이전트가 단일 정적 바이너리 → 규정서 §4.4 "자기잠금 회피"에 유리.
-- **오케스트레이션·클라우드네이티브 정렬**: Ansible/Salt 서브프로세스·mTLS·gRPC 관성.
+- **레거시 호스트에 발자국을 남기지 않는다**: `CGO_ENABLED=0` 단일 정적 바이너리라 런타임 의존이 없다.
+  관측 대상이 소스도 패키지 관리도 기대할 수 없는 구형 서버다 — 복사해서 실행하고 지우면 끝이어야 한다.
+  Go 툴체인이 정하는 커널 하한(3.2)이 곧 이 리포의 하한이 되는 것도 여기서 온다(§4.4 자기잠금 회피).
+- **교차 컴파일이 빌드 인프라 없이 된다**: `GOOS=linux GOARCH=arm64`만으로 arch별 산출물이 나온다.
+  CI가 arch마다 정적 링크 여부까지 검증한다.
+- **`/proc`·ELF를 자립적으로 판다**: `debug/elf`가 표준 라이브러리다. `ldd`·`readelf`를 부르지 않으므로
+  대상 호스트에 그 도구가 없어도, 있더라도 그 출력 형식이 달라도 관측이 흔들리지 않는다.
+- **오케스트레이션·계약 정렬**: Ansible/Salt 서브프로세스·mTLS·gRPC 관성.
 - **Rust는 어디에?** ELF 심볼 분석기(§2.3)는 순수하고 고립된 모듈이라 **나중에 Rust로 교체 가능한 명확한 후보**. intake 계약만 지키면 되므로 코어를 건드리지 않고 갈아끼울 수 있다. 지금은 Go로 시작하고 필요 시 격상.
 
 ---
@@ -66,6 +73,11 @@
 ## 2. 시스템 아키텍처
 
 ### 2.1 모듈 맵 — 규정서 3단계 + 관통 원칙의 코드 투영
+
+> **이 맵은 플랫폼 전체의 구상이고, 이 리포의 범위는 [§6](#6-범위-경계)다.**
+> 아래 상자 중 Reconciliation Engine · Confidence Scoring · Review Queue · Decision Service는
+> **이 리포에 없다** — 계약(`contracts/`)으로 자리만 잡아 두었다. 무엇을 만들고 무엇을 만들지
+> 않았는지는 §6.2가 결정적이다.
 
 ```
                          ┌─────────────────────────────────────────────┐
@@ -402,10 +414,10 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 
 ---
 
-## 7. 다음 액션 (제안)
+## 7. 지금 어디까지 왔나
 
-1. **`contracts/` 먼저 확정** — Collector intake protobuf + CBOM Envelope 스키마가 모든 것의 SSOT(라이선스 정리). 이게 굳으면 Collector·코어를 독립 병렬 개발 가능.
-2. **레퍼런스 Collector 2종 스켈레톤** — `openssl-collector`(Go), `jvm-collector`(순수 Java). JVM 쪽이 커뮤니티 유인 지점이므로 우선순위 상.
-3. **리포 부트스트랩** — `pqcota` monorepo + Apache-2.0 LICENSE + CONTRIBUTING/GOVERNANCE.
-4. **정규화 파이프라인 6단계 골격** — 각 단계 인터페이스부터.
+§1–§6이 정한 것 중 무엇이 서 있고 무엇이 남았는지는 한 곳에서만 관리한다 —
+[RELEASE_NOTES](../RELEASE_NOTES.md)의 「성과」·「로드맵에 없는 것」·「로드맵」이다.
+설계가 끝난 일을 "다음 액션"으로 들고 있으면 구현이 앞서고 문서가 뒤처지는 그 상태가 된다.
 
+검토 중이라 아직 어느 쪽도 아닌 설계는 [under-review](under-review.md)에 따로 둔다.

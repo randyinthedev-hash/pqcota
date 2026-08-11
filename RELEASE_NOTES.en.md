@@ -55,7 +55,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ### Settled (what used to block the v0.1.0 release)
 
-- **Minimum supported kernel = 3.2** (the floor the Go 1.24+ toolchain sets). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.md#실행-요건--커널권한) (Korean).
+- **Minimum supported kernel = 3.2** (the floor the Go toolchain sets — it became this in 1.24 and has held since. Building needs Go 1.26.4, per `go.mod`). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.md#실행-요건--커널권한) (Korean).
 - **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real.
 
 ---
