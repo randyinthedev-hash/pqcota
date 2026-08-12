@@ -51,3 +51,44 @@ func TestSignVerify(t *testing.T) {
 		t.Error("무서명이 검증 통과")
 	}
 }
+
+// TestVerifyFromBindsKeysToCollectors — 서명이 "누가 냈나"를 답하게 만든다.
+//
+// Verify는 넘긴 키를 전부 시도하므로, 여러 collector의 키를 한 목록으로 주면 어느 키로든 통과한
+// 결과가 **아무 collector 이름이나 달고** 들어올 수 있다. VerifyFrom은 그 이름에 등록된 키로만 본다.
+func TestVerifyFromBindsKeysToCollectors(t *testing.T) {
+	pubA, privA, _ := sign.Generate()
+	pubB, _, _ := sign.Generate()
+
+	// A의 키로 서명해 놓고 collector 이름만 B로 바꾼다.
+	res := &discoveryv1.CollectionResult{Envelope: &commonv1.Envelope{
+		CollectorId: "collector-b", TargetNodeId: "web-01",
+	}}
+	sig, err := sign.Sign(privA, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Envelope.Signature = sig
+
+	keys := map[string]string{"collector-a": pubA, "collector-b": pubB}
+
+	if !sign.Verify([]string{pubA, pubB}, res) {
+		t.Fatal("전제 확인: 목록 검증은 통과한다 — 그래서 VerifyFrom이 필요하다")
+	}
+	if sign.VerifyFrom(keys, res) {
+		t.Fatal("A의 키로 서명한 것이 collector-b 이름을 달고 통과했다")
+	}
+
+	// 이름을 바로잡으면 통과한다.
+	res.Envelope.CollectorId = "collector-a"
+	res.Envelope.Signature, _ = sign.Sign(privA, res)
+	if !sign.VerifyFrom(keys, res) {
+		t.Fatal("자기 이름·자기 키인데 거절됐다")
+	}
+	// 등록되지 않은 collector는 받지 않는다.
+	res.Envelope.CollectorId = "collector-unknown"
+	res.Envelope.Signature, _ = sign.Sign(privA, res)
+	if sign.VerifyFrom(keys, res) {
+		t.Fatal("모르는 collector의 주장을 받았다")
+	}
+}

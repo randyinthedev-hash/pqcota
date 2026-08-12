@@ -11,6 +11,10 @@
 //	                    자산만** 남긴다(§1.4 노드 게이트를 자산 단위로). 제외분은 적재되지 않되
 //	                    몇 건인지 고지된다 — 제외는 부재가 아니다(§2.6).
 //	env PQCOTA_DSN     : (선택) 있으면 Postgres 영속화, 없으면 인메모리(요약만).
+//	env PQCOTA_VERIFY_KEY        : (선택) 콤마 구분 base64 공개키. 있으면 서명 검증.
+//	env PQCOTA_REQUIRE_SIGNATURE : "1"이면 검증할 키가 없을 때 **적재를 시작하지 않는다.**
+//	                               조용히 통과하는 경로를 닫아야 하는 배포용(§2.6).
+//	env PQCOTA_ORG               : (선택) 이 적재가 속할 조직. 여러 조직이 한 저장소를 쓰면 필수.
 package main
 
 import (
@@ -77,7 +81,17 @@ func main() {
 		os.Exit(2)
 	}
 
-	rep, err := ingest.IngestResults(results, master, verifySig, prefix, "ruleset-demo", store, assetPolicy)
+	opts := ingest.IngestOptions{
+		Master: master, VerifySig: verifySig, SnapshotPrefix: prefix,
+		RulesetVersion: "ruleset-demo", Store: store, AssetPolicy: assetPolicy,
+		RequireSignature: os.Getenv("PQCOTA_REQUIRE_SIGNATURE") == "1",
+	}
+	// 거절 기록은 남길 수 있을 때만 남긴다 — 인메모리 저장소도 같은 규칙을 만족하므로
+	// 데모에서도 같은 경로를 탄다(실제에 없는 경로를 타지 않게).
+	if rs, ok := store.(ingest.RejectionStore); ok {
+		opts.Rejections = rs
+	}
+	rep, err := ingest.IngestWith(results, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ingest:", err)
 		os.Exit(1)
@@ -99,12 +113,17 @@ func main() {
 	if verifySig != nil {
 		fmt.Printf("서명 검증: PQCOTA_VERIFY_KEY로 검증(불일치는 거부, §2.6)\n")
 	} else {
-		fmt.Printf("서명 검증: 생략(전송 보안에 의존)\n")
+		fmt.Printf("서명 검증: **하지 않았다** — 검증할 공개키가 없다. 전송 보안이 대신한다는 전제다.\n")
+		fmt.Printf("           그 전제가 서지 않는 곳이면 PQCOTA_REQUIRE_SIGNATURE=1로 막을 것.\n")
 	}
 	// 스냅샷은 실질 내용이 바뀐 노드에만 새로 생긴다 — 나머지는 관측 기록만 남아
 	// "봤다"는 사실은 보존하되 같은 상태를 중복 저장하지 않는다.
 	fmt.Printf("\n적재 결과: 수용 %d · 미등재/앵커없음 %d · 서명거부 %d → 노드 %d개 관측(변화 %d · 동일 %d)\n",
 		rep.Accepted, rep.OffScope, rep.Rejected, rep.Snapshots, rep.Changed, rep.Snapshots-rep.Changed)
+	if rep.Unverified > 0 {
+		// 확인하지 못한 것을 통과와 같은 자리에 두지 않는다 — 서명거부와도 다르다(§2.6).
+		fmt.Printf("서명 미확인: %d건 — 틀렸다는 것이 아니라 **물어보지 못했다**는 뜻이다.\n", rep.Unverified)
+	}
 	if rep.ExcludedByScope > 0 {
 		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 말한다(§2.6).
 		fmt.Printf("자산 스코프: 관리 대상 아님으로 %d건 제외(관측은 됐으나 적재 안 함)\n", rep.ExcludedByScope)

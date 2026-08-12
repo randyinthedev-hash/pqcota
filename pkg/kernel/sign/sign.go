@@ -118,6 +118,22 @@ func Sign(privB64 string, res *discoveryv1.CollectionResult) (string, error) {
 
 // Verify — pub(base64) 목록 중 하나로 envelope.signature가 유효하면 true.
 // 등록된 공개키 provenance와 일치할 때만 통과(§2.6 "등록 provenance와 일치해야").
+// VerifyFrom — **collector에 묶인 키로만** 검증한다.
+//
+// [Verify]는 넘긴 키를 전부 시도하고 어느 키가 맞았는지 묻지 않는다. 여러 조직·여러 collector의
+// 키를 한 목록으로 넘기면, 어떤 키로든 통과한 결과가 **아무 collector 이름이나 달고** 들어올 수
+// 있다. 서명은 "누가 냈나"를 답해야 하는데 그 목록은 "누군가는 냈다"까지만 답한다.
+//
+// keys는 collector_id → base64 공개키. 그 collector에 등록된 키가 없으면 거절한다 — 모르는
+// collector의 주장을 받지 않는다.
+func VerifyFrom(keys map[string]string, res *discoveryv1.CollectionResult) bool {
+	pub, ok := keys[res.GetEnvelope().GetCollectorId()]
+	if !ok {
+		return false
+	}
+	return Verify([]string{pub}, res)
+}
+
 func Verify(pubB64s []string, res *discoveryv1.CollectionResult) bool {
 	s := res.GetEnvelope().GetSignature()
 	if !strings.HasPrefix(s, Prefix) {

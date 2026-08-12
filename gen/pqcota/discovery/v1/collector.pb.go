@@ -228,6 +228,12 @@ type CollectionResult struct {
 	Envelope *v1.Envelope           `protobuf:"bytes,1,opt,name=envelope,proto3" json:"envelope,omitempty"` // §3.1 Envelope (provenance + 서명 + detection_method)
 	// 원시 포집 — collector 네이티브 출력 불변 보존(§2.4 step 1). 코어가 append-only로 영속화,
 	// 강화 규칙 개선 시 여기서 재정규화(§1.2). 표준 아님(도구 고유).
+	//
+	// **여기에 담지 않는 것** — 설정 파일 원문, 패킷 페이로드, 자격증명(키·비밀번호·토큰).
+	// 이 필드는 자유형 bytes라 스키마가 막아 주지 않는다. 그래서 규약으로 적는다: collector가
+	// **자기가 판정한 결과**를 그 도구의 형식으로 담는 자리이지, 읽은 것을 그대로 실어 보내는
+	// 자리가 아니다. 관측 대상의 내용을 나르기 시작하면 이 결과물은 더 이상 인벤토리가 아니라
+	// 사본이 된다 — 받는 쪽이 무엇을 보관하게 되는지가 달라진다.
 	RawCapture []byte `protobuf:"bytes,2,opt,name=raw_capture,json=rawCapture,proto3" json:"raw_capture,omitempty"`
 	RawFormat  string `protobuf:"bytes,3,opt,name=raw_format,json=rawFormat,proto3" json:"raw_format,omitempty"` // 예: "openssl-collector/native-v1", "cbomkit/theia-json"
 	// 정규화된 CycloneDX CBOM(ECMA-424) 표준 본문(§2.4 step 2). 상호운용 보장 계층(§3.2).
