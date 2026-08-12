@@ -213,6 +213,11 @@ already exists: `pqcota-declare` imports CMDB declarations as `detection_method=
 distinguishable from observations. An attribution a person entered can arrive through the same lane and
 never mix with what was observed. A CSV line is enough.
 
+> **Not in v0.3.0.** It waits until the demo measures how much the automatic path (5.1) actually misses.
+> Building it now would be speculative abstraction — laying the road for filling gaps before knowing how
+> many are left to fill. The automatic path now **reports the count and the reasons in the completeness
+> note.** That number is what this decision will rest on.
+
 ### 5.3 No admin UI
 
 Facts entered by people already arrive as files here — `hosts.csv`, `scope-assets.csv`, machine profiles,

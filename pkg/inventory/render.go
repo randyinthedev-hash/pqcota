@@ -30,12 +30,19 @@ func Render(snap *history.Snapshot) string {
 		// 제외는 "없음"이 아니다 — 정책으로 뺀 걸 감추면 인벤토리가 거짓말한다(§2.6).
 		fmt.Fprintf(&b, "자산 스코프 제외: %d건 (관측됐으나 관리 대상 아님 — 부재가 아니다)\n", snap.ExcludedByScope)
 	}
-	if c := snap.Completeness; c != nil && len(c.GetLayersMissing()) > 0 {
-		var g []string
-		for _, l := range c.GetLayersMissing() {
-			g = append(g, short(l.String(), "COLLECTION_LAYER_"))
+	if c := snap.Completeness; c != nil {
+		if len(c.GetLayersMissing()) > 0 {
+			var g []string
+			for _, l := range c.GetLayersMissing() {
+				g = append(g, short(l.String(), "COLLECTION_LAYER_"))
+			}
+			fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
+		} else if n := c.GetNote(); n != "" {
+			// **계층 갭이 없어도 노트는 낸다.** 계층이 빈 노트를 흘려보내던 탓에, 창이 중간에
+			// 끊겼다는 netcap의 경고와 앱 귀속 실패가 화면까지 오지 못했다 — 정직하게 적어 둔
+			// 것이 읽는 사람에게 도달하지 않으면 적지 않은 것과 같다(§2.6).
+			fmt.Fprintf(&b, "관측 한계: %s\n", n)
 		}
-		fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
 	}
 	return b.String()
 }
@@ -124,11 +131,29 @@ func RenderDetail(snap *history.Snapshot) string {
 	}
 	fmt.Fprintf(&b, "\n관측 엣지 %d (이 스냅샷)\n", len(snap.Edges))
 	for _, e := range snap.Edges {
-		fmt.Fprintf(&b, "  %s → %-22s %-5s %-38s %s\n",
+		fmt.Fprintf(&b, "  %s → %-22s %-5s %-38s %s%s\n",
 			e.GetSrcNodeId(), edgeDst(e), short(e.GetProtocol().String(), "NETWORK_PROTOCOL_"),
-			edgeAlgo(e), postureMark(e))
+			edgeAlgo(e), postureMark(e), edgeApp(e))
 	}
 	return b.String()
+}
+
+// edgeApp — 엣지를 연 앱. 사람이 조치할 대상은 서버가 아니라 앱이다.
+//
+// **비어 있으면 "귀속하지 못함"이지 "앱 없음"이 아니다.** 그래서 빈칸으로 두지 않고 `@?`로
+// 적는다 — 빈칸은 열이 없는 것과 구별되지 않는다. 왜 못 잡았는지는 그 스냅샷의 완전성 노트에
+// 있다(§2.6).
+//
+// 근거(`app_key_kind`)가 유닛이 아니면 함께 적는다. systemd 유닛은 앱 이름이지만 exe 경로는
+// 그렇지 않아서, 같은 값이라도 얼마나 믿을지가 다르다.
+func edgeApp(e *discoveryv1.ObservedEdge) string {
+	if e.GetAppKey() == "" {
+		return "  @?"
+	}
+	if k := e.GetAppKeyKind(); k != "" && k != "systemd-unit" {
+		return "  @" + e.GetAppKey() + "(" + k + ")"
+	}
+	return "  @" + e.GetAppKey()
 }
 
 // RenderDiff — 두 스냅샷 사이의 변화를 관측 사실로만 서술한다(추가·사라짐·변경).
