@@ -126,7 +126,7 @@ What a person acts on is an app, not a server.
   worst case, but short-lived connections themselves are not the exception. **The declared lane is now
   fixed as v0.4.0** — decided after measuring, so it is not speculative abstraction.
 - **The signature range changed** — a contract field was added and `sign.Canonical` updated with it, so
-  **signatures produced at v0.2.0 or earlier are invalid.** [Compatibility policy §2](docs/compatibility.md)
+  **signatures produced at v0.2.0 or earlier are invalid.** [Compatibility policy §2](docs/compatibility.md) (Korean)
   is written for exactly this case, and before any real deployment is the cheapest time for it.
 
 
@@ -160,7 +160,7 @@ reads as "absent" — to the ingest path.** A review from a consumer of the cont
   arrive wearing any collector's name. Signatures now answer *who* produced this.
 - **A `raw_capture` convention in the contract** — no file contents, packet payloads, or credentials.
   The field is free-form `bytes`, so the schema cannot enforce it; it is written down as a convention.
-- **A [compatibility policy](docs/compatibility.md)** — five distinct faces: contract, signature, Go API,
+- **A [compatibility policy](docs/compatibility.md)** (Korean) — five distinct faces: contract, signature, Go API,
   DB schema, mixed versions. So that "it is compatible" does not stay vague about which.
 
 ### What was fixed

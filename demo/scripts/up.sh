@@ -41,7 +41,8 @@ docker exec pqcota-ctl bash -lc '
   echo "   [ctl] make generate                       # contracts/*.proto → gen/"
   make generate >/dev/null
   echo "   [ctl] go build -o /usr/local/bin/ …        # 이 머신에서 쓸 중앙 CLI"
-  CGO_ENABLED=0 go build -o /usr/local/bin/     ./inventory/cmd/pqcota-ingest ./discovery/cmd/pqcota-hosts     ./inventory/cmd/pqcota-inventory ./inventory/cmd/pqcota-discover-view     ./inventory/cmd/pqcota-profile ./inventory/cmd/pqcota-declare ./inventory/cmd/pqcota-prune     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records
+  CGO_ENABLED=0 go build -o /usr/local/bin/     ./inventory/cmd/pqcota-ingest ./discovery/cmd/pqcota-hosts     ./inventory/cmd/pqcota-inventory ./inventory/cmd/pqcota-discover-view     ./inventory/cmd/pqcota-profile ./inventory/cmd/pqcota-declare ./inventory/cmd/pqcota-prune \
+    ./inventory/cmd/pqcota-declare-attribution     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records
   echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # 노드에 반입할 collector"
   CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/"     ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
   echo "   [ctl] make build-jar                      # JVM attach 사이드카"

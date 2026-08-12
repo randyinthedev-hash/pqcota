@@ -6,6 +6,10 @@ English · [한국어](CONTRIBUTING.md)
 
 > **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](docs/regulation.en.md).
 
+> **What will not be broken** — contract, signature, Go API, DB schema, and mixed versions, written out
+> as five distinct faces: [compatibility policy](docs/compatibility.md) (Korean). Read it before changing
+> any of them.
+
 For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.en.md) and [demo/](demo/).
 
 ## Prerequisites
@@ -135,7 +139,7 @@ languages at the same breadth would leave neither current. So the scope is fixed
 |---|---|
 | The front door — README, CONTRIBUTING, SECURITY, RELEASE_NOTES | test case lists, the test map, kernel cases |
 | The regulation, architecture, per-stage designs, contracts | collector deployment design, each `cmd/README` |
-| Licensing, runtime acceptance, under review | the demo and every example |
+| Licensing, runtime acceptance, under review | **the compatibility policy**, the demo, every example |
 
 When an English document points at something with no English counterpart, it says `(Korean)`. Contributions
 that widen this table are welcome — just start knowing that widening it also widens the upkeep.
