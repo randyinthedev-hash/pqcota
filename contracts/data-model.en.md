@@ -165,14 +165,14 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 **Seen again as lanes**: observed (`CollectionResult`, `ObservedEdge`) → derived (`Finding`, `QuantumPosture`) → declared/metadata (`MachineProfile`, `Decision`) → action (`ProvisioningRecord`). `node_id` is the anchor threading every lane, and `app_key(s)` attributes crypto assets to apps, flowing from discovery all the way to provisioning.
 
 > **`app_key` is not always filled.** `Finding` and `ProvisioningRecord` come straight from the process
-> that was observed, so they always attribute. **`ObservedEdge` reaches the app from v0.3.0 on, but not
-> always** — passive wire observation carries no PID of its own, so the socket inode is correlated
-> against `/proc/*/fd` at capture time to fill `app_key`.
+> that was observed, so they always attribute. **`ObservedEdge` reaches the app from v0.3.0 on, but only
+> while the socket is still open at lookup time** — passive wire observation carries no PID of its own,
+> so the socket inode has to be correlated against `/proc/*/fd` to fill `app_key`.
 >
-> **It is not always filled** — a connection that closed quickly is already gone by lookup time, and
-> without enough permission another process cannot be read. So an **empty `app_key` means "could not
-> attribute", not "this edge has no app"**, and the completeness note says which. The path for a person
-> to fill what was missed is in [under review §5.2](../docs/under-review.en.md) (v0.4.0).
+> A connection that closed quickly is therefore blank, and so is one whose process could not be read for
+> lack of permission. An **empty `app_key` means "could not attribute", not "this edge has no app"**, and
+> the completeness note says which. The path for a person to fill what was missed is in
+> [under review §5.2](../docs/under-review.en.md) (v0.4.0).
 
 ---
 
