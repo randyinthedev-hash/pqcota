@@ -174,6 +174,38 @@ The limit is clear: **the socket has to be alive at the moment of capture.** Sho
 missed. What is missed stays blank with a lower `evidence_strength` — as long as it is not written down
 as absent.
 
+#### What measuring it revealed
+
+The correlation was tried against real TCP connections on Linux hardware. **It works** — an inode yields
+a PID and its cgroup. But three things the design did not mention came out.
+
+**① Several processes hold one socket.** File descriptors are inherited, so children keep a connection
+their parent opened. The measurement found **three PIDs** on one inode (`bash` plus its two `sleep`
+children). Reading `comm` off the first hit answers `sleep`, but **the process that opened the connection
+was `bash`.** Taking the first PID found attributes the edge to the wrong app.
+
+→ A rule is needed: among the PIDs holding the same inode, take **the shallowest one up the parent
+chain.** If an ancestor is in the set, that is the side that opened the socket.
+
+**② The race is worse than assumed.** Right after opening and immediately closing three connections,
+`/proc/net/tcp` held **zero** of them. "Correlate at capture time" was the plan, but the socket can
+already be gone between seeing the handshake on the wire and reading `/proc`. **Attribution is
+best-effort** — an implementation can narrow that window, not close it.
+
+→ So **what is missed must not be written as "no app".** An empty `app_key` means "could not attribute",
+not "this edge has no app", and drawing that line is what the completeness map already does. The rule
+this repo keeps for observation gaps applies unchanged to attribution.
+
+**③ Another user's file descriptors are not readable.** As an ordinary user, `/proc/1/fd` is denied.
+netcap already requires `CAP_NET_RAW`, and **that is not enough here.** Missing something for lack of
+permission is also "could not attribute", not "no app" — and since the reason differs from ②, it is
+worth recording separately.
+
+**What the app key comes from** — the contract defines `app_key` as a *"machine-scoped stable key
+(systemd unit name, exe path, …)"*. In the measurement `comm` gave `sleep` (unstable), `exe` gave
+`/usr/bin/sleep` (a path, but not an app), and **`cgroup` gave the systemd unit**. cgroup is closest to
+what the contract describes — and `procs.AppKey` already derives exactly that.
+
 ### 5.2 The manual path — reuse the declared lane
 
 For what the automatic path misses, an operator supplies it. This has the same shape as something that
