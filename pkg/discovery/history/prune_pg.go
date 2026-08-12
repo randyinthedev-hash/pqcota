@@ -36,25 +36,25 @@ func (p *PgStore) Prune(pol Policy, apply bool) (*PruneReport, error) {
 		np := NodePrune{NodeID: node, Snapshots: len(victims), UpTo: victims[len(victims)-1].CreatedAt}
 
 		if err := p.pool.QueryRow(ctx,
-			`SELECT count(*) FROM pqcota_observations WHERE node_id=$1 AND snapshot_id = ANY($2)`,
-			node, ids).Scan(&np.Observations); err != nil {
+			`SELECT count(*) FROM pqcota_observations WHERE org=$1 AND node_id=$2 AND snapshot_id = ANY($3)`,
+			p.org, node, ids).Scan(&np.Observations); err != nil {
 			return nil, err
 		}
 
 		if apply {
 			// 관측 기록 → 스냅샷 순으로 지운다(고아 관측 기록이 남지 않게).
 			if _, err := p.pool.Exec(ctx,
-				`DELETE FROM pqcota_observations WHERE node_id=$1 AND snapshot_id = ANY($2)`, node, ids); err != nil {
+				`DELETE FROM pqcota_observations WHERE org=$1 AND node_id=$2 AND snapshot_id = ANY($3)`, p.org, node, ids); err != nil {
 				return nil, err
 			}
 			if _, err := p.pool.Exec(ctx,
-				`DELETE FROM pqcota_snapshots WHERE node_id=$1 AND id = ANY($2)`, node, ids); err != nil {
+				`DELETE FROM pqcota_snapshots WHERE org=$1 AND node_id=$2 AND id = ANY($3)`, p.org, node, ids); err != nil {
 				return nil, err
 			}
 			if _, err := p.pool.Exec(ctx,
-				`INSERT INTO pqcota_retention_events(node_id,pruned_upto,snapshots,observations,policy)
-				 VALUES($1,$2,$3,$4,$5)`,
-				node, np.UpTo, np.Snapshots, np.Observations, pol.String()); err != nil {
+				`INSERT INTO pqcota_retention_events(org,node_id,pruned_upto,snapshots,observations,policy)
+				 VALUES($1,$2,$3,$4,$5,$6)`,
+				p.org, node, np.UpTo, np.Snapshots, np.Observations, pol.String()); err != nil {
 				return nil, err
 			}
 		}
@@ -67,7 +67,7 @@ func (p *PgStore) Prune(pol Policy, apply bool) (*PruneReport, error) {
 func (p *PgStore) RetentionEvents(nodeID string) ([]RetentionEvent, error) {
 	rows, err := p.pool.Query(context.Background(),
 		`SELECT node_id, pruned_upto, snapshots, observations, policy, executed_at
-		 FROM pqcota_retention_events WHERE node_id=$1 ORDER BY seq ASC`, nodeID)
+		 FROM pqcota_retention_events WHERE org=$1 AND node_id=$2 ORDER BY seq ASC`, p.org, nodeID)
 	if err != nil {
 		return nil, err
 	}

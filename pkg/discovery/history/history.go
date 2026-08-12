@@ -9,6 +9,7 @@ import (
 
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/pqcota/pqcota/pkg/org"
 )
 
 // Snapshot — 디스커버리 상태 스냅샷. 노드별 파생 Finding + 완전성 맵.
@@ -64,7 +65,11 @@ type Store interface {
 }
 
 // MemStore — 인메모리 append-only 구현(테스트·단일 실행용). 영속화는 PgStore.
+//
+// **PgStore와 같은 규칙으로 조직에 묶인다.** 한 MemStore는 한 조직만 담는다 — 테스트가 격리 없는
+// 경로를 타면 실제와 어긋나기 때문이다.
 type MemStore struct {
+	org    org.ID
 	mu     sync.RWMutex
 	seq    int64 // PgStore의 BIGSERIAL에 대응 — 전역 단조증가
 	byNode map[string][]*Snapshot
@@ -73,8 +78,25 @@ type MemStore struct {
 	events []RetentionEvent               // 절단 기록(보존 정책 집행 흔적)
 }
 
-func NewMemStore() *MemStore {
+// NewMemStore — 조직을 대지 않고 연다. org.Default에 묶인다(시그니처를 바꾸지 않는다 —
+// docs/compatibility.md §3).
+func NewMemStore() *MemStore { m, _ := NewMemStoreIn(""); return m }
+
+// NewMemStoreIn — 조직에 묶인 인메모리 저장소. 규칙은 NewPgStoreIn과 같다.
+func NewMemStoreIn(organization string) (*MemStore, error) {
+	o, err := org.Resolve(organization)
+	if err != nil {
+		return nil, err
+	}
+	return newMem(o), nil
+}
+
+// Org — 이 저장소가 묶인 조직.
+func (m *MemStore) Org() org.ID { return m.org }
+
+func newMem(o org.ID) *MemStore {
 	return &MemStore{
+		org:    o,
 		byNode: make(map[string][]*Snapshot),
 		hash:   make(map[string]string),
 		obs:    make(map[string]map[string]*ObsStat),
