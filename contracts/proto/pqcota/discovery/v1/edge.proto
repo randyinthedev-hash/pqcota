@@ -57,4 +57,16 @@ message ObservedEdge {
   uint64 observed_count = 10;           // 관측 횟수(빈도) — confidence 입력(§3.5).
   google.protobuf.Timestamp first_seen = 11;
   google.protobuf.Timestamp last_seen = 12;
+
+  // 이 엣지를 연 애플리케이션(§1.5 자산 귀속). (src_node_id, app_key)가 전역 유일.
+  // 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 값의 모양은 asset.proto와 같다
+  // — systemd 유닛명 우선, 없으면 exe 경로.
+  //
+  // **비었다는 것은 "앱이 없다"가 아니라 "귀속하지 못했다"이다.** 귀속은 best-effort다:
+  // 짧게 붙었다 끊긴 연결은 /proc을 읽는 시점에 이미 없고, 권한이 모자라면 남의 프로세스
+  // fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note가 말한다 — 관측 갭과 같은 규칙이다.
+  string app_key = 13;
+  // app_key를 무엇에서 뽑았나 — "systemd-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
+  // 근거가 다르면 신뢰도가 다르므로 값만 두고 출처를 버리지 않는다.
+  string app_key_kind = 14;
 }

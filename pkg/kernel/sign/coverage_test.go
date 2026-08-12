@@ -91,6 +91,9 @@ func TestTamperBreaksVerification(t *testing.T) {
 		"edge.role":           func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].Role = discoveryv1.EdgeRole_EDGE_ROLE_SERVER },
 		"edge.observed_count": func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].ObservedCount = 1 },
 		"edge.last_seen":      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].LastSeen = timestamppb.Now() },
+		// 귀속을 갈아끼우는 변조 — 어느 앱이 그 통신을 했나가 바뀌면 조치 대상이 바뀐다.
+		"edge.app_key":      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKey = "other.service" },
+		"edge.app_key_kind": func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKeyKind = "exe-path" },
 		"edge 추가": func(r *discoveryv1.CollectionResult) {
 			r.ObservedEdges = append(r.ObservedEdges, &discoveryv1.ObservedEdge{SrcNodeId: "node-a", DstAddr: "10.0.0.3:22"})
 		},
@@ -135,7 +138,7 @@ func TestCanonicalCoversAllFields(t *testing.T) {
 		"Envelope":         9,  // 그중 signature는 서명 대상에서 제외(자기 자신)
 		"MachineIdentity":  7,  // machine_id, hardware_uuid, cloud_instance_id, fqdn, ips, self_assigned_id, derived_from
 		"Completeness":     3,  // layers_covered, layers_missing, note
-		"ObservedEdge":     12, // src, dst_node, dst_addr, port, proto, role, group, cipher, detection, count, first, last
+		"ObservedEdge":     14, // src, dst_node, dst_addr, port, proto, role, group, cipher, detection, count, first, last, app_key, app_key_kind
 	}
 	got := map[string]int{
 		"CollectionResult": (&discoveryv1.CollectionResult{}).ProtoReflect().Descriptor().Fields().Len(),
