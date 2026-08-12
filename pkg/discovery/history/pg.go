@@ -8,6 +8,7 @@ import (
 
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/pqcota/pqcota/pkg/org"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,23 +55,61 @@ CREATE TABLE IF NOT EXISTS pqcota_retention_events (
     executed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_pqcota_ret_node ON pqcota_retention_events(node_id, seq);
+
+-- 조직 축(v0.2.0). 기본값을 두는 이유는 **기존 행을 채우기 위해서다** — 옛 데이터가 어느 조직
+-- 것인지 기계는 모르므로 org.Default로 넣고, 그 사실이 값으로 남는다.
+-- 여러 조직을 한 저장소에 담는 배포는 이행 후 기본값을 뗀다(docs/compatibility.md §5):
+--   ALTER TABLE <t> ALTER COLUMN org DROP DEFAULT;
+-- 그러면 조직을 모르는 옛 바이너리의 INSERT가 NOT NULL 위반으로 터진다 — 조용한 오염 대신
+-- 시끄러운 실패다.
+ALTER TABLE pqcota_snapshots        ADD COLUMN IF NOT EXISTS org TEXT NOT NULL DEFAULT 'default';
+ALTER TABLE pqcota_observations     ADD COLUMN IF NOT EXISTS org TEXT NOT NULL DEFAULT 'default';
+ALTER TABLE pqcota_retention_events ADD COLUMN IF NOT EXISTS org TEXT NOT NULL DEFAULT 'default';
+-- 인덱스 선두가 org다. 조직이 하나뿐인 저장소에서도 손해가 없고(선두 컬럼이 상수), 여럿이면
+-- 조직 안에서만 훑는다. 옛 인덱스는 지우지 않는다 — 지우는 것은 되돌릴 수 없다.
+CREATE INDEX IF NOT EXISTS idx_pqcota_snap_org ON pqcota_snapshots(org, node_id, seq);
+CREATE INDEX IF NOT EXISTS idx_pqcota_obs_org  ON pqcota_observations(org, node_id, seq);
+CREATE INDEX IF NOT EXISTS idx_pqcota_ret_org  ON pqcota_retention_events(org, node_id, seq);
 `
 
 // PgStore — Postgres append-only 히스토리(§2.4⑥ 영속화, §1.2 원본 불변).
 // INSERT만 한다 — 스냅샷은 절대 갱신/삭제하지 않는다. 파생 Finding은 protojson으로 보존.
-type PgStore struct{ pool *pgxpool.Pool }
+//
+// **핸들이 조직에 묶인다.** 모든 질의가 그 조건을 달고 나가고, 빼는 방법이 없다 — 질의마다
+// 기억할 일이 없으니 잊을 일도 없다.
+type PgStore struct {
+	pool *pgxpool.Pool
+	org  org.ID
+}
 
+// NewPgStore — 조직을 대지 않고 연다. org.Default에 묶인다.
+//
+// 시그니처를 바꾸지 않는다(docs/compatibility.md §3). 여러 조직을 담는 배포는
+// PQCOTA_REQUIRE_ORG=1로 이 경로를 막고 NewPgStoreIn을 쓴다.
 func NewPgStore(ctx context.Context, dsn string) (*PgStore, error) {
+	return NewPgStoreIn(ctx, dsn, "")
+}
+
+// NewPgStoreIn — 조직에 묶인 저장소를 연다. organization이 빈 문자열이면 org.Resolve의 규칙을
+// 따른다(기본 조직, 단 필수 모드에서는 에러).
+func NewPgStoreIn(ctx context.Context, dsn, organization string) (*PgStore, error) {
+	o, err := org.Resolve(organization)
+	if err != nil {
+		return nil, err
+	}
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := pool.Exec(ctx, schemaSQL); err != nil {
+	if err := ensureSchema(ctx, pool); err != nil {
 		pool.Close()
 		return nil, err
 	}
-	return &PgStore{pool: pool}, nil
+	return &PgStore{pool: pool, org: o}, nil
 }
+
+// Org — 이 핸들이 묶인 조직.
+func (p *PgStore) Org() org.ID { return p.org }
 
 func (p *PgStore) Close() { p.pool.Close() }
 
@@ -98,8 +137,8 @@ func (p *PgStore) Append(s *Snapshot) error {
 	var prevAt time.Time
 	err = p.pool.QueryRow(ctx,
 		`SELECT id, seq, created_at FROM pqcota_snapshots
-		 WHERE node_id=$1 AND content_hash=$2 ORDER BY seq DESC LIMIT 1`,
-		s.NodeID, hash).Scan(&prevID, &prevSeq, &prevAt)
+		 WHERE org=$1 AND node_id=$2 AND content_hash=$3 ORDER BY seq DESC LIMIT 1`,
+		p.org, s.NodeID, hash).Scan(&prevID, &prevSeq, &prevAt)
 	switch {
 	case err == nil:
 		// 직전 스냅샷과 같은 내용인지 확인 — 중간에 변했다 되돌아온 경우도 그 최신 동일본을 가리킨다.
@@ -111,9 +150,9 @@ func (p *PgStore) Append(s *Snapshot) error {
 
 	// seq·created_at은 DB가 부여한다 — RETURNING으로 되받아 호출자의 스냅샷에 채운다.
 	if err := p.pool.QueryRow(ctx,
-		`INSERT INTO pqcota_snapshots(id,node_id,ruleset_ver,findings,completeness,edges,content_hash,excluded_by_scope)
-		 VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING seq, created_at`,
-		s.ID, s.NodeID, s.RulesetVersion, fj, cj, ej, hash, s.ExcludedByScope).Scan(&s.Seq, &s.CreatedAt); err != nil {
+		`INSERT INTO pqcota_snapshots(org,id,node_id,ruleset_ver,findings,completeness,edges,content_hash,excluded_by_scope)
+		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING seq, created_at`,
+		p.org, s.ID, s.NodeID, s.RulesetVersion, fj, cj, ej, hash, s.ExcludedByScope).Scan(&s.Seq, &s.CreatedAt); err != nil {
 		return err
 	}
 	s.Created = true
@@ -122,8 +161,8 @@ func (p *PgStore) Append(s *Snapshot) error {
 
 func (p *PgStore) observe(ctx context.Context, nodeID, snapID, ruleset string) error {
 	_, err := p.pool.Exec(ctx,
-		`INSERT INTO pqcota_observations(node_id,snapshot_id,ruleset_ver) VALUES($1,$2,$3)`,
-		nodeID, snapID, ruleset)
+		`INSERT INTO pqcota_observations(org,node_id,snapshot_id,ruleset_ver) VALUES($1,$2,$3,$4)`,
+		p.org, nodeID, snapID, ruleset)
 	return err
 }
 
@@ -131,7 +170,7 @@ func (p *PgStore) observe(ctx context.Context, nodeID, snapID, ruleset string) e
 func (p *PgStore) ObservationStats(nodeID string) (map[string]ObsStat, error) {
 	rows, err := p.pool.Query(context.Background(),
 		`SELECT snapshot_id, count(*), min(observed_at), max(observed_at)
-		 FROM pqcota_observations WHERE node_id=$1 GROUP BY snapshot_id`, nodeID)
+		 FROM pqcota_observations WHERE org=$1 AND node_id=$2 GROUP BY snapshot_id`, p.org, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +193,7 @@ const snapCols = `seq,id,node_id,ruleset_ver,findings,completeness,edges,created
 func (p *PgStore) Latest(nodeID string) (*Snapshot, error) {
 	row := p.pool.QueryRow(context.Background(),
 		`SELECT `+snapCols+` FROM pqcota_snapshots
-		 WHERE node_id=$1 ORDER BY seq DESC LIMIT 1`, nodeID)
+		 WHERE org=$1 AND node_id=$2 ORDER BY seq DESC LIMIT 1`, p.org, nodeID)
 	return scanSnapshot(row)
 }
 
@@ -162,13 +201,13 @@ func (p *PgStore) Latest(nodeID string) (*Snapshot, error) {
 func (p *PgStore) ByID(id string) (*Snapshot, error) {
 	row := p.pool.QueryRow(context.Background(),
 		`SELECT `+snapCols+` FROM pqcota_snapshots
-		 WHERE id=$1 ORDER BY seq DESC LIMIT 1`, id)
+		 WHERE org=$1 AND id=$2 ORDER BY seq DESC LIMIT 1`, p.org, id)
 	return scanSnapshot(row)
 }
 
 func (p *PgStore) Nodes() ([]string, error) {
 	rows, err := p.pool.Query(context.Background(),
-		`SELECT DISTINCT node_id FROM pqcota_snapshots ORDER BY node_id`)
+		`SELECT DISTINCT node_id FROM pqcota_snapshots WHERE org=$1 ORDER BY node_id`, p.org)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +226,7 @@ func (p *PgStore) Nodes() ([]string, error) {
 func (p *PgStore) Snapshots(nodeID string) ([]*Snapshot, error) {
 	rows, err := p.pool.Query(context.Background(),
 		`SELECT `+snapCols+` FROM pqcota_snapshots
-		 WHERE node_id=$1 ORDER BY seq ASC`, nodeID)
+		 WHERE org=$1 AND node_id=$2 ORDER BY seq ASC`, p.org, nodeID)
 	if err != nil {
 		return nil, err
 	}
