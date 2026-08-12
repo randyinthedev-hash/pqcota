@@ -14,6 +14,12 @@ three things: **what was wrong · which version it entered in · what came out w
 out wrong, it says so). Sections of already-published versions are not edited — a defect is recorded
 in the version that fixed it, naming where it started.
 
+**Whether to cut a separate patch release is a distinct call.** The criterion is not a version-number
+rule but *how long a known defect would sit in the latest release*. If the next minor is far off, cut the
+patch (v0.1.3 did). If it ships shortly, carry the fix there — a release that lives for hours only adds
+history. Either way the "What was fixed" section names **which version it entered in**, so the record is
+the same.
+
 ---
 
 ## Roadmap — Upcoming releases (planned)
