@@ -55,13 +55,16 @@ cron, and SSH all are.
 
 ### What was built
 
-- **`pqcota-declare-attribution`** — imports a CSV (`node_id,dst,port,app_key`) as a declared-lane
-  result. A row that does not identify an edge (non-numeric port, missing app_key, missing node_id)
-  **stops rather than being guessed at** — attributing to the wrong app changes what gets acted on.
-- **`AttributionOverlay`** — joins declarations with observations **at read time only**. What
-  observation already filled stays untouched; only blanks are filled, shown as `@app(declared)`, with a
-  line saying how many came from declarations. The index accepts only edges marked
-  `app_key_kind="declared"`, so observation never fills observation.
+- **`pqcota-declare-attribution`** — imports a CSV (`node_id,dst,app_key`) as declarations. A row that
+  does not identify an edge (any of the three empty) **stops rather than being guessed at** —
+  attributing to the wrong app changes what gets acted on.
+- **`pqcota_edge_attribution`** — where declarations live, **outside the node's snapshot timeline.**
+  Ingest separates declarations out and routes them here without creating a snapshot. Declaring the same
+  `(org, node_id, dst)` again overwrites — a declaration is something a person corrects, so it does not
+  follow the append-only rule that observation does.
+- **`AttributionOverlay`** — reads that store at query time and lays it over. What observation already
+  filled stays untouched; only blanks are filled, shown as `@app(declared)`, with a line saying how many
+  came from declarations.
 
 ### What was learned
 
@@ -77,6 +80,18 @@ cron, and SSH all are.
 - **`ObservedEdge.detection_method` must not be used for this.** It says *how the edge was observed*, not
   where the key came from. Putting `UNSPECIFIED` there would **blur the fact that the communication
   really was seen.**
+- **Declarations had to be separated at the storage layer — filtering per view was not enough.** The first
+  attempt put declarations on the same snapshot timeline and filtered them out on screen. Two demo runs
+  showed two leaks: ① a declaration became the node's **latest snapshot**, so the default view showed
+  *1 observed edge instead of 4* (observation appearing to have vanished), and ② history **lined the
+  declaration up as a state change** (a node that had never had 0 assets and 1 edge). `-diff` would have
+  been the third. **Filter per view and every new view leaks the same way** — so the storage was split.
+- **`dst` already carries the port.** The contract defines `dst_addr` as `"ip:port"`, yet the CSV and the
+  store key also held a port — writing the same fact twice means one of them can be wrong and the match
+  fails silently.
+- **In-memory tests cannot prove isolation** — the store objects differ to begin with. Only Postgres,
+  where one table is shared, can measure it (TV-ATTR-7); without that counterpart, a green light reads
+  as isolation.
 
 
 ## v0.3.0 — attributing edges to apps (2026-08-12)
