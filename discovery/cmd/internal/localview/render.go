@@ -19,6 +19,8 @@ import (
 
 // Render — 수집 결과들을 정규화해 인벤토리 뷰 문자열로 만든다.
 func Render(node string, results []*discoveryv1.CollectionResult) (string, error) {
+	// 조직을 대지 않는다 — 이 저장소는 화면을 그리는 동안만 살고 아무것도 남기지 않는다.
+	// 격리할 것이 없는 자리다(적재 경로는 org.FromEnv를 쓴다).
 	snap, err := normalize.Normalize(results, "snap-local", node, "ruleset-1", history.NewMemStore(), nil)
 	if err != nil {
 		return "", fmt.Errorf("정규화: %w", err)
