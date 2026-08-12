@@ -28,7 +28,7 @@ func autoDDL() bool { return os.Getenv(AutoDDLEnv) != "0" }
 // ensureSchema — 스키마를 올리거나, 올리지 않기로 했으면 있는지 확인만 한다.
 func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	if autoDDL() {
-		_, err := pool.Exec(ctx, schemaSQL+rejectionSchemaSQL)
+		_, err := pool.Exec(ctx, schemaSQL+rejectionSchemaSQL+attributionSchemaSQL)
 		return err
 	}
 	var exists bool

@@ -22,6 +22,8 @@ type IngestReport struct {
 	Changed   int // 그중 실질 내용이 바뀌어 **새 스냅샷**이 생긴 노드 수
 	// ExcludedByScope — 자산 스코프 정책으로 관리 대상에서 뺀 finding 수(제외 ≠ 부재 — 고지용).
 	ExcludedByScope int
+	// DeclaredAttributions — 이번에 받은 귀속 선언 수. 관측이 아니므로 Accepted와 섞지 않는다.
+	DeclaredAttributions int
 	// Unverified — 서명을 **확인하지 못한** 건수. 검증 실패(Rejected)와 다르다 — 틀렸다는 것이
 	// 아니라 물어보지 못했다는 것이다. 이 둘을 한 숫자로 합치면 "검증했고 통과했다"와
 	// "검증할 키가 없었다"가 같은 모양이 된다(§2.6).
@@ -91,9 +93,24 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	if o.RequireSignature && o.VerifySig == nil {
 		return nil, ErrSignatureRequired
 	}
+	// 귀속 선언은 **노드의 상태가 아니다** — 스냅샷 타임라인에 넣으면 조회·이력·diff가 저마다
+	// 그것을 걸러 내야 하고, 화면이 늘 때마다 같은 자리가 다시 샌다. 여기서 갈라낸다.
+	results, declared := splitAttributionDeclarations(results)
 	master, verifySig, store := o.Master, o.VerifySig, o.Store
 	snapshotPrefix, rulesetVersion, assetPolicy := o.SnapshotPrefix, o.RulesetVersion, o.AssetPolicy
 	rep := &IngestReport{}
+	if len(declared) > 0 {
+		as, ok := o.Store.(history.AttributionStore)
+		if !ok {
+			return nil, errors.New("귀속 선언이 왔는데 저장소가 그것을 담지 못한다")
+		}
+		for _, a := range declared {
+			if err := as.PutAttribution(a); err != nil {
+				return nil, err
+			}
+		}
+		rep.DeclaredAttributions = len(declared)
+	}
 	rep.Conflicts = CheckIdentity(results) // 사용자 node_id 입력의 중복/충돌을 지문으로 교차검증(§1.4)
 	for _, c := range rep.Conflicts {
 		o.record(rep, nil, c.Key, history.RejectIdentity,
@@ -149,6 +166,43 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	}
 	return rep, nil
 }
+
+// splitAttributionDeclarations — 귀속 선언을 관측 결과에서 갈라낸다.
+//
+// 판정은 내용으로 한다: 자산(CBOM)이 없고, 엣지가 전부 선언 표시를 달고 있으면 선언이다.
+// 관측 결과는 어느 쪽이든 관측한 것을 담고 있으므로 여기 걸리지 않는다.
+func splitAttributionDeclarations(in []*discoveryv1.CollectionResult) ([]*discoveryv1.CollectionResult, []history.EdgeAttribution) {
+	var keep []*discoveryv1.CollectionResult
+	var out []history.EdgeAttribution
+	for _, r := range in {
+		edges := r.GetObservedEdges()
+		if len(r.GetCbomCyclonedx()) > 0 || len(edges) == 0 {
+			keep = append(keep, r)
+			continue
+		}
+		allDeclared := true
+		for _, e := range edges {
+			if e.GetAppKeyKind() != declaredKind || e.GetAppKey() == "" {
+				allDeclared = false
+				break
+			}
+		}
+		if !allDeclared {
+			keep = append(keep, r)
+			continue
+		}
+		for _, e := range edges {
+			out = append(out, history.EdgeAttribution{
+				NodeID: e.GetSrcNodeId(), Dst: e.GetDstAddr(), Port: e.GetPort(), AppKey: e.GetAppKey(),
+			})
+		}
+	}
+	return keep, out
+}
+
+// declaredKind — declaration.KindDeclared와 같은 값. 이 패키지가 declaration을 import하면
+// 순환이 되므로 값을 둔다. 어긋나면 TestDeclaredKindMatches가 실패한다.
+const declaredKind = "declared"
 
 // record — 받지 않은 사실을 저장소에 남긴다. 남길 곳이 없으면 조용히 지나간다(v0.1.x와 같음).
 //

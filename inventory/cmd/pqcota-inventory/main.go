@@ -112,24 +112,10 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 	return out, nil
 }
 
-// declaredOverlay — 저장소의 선언 레인 스냅샷들을 모아 귀속 색인을 만든다.
-//
-// 색인은 `app_key_kind="declared"`인 엣지만 받으므로 관측 스냅샷을 함께 넣어도 오염되지 않는다.
-// 못 읽는 노드가 있어도 조회를 멈추지 않는다 — 선언은 덤이고, 관측을 보여 주는 것이 본업이다.
+// declaredOverlay — 귀속 저장소에서 선언 색인을 만든다. 담지 못하는 저장소면 빈 색인이다.
 func declaredOverlay(store history.Store) *inventory.AttributionOverlay {
-	nodes, err := store.Nodes()
-	if err != nil {
-		return nil
-	}
-	var snaps []*history.Snapshot
-	for _, n := range nodes {
-		ss, err := store.Snapshots(n)
-		if err != nil {
-			continue
-		}
-		snaps = append(snaps, ss...)
-	}
-	return inventory.BuildAttributionOverlay(snaps...)
+	as, _ := store.(history.AttributionStore)
+	return inventory.BuildAttributionOverlay(as)
 }
 
 func mustSnapshot(store history.Store, id string) (*history.Snapshot, error) {

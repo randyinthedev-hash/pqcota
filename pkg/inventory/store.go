@@ -24,8 +24,7 @@ func RenderStore(store history.Store, meta MetaStore) (string, error) {
 	totalAssets := 0
 	var edges []*discoveryv1.ObservedEdge
 	for _, n := range nodes {
-		// 선언만 담은 스냅샷은 노드의 "현재"가 아니다 — 건너뛰고 마지막 **관측**을 보인다.
-		snap, err := LatestObserved(store, n)
+		snap, err := store.Latest(n)
 		if err != nil {
 			return "", err
 		}
