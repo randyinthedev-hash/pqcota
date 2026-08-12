@@ -434,6 +434,9 @@ type Envelope struct {
 	CollectorId      string                 `protobuf:"bytes,1,opt,name=collector_id,json=collectorId,proto3" json:"collector_id,omitempty"`                                                    // 예: "openssl-collector"
 	CollectorVersion string                 `protobuf:"bytes,2,opt,name=collector_version,json=collectorVersion,proto3" json:"collector_version,omitempty"`                                     // 예: "0.1.0"
 	DetectionMethod  DetectionMethod        `protobuf:"varint,3,opt,name=detection_method,json=detectionMethod,proto3,enum=pqcota.common.v1.DetectionMethod" json:"detection_method,omitempty"` // 이 수집의 주 탐지 방법
+	// 이 수집이 **실제로 일어난** 시각. collector가 캡처 시점에 채운다 — 적재·출력 시각이 아니다.
+	// 비우지 않는다: Envelope의 목적이 provenance이고, 서명(§2.6)이 이 값을 덮는다.
+	// 관측에 실패한 결과(완전성 갭)에도 채운다 — **언제 시도했는지**가 갭 기록의 근거다.
 	CollectedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=collected_at,json=collectedAt,proto3" json:"collected_at,omitempty"`
 	TargetNodeId     string                 `protobuf:"bytes,5,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`           // 스코프 마스터 앵커 = 권위 머신 ID (§1.4)
 	ScopeMasterRef   string                 `protobuf:"bytes,6,opt,name=scope_master_ref,json=scopeMasterRef,proto3" json:"scope_master_ref,omitempty"`     // 대조 대상 CMDB 스냅샷 참조

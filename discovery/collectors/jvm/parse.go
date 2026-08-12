@@ -7,10 +7,16 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// now — 수집 시각의 출처. 테스트가 갈아끼울 수 있게 변수로 둔다(시그니처는 건드리지 않는다).
+var now = time.Now
 
 // Provider — getProviders() 실체의 한 항목(등록 순서 포함, 수용 원칙 §2.2).
 type Provider struct {
@@ -96,6 +102,7 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 			CollectorId:      "jvm-collector",
 			CollectorVersion: "0.1.0",
 			DetectionMethod:  dm,
+			CollectedAt:      timestamppb.New(now()),
 			TargetNodeId:     node,
 			CollectorLicense: "Apache-2.0",
 		},

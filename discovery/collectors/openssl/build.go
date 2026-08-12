@@ -1,10 +1,17 @@
 package openssl
 
 import (
+	"time"
+
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
 	"github.com/pqcota/pqcota/pkg/discovery/normalize"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// now — 수집 시각의 출처. 테스트가 갈아끼울 수 있게 변수로 둔다(시그니처는 건드리지 않는다).
+var now = time.Now
 
 // BuildResult — 탐지 결과를 정규화된 CBOM Envelope(CollectionResult)로. 노드 단위 집계에 쓴다.
 // dets가 비면 프로세스 계층 미커버(갭). CycloneDX + pqcota properties(§3.2).
@@ -32,6 +39,7 @@ func BuildResult(node string, dets []Detection) *discoveryv1.CollectionResult {
 			CollectorId:      "openssl-collector",
 			CollectorVersion: "0.1.0",
 			DetectionMethod:  commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
+			CollectedAt:      timestamppb.New(now()),
 			TargetNodeId:     node,
 			CollectorLicense: "Apache-2.0",
 		},

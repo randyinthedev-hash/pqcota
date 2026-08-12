@@ -8,6 +8,12 @@ English · [한국어](RELEASE_NOTES.md)
 
 Records the **goals** and **results** per version. Updated as versions advance, newest on top.
 
+Sections are split by the **kind** of content — **What was built** · **What was learned** ·
+**What was fixed**. A defect is not dressed up as a feature; it gets its own section, which states
+three things: **what was wrong · which version it entered in · what came out wrong** (if nothing came
+out wrong, it says so). Sections of already-published versions are not edited — a defect is recorded
+in the version that fixed it, naming where it started.
+
 ---
 
 ## Roadmap — Upcoming releases (planned)
@@ -19,6 +25,17 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   socket inodes (`/proc/net/tcp`) against `/proc/*/fd` at capture time fills in `app_key` (a purely
   additive contract change). What the automatic path misses arrives through the declared lane, and no
   admin UI is built — the design and the reasoning: [designs under review](docs/under-review.en.md).
+
+  **Three central-ingest items** ship in the same release. Each applies a principle this repo already
+  keeps to the ingest path.
+  - **Persist rejections, off-scope entries, and identity conflicts.** `IngestReport` is a return value
+    today: printed, then gone — the same reason `pqcota_retention_events` records what pruning removed.
+    Without it, "something was sent wrong" and "nothing happened" are indistinguishable.
+  - **A mandatory signature-verification mode.** Today, with no verifier configured, results pass
+    silently (on the premise that transport security stands in). For paths where that premise does not
+    hold, report the unverified count and fail in mandatory mode.
+  - **Pin the `raw_capture` convention in the contract comment** — no file contents, packet payloads, or
+    credentials. Today only collector discipline keeps this; the contract does not say it.
 
 - **v0.3.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.md) (Korean).
 - **v0.4.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.md) (Korean).
@@ -41,6 +58,43 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.1.3 — the collection timestamp was empty (2026-08-12)
+**Goal** — fix one defect that had been there since v0.1.0. No functional change. It surfaced while a
+downstream consumer was designing a per-result deduplication key.
+
+### What was fixed
+
+- **`Envelope.collected_at` was empty** (v0.1.0–v0.1.2 — four of the five places a result is built).
+
+  **What was wrong** — only **one** place filled it: the openssl collector's gRPC service path. The jvm
+  collector, the network collector, and the openssl **CLI path the demo actually uses**
+  (`pqcota-nodescan` → `BuildResult`) emitted results with it left empty. Same collector, different
+  provenance depending on which door the result came out of.
+
+  **What came out wrong** — **nothing did.** The only reader of this value inside the repo is
+  `sign.Canonical`, and the inventory's "when was this seen" comes from the ingest timestamp
+  (`pqcota_observations.observed_at`). What was wrong is that **the signature was covering an empty
+  field** — the collection time was inside the signed range, and what got signed was "we don't know
+  when we looked".
+
+  **When it would start coming out wrong** — the moment anything reads it. The jvm collector emits
+  **one result per JVM**, so a receiver keying deduplication on `(collector_id, node_id, collected_at)`
+  would **collapse several JVMs on one node into one.** It is latent, which is why the fix did not wait
+  for a release.
+
+  **Why it went unseen** — `collected_at` was the **only one of the Envelope's nine fields without a
+  comment**. So the comment was fixed too: what the value means (not the ingest or output time), and
+  that it **is filled on failed collections as well** — when the attempt happened is the basis of the
+  gap record.
+
+  **Signature compatibility** — `Canonical` reads the value out of the message, so **existing signatures
+  remain valid**: an old result signed with a zero timestamp still canonicalizes to the same bytes. The
+  contract change is comment-only, so `buf breaking` stays clean.
+
+  **API compatibility** — no signature changed. The clock is a package variable (`var now = time.Now`)
+  that tests swap out. Three regression tests, one per collector, hold the place.
+
 
 ## v0.1.2 — Putting reconciliation state in the vocabulary (2026-08-11)
 
