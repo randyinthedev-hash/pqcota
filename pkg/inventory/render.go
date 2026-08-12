@@ -9,6 +9,7 @@ import (
 
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
 	"github.com/pqcota/pqcota/pkg/discovery/history"
+	"github.com/pqcota/pqcota/pkg/inventory/declaration"
 	"github.com/pqcota/pqcota/pkg/kernel/posture"
 )
 
@@ -124,16 +125,32 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 // RenderDetail — 스냅샷 단건 상세: 자산 뷰 + 그 스냅샷의 관측 엣지.
 // (Render는 누적 뷰가 쓰므로 건드리지 않고, 엣지는 상세에서만 펼친다.)
 func RenderDetail(snap *history.Snapshot) string {
+	return RenderDetailWith(snap, nil)
+}
+
+// RenderDetailWith — 선언된 귀속을 얹어 낸다. overlay가 nil이면 [RenderDetail]과 같다.
+//
+// 얹는 일은 **읽을 때만** 일어난다 — 저장된 관측 엣지는 그대로다(검토 중인 설계 §5.2).
+func RenderDetailWith(snap *history.Snapshot, overlay *AttributionOverlay) string {
 	var b strings.Builder
 	b.WriteString(Render(snap))
 	if len(snap.Edges) == 0 {
 		return b.String()
 	}
 	fmt.Fprintf(&b, "\n관측 엣지 %d (이 스냅샷)\n", len(snap.Edges))
+	declared := 0
 	for _, e := range snap.Edges {
+		key, kind := overlay.Apply(e)
+		if kind == declaration.KindDeclared {
+			declared++
+		}
 		fmt.Fprintf(&b, "  %s → %-22s %-5s %-38s %s%s\n",
 			e.GetSrcNodeId(), edgeDst(e), short(e.GetProtocol().String(), "NETWORK_PROTOCOL_"),
-			edgeAlgo(e), postureMark(e), edgeApp(e))
+			edgeAlgo(e), postureMark(e), appMark(key, kind))
+	}
+	if declared > 0 {
+		// 몇 개가 선언으로 메워졌는지 밝힌다 — 화면만 보면 관측과 구별되지 않는다.
+		fmt.Fprintf(&b, "  (그중 %d개는 관측이 아니라 **선언된 귀속**이다 — `(declared)` 표시)\n", declared)
 	}
 	return b.String()
 }
@@ -146,14 +163,14 @@ func RenderDetail(snap *history.Snapshot) string {
 //
 // 근거(`app_key_kind`)가 유닛이 아니면 함께 적는다. systemd 유닛은 앱 이름이지만 exe 경로는
 // 그렇지 않아서, 같은 값이라도 얼마나 믿을지가 다르다.
-func edgeApp(e *discoveryv1.ObservedEdge) string {
-	if e.GetAppKey() == "" {
+func appMark(key, kind string) string {
+	if key == "" {
 		return "  @?"
 	}
-	if k := e.GetAppKeyKind(); k != "" && k != "systemd-unit" {
-		return "  @" + e.GetAppKey() + "(" + k + ")"
+	if kind != "" && kind != "systemd-unit" {
+		return "  @" + key + "(" + kind + ")"
 	}
-	return "  @" + e.GetAppKey()
+	return "  @" + key
 }
 
 // RenderDiff — 두 스냅샷 사이의 변화를 관측 사실로만 서술한다(추가·사라짐·변경).

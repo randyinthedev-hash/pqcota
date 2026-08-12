@@ -10,7 +10,7 @@
 
 | 레벨 | 수 | 어디서 도나 |
 |---|---|---|
-| **unit** | 185 | 어디서나. 입력은 테스트 내부 상수 |
+| **unit** | 189 | 어디서나. 입력은 테스트 내부 상수 |
 | **integration** | 11 | **리눅스** 필요(`//go:build linux`) — 실 crypto/tls·실물 sshd·`CAP_NET_RAW`·실 JVM·Postgres |
 | **e2e** | 1 | 리눅스 + Docker — [데모](../demo/integration-verification.md). Go 테스트가 아니라 데모 6단계다 |
 

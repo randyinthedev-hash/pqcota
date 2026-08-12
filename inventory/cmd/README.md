@@ -36,6 +36,31 @@ pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 
 미등재 노드의 결과는 버리지 않고 **등재요청**으로 남는다.
 
+### `pqcota-declare-attribution`
+
+```bash
+pqcota-declare-attribution [--out <dir>] <attribution.csv>   # CSV: node_id,dst,port,app_key
+pqcota-ingest <dir>                                          # 선언 레인으로 적재
+```
+
+네트워크 관측은 **캡처하는 순간 소켓이 살아 있어야** 앱을 알아낸다. 짧게 붙었다 끊기는
+연결(배치·헬스체크·cron·SSH)은 그 창을 벗어나므로 `app_key`가 빈다 — 조회 화면에서 `@?`로 보이는
+자리다. 그 자리를 운영자가 메우는 길이다.
+
+| | |
+|---|---|
+| `node_id` | 관측 호스트(엣지의 src) |
+| `dst` | 상대. 엣지에 찍힌 주소 그대로 — `pqcota-inventory -snapshot`에서 보인다 |
+| `port` | 엣지의 포트 |
+| `app_key` | 귀속시킬 앱 |
+
+> **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,
+> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 잡은 귀속은 덮지 않고 **빈 자리만**
+> 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
+>
+> 저장을 가르는 이유는 둘이다 — 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과
+> 달라지고, 원본에서 다시 계산할 때 저장된 값과 갈린다.
+
 ### `pqcota-keygen`
 
 ```
