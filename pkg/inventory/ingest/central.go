@@ -193,7 +193,7 @@ func splitAttributionDeclarations(in []*discoveryv1.CollectionResult) ([]*discov
 		}
 		for _, e := range edges {
 			out = append(out, history.EdgeAttribution{
-				NodeID: e.GetSrcNodeId(), Dst: e.GetDstAddr(), Port: e.GetPort(), AppKey: e.GetAppKey(),
+				NodeID: e.GetSrcNodeId(), Dst: e.GetDstAddr(), AppKey: e.GetAppKey(),
 			})
 		}
 	}
