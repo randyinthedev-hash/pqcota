@@ -99,3 +99,37 @@ func TestAttributionCSVRefusesWhatItCannotPlace(t *testing.T) {
 		}
 	}
 }
+
+// TestDeclarationIsNotTheNodeState — **선언이 노드의 "현재"를 덮으면 안 된다.**
+//
+// 선언은 사람이 "이 엣지는 그 앱 것이다"라고 적은 것이지 노드를 다시 관측한 결과가 아니다.
+// 그것이 최신 스냅샷이 되면 직전에 관측한 자산·엣지가 화면에서 사라지고, 읽는 사람은 없어진
+// 줄 안다 — 데모에서 실제로 그렇게 나왔다(관측 엣지 4개가 1개로 보였다).
+func TestDeclarationIsNotTheNodeState(t *testing.T) {
+	obs := observed(t)
+	decl := declaredSnap(t, "web-01,10.0.0.7,22,batch-job.service\n")
+
+	if inventory.IsDeclarationOnly(obs) {
+		t.Error("관측 스냅샷을 선언으로 판정했다 — 관측이 화면에서 사라진다")
+	}
+	if !inventory.IsDeclarationOnly(decl) {
+		t.Error("선언 스냅샷을 관측으로 판정했다 — 그것이 노드의 현재가 된다")
+	}
+
+	// 선언이 나중에 쌓여도 마지막 **관측**이 나온다.
+	store := history.NewMemStore()
+	for _, s := range []*history.Snapshot{obs, decl} {
+		if err := store.Append(&history.Snapshot{
+			ID: s.ID, NodeID: "web-01", RulesetVersion: "r1", Edges: s.Edges, Findings: s.Findings,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := inventory.LatestObserved(store, "web-01")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got == nil || len(got.Edges) != 2 {
+		t.Fatalf("마지막 관측이 아니라 선언이 나왔다: %+v", got)
+	}
+}
