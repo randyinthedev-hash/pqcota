@@ -35,7 +35,7 @@ These explain why the fields split the way they do.
 ### Controlled vocabulary (enums) — shared by all stages
 | Enum | Meaning | Values (0=UNSPECIFIED omitted) |
 |---|---|---|
-| `CryptoRuntime` | the crypto runtime — what is accepted is in the [acceptance principles](../docs/runtime-acceptance.en.md). The first-class branch for every finding, asset, and remediation | `OPENSSL` · `JCA` · `WIN_CNG` (**schema reserved** in v0.1.0, unimplemented — the code that fills it comes in v0.4.0+) |
+| `CryptoRuntime` | the crypto runtime — what is accepted is in the [acceptance principles](../docs/runtime-acceptance.en.md). The first-class branch for every finding, asset, and remediation | `OPENSSL` · `JCA` · `WIN_CNG` (**schema reserved** in v0.1.0, unimplemented — the code that fills it comes in v0.5.0+) |
 | `DetectionMethod` | the detection method. Reported by the collector → the basis for deriving evidence | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
 | `EvidenceStrength` | evidence strength. **Derived from detection_method** (only the core fills it) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
 | `UsageContext` | usage context | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
@@ -72,7 +72,7 @@ The typed view the core normalization pipeline derives from the `cbom_cyclonedx`
 |---|---|---|
 | `OpensslAxes` | the OpenSSL branch axis | `lib`·`version`·`fork` (OpenSSL/BoringSSL/…)·`binding_mode` |
 | `JcaAxes` | the JCA branch axis | `jdk_vendor`·`jdk_version`·`provider_set` (**order is meaningful** — priority negotiation)·`registration_mode` |
-| `CngAxes` | the Windows CNG branch axis (**reserved in v0.1.0**, unimplemented) | `provider_set` (KSP/SSP, **order is meaningful**). The remaining fields, which real observation will settle, are added additively in v0.4.0 |
+| `CngAxes` | the Windows CNG branch axis (**reserved in v0.1.0**, unimplemented) | `provider_set` (KSP/SSP, **order is meaningful**). The remaining fields, which real observation will settle, are added additively in v0.5.0 |
 | **`Finding`** | one crypto asset (a derived view) | `id` (canonical hash)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method` + **`evidence_strength`** (derived) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id` + `ruleset_version` (reproduction) · **`app_keys`** (asset attribution; a shared .so has several) |
 
 ### `asset.proto` — the asset hierarchy (Machine → Application → Process)
@@ -168,7 +168,9 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 > **`ObservedEdge` stops at the node** — passive observation of the wire carries no PID for the socket
 > that opened the connection. So when two processes on one node use the same library, which of them
 > owns an observed edge is unknown. The two observations meet only at `node_id`
-> ([under review — attributing edges to apps](../docs/under-review.en.md), planned for v0.3.0).
+> Since v0.3.0 an edge also carries `app_key` through to the app — though the automatic path misses
+> short-lived connections, so an empty `app_key` means "could not attribute", not "no app"
+> ([under review §5](../docs/under-review.en.md)).
 
 ---
 
