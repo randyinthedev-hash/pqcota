@@ -171,8 +171,10 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 >
 > A connection that closed quickly is therefore blank, and so is one whose process could not be read for
 > lack of permission. An **empty `app_key` means "could not attribute", not "this edge has no app"**, and
-> the completeness note says which. The path for a person to fill what was missed is in
-> [under review §5.2](../docs/under-review.en.md) (v0.4.0).
+> the completeness note says which. From v0.4.0 a person can fill what was missed
+> (`pqcota-declare-attribution`) — but that declaration **does not edit the observation**: it lands in its
+> own lane, and the join happens on the inventory screen
+> ([under review §5.2](../docs/under-review.en.md)).
 
 ---
 
