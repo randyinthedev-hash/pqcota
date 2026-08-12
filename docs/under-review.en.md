@@ -8,6 +8,9 @@ English · [한국어](under-review.md)
 > but are not committed to implementation. The real design documents (discovery, inventory, provisioning)
 > record **only what stands today** — mixing in what is under review makes it impossible to tell fact from plan.
 
+> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](regulation.md)
+> (Korean). Sections of this document itself are referred to in context, as in `§5.1`, or by link.
+
 **Lifetime** — an item ends in one of four ways.
 
 | | |
@@ -212,6 +215,31 @@ For what the automatic path misses, an operator supplies it. This has the same s
 already exists: `pqcota-declare` imports CMDB declarations as `detection_method=UNSPECIFIED`, keeping them
 distinguishable from observations. An attribution a person entered can arrive through the same lane and
 never mix with what was observed. A CSV line is enough.
+
+#### Ingest must not patch the observed edge
+
+Filling the blank `app_key` during ingest looks simpler. **Two things block it.**
+
+**① The signature.** `sign.Canonical` covers `ObservedEdge` including `app_key` (v0.3.0). If ingest
+fills that field, **what is stored differs from what the collector signed.** A declaration is not the
+collector's claim, so it has no place inside that signature.
+
+**② Re-normalization** ([process regulation](regulation.md) §1.2, Korean). When the enrichment rules improve, results are recomputed from
+`raw_capture`. If ingest has edited the observation, the recomputed value and the stored one diverge —
+and it stops being clear which is the original.
+
+**So storage stays separate and the screen joins them.**
+
+| | |
+|---|---|
+| Declaration | its own `CollectionResult` — `detection_method=UNSPECIFIED`, the lane `pqcota-declare` already uses |
+| Observed edge | **untouched.** The signature and re-normalization still hold |
+| Screen | the declaration is laid over the blank as `@payment-gw(declared)` — the basis stays visible |
+
+**The contract is not touched.** `app_key_kind`, added in v0.3.0, already answers "what does this key
+rest on" — `declared` simply joins `systemd-unit` and `exe-path`. `ObservedEdge.detection_method` must
+not be used for this: it says **how the edge itself was observed**, not where the key came from, so
+putting `UNSPECIFIED` there would blur the fact that the communication really was seen.
 
 #### What the demo measured — the automatic path is not enough on its own
 
