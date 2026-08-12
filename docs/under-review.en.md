@@ -141,9 +141,9 @@ reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
 
 ---
 
-## 5. Attributing edges to apps (planned for v0.2.0)
+## 5. Attributing edges to apps (planned for v0.3.0)
 
-> **Decided to do it.** It is v0.2.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
+> **Decided to do it.** It is v0.3.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
 > What remains here is **how** — the three paths below, and what was ruled out.
 
 The two observations **meet only at the node** today.
@@ -192,7 +192,7 @@ button follow.** Both are [explicitly excluded](architecture.en.md#62-explicit-e
 and on a screen "let people approve it here too" is the natural next step. At that moment an observation
 tool becomes a judgment tool.
 
-### 5.4 Why v0.2.0 — ahead of CNG
+### 5.4 Why v0.3.0 — ahead of CNG
 
 This work once sat behind CNG. The reason given was **"settle the attribution model after seeing both a
 file substrate and a registry one"** — on a second look, that reason does not hold.
@@ -212,3 +212,6 @@ place like the v0.1.0 `CngAxes` reservation, **schema present, never run**.
 **It makes what already ships more correct.** Singling out communication that no declaration covers is
 the first value of this observation, and an edge that stops at the node stops at "somewhere on this
 server". What a person acts on is an app, not a server.
+
+**Then why not v0.2.0** — v0.2.0 (the ingest path) is work that a consumer of the contract is **blocked
+on and waiting for**, and it is mechanical. Nothing waits on this. Releases are cut by who is waiting.
