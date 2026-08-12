@@ -51,6 +51,19 @@ pqcota-declare cmdb.csv --out ./declared && pqcota-ingest ./declared   # a CMDB 
 
 To just collate files without a datastore, use `pqcota-discover-view ./results`. Per-command arguments → [inventory/cmd](cmd/README.md) (Korean).
 
+**If several organizations share one datastore** — every command takes the organization from
+`PQCOTA_ORG`. Without it, the store binds to `default`; with `PQCOTA_REQUIRE_ORG=1` it will not open
+at all without one. Each organization keeps its own `node_id` space, so two `web-01`s do not overwrite
+each other.
+
+```bash
+export PQCOTA_ORG=acme PQCOTA_REQUIRE_ORG=1 PQCOTA_REQUIRE_SIGNATURE=1
+```
+
+All three close a path that would otherwise pass quietly — opening without an organization, accepting
+results without being able to ask about their signature, or creating a schema that was not there and
+writing into it. Details in [inventory/cmd](cmd/README.md#pqcota-ingest) (Korean).
+
 ## What comes in
 
 **The command differs by origin**, and so does the detection method recorded alongside it.

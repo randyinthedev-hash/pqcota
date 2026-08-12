@@ -23,7 +23,7 @@ grep -rh '^func Test' --include='*_test.go' . | wc -l          # 전체
 grep -rl '//go:build linux' --include='*_test.go' . | xargs grep -c '^func Test'   # integration
 ```
 
-일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-16이 스킵된다 — **스킵은 통과가 아니다.**
+일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·**TV-ORG-4**·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-16이 스킵된다 — **스킵은 통과가 아니다.**
 
 ## 코드는 어디에
 
