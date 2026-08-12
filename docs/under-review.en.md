@@ -213,5 +213,6 @@ place like the v0.1.0 `CngAxes` reservation, **schema present, never run**.
 the first value of this observation, and an edge that stops at the node stops at "somewhere on this
 server". What a person acts on is an app, not a server.
 
-**Then why not v0.2.0** — v0.2.0 (the ingest path) is work that a consumer of the contract is **blocked
-on and waiting for**, and it is mechanical. Nothing waits on this. Releases are cut by who is waiting.
+**Then why was it not folded into v0.2.0** — v0.2.0 (the ingest path) was work a consumer of the
+contract was **blocked on and waiting for**, and it was mechanical. Nothing waits on this. Releases are
+cut by who is waiting.
