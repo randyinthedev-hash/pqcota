@@ -12,9 +12,9 @@
 
 ## 0. 실행 환경
 
-**케이스는 대부분 unit이다** — 실물 없이 어디서나 돈다. 예외는 **TV-RETENTION-8과 TV-ORG-4** 둘로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
+**케이스는 대부분 unit이다** — 실물 없이 어디서나 돈다. 예외는 **TV-RETENTION-8 · TV-ORG-4 · TV-ATTR-7 · TV-ATTR-8** 넷으로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
 
-TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모리 케이스(TV-ORG-3)는 저장소 객체가 애초에 다르므로 통과해도 격리를 증명하지 않는다 — 한 테이블을 공유하는 쪽에서만 잴 수 있다.
+TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.** 인메모리 케이스는 저장소 객체가 애초에 다르므로 통과해도 격리를 증명하지 않는다 — 한 테이블을 공유하는 쪽에서만 잴 수 있다.
 
 적재→조회→이력→절단→스코프 **종단**은 여기 케이스가 아니라 [데모 5/6](../demo/integration-verification.md)이 확인한다.
 
@@ -76,6 +76,8 @@ TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모�
 | [TV-ATTR-0](../pkg/inventory/edge_app_test.go) | `TestUnattributedEdgeIsMarkedNotBlank` — 귀속된 엣지·exe 경로로 귀속된 엣지·못 잡은 엣지 셋 | `@app` · `@app(exe-path)` · **`@?`**. 완전성 노트도 함께 나온다 | 빈칸은 "그런 열이 없다"와 구별되지 않는다. 무엇을 모르는지 보여야 선언으로 채울지 판단한다 |
 | [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverEntersTheTimeline` — 선언을 적재하고 노드 목록·스냅샷 수를 본다 | 노드가 안 생기고 스냅샷도 0. 귀속 저장소에만 들어간다 | 타임라인에 넣으면 조회·이력·diff가 저마다 걸러 내야 한다 — **실제로 기본 조회와 이력에서 두 번 샜다** |
 | [TV-ATTR-6](../pkg/inventory/attribution_overlay_test.go) | `TestRedeclaringOverwrites` — 같은 엣지를 두 번 선언 | 뒤엣것으로 덮인다 | 선언은 사람이 고치는 것이라 append-only가 아니다 — 관측(불변)과 규칙이 다르다 |
+| [TV-ATTR-7](../pkg/discovery/history/attribution_pg_test.go) | `TestPgAttributionsShareATableAndStillDoNotSeeEachOther` — 두 조직이 **같은 (node, dst)**를 선언한다(`PQCOTA_TEST_DSN` 있을 때) | 각자 자기 것만 본다 | 키가 겹치는 최악의 경우다. 인메모리 케이스는 객체가 달라 통과해도 격리를 증명하지 못한다 |
+| [TV-ATTR-8](../pkg/discovery/history/attribution_pg_test.go) | `TestPgRedeclaringOverwrites` — 같은 엣지를 Postgres에 두 번 선언 | 덮이고, 선언 시각이 남는다 | Pg의 `ON CONFLICT` 경로는 인메모리와 구현이 다르다 — 저장소를 바꿔도 규칙이 유지되는지 따로 본다 |
 | [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation` — 관측이 이미 채운 자리를 노리는 선언을 함께 넣는다 | 관측이 이긴다. 빈 자리만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다 — 선언 레인을 따로 둔 이유가 사라진다 |
 | [TV-ATTR-2](../pkg/inventory/attribution_overlay_test.go) | `TestOverlayDoesNotMutateTheStoredEdge` — 얹어서 렌더한 뒤 원본 확인 | 저장된 엣지의 `app_key`가 그대로 비어 있다 | 서명이 `app_key`를 덮는다. 적재·조회가 관측을 고치면 collector가 서명한 것과 달라지고, 원본에서 재계산할 때도 갈린다 |
 | [TV-ATTR-3](../pkg/inventory/attribution_overlay_test.go) | `TestObservedEdgesDoNotLeakIntoTheOverlay` — 관측 스냅샷으로 색인을 만든다 | 색인이 **빈다** | 관측이 관측을 메우면 어느 것이 근거인지 알 수 없어진다 |
