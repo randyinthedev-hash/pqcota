@@ -9,18 +9,28 @@ import (
 	"github.com/pqcota/pqcota/pkg/discovery/history"
 	"github.com/pqcota/pqcota/pkg/inventory"
 	"github.com/pqcota/pqcota/pkg/inventory/declaration"
+	"github.com/pqcota/pqcota/pkg/inventory/ingest"
 )
 
-func declaredSnap(t *testing.T, csv string) *history.Snapshot {
+// declaredInto — CSV를 적재 경로로 넣는다. 선언은 스냅샷이 아니라 귀속 저장소로 간다.
+func declaredInto(t *testing.T, store *history.MemStore, csv string) {
 	t.Helper()
 	res, err := declaration.ImportAttributionCSV(strings.NewReader(csv))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res) == 0 {
-		t.Fatal("선언이 하나도 안 만들어졌다")
+	rep, err := ingest.IngestWith(res, ingest.IngestOptions{
+		SnapshotPrefix: "d", RulesetVersion: "r1", Store: store,
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	return &history.Snapshot{ID: "d1", NodeID: "web-01", Edges: res[0].GetObservedEdges()}
+	if rep.DeclaredAttributions == 0 {
+		t.Fatal("선언이 귀속 저장소로 가지 않았다")
+	}
+	if rep.Snapshots != 0 {
+		t.Fatalf("선언이 스냅샷을 %d개 만들었다 — 노드의 상태 이력에 줄을 세우면 안 된다", rep.Snapshots)
+	}
 }
 
 func observed(t *testing.T) *history.Snapshot {
@@ -42,8 +52,9 @@ func observed(t *testing.T) *history.Snapshot {
 // 덮어쓰게 두면 사람이 적은 것과 기계가 본 것이 섞이고, 선언 레인을 따로 둔 이유가 사라진다.
 func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 	// 관측이 이미 채운 자리를 노리는 선언을 일부러 넣는다.
-	decl := declaredSnap(t, "node_id,dst,port,app_key\nweb-01,10.0.0.5,443,사람이-적은-다른-앱\nweb-01,10.0.0.7,22,batch-job.service\n")
-	out := inventory.RenderDetailWith(observed(t), inventory.BuildAttributionOverlay(decl))
+	store := history.NewMemStore()
+	declaredInto(t, store, "node_id,dst,port,app_key\nweb-01,10.0.0.5,443,사람이-적은-다른-앱\nweb-01,10.0.0.7,22,batch-job.service\n")
+	out := inventory.RenderDetailWith(observed(t), inventory.BuildAttributionOverlay(store))
 
 	if strings.Contains(out, "사람이-적은-다른-앱") {
 		t.Error("선언이 관측을 덮어썼다")
@@ -66,8 +77,9 @@ func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 // 갈린다. 그래서 합치는 일은 **읽을 때만** 일어나야 한다.
 func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 	snap := observed(t)
-	decl := declaredSnap(t, "web-01,10.0.0.7,22,batch-job.service\n")
-	_ = inventory.RenderDetailWith(snap, inventory.BuildAttributionOverlay(decl))
+	store := history.NewMemStore()
+	declaredInto(t, store, "web-01,10.0.0.7,22,batch-job.service\n")
+	_ = inventory.RenderDetailWith(snap, inventory.BuildAttributionOverlay(store))
 
 	if got := snap.Edges[1].GetAppKey(); got != "" {
 		t.Fatalf("저장된 엣지가 %q로 바뀌었다 — 서명이 덮는 필드다", got)
@@ -77,13 +89,30 @@ func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 	}
 }
 
-// TestObservedEdgesDoNotLeakIntoTheOverlay — 관측 스냅샷을 넣어도 색인이 오염되지 않는다.
+// TestDeclarationNeverEntersTheTimeline — **B안의 핵심이다.**
 //
-// 색인은 `app_key_kind="declared"`인 것만 받는다. 안 그러면 관측이 관측을 메우게 되어,
-// 어느 것이 근거인지 알 수 없어진다.
-func TestObservedEdgesDoNotLeakIntoTheOverlay(t *testing.T) {
-	if n := inventory.BuildAttributionOverlay(observed(t)).Len(); n != 0 {
-		t.Fatalf("관측 엣지 %d개가 선언 색인에 들어갔다", n)
+// 선언이 노드의 스냅샷 타임라인에 들어가면 조회·이력·diff가 저마다 그것을 걸러 내야 하고,
+// 화면이 늘 때마다 같은 자리가 다시 샌다. 실제로 기본 조회와 이력에서 두 번 샜다.
+func TestDeclarationNeverEntersTheTimeline(t *testing.T) {
+	store := history.NewMemStore()
+	declaredInto(t, store, "web-01,10.0.0.7,22,batch-job.service\n") // 스냅샷 0을 안에서 검사한다
+	if nodes, _ := store.Nodes(); len(nodes) != 0 {
+		t.Fatalf("선언이 노드를 만들었다: %v", nodes)
+	}
+	got, err := store.Attributions()
+	if err != nil || len(got) != 1 {
+		t.Fatalf("귀속 저장소에 안 들어갔다: %v %v", got, err)
+	}
+}
+
+// TestRedeclaringOverwrites — 선언은 사람이 고치는 것이라 append-only가 아니다.
+func TestRedeclaringOverwrites(t *testing.T) {
+	store := history.NewMemStore()
+	declaredInto(t, store, "web-01,10.0.0.7,22,first.service\n")
+	declaredInto(t, store, "web-01,10.0.0.7,22,second.service\n")
+	got, _ := store.Attributions()
+	if len(got) != 1 || got[0].AppKey != "second.service" {
+		t.Fatalf("다시 선언했는데 덮이지 않았다: %+v", got)
 	}
 }
 
@@ -97,39 +126,5 @@ func TestAttributionCSVRefusesWhatItCannotPlace(t *testing.T) {
 		if _, err := declaration.ImportAttributionCSV(strings.NewReader(bad)); err == nil {
 			t.Errorf("받아들이면 안 되는 줄을 받았다: %q", strings.TrimSpace(bad))
 		}
-	}
-}
-
-// TestDeclarationIsNotTheNodeState — **선언이 노드의 "현재"를 덮으면 안 된다.**
-//
-// 선언은 사람이 "이 엣지는 그 앱 것이다"라고 적은 것이지 노드를 다시 관측한 결과가 아니다.
-// 그것이 최신 스냅샷이 되면 직전에 관측한 자산·엣지가 화면에서 사라지고, 읽는 사람은 없어진
-// 줄 안다 — 데모에서 실제로 그렇게 나왔다(관측 엣지 4개가 1개로 보였다).
-func TestDeclarationIsNotTheNodeState(t *testing.T) {
-	obs := observed(t)
-	decl := declaredSnap(t, "web-01,10.0.0.7,22,batch-job.service\n")
-
-	if inventory.IsDeclarationOnly(obs) {
-		t.Error("관측 스냅샷을 선언으로 판정했다 — 관측이 화면에서 사라진다")
-	}
-	if !inventory.IsDeclarationOnly(decl) {
-		t.Error("선언 스냅샷을 관측으로 판정했다 — 그것이 노드의 현재가 된다")
-	}
-
-	// 선언이 나중에 쌓여도 마지막 **관측**이 나온다.
-	store := history.NewMemStore()
-	for _, s := range []*history.Snapshot{obs, decl} {
-		if err := store.Append(&history.Snapshot{
-			ID: s.ID, NodeID: "web-01", RulesetVersion: "r1", Edges: s.Edges, Findings: s.Findings,
-		}); err != nil {
-			t.Fatal(err)
-		}
-	}
-	got, err := inventory.LatestObserved(store, "web-01")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got == nil || len(got.Edges) != 2 {
-		t.Fatalf("마지막 관측이 아니라 선언이 나왔다: %+v", got)
 	}
 }

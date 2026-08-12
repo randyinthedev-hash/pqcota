@@ -21,22 +21,21 @@ type edgeKey struct {
 	port uint32
 }
 
-// BuildAttributionOverlay — 선언 레인 스냅샷들에서 색인을 만든다.
+// BuildAttributionOverlay — 귀속 저장소에서 색인을 만든다.
 //
-// 관측 스냅샷을 넣어도 안전하다 — 선언 레인 표시(`app_key_kind="declared"`)가 없는 엣지는
-// 무시하므로, 관측이 이 색인에 섞여 들어오지 않는다.
-func BuildAttributionOverlay(snaps ...*history.Snapshot) *AttributionOverlay {
+// **스냅샷을 읽지 않는다.** 선언은 노드의 상태 이력 밖에 산다 — 거기 넣으면 조회·이력·diff가
+// 저마다 그것을 걸러 내야 하고, 화면이 늘 때마다 같은 자리가 다시 샌다.
+func BuildAttributionOverlay(store history.AttributionStore) *AttributionOverlay {
 	o := &AttributionOverlay{byEdge: map[edgeKey]string{}}
-	for _, s := range snaps {
-		if s == nil {
-			continue
-		}
-		for _, e := range s.Edges {
-			if e.GetAppKeyKind() != declaration.KindDeclared || e.GetAppKey() == "" {
-				continue
-			}
-			o.byEdge[edgeKey{e.GetSrcNodeId(), e.GetDstAddr(), e.GetPort()}] = e.GetAppKey()
-		}
+	if store == nil {
+		return o
+	}
+	as, err := store.Attributions()
+	if err != nil {
+		return o // 선언은 덤이다 — 못 읽어도 관측을 보여 주는 본업은 멈추지 않는다
+	}
+	for _, a := range as {
+		o.byEdge[edgeKey{a.NodeID, a.Dst, a.Port}] = a.AppKey
 	}
 	return o
 }

@@ -74,7 +74,8 @@ TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모�
 | [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent` — 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 구멍이 "관측 안 함"과 구분되지 않는다 |
 | [TV-RETENTION-8](../pkg/discovery/history/pg_test.go) | `TestPgStore` — Postgres 영속(`PQCOTA_TEST_DSN` 있을 때) | 2층 저장·조회가 인메모리와 같은 계약 | 저장소를 바꿔도 이력의 뜻이 달라지지 않는다 |
 | [TV-ATTR-0](../pkg/inventory/edge_app_test.go) | `TestUnattributedEdgeIsMarkedNotBlank` — 귀속된 엣지·exe 경로로 귀속된 엣지·못 잡은 엣지 셋 | `@app` · `@app(exe-path)` · **`@?`**. 완전성 노트도 함께 나온다 | 빈칸은 "그런 열이 없다"와 구별되지 않는다. 무엇을 모르는지 보여야 선언으로 채울지 판단한다 |
-| [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationIsNotTheNodeState` — 관측 뒤에 선언을 쌓고 최신을 묻는다 | 마지막 **관측**이 나온다. 선언만 담은 스냅샷은 노드의 현재가 아니다 | 데모에서 실제로 관측 엣지 4개가 1개로 보였다 — 선언이 최신이 되어 관측을 덮었다 |
+| [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverEntersTheTimeline` — 선언을 적재하고 노드 목록·스냅샷 수를 본다 | 노드가 안 생기고 스냅샷도 0. 귀속 저장소에만 들어간다 | 타임라인에 넣으면 조회·이력·diff가 저마다 걸러 내야 한다 — **실제로 기본 조회와 이력에서 두 번 샜다** |
+| [TV-ATTR-6](../pkg/inventory/attribution_overlay_test.go) | `TestRedeclaringOverwrites` — 같은 엣지를 두 번 선언 | 뒤엣것으로 덮인다 | 선언은 사람이 고치는 것이라 append-only가 아니다 — 관측(불변)과 규칙이 다르다 |
 | [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation` — 관측이 이미 채운 자리를 노리는 선언을 함께 넣는다 | 관측이 이긴다. 빈 자리만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다 — 선언 레인을 따로 둔 이유가 사라진다 |
 | [TV-ATTR-2](../pkg/inventory/attribution_overlay_test.go) | `TestOverlayDoesNotMutateTheStoredEdge` — 얹어서 렌더한 뒤 원본 확인 | 저장된 엣지의 `app_key`가 그대로 비어 있다 | 서명이 `app_key`를 덮는다. 적재·조회가 관측을 고치면 collector가 서명한 것과 달라지고, 원본에서 재계산할 때도 갈린다 |
 | [TV-ATTR-3](../pkg/inventory/attribution_overlay_test.go) | `TestObservedEdgesDoNotLeakIntoTheOverlay` — 관측 스냅샷으로 색인을 만든다 | 색인이 **빈다** | 관측이 관측을 메우면 어느 것이 근거인지 알 수 없어진다 |
