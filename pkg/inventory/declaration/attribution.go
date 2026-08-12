@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
@@ -21,12 +20,13 @@ const KindDeclared = "declared"
 // EdgeAttribution — 사람이 지정한 엣지→앱 귀속 한 건.
 type EdgeAttribution struct {
 	NodeID string // 관측 호스트(엣지의 src)
-	Dst    string // 상대 — "ip:port"의 ip이거나 해소된 노드 ID
-	Port   uint32
+	// Dst — 엣지에 찍힌 상대 주소 그대로. 계약이 `dst_addr`를 `"ip:port"`로 정하므로 포트가
+	// 이미 들어 있다 — 따로 받으면 같은 정보를 두 번 적게 되고, 한쪽만 틀리면 조용히 안 맞는다.
+	Dst    string
 	AppKey string
 }
 
-// ImportAttributionCSV — 선언 CSV(node_id,dst,port,app_key)를 선언 레인 CollectionResult로 임포트.
+// ImportAttributionCSV — 선언 CSV(node_id,dst,app_key)를 선언 레인 CollectionResult로 임포트.
 //
 // **관측 결과를 고치지 않는다.** 이건 자기 레인으로 따로 쌓이고(detection_method=UNSPECIFIED),
 // 관측 엣지와 합치는 일은 화면에서 한다 — 적재가 관측을 고치면 collector의 서명과 어긋나고,
@@ -41,25 +41,21 @@ func ImportAttributionCSV(r io.Reader) ([]*discoveryv1.CollectionResult, error) 
 	byNode := map[string][]EdgeAttribution{}
 	var order []string
 	for i, row := range rows {
-		if len(row) < 4 {
+		if len(row) < 3 {
 			continue
 		}
 		if i == 0 && strings.EqualFold(strings.TrimSpace(row[0]), "node_id") {
 			continue // 헤더
 		}
-		port, err := strconv.ParseUint(strings.TrimSpace(row[2]), 10, 32)
-		if err != nil {
-			// 포트를 못 읽으면 그 줄은 어느 엣지를 가리키는지 알 수 없다. 추측하지 않고 알린다.
-			return nil, fmt.Errorf("%d행: 포트를 읽을 수 없다(%q)", i+1, row[2])
-		}
 		a := EdgeAttribution{
 			NodeID: strings.TrimSpace(row[0]),
 			Dst:    strings.TrimSpace(row[1]),
-			Port:   uint32(port),
-			AppKey: strings.TrimSpace(row[3]),
+			AppKey: strings.TrimSpace(row[2]),
 		}
-		if a.NodeID == "" || a.AppKey == "" {
-			return nil, fmt.Errorf("%d행: node_id와 app_key는 비울 수 없다", i+1)
+		// 셋 중 하나라도 비면 어느 엣지를 가리키는지 알 수 없다. 추측하지 않고 알린다 —
+		// 틀린 앱에 귀속하면 조치 대상이 바뀐다.
+		if a.NodeID == "" || a.Dst == "" || a.AppKey == "" {
+			return nil, fmt.Errorf("%d행: node_id·dst·app_key는 셋 다 있어야 한다", i+1)
 		}
 		if _, ok := byNode[a.NodeID]; !ok {
 			order = append(order, a.NodeID)
@@ -80,13 +76,12 @@ func buildDeclaredAttribution(node string, as []EdgeAttribution) *discoveryv1.Co
 		edges = append(edges, &discoveryv1.ObservedEdge{
 			SrcNodeId: a.NodeID,
 			DstAddr:   a.Dst,
-			Port:      a.Port,
 			AppKey:    a.AppKey,
 			// 이 엣지는 관측된 것이 아니다 — 귀속을 나르는 그릇일 뿐이다.
 			DetectionMethod: commonv1.DetectionMethod_DETECTION_METHOD_UNSPECIFIED,
 			AppKeyKind:      KindDeclared,
 		})
-		fmt.Fprintf(&raw, "%s,%s,%d,%s\n", a.NodeID, a.Dst, a.Port, a.AppKey)
+		fmt.Fprintf(&raw, "%s,%s,%s\n", a.NodeID, a.Dst, a.AppKey)
 	}
 	return &discoveryv1.CollectionResult{
 		Envelope: &commonv1.Envelope{

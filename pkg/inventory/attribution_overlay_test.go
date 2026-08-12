@@ -53,7 +53,7 @@ func observed(t *testing.T) *history.Snapshot {
 func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 	// 관측이 이미 채운 자리를 노리는 선언을 일부러 넣는다.
 	store := history.NewMemStore()
-	declaredInto(t, store, "node_id,dst,port,app_key\nweb-01,10.0.0.5,443,사람이-적은-다른-앱\nweb-01,10.0.0.7,22,batch-job.service\n")
+	declaredInto(t, store, "node_id,dst,app_key\nweb-01,10.0.0.5,사람이-적은-다른-앱\nweb-01,10.0.0.7,batch-job.service\n")
 	out := inventory.RenderDetailWith(observed(t), inventory.BuildAttributionOverlay(store))
 
 	if strings.Contains(out, "사람이-적은-다른-앱") {
@@ -78,7 +78,7 @@ func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 	snap := observed(t)
 	store := history.NewMemStore()
-	declaredInto(t, store, "web-01,10.0.0.7,22,batch-job.service\n")
+	declaredInto(t, store, "web-01,10.0.0.7,batch-job.service\n")
 	_ = inventory.RenderDetailWith(snap, inventory.BuildAttributionOverlay(store))
 
 	if got := snap.Edges[1].GetAppKey(); got != "" {
@@ -95,7 +95,7 @@ func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 // 화면이 늘 때마다 같은 자리가 다시 샌다. 실제로 기본 조회와 이력에서 두 번 샜다.
 func TestDeclarationNeverEntersTheTimeline(t *testing.T) {
 	store := history.NewMemStore()
-	declaredInto(t, store, "web-01,10.0.0.7,22,batch-job.service\n") // 스냅샷 0을 안에서 검사한다
+	declaredInto(t, store, "web-01,10.0.0.7,batch-job.service\n") // 스냅샷 0을 안에서 검사한다
 	if nodes, _ := store.Nodes(); len(nodes) != 0 {
 		t.Fatalf("선언이 노드를 만들었다: %v", nodes)
 	}
@@ -108,8 +108,8 @@ func TestDeclarationNeverEntersTheTimeline(t *testing.T) {
 // TestRedeclaringOverwrites — 선언은 사람이 고치는 것이라 append-only가 아니다.
 func TestRedeclaringOverwrites(t *testing.T) {
 	store := history.NewMemStore()
-	declaredInto(t, store, "web-01,10.0.0.7,22,first.service\n")
-	declaredInto(t, store, "web-01,10.0.0.7,22,second.service\n")
+	declaredInto(t, store, "web-01,10.0.0.7,first.service\n")
+	declaredInto(t, store, "web-01,10.0.0.7,second.service\n")
 	got, _ := store.Attributions()
 	if len(got) != 1 || got[0].AppKey != "second.service" {
 		t.Fatalf("다시 선언했는데 덮이지 않았다: %+v", got)
@@ -119,9 +119,9 @@ func TestRedeclaringOverwrites(t *testing.T) {
 // TestAttributionCSVRefusesWhatItCannotPlace — 어느 엣지를 가리키는지 모르는 줄은 받지 않는다.
 func TestAttributionCSVRefusesWhatItCannotPlace(t *testing.T) {
 	for _, bad := range []string{
-		"web-01,10.0.0.7,포트아님,app\n", // 포트를 못 읽으면 어느 엣지인지 모른다
-		"web-01,10.0.0.7,22,\n",      // 귀속할 앱이 없다
-		",10.0.0.7,22,app\n",         // 어느 노드인지 모른다
+		"web-01,10.0.0.7,\n", // 귀속할 앱이 없다
+		",10.0.0.7,app\n",    // 어느 노드인지 모른다
+		"web-01,,app\n",      // 어느 엣지인지 모른다
 	} {
 		if _, err := declaration.ImportAttributionCSV(strings.NewReader(bad)); err == nil {
 			t.Errorf("받아들이면 안 되는 줄을 받았다: %q", strings.TrimSpace(bad))

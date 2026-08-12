@@ -4,9 +4,10 @@
 // 끊기는 연결(배치·헬스체크·cron·SSH)은 그 창을 벗어나므로 `app_key`가 빈다. 그 자리를 운영자가
 // 메우는 길이다.
 //
-//	입력 CSV: node_id,dst,port,app_key
+//	입력 CSV: node_id,dst,app_key
 //	  node_id — 관측 호스트(엣지의 src)
-//	  dst     — 상대. 엣지에 찍힌 주소 그대로(`pqcota-inventory -snapshot`에서 보인다)
+//	  dst     — 상대. 엣지에 찍힌 주소 그대로(`pqcota-inventory -snapshot`에서 보인다).
+//	            계약이 `dst_addr`를 "ip:port"로 정하므로 포트가 이미 들어 있다.
 //
 // usage: pqcota-declare-attribution [--out <dir>] <attribution.csv>
 //
@@ -32,7 +33,7 @@ func main() {
 	flag.Parse()
 	if flag.NArg() != 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-declare-attribution [--out <dir>] <attribution.csv>")
-		fmt.Fprintln(os.Stderr, "  CSV: node_id,dst,port,app_key")
+		fmt.Fprintln(os.Stderr, "  CSV: node_id,dst,app_key")
 		os.Exit(2)
 	}
 

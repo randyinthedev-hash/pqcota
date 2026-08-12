@@ -39,7 +39,7 @@ pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 ### `pqcota-declare-attribution`
 
 ```bash
-pqcota-declare-attribution [--out <dir>] <attribution.csv>   # CSV: node_id,dst,port,app_key
+pqcota-declare-attribution [--out <dir>] <attribution.csv>   # CSV: node_id,dst,app_key
 pqcota-ingest <dir>                                          # 선언 레인으로 적재
 ```
 
@@ -50,8 +50,7 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 | | |
 |---|---|
 | `node_id` | 관측 호스트(엣지의 src) |
-| `dst` | 상대. 엣지에 찍힌 주소 그대로 — `pqcota-inventory -snapshot`에서 보인다 |
-| `port` | 엣지의 포트 |
+| `dst` | 상대. 엣지에 찍힌 주소 그대로 — `pqcota-inventory -snapshot`에서 보인다. **포트를 따로 적지 않는다**: 계약이 `dst_addr`를 `"ip:port"`로 정해 이미 들어 있고, 두 곳에 적으면 한쪽만 틀렸을 때 조용히 안 맞는다 |
 | `app_key` | 귀속시킬 앱 |
 
 > **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,

@@ -15,11 +15,8 @@ type AttributionOverlay struct {
 	byEdge map[edgeKey]string
 }
 
-type edgeKey struct {
-	node string
-	dst  string
-	port uint32
-}
+// edgeKey — (관측 호스트, 상대 주소). 상대 주소가 이미 포트를 담으므로 포트를 따로 두지 않는다.
+type edgeKey struct{ node, dst string }
 
 // BuildAttributionOverlay — 귀속 저장소에서 색인을 만든다.
 //
@@ -35,7 +32,7 @@ func BuildAttributionOverlay(store history.AttributionStore) *AttributionOverlay
 		return o // 선언은 덤이다 — 못 읽어도 관측을 보여 주는 본업은 멈추지 않는다
 	}
 	for _, a := range as {
-		o.byEdge[edgeKey{a.NodeID, a.Dst, a.Port}] = a.AppKey
+		o.byEdge[edgeKey{a.NodeID, a.Dst}] = a.AppKey
 	}
 	return o
 }
@@ -51,7 +48,7 @@ func (o *AttributionOverlay) Apply(e *discoveryv1.ObservedEdge) (key, kind strin
 	if o == nil {
 		return "", ""
 	}
-	if k, ok := o.byEdge[edgeKey{e.GetSrcNodeId(), e.GetDstAddr(), e.GetPort()}]; ok {
+	if k, ok := o.byEdge[edgeKey{e.GetSrcNodeId(), edgeDstKey(e)}]; ok {
 		return k, declaration.KindDeclared
 	}
 	return "", ""
@@ -63,4 +60,13 @@ func (o *AttributionOverlay) Len() int {
 		return 0
 	}
 	return len(o.byEdge)
+}
+
+// edgeDstKey — 선언이 가리키는 상대. 주소가 있으면 그것을, 노드로 해소돼 주소가 비면 노드 ID를
+// 쓴다 — 화면에 보이는 값과 같아야 사람이 그대로 옮겨 적을 수 있다.
+func edgeDstKey(e *discoveryv1.ObservedEdge) string {
+	if a := e.GetDstAddr(); a != "" {
+		return a
+	}
+	return e.GetDstNodeId()
 }

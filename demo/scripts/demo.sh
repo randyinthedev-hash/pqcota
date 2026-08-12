@@ -120,14 +120,12 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot
 # 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
 UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_elements(s.edges) e
   where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
-UNATTR_PORT=$(pg -tAc "select coalesce(e->>'port','0') from pqcota_snapshots s, jsonb_array_elements(s.edges) e
-  where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
 if [ -n "$UNATTR_DST" ]; then
   echo "   ── 귀속 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
   echo "      대상 $UNATTR_DST — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
   docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
-node_id,dst,port,app_key
-$HNODE,$UNATTR_DST,$UNATTR_PORT,batch-runner.service
+node_id,dst,app_key
+$HNODE,$UNATTR_DST,batch-runner.service
 CSV
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
     'pqcota-declare-attribution --out /work/declared-attr /work/attribution.csv && pqcota-ingest /work/declared-attr >/dev/null' \
