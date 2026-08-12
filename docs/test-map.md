@@ -10,8 +10,8 @@
 
 | 레벨 | 수 | 어디서 도나 |
 |---|---|---|
-| **unit** | 180 | 어디서나. 입력은 테스트 내부 상수 |
-| **integration** | 10 | **리눅스** 필요(`//go:build linux`) — 실 crypto/tls·실물 sshd·`CAP_NET_RAW`·실 JVM·Postgres |
+| **unit** | 184 | 어디서나. 입력은 테스트 내부 상수 |
+| **integration** | 11 | **리눅스** 필요(`//go:build linux`) — 실 crypto/tls·실물 sshd·`CAP_NET_RAW`·실 JVM·Postgres |
 | **e2e** | 1 | 리눅스 + Docker — [데모](../demo/integration-verification.md). Go 테스트가 아니라 데모 6단계다 |
 
 케이스는 **테스트 함수 단위**다 — 한 항목이 한 테스트(또는 한 테이블 테스트)에 대응한다. 그래서 테스트가 없는 항목은 감출 곳이 없다.
