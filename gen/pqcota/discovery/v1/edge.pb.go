@@ -203,8 +203,19 @@ type ObservedEdge struct {
 	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — confidence 입력(§3.5).
 	FirstSeen       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=first_seen,json=firstSeen,proto3" json:"first_seen,omitempty"`
 	LastSeen        *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 이 엣지를 연 애플리케이션(§1.5 자산 귀속). (src_node_id, app_key)가 전역 유일.
+	// 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 값의 모양은 asset.proto와 같다
+	// — systemd 유닛명 우선, 없으면 exe 경로.
+	//
+	// **비었다는 것은 "앱이 없다"가 아니라 "귀속하지 못했다"이다.** 귀속은 best-effort다:
+	// 짧게 붙었다 끊긴 연결은 /proc을 읽는 시점에 이미 없고, 권한이 모자라면 남의 프로세스
+	// fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note가 말한다 — 관측 갭과 같은 규칙이다.
+	AppKey string `protobuf:"bytes,13,opt,name=app_key,json=appKey,proto3" json:"app_key,omitempty"`
+	// app_key를 무엇에서 뽑았나 — "systemd-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
+	// 근거가 다르면 신뢰도가 다르므로 값만 두고 출처를 버리지 않는다.
+	AppKeyKind    string `protobuf:"bytes,14,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ObservedEdge) Reset() {
@@ -321,11 +332,25 @@ func (x *ObservedEdge) GetLastSeen() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ObservedEdge) GetAppKey() string {
+	if x != nil {
+		return x.AppKey
+	}
+	return ""
+}
+
+func (x *ObservedEdge) GetAppKeyKind() string {
+	if x != nil {
+		return x.AppKeyKind
+	}
+	return ""
+}
+
 var File_pqcota_discovery_v1_edge_proto protoreflect.FileDescriptor
 
 const file_pqcota_discovery_v1_edge_proto_rawDesc = "" +
 	"\n" +
-	"\x1epqcota/discovery/v1/edge.proto\x12\x13pqcota.discovery.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dpqcota/common/v1/common.proto\"\x9e\x04\n" +
+	"\x1epqcota/discovery/v1/edge.proto\x12\x13pqcota.discovery.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dpqcota/common/v1/common.proto\"\xd9\x04\n" +
 	"\fObservedEdge\x12\x1e\n" +
 	"\vsrc_node_id\x18\x01 \x01(\tR\tsrcNodeId\x12\x1e\n" +
 	"\vdst_node_id\x18\x02 \x01(\tR\tdstNodeId\x12\x19\n" +
@@ -340,7 +365,10 @@ const file_pqcota_discovery_v1_edge_proto_rawDesc = "" +
 	" \x01(\x04R\robservedCount\x129\n" +
 	"\n" +
 	"first_seen\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tfirstSeen\x127\n" +
-	"\tlast_seen\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen*\x82\x01\n" +
+	"\tlast_seen\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x12\x17\n" +
+	"\aapp_key\x18\r \x01(\tR\x06appKey\x12 \n" +
+	"\fapp_key_kind\x18\x0e \x01(\tR\n" +
+	"appKeyKind*\x82\x01\n" +
 	"\x0fNetworkProtocol\x12 \n" +
 	"\x1cNETWORK_PROTOCOL_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14NETWORK_PROTOCOL_TLS\x10\x01\x12\x18\n" +

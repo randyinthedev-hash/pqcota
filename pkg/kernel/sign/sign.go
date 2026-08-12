@@ -98,12 +98,13 @@ func machineCanon(m *commonv1.MachineIdentity) string {
 }
 
 func edgeCanon(e *discoveryv1.ObservedEdge) string {
-	return fmt.Sprintf("%s>%s@%s:%d/%s/%s/%s/%s/%s/%d/%s/%s",
+	return fmt.Sprintf("%s>%s@%s:%d/%s/%s/%s/%s/%s/%d/%s/%s/%s/%s",
 		e.GetSrcNodeId(), e.GetDstNodeId(), e.GetDstAddr(), e.GetPort(),
 		e.GetProtocol(), e.GetRole(), e.GetNegotiatedGroup(), e.GetCipher(),
 		e.GetDetectionMethod(), e.GetObservedCount(),
 		e.GetFirstSeen().AsTime().UTC().Format(time.RFC3339Nano),
-		e.GetLastSeen().AsTime().UTC().Format(time.RFC3339Nano))
+		e.GetLastSeen().AsTime().UTC().Format(time.RFC3339Nano),
+		e.GetAppKey(), e.GetAppKeyKind())
 }
 
 // Sign — priv(base64)로 결과에 서명. 반환값을 envelope.signature에 넣는다.
