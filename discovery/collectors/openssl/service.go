@@ -29,7 +29,7 @@ func (s *Service) now() time.Time {
 	if s.Now != nil {
 		return s.Now()
 	}
-	return time.Now()
+	return now()
 }
 
 // Describe — 능력 신고(§1.6). 코어가 완전성 맵·계층 커버리지·라이선스 UX 판단에 사용.

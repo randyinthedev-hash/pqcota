@@ -1,9 +1,16 @@
 package network
 
 import (
+	"time"
+
 	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// now — 수집 시각의 출처. 테스트가 갈아끼울 수 있게 변수로 둔다(시그니처는 건드리지 않는다).
+var now = time.Now
 
 const (
 	collectorID      = "network-collector"
@@ -63,6 +70,7 @@ func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote stri
 			CollectorId:      collectorID,
 			CollectorVersion: collectorVersion,
 			DetectionMethod:  commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
+			CollectedAt:      timestamppb.New(now()),
 			TargetNodeId:     node,
 			CollectorLicense: collectorLicense,
 		},
@@ -84,6 +92,7 @@ func DegradedResult(node, reason string) *discoveryv1.CollectionResult {
 			CollectorId:      collectorID,
 			CollectorVersion: collectorVersion,
 			DetectionMethod:  commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
+			CollectedAt:      timestamppb.New(now()),
 			TargetNodeId:     node,
 			CollectorLicense: collectorLicense,
 		},
