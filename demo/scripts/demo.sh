@@ -113,6 +113,29 @@ PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order
 echo "   ── 스냅샷 상세(-snapshot): 자산 + 그 스냅샷의 관측 엣지(누적 뷰는 합계만 낸다) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
+# 엣지 귀속 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
+# 그 창을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "귀속하지 못했다"이고**, 그 자리를
+# 사람이 선언으로 메운다. 관측을 고치지 않고 자기 레인으로 들어가며, 메운 것은 (declared)로 표시된다.
+UNATTR=$(pg -tAc "select (e->>'dstAddr')||','||coalesce(e->>'port','0')
+  from pqcota_snapshots s, jsonb_array_elements(s.edges) e
+  where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
+if [ -n "$UNATTR" ]; then
+  echo "   ── 귀속 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
+  echo "      대상 $UNATTR — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
+  docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
+node_id,dst,port,app_key
+$HNODE,${UNATTR%,*},${UNATTR##*,},batch-runner.service
+CSV
+  docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
+    'pqcota-declare-attribution --out /work/declared-attr /work/attribution.csv && pqcota-ingest /work/declared-attr >/dev/null' \
+    | sed 's/^/      /'
+  echo "   ── 다시 조회: 관측 엣지는 그대로고, 빈 자리만 메워진다 ──"
+  docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" \
+    | grep -E '관측 엣지|→|선언된 귀속' | sed 's/^/   /'
+else
+  echo "   (이 창에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
+fi
+
 # 자산 스코프 — 노드는 등재됐어도(§1.4) 그 안에서 계속 관리할 자산만 남긴다. 시스템 기본
 # 라이브러리·패키지 런타임이 섞이면 인벤토리가 잡음에 묻힌다.
 # 내용이 바뀌므로 새 스냅샷이 생긴다 → 바로 이게 -diff로 보일 "실제 변화"다.
