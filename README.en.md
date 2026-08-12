@@ -47,7 +47,7 @@ The same observation is also rendered as a topology — color is posture.
 
 ![Observed topology — color is posture (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
 
-**🔴 is not a verdict of "vulnerable" — it is the observation that a classical algorithm was negotiated.** What to change, and when, is the user's call. Full expected output lives in [demo/expected-output](demo/expected-output/README.md).
+**🔴 is not a verdict of "vulnerable" — it is the observation that a classical algorithm was negotiated.** What to change, and when, is the user's call. Full expected output lives in [demo/expected-output](demo/expected-output/README.md) (Korean).
 
 ## What it does — three stages
 
@@ -85,7 +85,7 @@ Setup, expected output, and how to point it at your own hosts → **[demo/](demo
 
 **To run**
 - Multiple nodes — Ansible on the controller, SSH access to the targets
-- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [discovery/cmd](discovery/cmd/README.md)
+- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [discovery/cmd](discovery/cmd/README.en.md)
 
 ## Build
 
@@ -126,7 +126,7 @@ The collectors are **Linux-only**, so `GOOS=linux` and `CGO_ENABLED=0` (static l
 agnostic) are fixed. The only thing you change per node is `GOARCH`; for the accepted values see the
 [Go documentation](https://go.dev/doc/install/source#environment).
 
-Privileges and environment variables for running the collectors on a node → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
+Privileges and environment variables for running the collectors on a node → [discovery/cmd](discovery/cmd/README.en.md).
 
 Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CONTRIBUTING.en.md).
 

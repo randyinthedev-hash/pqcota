@@ -158,6 +158,7 @@ func main() {
 		`제목만 있고 내용이 없는 절 — 옮기다 본문을 흘렸거나, 쓰다 만 자리다`,
 		"범위 표기의 `~` — GitHub이 취소선으로 읽어 문장 일부에 줄이 그어진다. `–`를 쓸 것",
 		"`§N`을 쓰면서 그게 어느 문서의 절인지 밝히지 않았다 — 처음 읽는 사람은 찾을 방법이 없다",
+		"영문 문서가 한국어 문서를 가리킨다 — 영문 짝이 있으면 그쪽으로, 없으면 `(Korean)`으로 밝힐 것",
 	}
 	hits := make([][]string, len(titles))
 
@@ -188,6 +189,12 @@ func main() {
 						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: 링크 대상 없음 → %s", d, n+1, target))
 					} else if anchor != "" && anchors[p] != nil && !anchors[p][slug(anchor)] {
 						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: 앵커 없음 → %s", d, n+1, target))
+					}
+					// (9) 영문 문서가 한국어 문서를 가리키는 자리. 규칙은 CONTRIBUTING「언어」에
+					// 있다: 영문 짝이 있으면 그쪽을 가리키고, 없으면 `(Korean)`으로 밝힌다.
+					// 손으로 지키면 반드시 어긋난다 — 실제로 28곳이 어긋나 있었다.
+					if msg := crossLang(d, p, line); msg != "" {
+						hits[8] = append(hits[8], fmt.Sprintf("%s:%d: %s → %s", d, n+1, msg, target))
 					}
 				}
 			}
@@ -275,6 +282,26 @@ func loc(file string, idx int, line string) string {
 		s = string(r[:160])
 	}
 	return fmt.Sprintf("%s:%d: %s", file, idx+1, s)
+}
+
+// crossLang — 영문 문서가 한국어 문서를 가리킬 때의 규칙 위반을 말한다. 위반이 없으면 빈 문자열.
+//
+// 언어 전환 헤더와 정본 표시 줄은 **한국어를 가리키는 것이 맞다** — 거기서 영문으로 보내면
+// 읽는 사람이 자기가 보던 언어로 되돌아온다.
+func crossLang(from, to, line string) string {
+	if !strings.HasSuffix(from, ".en.md") || !strings.HasSuffix(to, ".md") || strings.HasSuffix(to, ".en.md") {
+		return ""
+	}
+	if strings.HasPrefix(line, "English ·") || strings.Contains(line, "Translated from the Korean original") {
+		return ""
+	}
+	if _, err := os.Stat(strings.TrimSuffix(to, ".md") + ".en.md"); err == nil {
+		return "영문 짝이 있는데 한국어로 링크"
+	}
+	if !strings.Contains(line, "Korean") {
+		return "한국어 전용 문서인데 `(Korean)` 표시가 없다"
+	}
+	return ""
 }
 
 // checkLicenseTable — 빌드 산출물에 실제로 링크되는 모듈(go list -deps)이 라이선스 문서의 표와

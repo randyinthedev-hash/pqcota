@@ -4,7 +4,7 @@ English · [한국어](README.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](README.md) is authoritative.
 
-The CLIs (Go binaries) of the discovery stage. The names look alike, so this page sorts them into three categories by **which one to use when**. All observation is done by the collectors in ② on the target machine; accumulating what they produce centrally is [inventory/cmd](../../inventory/cmd/README.md)'s job.
+The CLIs (Go binaries) of the discovery stage. The names look alike, so this page sorts them into three categories by **which one to use when**. All observation is done by the collectors in ② on the target machine; accumulating what they produce centrally is [inventory/cmd](../../inventory/cmd/README.md) (Korean)'s job.
 
 > **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](../../docs/regulation.en.md).
 
@@ -195,7 +195,7 @@ It exists to find **what to restart** right before provisioning — a PID is vol
 
 ---
 **When to use what**
-- Observing several nodes and accumulating them into the inventory → run **②** on each node (default `--output json`) → ingest centrally with [`pqcota-ingest`](../../inventory/cmd/README.md).
+- Observing several nodes and accumulating them into the inventory → run **②** on each node (default `--output json`) → ingest centrally with [`pqcota-ingest`](../../inventory/cmd/README.md) (Korean).
 - Just checking one node in place → run **②** with `--output table`. Nothing accumulates.
 
 > All the logic lives in `pkg/discovery/` (normalization, history) and `discovery/collectors/` (collection); these commands are thin entry points that assemble it. Retrieved results are **accumulated into an append-only history** by the inventory's `pqcota-ingest`.

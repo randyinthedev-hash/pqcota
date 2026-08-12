@@ -28,9 +28,9 @@ flowchart LR
 
 | Collector | What it observes | How |
 |---|---|---|
-| **[openssl](collectors/openssl/README.md)** | loaded libcrypto/libssl, fork, app attribution | parses `/proc` and ELF **itself** (Linux) — no dependency on `ldd` or `readelf` |
-| **[jvm](collectors/jvm/README.md)** ★ | the **actual** live JCA provider chain (registration order included) | JVM attach → `getProviders()` (pure-Java sidecar) |
-| **[network](collectors/network/README.md)** | TLS/SSH handshake groups → communication edges | passive AF_PACKET capture (Linux), no decryption |
+| **[openssl](collectors/openssl/README.md) (Korean)** | loaded libcrypto/libssl, fork, app attribution | parses `/proc` and ELF **itself** (Linux) — no dependency on `ldd` or `readelf` |
+| **[jvm](collectors/jvm/README.md) (Korean)** ★ | the **actual** live JCA provider chain (registration order included) | JVM attach → `getProviders()` (pure-Java sidecar) |
+| **[network](collectors/network/README.md) (Korean)** | TLS/SSH handshake groups → communication edges | passive AF_PACKET capture (Linux), no decryption |
 
 ★ The **killer capability** of this stage is that jvm attach catches **dynamically registered providers** (BouncyCastle added via `addProvider` at runtime, for instance) that static scanning cannot see — a gap no dedicated OSS filled.
 
@@ -51,7 +51,7 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml
 pqcota-ingest ./results                   # ingest the retrieved results into the inventory
 ```
 
-Arguments, privileges, and environment variables per command → [discovery/cmd](cmd/README.md) (Korean).
+Arguments, privileges, and environment variables per command → [discovery/cmd](cmd/README.en.md).
 
 ## When it doesn't work — symptom and cause
 
@@ -70,7 +70,7 @@ How each collector parses, how far it degrades, and what the six normalization s
 ## This folder
 
 - [`collectors/`](collectors) — collector implementations (openssl · jvm · network)
-- [`cmd/`](cmd) — entry points for access prep and collector execution → [command map](cmd/README.md) (Korean)
+- [`cmd/`](cmd) — entry points for access prep and collector execution → [command map](cmd/README.en.md)
 - [`ansible/`](ansible) — the **reference playbook** that runs collectors across prepared nodes at once
 - **Design docs**: [Discovery design](design.en.md) · [collector deployment](collector-deployment.md) · [test cases](testcases.md) (Korean)
 

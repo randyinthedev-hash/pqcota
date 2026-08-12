@@ -70,7 +70,7 @@ Also read [the ripple checklist for contract changes](contracts/README.en.md) (s
 | `demo/` | Docker end-to-end demo (access prep → discovery → inventory → provisioning) |
 | `tools/` | Repo tooling — `checkdocs` (the docs gate; `make check-docs` builds and runs it) |
 
-That is, **`pkg/`·`contracts/` split by stage, and so do the top-level execution folders**. To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md)).
+That is, **`pkg/`·`contracts/` split by stage, and so do the top-level execution folders**. To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](discovery/cmd/README.en.md)·[inventory](inventory/cmd/README.md) (Korean)·[provisioning](provisioning/cmd/README.md) (Korean)).
 
 ## Contract-first
 
@@ -117,7 +117,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector re
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh            # end-to-end discovery demo
 ```
 
-Acceptance criteria and implementation order: [discovery test cases](discovery/testcases.md)·[inventory test cases](inventory/testcases.md) (TDD).
+Acceptance criteria and implementation order: [discovery test cases](discovery/testcases.md) (Korean)·[inventory test cases](inventory/testcases.md) (Korean) (TDD).
 
 ## Language
 
@@ -179,4 +179,4 @@ Including this with a bug report speeds up reproduction:
 
 ## Design first
 
-Before adding a feature, read the rationale docs — [docs/](docs/README.md) has the process spec and subsystem designs, and every `§` reference in the code points there.
+Before adding a feature, read the rationale docs — [docs/](docs/README.en.md) has the process spec and subsystem designs, and every `§` reference in the code points there.
