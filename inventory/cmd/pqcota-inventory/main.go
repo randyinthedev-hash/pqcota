@@ -22,6 +22,7 @@ import (
 
 	"github.com/pqcota/pqcota/pkg/discovery/history"
 	"github.com/pqcota/pqcota/pkg/inventory"
+	"github.com/pqcota/pqcota/pkg/org"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "(인메모리는 프로세스 간 공유가 안 되므로 조회 뷰는 영속 저장소 전제)")
 		os.Exit(2)
 	}
-	store, err := history.NewPgStore(context.Background(), dsn)
+	store, err := history.NewPgStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Postgres 연결:", err)
 		os.Exit(1)
@@ -98,7 +99,7 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 	}
 
 	// 기본 — 전 노드 최신 누적 뷰. 머신 메타데이터(엔드포인트·프로필)를 헤더에 곁들인다(§2.0).
-	meta, err := inventory.NewPgMetaStore(context.Background(), dsn)
+	meta, err := inventory.NewPgMetaStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
 		return "", fmt.Errorf("메타 저장소: %w", err)
 	}

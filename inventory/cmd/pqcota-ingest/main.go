@@ -32,6 +32,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/inventory/ingest"
 	"github.com/pqcota/pqcota/pkg/kernel/scope"
 	"github.com/pqcota/pqcota/pkg/kernel/sign"
+	"github.com/pqcota/pqcota/pkg/org"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -151,14 +152,31 @@ func main() {
 func openStore() (history.Store, func(), bool) {
 	dsn := os.Getenv("PQCOTA_DSN")
 	if dsn == "" {
-		return history.NewMemStore(), func() {}, false
+		mem, err := history.NewMemStoreIn(org.FromEnv())
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "조직:", err)
+			os.Exit(2)
+		}
+		return mem, func() {}, false
 	}
-	pg, err := history.NewPgStore(context.Background(), dsn)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Postgres 연결 실패, 인메모리로 대체:", err)
-		return history.NewMemStore(), func() {}, false
+	pg, err := history.NewPgStoreIn(context.Background(), dsn, org.FromEnv())
+	if err == nil {
+		return pg, pg.Close, true
 	}
-	return pg, pg.Close, true
+	// **폴백하지 않는 경우** — 조직을 요구하는 배포에서 인메모리로 내려앉으면, 적재된 줄 알았던
+	// 것이 프로세스와 함께 사라진다. 영속을 요구한 것은 DSN을 준 쪽이다.
+	if org.Required() {
+		fmt.Fprintln(os.Stderr, "Postgres 연결 실패:", err)
+		fmt.Fprintln(os.Stderr, "  "+org.RequireEnv+"=1이므로 인메모리로 대체하지 않는다 — 적재를 멈춘다.")
+		os.Exit(1)
+	}
+	fmt.Fprintln(os.Stderr, "Postgres 연결 실패, 인메모리로 대체:", err)
+	mem, merr := history.NewMemStoreIn(org.FromEnv())
+	if merr != nil {
+		fmt.Fprintln(os.Stderr, "조직:", merr)
+		os.Exit(2)
+	}
+	return mem, func() {}, false
 }
 
 func loadResults(dir string) []*discoveryv1.CollectionResult {

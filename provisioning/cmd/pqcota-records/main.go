@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/pqcota/pqcota/pkg/org"
 	"github.com/pqcota/pqcota/pkg/provisioning"
 )
 
@@ -21,7 +22,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "PQCOTA_DSN 필요 — pqcota-provision이 레코드를 적재한 Postgres.")
 		os.Exit(2)
 	}
-	store, err := provisioning.NewPgRecordStore(context.Background(), dsn)
+	store, err := provisioning.NewPgRecordStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Postgres 연결:", err)
 		os.Exit(1)

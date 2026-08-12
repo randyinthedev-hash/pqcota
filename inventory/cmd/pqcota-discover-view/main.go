@@ -52,6 +52,8 @@ func main() {
 			edges = append(edges, res.GetObservedEdges()...)
 			continue
 		}
+		// 조직을 대지 않는다 — 이 저장소는 화면을 그리는 동안만 살고 아무것도 남기지 않는다.
+		// 격리할 것이 없는 자리다(적재 경로는 org.FromEnv를 쓴다).
 		snap, err := normalize.Normalize([]*discoveryv1.CollectionResult{res}, "snap", node, "ruleset-demo", history.NewMemStore(), nil)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "normalize:", err)

@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/pqcota/pqcota/pkg/discovery/history"
+	"github.com/pqcota/pqcota/pkg/org"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "PQCOTA_DSN 필요 — 절단할 영속 저장소를 가리켜야 함.")
 		os.Exit(2)
 	}
-	store, err := history.NewPgStore(context.Background(), dsn)
+	store, err := history.NewPgStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Postgres 연결:", err)
 		os.Exit(1)

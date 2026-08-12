@@ -21,6 +21,7 @@ import (
 
 	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
 	"github.com/pqcota/pqcota/pkg/discovery/history"
+	"github.com/pqcota/pqcota/pkg/org"
 	"github.com/pqcota/pqcota/pkg/provisioning"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -94,7 +95,7 @@ func main() {
 
 	// (2) before 캡처 + 레코드 영속.
 	ctx := context.Background()
-	hist, err := history.NewPgStore(ctx, *dsn)
+	hist, err := history.NewPgStoreIn(ctx, *dsn, org.FromEnv())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "히스토리 연결:", err)
 		os.Exit(1)

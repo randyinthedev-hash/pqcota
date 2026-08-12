@@ -79,6 +79,15 @@ func Resolve(s string) (ID, error) {
 	return Parse(s)
 }
 
+// Env — 저장소를 여는 명령들이 조직을 읽는 환경변수.
+//
+// 읽는 쪽과 쓰는 쪽이 다른 조직을 보면 격리가 있는 것보다 나쁘다 — 데이터가 있는데 안 보인다.
+// 그래서 저장소를 여는 모든 명령이 같은 이름을 본다.
+const Env = "PQCOTA_ORG"
+
+// FromEnv — [Env]의 값. 없으면 빈 문자열이고, [Resolve]가 규칙대로 푼다.
+func FromEnv() string { return os.Getenv(Env) }
+
 // Required — 필수 모드인가.
 func Required() bool { return os.Getenv(RequireEnv) == "1" }
 
