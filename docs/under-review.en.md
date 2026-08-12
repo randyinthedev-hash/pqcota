@@ -144,7 +144,7 @@ reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
 
 ---
 
-## 5. Attributing edges to apps (v0.3.0 — automatic path done)
+## 5. Attributing edges to apps (done — automatic in v0.3.0, declared in v0.4.0)
 
 > **Decided to do it.** It is v0.3.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
 > What remains here is **how** — the three paths below, and what was ruled out.
