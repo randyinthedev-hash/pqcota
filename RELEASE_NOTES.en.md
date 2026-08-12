@@ -26,12 +26,6 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.4.0 (planned)** — **a declared lane for attribution**: a person fills what the automatic path
-  cannot see by construction. The v0.3.0 demo **missed 3 of 4 edges** (short-lived connections). That
-  demo's traffic is short-lived by construction, so it is close to a worst case — but short-lived
-  connections are not the exception: batch jobs, health checks, cron, and SSH are exactly that. Input
-  arrives through the lane `pqcota-declare` already uses, so it never mixes with observation:
-  [Designs under review §5.2](docs/under-review.en.md).
 - **v0.5.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.md) (Korean).
 - **v0.6.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.md) (Korean).
 
@@ -53,6 +47,37 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.4.0 — a person fills what observation could not attribute (2026-08-12)
+**Goal** — fill the place v0.3.0's automatic path cannot see by construction. The demo **missed 3 of 4
+edges**, all for the same reason: short-lived connections — which is what batch jobs, health checks,
+cron, and SSH all are.
+
+### What was built
+
+- **`pqcota-declare-attribution`** — imports a CSV (`node_id,dst,port,app_key`) as a declared-lane
+  result. A row that does not identify an edge (non-numeric port, missing app_key, missing node_id)
+  **stops rather than being guessed at** — attributing to the wrong app changes what gets acted on.
+- **`AttributionOverlay`** — joins declarations with observations **at read time only**. What
+  observation already filled stays untouched; only blanks are filled, shown as `@app(declared)`, with a
+  line saying how many came from declarations. The index accepts only edges marked
+  `app_key_kind="declared"`, so observation never fills observation.
+
+### What was learned
+
+- **Ingest must not patch the observed edge.** That looked simpler at first, but two things block it:
+  ① `sign.Canonical` covers `ObservedEdge` including `app_key` (v0.3.0), so filling it at ingest makes
+  **what is stored differ from what the collector signed** — and a declaration is not the collector's
+  claim. ② When rules improve and results are recomputed from `raw_capture`, the recomputed and stored
+  values diverge, and it stops being clear which is the original. **So storage stays separate and the
+  screen joins them.**
+- **The contract did not grow.** `app_key_kind`, added in v0.3.0, already answers "what does this key
+  rest on", so `declared` simply joins `systemd-unit` and `exe-path`. Signatures are untouched too — one
+  break in v0.3.0 was enough without a second right behind it.
+- **`ObservedEdge.detection_method` must not be used for this.** It says *how the edge was observed*, not
+  where the key came from. Putting `UNSPECIFIED` there would **blur the fact that the communication
+  really was seen.**
+
 
 ## v0.3.0 — attributing edges to apps (2026-08-12)
 **Goal** — carry observed communication past "somewhere on this server" and **all the way to the app**.
