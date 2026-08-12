@@ -62,6 +62,9 @@ func newPgRecordStore(ctx context.Context, dsn string, o org.ID) (*PgRecordStore
 	return &PgRecordStore{pool: pool, org: o}, nil
 }
 
+// Org — 이 핸들이 묶인 조직(org.Scoped).
+func (p *PgRecordStore) Org() org.ID { return p.org }
+
 func (p *PgRecordStore) Close() { p.pool.Close() }
 
 func (p *PgRecordStore) Append(r *provisioningv1.ProvisioningRecord) error {
