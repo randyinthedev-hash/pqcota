@@ -116,15 +116,18 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot
 # 엣지 귀속 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
 # 그 창을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "귀속하지 못했다"이고**, 그 자리를
 # 사람이 선언으로 메운다. 관측을 고치지 않고 자기 레인으로 들어가며, 메운 것은 (declared)로 표시된다.
-UNATTR=$(pg -tAc "select (e->>'dstAddr')||','||coalesce(e->>'port','0')
-  from pqcota_snapshots s, jsonb_array_elements(s.edges) e
+# dst는 **엣지에 찍힌 그대로** 적는다(이 데모에서는 "ip:port" 모양이다) — 화면에서 보이는 값을
+# 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
+UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_elements(s.edges) e
   where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
-if [ -n "$UNATTR" ]; then
+UNATTR_PORT=$(pg -tAc "select coalesce(e->>'port','0') from pqcota_snapshots s, jsonb_array_elements(s.edges) e
+  where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
+if [ -n "$UNATTR_DST" ]; then
   echo "   ── 귀속 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
-  echo "      대상 $UNATTR — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
+  echo "      대상 $UNATTR_DST — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
   docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
 node_id,dst,port,app_key
-$HNODE,${UNATTR%,*},${UNATTR##*,},batch-runner.service
+$HNODE,$UNATTR_DST,$UNATTR_PORT,batch-runner.service
 CSV
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
     'pqcota-declare-attribution --out /work/declared-attr /work/attribution.csv && pqcota-ingest /work/declared-attr >/dev/null' \
