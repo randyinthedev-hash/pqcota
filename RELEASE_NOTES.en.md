@@ -81,6 +81,23 @@ reads as "absent" — to the ingest path.** A review from a consumer of the cont
 - **A [compatibility policy](docs/compatibility.md)** — five distinct faces: contract, signature, Go API,
   DB schema, mixed versions. So that "it is compatible" does not stay vague about which.
 
+### What was fixed
+
+- **Falling back to an in-memory store when Postgres could not be opened** (v0.1.0–v0.1.3,
+  `pqcota-ingest` · `pqcota-cbom-ingest`).
+
+  **What was wrong** — with `PQCOTA_DSN` set, a failure to connect or to prepare the schema printed one
+  warning and **carried on with the in-memory store.** Supplying a DSN is a request for persistence, and
+  that request was being silently cancelled.
+
+  **What came out wrong** — the screen said **success.** The full "ingested: N accepted … N nodes
+  observed" line printed normally, and the data vanished with the process. A failure that looks like a
+  success. It surfaced while actually running `PQCOTA_AUTO_DDL=0` in this release: the schema was not to
+  be created, there was no schema, and ingest reported success.
+
+  **The fix** — if a DSN is given and the store cannot be opened, **stop.** The message that blamed an
+  organization error on "Postgres connection failed" was corrected too.
+
 ### What was learned
 
 - **Consumer code does not change by a single line.** The existing constructors stay, bound to
