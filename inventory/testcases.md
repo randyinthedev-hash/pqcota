@@ -18,7 +18,7 @@ TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모�
 
 적재→조회→이력→절단→스코프 **종단**은 여기 케이스가 아니라 [데모 5/6](../demo/integration-verification.md)이 확인한다.
 
-케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE` · `TV-ORG`(조직 격리) · `TV-REJECT`(받지 않은 사실). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
+케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE` · `TV-ORG`(조직 격리) · `TV-REJECT`(받지 않은 사실) · `TV-ATTR`(선언된 귀속). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
 
 절 제목의 `SV-*`는 설계 문서가 매긴 **상황**(Scenario·inVentory) 번호이고([인벤토리 설계](design.md)의 선언 임포터, [위임 수신 설계](cbom-intake.md)), 표 안의 `TV-*`는 그 상황을 검증하는 **테스트** 번호다.
 
@@ -73,6 +73,10 @@ TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모�
 | [TV-RETENTION-6](../pkg/discovery/history/prune_test.go) | `TestPruneConservativeWithBothAxes` — `older-than` + `keep-last` 동시 | **보수적** — 최근 N개 안이면 오래돼도 보존 | 두 축이 부딪히면 더 많이 남기는 쪽으로. 지운 것은 되돌릴 수 없다 |
 | [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent` — 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 구멍이 "관측 안 함"과 구분되지 않는다 |
 | [TV-RETENTION-8](../pkg/discovery/history/pg_test.go) | `TestPgStore` — Postgres 영속(`PQCOTA_TEST_DSN` 있을 때) | 2층 저장·조회가 인메모리와 같은 계약 | 저장소를 바꿔도 이력의 뜻이 달라지지 않는다 |
+| [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation` — 관측이 이미 채운 자리를 노리는 선언을 함께 넣는다 | 관측이 이긴다. 빈 자리만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다 — 선언 레인을 따로 둔 이유가 사라진다 |
+| [TV-ATTR-2](../pkg/inventory/attribution_overlay_test.go) | `TestOverlayDoesNotMutateTheStoredEdge` — 얹어서 렌더한 뒤 원본 확인 | 저장된 엣지의 `app_key`가 그대로 비어 있다 | 서명이 `app_key`를 덮는다. 적재·조회가 관측을 고치면 collector가 서명한 것과 달라지고, 원본에서 재계산할 때도 갈린다 |
+| [TV-ATTR-3](../pkg/inventory/attribution_overlay_test.go) | `TestObservedEdgesDoNotLeakIntoTheOverlay` — 관측 스냅샷으로 색인을 만든다 | 색인이 **빈다** | 관측이 관측을 메우면 어느 것이 근거인지 알 수 없어진다 |
+| [TV-ATTR-4](../pkg/inventory/attribution_overlay_test.go) | `TestAttributionCSVRefusesWhatItCannotPlace` — 포트가 숫자가 아님 · app_key 없음 · node_id 없음 | 전부 에러 | 어느 엣지를 가리키는지 모르는 줄을 추측으로 붙이면 틀린 앱에 귀속된다 |
 | [TV-ORG-1](../pkg/org/org_test.go) | `TestParseRejectsWhatCannotBeToldApart` · `TestEmptyIsNotAChoice` — `Acme`·`ACME`·빈 값·`acme_corp` 등 | 전부 거절. 소문자·숫자·하이픈 2–64자만 | 사람은 같게 읽고 기계는 다르게 읽는 이름이 있으면 한 조직이 둘로 갈린다 |
 | [TV-ORG-2](../pkg/org/org_test.go) | `TestRequiredModeRefusesTheDefaultStore` · `TestDefaultIsReservedInRequiredMode` — 필수 모드에서 조직 없음·`default` | 둘 다 **여는 자리에서** 거절 | 데이터가 섞인 뒤에는 되돌릴 수 없다. `default`는 모양 규칙을 통과하므로 막지 않으면 배정된다 |
 | [TV-ORG-3](../pkg/discovery/history/org_test.go) | `TestOrgsDoNotSeeEachOther` — 두 인메모리 저장소가 같은 `web-01` | `Nodes()`·`ByID()`·`Latest()`가 남의 것을 안 준다 | **모양만 확인한다.** 객체가 다르므로 통과해도 격리를 증명하지 않는다 — TV-ORG-4가 그 일을 한다 |

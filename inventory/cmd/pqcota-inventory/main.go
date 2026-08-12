@@ -77,7 +77,8 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 		if err != nil {
 			return "", err
 		}
-		return inventory.RenderDetail(snap), nil
+		// 선언된 귀속을 **읽을 때만** 얹는다 — 저장된 관측 엣지는 그대로다.
+		return inventory.RenderDetailWith(snap, declaredOverlay(store)), nil
 
 	case diffPair != "":
 		ids := strings.Split(diffPair, ",")
@@ -109,6 +110,26 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 		return "", fmt.Errorf("render: %w", err)
 	}
 	return out, nil
+}
+
+// declaredOverlay — 저장소의 선언 레인 스냅샷들을 모아 귀속 색인을 만든다.
+//
+// 색인은 `app_key_kind="declared"`인 엣지만 받으므로 관측 스냅샷을 함께 넣어도 오염되지 않는다.
+// 못 읽는 노드가 있어도 조회를 멈추지 않는다 — 선언은 덤이고, 관측을 보여 주는 것이 본업이다.
+func declaredOverlay(store history.Store) *inventory.AttributionOverlay {
+	nodes, err := store.Nodes()
+	if err != nil {
+		return nil
+	}
+	var snaps []*history.Snapshot
+	for _, n := range nodes {
+		ss, err := store.Snapshots(n)
+		if err != nil {
+			continue
+		}
+		snaps = append(snaps, ss...)
+	}
+	return inventory.BuildAttributionOverlay(snaps...)
 }
 
 func mustSnapshot(store history.Store, id string) (*history.Snapshot, error) {
