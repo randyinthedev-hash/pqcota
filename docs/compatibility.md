@@ -62,6 +62,9 @@ type RejectionStore interface{ ... } // 새로 — PgStore가 함께 만족한�
 **③ 생성자는 더한다.** `NewPgStore(ctx, dsn)`을 두고 `NewPgStoreIn(ctx, dsn, org)`을 더한다.
 기존 호출자는 한 줄도 고치지 않는다.
 
+인터페이스로 받아 온 값에 새 능력을 묻고 싶으면 **작은 인터페이스를 하나 더 만들고 타입 단언**한다.
+`org.Scoped`가 그 예다 — `history.Store`에 `Org()`를 더하지 않고도 조직을 물을 수 있다.
+
 ## 4. DB 스키마 — 멱등하게, 그리고 절반만 되지 않게
 
 스키마는 **`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`**로 자란다.

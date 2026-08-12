@@ -78,6 +78,9 @@ func NewPgMetaStoreIn(ctx context.Context, dsn, organization string) (*PgMetaSto
 	return &PgMetaStore{pool: pool, org: o}, nil
 }
 
+// Org — 이 핸들이 묶인 조직(org.Scoped).
+func (p *PgMetaStore) Org() org.ID { return p.org }
+
 func (p *PgMetaStore) Close() { p.pool.Close() }
 
 func (p *PgMetaStore) UpsertEndpoint(e *inventoryv1.MachineEndpoint) error {

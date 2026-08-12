@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
+	"github.com/pqcota/pqcota/pkg/org"
 )
 
 // MetaStore — 머신 메타데이터(엔드포인트·프로필) 저장소. 히스토리(append-only)와 달리 **upsert**한다
@@ -16,15 +17,30 @@ type MetaStore interface {
 }
 
 // MemMetaStore — 인메모리 구현(테스트·단일 실행).
+//
+// **PgMetaStore와 같은 규칙으로 조직에 묶인다.** 한 저장소는 한 조직만 담는다 — Pg판만 조직을
+// 갖고 Mem판이 안 가지면 테스트가 실제에 없는 경로를 타게 된다.
 type MemMetaStore struct {
 	mu   sync.RWMutex
+	org  org.ID
 	ep   map[string]*inventoryv1.MachineEndpoint
 	prof map[string]*inventoryv1.MachineProfile
 }
 
-func NewMemMetaStore() *MemMetaStore {
-	return &MemMetaStore{ep: map[string]*inventoryv1.MachineEndpoint{}, prof: map[string]*inventoryv1.MachineProfile{}}
+// NewMemMetaStore — 조직을 대지 않고 연다(org.Default). 시그니처를 바꾸지 않는다.
+func NewMemMetaStore() *MemMetaStore { m, _ := NewMemMetaStoreIn(""); return m }
+
+// NewMemMetaStoreIn — 조직에 묶인 인메모리 메타 저장소. 규칙은 NewPgMetaStoreIn과 같다.
+func NewMemMetaStoreIn(organization string) (*MemMetaStore, error) {
+	o, err := org.Resolve(organization)
+	if err != nil {
+		return nil, err
+	}
+	return &MemMetaStore{org: o, ep: map[string]*inventoryv1.MachineEndpoint{}, prof: map[string]*inventoryv1.MachineProfile{}}, nil
 }
+
+// Org — 이 저장소가 묶인 조직(org.Scoped).
+func (m *MemMetaStore) Org() org.ID { return m.org }
 
 func (m *MemMetaStore) UpsertEndpoint(e *inventoryv1.MachineEndpoint) error {
 	m.mu.Lock()

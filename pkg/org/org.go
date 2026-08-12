@@ -37,6 +37,12 @@ var (
 	ErrShape = errors.New("조직 이름의 모양이 규칙에 안 맞는다")
 	// ErrDefaultNotAllowed — 필수 모드인데 조직 없이 열려 했다.
 	ErrDefaultNotAllowed = fmt.Errorf("%s=1인데 조직을 대지 않았다 — 기본 조직으로 열 수 없다", RequireEnv)
+	// ErrReserved — 예약된 이름을 조직으로 쓰려 했다.
+	//
+	// [Default]는 모양 규칙을 통과한다. 그래서 막지 않으면 **고객 조직 ID로 배정될 수 있고**,
+	// 배정되는 순간 단일 조직 시절 데이터와 한 조직으로 합쳐진다. 되돌리려면 중복 정리부터
+	// 해야 하므로, 여러 조직을 담는 배포에서는 이름 단계에서 막는다.
+	ErrReserved = fmt.Errorf("%q는 예약된 조직 이름이다 — 조직을 대지 않고 연 저장소가 묶이는 자리다", Default)
 )
 
 // shape — 소문자·숫자·하이픈 2~64자, 하이픈으로 시작하지 않는다.
@@ -67,8 +73,19 @@ func Resolve(s string) (ID, error) {
 		}
 		return Default, nil
 	}
+	if Required() && ID(s) == Default {
+		return "", ErrReserved
+	}
 	return Parse(s)
 }
 
 // Required — 필수 모드인가.
 func Required() bool { return os.Getenv(RequireEnv) == "1" }
+
+// Scoped — 조직에 묶인 저장소. 저장소 인터페이스에 메서드를 더하는 대신 **별도 인터페이스**로
+// 둔다(호환성 정책 §3②) — 밖의 구현체를 깨지 않고, 쓰는 쪽은 타입 단언으로 묻는다.
+//
+//	if sc, ok := store.(org.Scoped); ok && sc.Org() != want { ... }
+//
+// 환경변수는 프로세스마다 달라질 수 있으니, 기동할 때 한 번 이것으로 확인하고 끊는 쪽이 안전하다.
+type Scoped interface{ Org() ID }
