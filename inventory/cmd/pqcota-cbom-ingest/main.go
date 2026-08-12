@@ -89,21 +89,12 @@ func openStore() (history.Store, func(), bool) {
 		return mem, func() {}, false
 	}
 	pg, err := history.NewPgStoreIn(context.Background(), dsn, org.FromEnv())
-	if err == nil {
-		return pg, pg.Close, true
-	}
-	// **폴백하지 않는 경우** — 조직을 요구하는 배포에서 인메모리로 내려앉으면, 적재된 줄 알았던
-	// 것이 프로세스와 함께 사라진다. 영속을 요구한 것은 DSN을 준 쪽이다.
-	if org.Required() {
-		fmt.Fprintln(os.Stderr, "Postgres 연결 실패:", err)
-		fmt.Fprintln(os.Stderr, "  "+org.RequireEnv+"=1이므로 인메모리로 대체하지 않는다 — 적재를 멈춘다.")
+	if err != nil {
+		// **인메모리로 대체하지 않는다.** v0.1.x는 여기서 폴백했는데, 그러면 적재된 줄 알았던
+		// 것이 프로세스와 함께 사라지고 화면에는 성공이 찍힌다 — 성공처럼 보이는 실패다.
+		// DSN을 준 것은 영속을 요구한 것이고, 그 요구를 못 들어주면 멈추는 것이 맞다.
+		fmt.Fprintln(os.Stderr, "저장소를 열지 못했다:", err)
 		os.Exit(1)
 	}
-	fmt.Fprintln(os.Stderr, "Postgres 연결 실패, 인메모리로 대체:", err)
-	mem, merr := history.NewMemStoreIn(org.FromEnv())
-	if merr != nil {
-		fmt.Fprintln(os.Stderr, "조직:", merr)
-		os.Exit(2)
-	}
-	return mem, func() {}, false
+	return pg, pg.Close, true
 }
