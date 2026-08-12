@@ -15,11 +15,14 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pqcota/pqcota/discovery/collectors/network"
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/pqcota/pqcota/pkg/discovery/procs"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -80,6 +83,10 @@ func main() {
 	// 같은 엣지의 여러 관측(ClientHello/ServerHello 등)을 키별로 병합한다.
 	// TLS는 ServerHello에만 협상 그룹이 실리므로 "그룹 있는 관측"을 우선 채택한다.
 	self := src.SelfIPs
+	// 귀속은 **엣지를 보는 그 자리에서** 한다. 캡처가 끝난 뒤 몰아 하면 그 사이에 닫힌 소켓을
+	// 더 놓친다. 비싼 fd 스캔만 창 안에서 짧게 재사용한다.
+	att := procs.NewAttributor("/proc", time.Second)
+	unattributed := map[string]int{} // 사유 → 건수
 	byKey := map[string]*discoveryv1.ObservedEdge{}
 	var order []string
 	for _, o := range obs {
@@ -95,6 +102,13 @@ func main() {
 				ex.Cipher = e.GetCipher()
 			}
 		} else {
+			if ip, _, err := net.SplitHostPort(e.GetDstAddr()); err == nil {
+				a := att.Remote(ip, e.GetPort())
+				e.AppKey, e.AppKeyKind = a.Key, a.Kind
+				if a.Key == "" {
+					unattributed[a.Reason]++
+				}
+			}
 			byKey[k] = e
 			order = append(order, k)
 		}
@@ -104,13 +118,45 @@ func main() {
 		edges = append(edges, byKey[k])
 	}
 	// 창이 중간에 끊겼으면 "관측 없음"과 구별되게 노트에 남긴다 — 결함을 갭으로 위장하지 않는다.
-	note := ""
+	// 귀속하지 못한 엣지는 **"앱 없음"이 아니라 "귀속하지 못함"이다.** 사유별로 몇 건인지
+	// 완전성 노트에 남긴다 — 안 적으면 빈 app_key가 "이 통신에 앱이 없다"로 읽힌다.
+	note := attributionNote(len(order), unattributed)
 	if src.Truncated {
-		note = fmt.Sprintf("관측 창이 읽기 오류로 중단됨(%v) — 이 결과는 창 전체를 대표하지 않는다(갭≠부재)", src.TruncErr)
+		note = strings.TrimSpace(note + " " + fmt.Sprintf("관측 창이 읽기 오류로 중단됨(%v) — 이 결과는 창 전체를 대표하지 않는다(갭≠부재)", src.TruncErr))
 		fmt.Fprintln(os.Stderr, "[netcap] ⚠ "+note)
 	}
 	emit(network.BuildResult(node, edges, note))
-	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개\n", len(edges))
+	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개", len(edges))
+	if n := total(unattributed); n > 0 {
+		fmt.Fprintf(os.Stderr, " · 앱 귀속 못 함 %d개", n)
+	}
+	fmt.Fprintln(os.Stderr)
+	for reason, n := range unattributed {
+		fmt.Fprintf(os.Stderr, "[netcap]   %d개: %s\n", n, reason)
+	}
+}
+
+// attributionNote — 귀속 결과를 완전성 노트 문장으로. 전부 잡았으면 빈 문자열.
+func attributionNote(edges int, unattributed map[string]int) string {
+	n := total(unattributed)
+	if n == 0 {
+		return ""
+	}
+	reasons := make([]string, 0, len(unattributed))
+	for r, c := range unattributed {
+		reasons = append(reasons, fmt.Sprintf("%s(%d)", r, c))
+	}
+	sort.Strings(reasons) // 순서가 흔들리면 같은 관측이 다른 스냅샷으로 보인다
+	return fmt.Sprintf("엣지 %d개 중 %d개를 앱에 귀속하지 못했다 — **앱이 없다는 뜻이 아니다**. 사유: %s",
+		edges, n, strings.Join(reasons, " · "))
+}
+
+func total(m map[string]int) int {
+	n := 0
+	for _, c := range m {
+		n += c
+	}
+	return n
 }
 
 func emit(res *discoveryv1.CollectionResult) {

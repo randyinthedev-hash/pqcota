@@ -23,7 +23,7 @@
 
 ## 1. 시나리오별 테스트케이스
 
-케이스 번호는 **`TD`(디스커버리) - 무엇을 보나 - 순번**이다 — `TD-OPENSSL` · `TD-JVM` · `TD-FORK` · `TD-CONTAINER` · `TD-SCOPE` · `TD-GAP` · `TD-SIGN` · `TD-NETWORK` · `TD-PROVENANCE`(수집 시각). 번호는 그것을 검증하는 **테스트 파일로 이어진다**(링크가 없는 것은 데모가 본다).
+케이스 번호는 **`TD`(디스커버리) - 무엇을 보나 - 순번**이다 — `TD-OPENSSL` · `TD-JVM` · `TD-FORK` · `TD-CONTAINER` · `TD-SCOPE` · `TD-GAP` · `TD-SIGN` · `TD-NETWORK` · `TD-PROVENANCE`(수집 시각) · `TD-ATTR`(엣지→앱 귀속). 번호는 그것을 검증하는 **테스트 파일로 이어진다**(링크가 없는 것은 데모가 본다).
 
 절 제목의 `SD-*`는 [디스커버리 설계](design.md)가 매긴 **상황**(Scenario·Discovery) 번호이고, 표 안의 `TD-*`는 그 상황을 검증하는 **테스트** 번호다 — 다른 축이라 섞지 않는다.
 
@@ -114,6 +114,10 @@
 | [TD-SIGN-3](../pkg/kernel/sign/coverage_test.go) | unit | `TestTamperBreaksVerification` · `EdgeOrderDoesNotMatter` · `CanonicalCoversAllFields` — 필드를 하나씩 변조, 엣지 순서 뒤섞기, 계약 필드 수 가드 | 어느 필드를 건드려도 검증이 깨지고, 순서만 다른 같은 관측은 통과. 계약에 필드가 늘면 **실패** | 완전성 선언과 `raw_capture`까지 서명이 덮는지, 그리고 **서명 사각지대가 조용히 생기지 않는지** |
 | [TD-SIGN-4](../pkg/inventory/ingest/central_test.go) | unit | `TestIngestAcceptsValidSignature` — 서명한 결과를 검증기와 함께 적재 | 거부 0, 수용 1, 스냅샷 1 | 거부만 시험하면 게이트가 정상 반입까지 막는 것을 못 잡는다 |
 | [TD-SIGN-5](../pkg/kernel/sign/sign_test.go) | unit | `TestVerifyFromBindsKeysToCollectors` — A의 키로 서명한 결과에 **B의 collector 이름**을 달아 검증 | `Verify`는 통과시키고 `VerifyFrom`은 거절. 모르는 collector도 거절 | `Verify`는 넘긴 키를 전부 시도해 "누군가는 냈다"까지만 답한다. 서명은 **누가 냈나**를 답해야 한다 |
+| [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket` — 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛에 귀속. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실기에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 틀린 앱에 귀속된다 |
+| [TD-ATTR-2](../pkg/discovery/procs/socket_test.go) | unit | `TestUnattributedIsNotNoApp` — 소켓이 닫힌 경우·안정 키를 못 뽑는 경우 | 빈 키 + **사유가 남는다** | 빈 `app_key`가 "이 통신에 앱이 없다"로 읽히면 안 된다. 관측 갭과 같은 규칙 |
+| [TD-ATTR-3](../pkg/discovery/procs/socket_test.go) | unit | `TestAmbiguousIsNotGuessed` · `TestSameAppOnBothSocketsIsNotAmbiguous` — 같은 상대로 두 앱 / 한 앱이 연결 둘 | 앞은 **고르지 않고**, 뒤는 잡는다 | 틀린 앱에 귀속하면 조치 대상이 바뀐다 — 비워 두는 것이 낫다. 다만 과하게 비우면 쓸모가 없다 |
+| [TD-ATTR-4](../discovery/cmd/pqcota-netcap/note_test.go) | unit(linux) | `TestAttributionNoteSaysWhatItDoesNotMean` — 못 잡은 엣지가 있는 결과 | 완전성 노트에 건수·사유가 남고 **순서가 흔들리지 않는다** | 사유 순서가 흔들리면 같은 관측이 내용 지문 차이로 다른 스냅샷이 된다 |
 | [TD-PROVENANCE-1](../discovery/collectors/network/collected_at_test.go) | unit | `TestEveryResultCarriesCollectedAt`(network·jvm) · `TestBuildResultCarriesCollectedAt`(openssl) — 세 collector가 내는 모든 결과 | 주입한 시계가 `collected_at`에 실린다. 관측 실패(`DegradedResult`)도 예외 아님 | 비어 있으면 서명이 빈 값을 덮는다 — "언제 봤는지 모른다"에 서명하는 것이다. 갭 기록도 **언제 시도했는지**가 근거다 |
 
 > 오프라인 **번들 생성**(턴키 배포)은 하지 않는다 — 여기 테스트는 **임포트 시 provenance 서명 검증**(수신 측)만.
