@@ -27,7 +27,7 @@ the regulation ──┬── architecture      (modules, contracts, and schema
 
 On the side: [crypto runtime acceptance principles](runtime-acceptance.en.md) (what is accepted as a runtime) ·
 [license notes](licensing.en.md) (what is used, and what enforces isolation) ·
-[designs under review](under-review.md) (what is not decided yet, Korean).
+[designs under review](under-review.en.md) (what is not decided yet, Korean).
 
 > **At a glance**: [platform structure and stakeholders](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html) — who supplies what, what the platform produces, and where execution happens.
 
@@ -61,7 +61,7 @@ On the side: [crypto runtime acceptance principles](runtime-acceptance.en.md) (w
 |---|---|
 | [**Data model schema**](../contracts/data-model.en.md) | a human-facing map of every specified message and enum — purpose, key fields, relationships, provenance lanes. The contracts SSOT reference |
 | [contracts/README](../contracts/README.en.md) | the list of protobuf files and namespaces + the CycloneDX property mapping |
-| [Designs under review](under-review.md) (Korean) | designs for what is on the roadmap but **not committed to implementation** — accepting providers (the config vocabulary to generate), observing providers, the HSM axis. Once settled it moves into the real design documents and is deleted from here |
+| [Designs under review](under-review.en.md) | designs for what is on the roadmap but **not committed to implementation** — accepting providers (the config vocabulary to generate), observing providers, the HSM axis. Once settled it moves into the real design documents and is deleted from here |
 | [Crypto runtime acceptance principles](runtime-acceptance.en.md) | what is accepted as a first-class crypto runtime — why the two accepted (OpenSSL, JCA) are isomorphic, the three acceptance conditions the four axes leave unsaid, and the decision tree for a new candidate |
 
 [`contracts/`](../contracts/) — the protobuf SSOT. The namespace is the stage.

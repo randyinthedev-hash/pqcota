@@ -11,7 +11,7 @@ English · [한국어](README.md)
 > **① is needed because of how this demo is built, not because observation requires it.** The demo runs
 > the scanners **over SSH to several nodes** from a controller, so it needs a connection inventory. The path
 > where you scan a single node in place, or collect result files and ingest them, needs no ① at all —
-> what is required and what is optional is in the [discovery/cmd README](../discovery/cmd/README.md) (Korean).
+> what is required and what is optional is in the [discovery/cmd README](../discovery/cmd/README.en.md).
 
 > **Boundary**: this demo is complete with this repo (Apache-2.0) alone. Provisioning goes as far as
 > **generation and persistence**, and the demo **actually applies the generated playbook and rolls it back** —
@@ -206,7 +206,7 @@ After that it is the same as the demo — hand the collected results to `pqcota-
 > - **Traffic generation** (`traffic=` in `groups.ini`, `pqcota-gen-traffic.sh`): the demo has no handshakes to observe, so it **manufactures them on purpose.** A real environment has real traffic, so you only need to **observe** with `pqcota-netcap <node> <iface> <window>`.
 > - **Group membership** (`[java]` in `groups.ini`): that is just the demo's way of picking which nodes get `pqcota-jvmscan`; use whatever your own inventory does.
 
-**Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.md) (Korean).
+**Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.en.md).
 
 ## Beyond discovery
 Discovery shows you as far as "what is actually negotiated" (the posture). **"How well does that match what was declared (CONFIRMED/shadow/unobserved)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.

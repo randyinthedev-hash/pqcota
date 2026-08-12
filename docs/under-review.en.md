@@ -8,8 +8,9 @@ English · [한국어](under-review.md)
 > but are not committed to implementation. The real design documents (discovery, inventory, provisioning)
 > record **only what stands today** — mixing in what is under review makes it impossible to tell fact from plan.
 
-> **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](regulation.md)
-> (Korean). Sections of this document itself are referred to in context, as in `§5.1`, or by link.
+> **§ notation**: unless stated otherwise, these are section numbers in the
+> [process regulation](regulation.en.md). Sections of this document itself are referred to in context,
+> as in `§5.1`, or by link.
 
 **Lifetime** — an item ends in one of four ways.
 
@@ -224,7 +225,7 @@ Filling the blank `app_key` during ingest looks simpler. **Two things block it.*
 fills that field, **what is stored differs from what the collector signed.** A declaration is not the
 collector's claim, so it has no place inside that signature.
 
-**② Re-normalization** ([process regulation](regulation.md) §1.2, Korean). When the enrichment rules improve, results are recomputed from
+**② Re-normalization** ([process regulation](regulation.en.md) §1.2). When the enrichment rules improve, results are recomputed from
 `raw_capture`. If ingest has edited the observation, the recomputed value and the stored one diverge —
 and it stops being clear which is the original.
 

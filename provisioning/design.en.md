@@ -248,7 +248,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 > **Why slot 2**: in JCA, **the earlier provider in the list services first**. Register it later and, BouncyCastle present or not, the existing provider keeps handling everything and **nothing changes**.
 >
-> **It takes the slot instead**: measured on JDK 21, setting `security.provider.2` to this value keeps the provider list at 12 entries with only `SunRsaSign` gone. To avoid displacing anything you would have to shift the later numbers down by one in the target's `java.security` first, which requires knowing that node's original file — so the tool does not do it for you. Check it yourself: [`verify-registration.sh`](../examples/provisioning/files/README.md).
+> **It takes the slot instead**: measured on JDK 21, setting `security.provider.2` to this value keeps the provider list at 12 entries with only `SunRsaSign` gone. To avoid displacing anything you would have to shift the later numbers down by one in the target's `java.security` first, which requires knowing that node's original file — so the tool does not do it for you. Check it yourself: [`verify-registration.sh`](../examples/provisioning/files/README.md) (Korean).
 >
 > **The fallback group is not decoration**: give `jdk.tls.namedGroups` **only unknown groups** and JSSE fails at initialization (measured: `ExceptionInInitializerError` on both JDK 21 and 25 — released JDKs do not know this group yet). So a classical group is always kept alongside.
 
@@ -306,7 +306,7 @@ plan.targetNodeId ─┐
 a targets.ini entry ┘         (node_id → ip and ssh connection are resolved here)
 ```
 
-So the tool neither needs to know a connection secret nor to persist one — the playbook says only `node_id`, and how to reach that node is the inventory's business (see `pqcota-hosts` in the [discovery examples](../examples/discovery/README.md)).
+So the tool neither needs to know a connection secret nor to persist one — the playbook says only `node_id`, and how to reach that node is the inventory's business (see `pqcota-hosts` in the [discovery examples](../examples/discovery/README.md) (Korean)).
 
 
 ### 5.2 Activation — stop at L2, or finish at L3
