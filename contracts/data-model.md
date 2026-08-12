@@ -162,12 +162,14 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 
 **레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 귀속시켜 discovery→provisioning까지 흐른다.
 
-> **`app_key`가 어디에나 있는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 앱에 귀속되지만
-> **`ObservedEdge`는 노드까지만** 간다 — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없기 때문이다.
-> 그래서 한 노드의 두 프로세스가 같은 lib을 쓸 때, 관측된 엣지가 그중 어느 쪽 것인지는 알 수 없다.
-> 두 관측은 `node_id`에서 만나고, v0.3.0부터 **엣지도 `app_key`로 앱까지 간다** — 다만 자동 경로는
-> 짧은 연결을 놓치므로 빈 `app_key`는 "앱 없음"이 아니라 "귀속하지 못함"이다
-> ([검토 중인 설계 §5](../docs/under-review.md)).
+> **`app_key`가 늘 채워지는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 관측한 프로세스에서
+> 바로 나오므로 항상 귀속된다. **`ObservedEdge`는 v0.3.0부터 앱까지 가되 늘 되지는 않는다.** 회선을 수동 관측하는 방식 자체에는 소켓을 연 PID가
+> 없으므로, 캡처 시점에 소켓 inode를 `/proc/*/fd`와 대조해 `app_key`를 채운다.
+>
+> **다만 항상 채워지지는 않는다** — 짧게 붙었다 끊긴 연결은 조회 시점에 이미 없고, 권한이 모자라면
+> 남의 프로세스를 못 읽는다. 그래서 **빈 `app_key`는 "이 엣지에 앱이 없다"가 아니라 "귀속하지
+> 못했다"이고**, 왜 못 했는지는 완전성 맵의 note가 말한다. 못 채운 자리를 사람이 지정하는 길은
+> [검토 중인 설계 §5.2](../docs/under-review.md)에 있다(v0.4.0).
 
 ---
 
