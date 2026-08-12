@@ -1,10 +1,16 @@
 package ingest
 
 import (
+	"crypto/sha256"
+	"errors"
+	"fmt"
+	"strings"
+
 	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
 	"github.com/pqcota/pqcota/pkg/discovery/history"
 	"github.com/pqcota/pqcota/pkg/discovery/normalize"
 	"github.com/pqcota/pqcota/pkg/kernel/scope"
+	"github.com/pqcota/pqcota/pkg/kernel/sign"
 )
 
 // IngestReport — 중앙 적재 결과 요약.
@@ -16,10 +22,47 @@ type IngestReport struct {
 	Changed   int // 그중 실질 내용이 바뀌어 **새 스냅샷**이 생긴 노드 수
 	// ExcludedByScope — 자산 스코프 정책으로 관리 대상에서 뺀 finding 수(제외 ≠ 부재 — 고지용).
 	ExcludedByScope int
-	Nodes           []string           // 저장된 노드
-	Notes           []string           // off-scope/거부 사유
-	Conflicts       []IdentityConflict // node_id↔지문 중복/충돌(사용자 입력 검증, §1.4)
+	// Unverified — 서명을 **확인하지 못한** 건수. 검증 실패(Rejected)와 다르다 — 틀렸다는 것이
+	// 아니라 물어보지 못했다는 것이다. 이 둘을 한 숫자로 합치면 "검증했고 통과했다"와
+	// "검증할 키가 없었다"가 같은 모양이 된다(§2.6).
+	Unverified int
+	Nodes      []string           // 저장된 노드
+	Notes      []string           // off-scope/거부 사유
+	Conflicts  []IdentityConflict // node_id↔지문 중복/충돌(사용자 입력 검증, §1.4)
 }
+
+// RejectionStore — 받지 않은 사실을 남기는 곳. [history.Store]에 메서드를 더하지 않고 **별도
+// 인터페이스**로 둔다(호환성 정책 §3②) — 밖의 구현체를 깨지 않고, PgStore·MemStore가 함께 만족한다.
+type RejectionStore interface {
+	AppendRejection(history.Rejection) error
+}
+
+// IngestOptions — 적재 한 번의 설정.
+//
+// 인자가 늘어날 때 시그니처를 바꾸는 대신 이 구조체를 받는다(호환성 정책 §3①). 기존
+// [IngestResults]는 이것을 채워 [IngestWith]를 부르는 껍데기로 남는다.
+type IngestOptions struct {
+	Master         *scope.Master                            // nil이면 스코프 게이트 생략(로컬·데모)
+	VerifySig      func(*discoveryv1.CollectionResult) bool // nil이면 검증하지 않는다
+	SnapshotPrefix string
+	RulesetVersion string
+	Store          history.Store
+	AssetPolicy    *scope.AssetPolicy // nil이면 관측된 자산 전부가 관리 대상
+
+	// RequireSignature — 검증을 필수로 만든다. VerifySig가 nil이면 **적재 자체를 거절한다.**
+	//
+	// 기본이 아닌 이유: 전송 보안(mTLS·SSH)이 검증을 대신하는 경로가 실제로 있다. 그러나 그
+	// 전제가 서지 않는 곳 — 여러 조직의 결과가 한 저장소로 모이는 곳 — 에서는 조용히 통과하는
+	// 경로가 열려 있으면 안 된다.
+	RequireSignature bool
+
+	// Rejections — 받지 않은 사실을 남길 곳. nil이면 [IngestReport]에만 남고 프로세스와 함께
+	// 사라진다(v0.1.x와 같은 동작).
+	Rejections RejectionStore
+}
+
+// ErrSignatureRequired — 필수 모드인데 검증자가 없다.
+var ErrSignatureRequired = errors.New("서명 검증이 필수인데 검증할 공개키가 없다")
 
 // IngestResults — 회수된 CollectionResult[]를 중앙 인벤토리(히스토리)에 적재한다.
 // 엣지↔중앙 경계를 넘어온 계약을 받아 노드별로 정규화·영속화하는 관문이다.
@@ -37,8 +80,25 @@ func IngestResults(
 	store history.Store,
 	assetPolicy *scope.AssetPolicy, // nil이면 관측된 자산 전부가 관리 대상
 ) (*IngestReport, error) {
+	return IngestWith(results, IngestOptions{
+		Master: master, VerifySig: verifySig, SnapshotPrefix: snapshotPrefix,
+		RulesetVersion: rulesetVersion, Store: store, AssetPolicy: assetPolicy,
+	})
+}
+
+// IngestWith — [IngestResults]와 같은 일을 옵션 구조체로 받는다. 새 설정은 여기에만 붙는다.
+func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*IngestReport, error) {
+	if o.RequireSignature && o.VerifySig == nil {
+		return nil, ErrSignatureRequired
+	}
+	master, verifySig, store := o.Master, o.VerifySig, o.Store
+	snapshotPrefix, rulesetVersion, assetPolicy := o.SnapshotPrefix, o.RulesetVersion, o.AssetPolicy
 	rep := &IngestReport{}
 	rep.Conflicts = CheckIdentity(results) // 사용자 node_id 입력의 중복/충돌을 지문으로 교차검증(§1.4)
+	for _, c := range rep.Conflicts {
+		o.record(rep, nil, c.Key, history.RejectIdentity,
+			c.Kind+": "+c.Key+" ↔ "+strings.Join(c.Members, ", "))
+	}
 	byNode := map[string][]*discoveryv1.CollectionResult{}
 	var order []string
 
@@ -47,16 +107,23 @@ func IngestResults(
 		if node == "" {
 			rep.OffScope++
 			rep.Notes = append(rep.Notes, "타깃 노드 미지정 — 스코프 앵커 없음")
+			o.record(rep, res, "", history.RejectOffScope, "타깃 노드 미지정 — 스코프 앵커 없음")
 			continue
 		}
 		if master != nil && !master.Registered(node) {
 			rep.OffScope++
 			rep.Notes = append(rep.Notes, node+": 미등재 → 등재 판정 요청(§1.4)")
+			o.record(rep, res, node, history.RejectOffScope, "미등재 → 등재 판정 요청(§1.4)")
 			continue
 		}
-		if verifySig != nil && !verifySig(res) {
+		if verifySig == nil {
+			// 검증하지 않았다는 사실을 센다. 통과와 같은 자리에 두지 않는다.
+			rep.Unverified++
+			o.record(rep, res, node, history.RejectUnverified, "검증할 공개키 없음 — 서명을 확인하지 못했다")
+		} else if !verifySig(res) {
 			rep.Rejected++
 			rep.Notes = append(rep.Notes, node+": 서명 검증 실패 → 거부(§2.6)")
+			o.record(rep, res, node, history.RejectSignature, "서명 검증 실패(§2.6)")
 			continue
 		}
 		if _, ok := byNode[node]; !ok {
@@ -81,6 +148,24 @@ func IngestResults(
 		rep.Nodes = append(rep.Nodes, node)
 	}
 	return rep, nil
+}
+
+// record — 받지 않은 사실을 저장소에 남긴다. 남길 곳이 없으면 조용히 지나간다(v0.1.x와 같음).
+//
+// 남기다 실패해도 적재를 멈추지 않는다 — 기록을 못 남긴 것 때문에 관측까지 잃으면 손해가 크다.
+// 대신 못 남겼다는 사실을 리포트에 적는다. 조용히 사라지게 두지 않는 것이 이 기록의 목적이다.
+func (o IngestOptions) record(rep *IngestReport, res *discoveryv1.CollectionResult, node string, kind history.RejectionKind, reason string) {
+	if o.Rejections == nil {
+		return
+	}
+	r := history.Rejection{NodeID: node, Kind: kind, Reason: reason}
+	if res != nil {
+		r.CollectorID = res.GetEnvelope().GetCollectorId()
+		r.CanonicalHash = fmt.Sprintf("%x", sha256.Sum256(sign.Canonical(res)))
+	}
+	if err := o.Rejections.AppendRejection(r); err != nil {
+		rep.Notes = append(rep.Notes, "거절 기록을 남기지 못했다: "+err.Error())
+	}
 }
 
 // IngestCBOM — 외부 도구(CBOMkit/CipherIQ 등)가 낸 CycloneDX를 수신해 히스토리에 적재한다(SV-2·SD-7).

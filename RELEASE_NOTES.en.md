@@ -20,30 +20,6 @@ in the version that fixed it, naming where it started.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.2.0 (planned)** — **move the ingest path onto a many-users premise.** The inventory runs today on
-  the assumption of one organization and one execution. The six items below are where that assumption
-  breaks, and each of them applies **a principle this repo already keeps — drop something silently and it
-  reads as "absent" — to the ingest path.**
-  - **An organization axis.** `node_id` is a global key, so two organizations using the same name merge
-    into one history. Bind the store handle to an organization (nothing to remember per query, so nothing
-    to forget) and lead the indexes with it. The existing constructors stay, bound to a default
-    organization, and a new one is added — so **the API does not break and single-organization users
-    never name an organization.** In mandatory mode, the default becomes an error.
-  - **A guard on automatic DDL.** `NewPgStore` runs `CREATE TABLE` from the constructor without saying
-    so. If what it points at is off, a fresh empty set of tables appears and gets written to — it fails
-    silently. Deploying a schema should be a deliberate act.
-  - **Persist rejections, off-scope entries, and identity conflicts.** `IngestReport` is a return value
-    today: printed, then gone — the same reason `pqcota_retention_events` records what pruning removed.
-    Without it, "something was sent wrong" and "nothing happened" are indistinguishable.
-  - **A mandatory signature-verification mode.** Today, with no verifier configured, results pass
-    silently (on the premise that transport security stands in). For paths where that premise does not
-    hold, report the unverified count and fail in mandatory mode.
-  - **Bind public keys to collectors when verifying.** `Verify` today tries **every** key it is handed
-    and never asks which one matched. Add a form that checks `collector_id → public key` (leaving the
-    existing `Verify` as it is).
-  - **Pin the `raw_capture` convention in the contract comment** — no file contents, packet payloads, or
-    credentials. Today only collector discipline keeps this; the contract does not say it.
-
 - **v0.3.0 (planned)** — **attributing edges to apps**: `ObservedEdge` stops at the node today. When two
   apps on one node use the same library, which of them owns an observed edge is unknown. Correlating
   socket inodes (`/proc/net/tcp`) against `/proc/*/fd` at capture time fills in `app_key` (a purely
@@ -71,6 +47,58 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.2.0 — moving the ingest path onto a many-users premise (2026-08-12)
+**Goal** — fix the places where the inventory still ran on the assumption of one organization and one
+execution. All six items apply **a principle this repo already keeps — drop something silently and it
+reads as "absent" — to the ingest path.** A review from a consumer of the contract pointed at the spots.
+
+### What was built
+
+- **An organization axis** across six tables — `pqcota_snapshots` · `observations` ·
+  `retention_events` · `provisioning_record` · `endpoint` · `profile`. **The store handle is bound to an
+  organization**, so every query carries that condition and there is no way to drop it — nothing to
+  remember per query means nothing to forget. `Nodes()` and `ByID()`, which used to sweep globally, came
+  inside the organization without any interface change.
+- **`pkg/org`** — the vocabulary for organization names. Lowercase, digits, hyphen, 2–64 characters (so
+  `Acme` and `acme` cannot diverge); no empty organization; with `PQCOTA_REQUIRE_ORG=1` a store cannot be
+  opened without one. `default` is **reserved** — it passes the shape rule, so leaving it open would let
+  it be assigned as a real organization name and merge with single-organization-era data.
+- **A guard on automatic DDL** — with `PQCOTA_AUTO_DDL=0` the schema is not created, and a missing schema
+  is an error. This closes the case where a misdirected connection **created a fresh empty set of tables
+  and wrote into them.**
+- **A rejection history** (`pqcota_rejections`) — signature failures, unverified results, off-scope
+  entries, and identity conflicts are recorded. The payload is not stored, only its canonical
+  fingerprint: the store never holds unverified data, yet repeats can still be counted.
+- **A mandatory signature mode** — with `PQCOTA_REQUIRE_SIGNATURE=1`, ingest **does not start** when there
+  is no key to verify with. The report also counts `Unverified` separately: "verified and passed" and
+  "there was no key to verify with" do not collapse into one number.
+- **`sign.VerifyFrom`** — matches on `collector_id → public key`. The existing `Verify` tries **every**
+  key it is handed, so a single list covering several collectors let a result that passed under any key
+  arrive wearing any collector's name. Signatures now answer *who* produced this.
+- **A `raw_capture` convention in the contract** — no file contents, packet payloads, or credentials.
+  The field is free-form `bytes`, so the schema cannot enforce it; it is written down as a convention.
+- **A [compatibility policy](docs/compatibility.md)** — five distinct faces: contract, signature, Go API,
+  DB schema, mixed versions. So that "it is compatible" does not stay vague about which.
+
+### What was learned
+
+- **Consumer code does not change by a single line.** The existing constructors stay, bound to
+  `org.Default`, and new ones were added alongside. The `history.Store` interface is untouched — to ask
+  about the organization, type-assert to `org.Scoped`. Single-organization users never meet the concept.
+- **One migration was not idempotent.** In `pqcota_endpoint` and `pqcota_profile`, `node_id` was both the
+  primary key and the upsert conflict target, so merely adding a column left **organization A's `web-01`
+  still overwriting B's.** `ADD PRIMARY KEY` has no `IF NOT EXISTS`, so it runs conditionally on how many
+  columns the current primary key has. Verified against real Postgres, run twice: existing rows are
+  preserved as `default`, and the same `web-01` now coexists per organization.
+- **An old binary can still write to the new schema — and that is the trap.** `DEFAULT` fills the
+  organization column, so nothing blocks it, and a binary that knows nothing about organizations
+  **writes silently into someone else's place.** The last (optional) migration step is therefore to drop
+  the default, after which such an insert fails on `NOT NULL`. A loud failure instead of quiet
+  contamination.
+- **An in-memory isolation test does not prove isolation.** Separate objects cannot see each other by
+  construction. A Postgres test that shares one table sits alongside it (`PQCOTA_TEST_DSN`).
+
 
 ## v0.1.3 — the collection timestamp was empty (2026-08-12)
 **Goal** — fix one defect that had been there since v0.1.0. No functional change. It surfaced while a
