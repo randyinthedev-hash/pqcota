@@ -49,6 +49,17 @@ pqcota-declare cmdb.csv --out ./declared && pqcota-ingest ./declared   # CMDB �
 
 저장소 없이 파일만 취합해 보려면 `pqcota-discover-view ./results`. 커맨드별 인자는 [inventory/cmd](cmd/README.md).
 
+**여럿이 한 저장소를 쓴다면** — 모든 명령이 `PQCOTA_ORG`로 조직을 받는다. 안 주면 `default`에 묶이고,
+`PQCOTA_REQUIRE_ORG=1`이면 조직 없이는 저장소가 열리지 않는다. 조직마다 `node_id`가 따로 놀므로
+같은 `web-01`이 서로 덮어쓰지 않는다.
+
+```bash
+export PQCOTA_ORG=acme PQCOTA_REQUIRE_ORG=1 PQCOTA_REQUIRE_SIGNATURE=1
+```
+
+셋 다 **조용히 지나가는 경로를 닫는 것**이다 — 조직 없이 열리거나, 서명을 못 물어보고 통과하거나,
+스키마가 없는데 새로 만들어 거기 쓰는 일. 전부 [inventory/cmd](cmd/README.md#pqcota-ingest)에 있다.
+
 ## 무엇이 들어오나
 
 어디서 왔는지에 따라 **넣는 커맨드가 다르고**, 함께 기록되는 관측 방법도 다르다.

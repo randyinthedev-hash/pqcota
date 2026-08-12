@@ -12,11 +12,13 @@
 
 ## 0. 실행 환경
 
-**케이스는 전부 unit이다** — 실물 없이 어디서나 돈다. 예외는 TV-RETENTION-8 하나로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
+**케이스는 대부분 unit이다** — 실물 없이 어디서나 돈다. 예외는 **TV-RETENTION-8과 TV-ORG-4** 둘로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
+
+TV-ORG-4는 스킵되면 **격리를 확인하지 못한 것이다.** 인메모리 케이스(TV-ORG-3)는 저장소 객체가 애초에 다르므로 통과해도 격리를 증명하지 않는다 — 한 테이블을 공유하는 쪽에서만 잴 수 있다.
 
 적재→조회→이력→절단→스코프 **종단**은 여기 케이스가 아니라 [데모 5/6](../demo/integration-verification.md)이 확인한다.
 
-케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE`. 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
+케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE` · `TV-ORG`(조직 격리) · `TV-REJECT`(받지 않은 사실). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
 
 절 제목의 `SV-*`는 설계 문서가 매긴 **상황**(Scenario·inVentory) 번호이고([인벤토리 설계](design.md)의 선언 임포터, [위임 수신 설계](cbom-intake.md)), 표 안의 `TV-*`는 그 상황을 검증하는 **테스트** 번호다.
 
@@ -71,6 +73,14 @@
 | [TV-RETENTION-6](../pkg/discovery/history/prune_test.go) | `TestPruneConservativeWithBothAxes` — `older-than` + `keep-last` 동시 | **보수적** — 최근 N개 안이면 오래돼도 보존 | 두 축이 부딪히면 더 많이 남기는 쪽으로. 지운 것은 되돌릴 수 없다 |
 | [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent` — 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 구멍이 "관측 안 함"과 구분되지 않는다 |
 | [TV-RETENTION-8](../pkg/discovery/history/pg_test.go) | `TestPgStore` — Postgres 영속(`PQCOTA_TEST_DSN` 있을 때) | 2층 저장·조회가 인메모리와 같은 계약 | 저장소를 바꿔도 이력의 뜻이 달라지지 않는다 |
+| [TV-ORG-1](../pkg/org/org_test.go) | `TestParseRejectsWhatCannotBeToldApart` · `TestEmptyIsNotAChoice` — `Acme`·`ACME`·빈 값·`acme_corp` 등 | 전부 거절. 소문자·숫자·하이픈 2–64자만 | 사람은 같게 읽고 기계는 다르게 읽는 이름이 있으면 한 조직이 둘로 갈린다 |
+| [TV-ORG-2](../pkg/org/org_test.go) | `TestRequiredModeRefusesTheDefaultStore` · `TestDefaultIsReservedInRequiredMode` — 필수 모드에서 조직 없음·`default` | 둘 다 **여는 자리에서** 거절 | 데이터가 섞인 뒤에는 되돌릴 수 없다. `default`는 모양 규칙을 통과하므로 막지 않으면 배정된다 |
+| [TV-ORG-3](../pkg/discovery/history/org_test.go) | `TestOrgsDoNotSeeEachOther` — 두 인메모리 저장소가 같은 `web-01` | `Nodes()`·`ByID()`·`Latest()`가 남의 것을 안 준다 | **모양만 확인한다.** 객체가 다르므로 통과해도 격리를 증명하지 않는다 — TV-ORG-4가 그 일을 한다 |
+| [TV-ORG-4](../pkg/discovery/history/org_pg_test.go) | `TestPgOrgsShareATableAndStillDoNotSeeEachOther` — **한 테이블을 공유하는** 두 조직(`PQCOTA_TEST_DSN` 있을 때) | 서로를 못 보고, 자기 것은 보인다 | `web-01` 충돌은 예외가 아니라 기본값에 가깝다. 섞이면 한 노드의 이력으로 병합되어 되돌릴 수 없다 |
+| [TV-REJECT-1](../pkg/inventory/ingest/rejection_test.go) | `TestRequiredModeRefusesToIngestWithoutAVerifier` — 서명 필수인데 검증기 없음 | 결과별 거절이 아니라 **적재가 시작되지 않는다** | 조용히 통과하는 경로가 열려 있는지가 문제이지 어떤 결과가 왔는지가 아니다 |
+| [TV-REJECT-2](../pkg/inventory/ingest/rejection_test.go) | `TestUnverifiedIsNotTheSameAsPassed` — 검증기 없이 적재 | `Unverified` 1 · `Rejected` 0 · `Accepted` 1 | "검증했고 통과했다"와 "검증할 키가 없었다"를 한 숫자로 합치면 리포트가 실제보다 강한 말을 한다 |
+| [TV-REJECT-3](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionsOutliveTheProcess` — 미등재·앵커없음 결과 적재 | 저장소에 사유·collector·지문·시각이 남는다 | 남기지 않으면 "계속 거절당하고 있었다"와 "아무 일도 없었다"가 구분되지 않는다 |
+| [TV-REJECT-4](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionStoreIsOptional` — 남길 곳 없이 적재 | v0.1.x와 같은 결과 | 기록을 더한 것이 적재 자체를 바꾸면 안 된다 |
 
 ### TV-SCOPE. 자산 스코프 (설계 §14)
 | 케이스 | Given → When | Then | 목적 |
