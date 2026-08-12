@@ -33,7 +33,7 @@
 ### 통제 어휘 (enum) — 전 단계 공유
 | enum | 뜻 | 값(0=UNSPECIFIED 생략) |
 |---|---|---|
-| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG`(v0.1.0 **스키마 예약**, 미구현 — 채우는 코드는 v0.4.0+) |
+| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG`(v0.1.0 **스키마 예약**, 미구현 — 채우는 코드는 v0.5.0+) |
 | `DetectionMethod` | 탐지 방법. collector가 신고 → evidence 파생 근거 | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
 | `EvidenceStrength` | 증거 강도. **detection_method에서 파생**(core만 채움) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
 | `UsageContext` | 사용 맥락 | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
@@ -70,7 +70,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 |---|---|---|
 | `OpensslAxes` | OpenSSL 분기축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode` |
 | `JcaAxes` | JCA 분기축 | `jdk_vendor`·`jdk_version`·`provider_set`(**순서 유의미** — 우선순위 협상)·`registration_mode` |
-| `CngAxes` | Windows CNG 분기축 (**v0.1.0 예약**, 미구현) | `provider_set`(KSP/SSP, **순서 유의미**). 실물 관측이 정할 나머지 필드는 v0.4.0에서 additive로 추가 |
+| `CngAxes` | Windows CNG 분기축 (**v0.1.0 예약**, 미구현) | `provider_set`(KSP/SSP, **순서 유의미**). 실물 관측이 정할 나머지 필드는 v0.5.0에서 additive로 추가 |
 | **`Finding`** | 크립토 자산 한 건(파생 뷰) | `id`(정규화 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method`+**`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id`+`ruleset_version`(재현) · **`app_keys`**(자산 귀속, 공유 .so는 다중) |
 
 ### `asset.proto` — 자산 계층 (Machine → Application → Process)
@@ -165,7 +165,9 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 > **`app_key`가 어디에나 있는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 앱에 귀속되지만
 > **`ObservedEdge`는 노드까지만** 간다 — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없기 때문이다.
 > 그래서 한 노드의 두 프로세스가 같은 lib을 쓸 때, 관측된 엣지가 그중 어느 쪽 것인지는 알 수 없다.
-> 두 관측은 `node_id`에서만 만난다 — 잇는 일은 [v0.3.0 예정](../docs/under-review.md)이다.
+> 두 관측은 `node_id`에서 만나고, v0.3.0부터 **엣지도 `app_key`로 앱까지 간다** — 다만 자동 경로는
+> 짧은 연결을 놓치므로 빈 `app_key`는 "앱 없음"이 아니라 "귀속하지 못함"이다
+> ([검토 중인 설계 §5](../docs/under-review.md)).
 
 ---
 

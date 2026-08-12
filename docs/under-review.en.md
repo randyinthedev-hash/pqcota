@@ -141,7 +141,7 @@ reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
 
 ---
 
-## 5. Attributing edges to apps (planned for v0.3.0)
+## 5. Attributing edges to apps (v0.3.0 — automatic path done)
 
 > **Decided to do it.** It is v0.3.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
 > What remains here is **how** — the three paths below, and what was ruled out.
@@ -213,10 +213,31 @@ already exists: `pqcota-declare` imports CMDB declarations as `detection_method=
 distinguishable from observations. An attribution a person entered can arrive through the same lane and
 never mix with what was observed. A CSV line is enough.
 
-> **Not in v0.3.0.** It waits until the demo measures how much the automatic path (5.1) actually misses.
-> Building it now would be speculative abstraction — laying the road for filling gaps before knowing how
-> many are left to fill. The automatic path now **reports the count and the reasons in the completeness
-> note.** That number is what this decision will rest on.
+#### What the demo measured — the automatic path is not enough on its own
+
+From the v0.3.0 demo (six stages):
+
+```
+3 of 4 edges could not be attributed to an app.
+Reason: the socket closed between capture and lookup (3)
+
+  web-gw → 172.18.0.3:8443  tls  X25519MLKEM768  @?
+  web-gw → 172.18.0.4:4433  tls  x25519          @/usr/bin/openssl(exe-path)
+  web-gw → 172.18.0.3:22    ssh  sntrup761x25519 @?
+  web-gw → 172.18.0.4:22    ssh  curve25519      @?
+```
+
+**A caveat comes first** — this demo's traffic is **short-lived by construction**
+(`echo Q | openssl s_client`, `ssh … true`). So 75% is not an average but close to a worst case; a
+long-running service is caught far more often. The one that was caught was the relatively long-lived
+`s_client`.
+
+The conclusion still holds. **Short-lived connections are not the exception** — batch jobs, health
+checks, cron, and SSH itself are exactly that. There is a place the automatic path cannot see by
+construction, and a way to fill it is needed.
+
+**Decision: build the declared lane. It is v0.4.0.** With a measurement behind it, this is no longer
+speculative abstraction — the road for filling gaps is being laid after counting how many are left.
 
 ### 5.3 No admin UI
 
@@ -229,7 +250,7 @@ button follow.** Both are [explicitly excluded](architecture.en.md#62-explicit-e
 and on a screen "let people approve it here too" is the natural next step. At that moment an observation
 tool becomes a judgment tool.
 
-### 5.4 Why v0.3.0 — ahead of CNG
+### 5.4 Why it came ahead of CNG
 
 This work once sat behind CNG. The reason given was **"settle the attribution model after seeing both a
 file substrate and a registry one"** — on a second look, that reason does not hold.

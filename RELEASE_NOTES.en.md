@@ -26,14 +26,14 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.3.0 (planned)** — **attributing edges to apps**: `ObservedEdge` stops at the node today. When two
-  apps on one node use the same library, which of them owns an observed edge is unknown. Correlating
-  socket inodes (`/proc/net/tcp`) against `/proc/*/fd` at capture time fills in `app_key` (a purely
-  additive contract change). What the automatic path misses arrives through the declared lane, and no
-  admin UI is built — the design and the reasoning: [designs under review](docs/under-review.en.md).
-
-- **v0.4.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.md) (Korean).
-- **v0.5.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.md) (Korean).
+- **v0.4.0 (planned)** — **a declared lane for attribution**: a person fills what the automatic path
+  cannot see by construction. The v0.3.0 demo **missed 3 of 4 edges** (short-lived connections). That
+  demo's traffic is short-lived by construction, so it is close to a worst case — but short-lived
+  connections are not the exception: batch jobs, health checks, cron, and SSH are exactly that. Input
+  arrives through the lane `pqcota-declare` already uses, so it never mixes with observation:
+  [Designs under review §5.2](docs/under-review.en.md).
+- **v0.5.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.md) (Korean).
+- **v0.6.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.md) (Korean).
 
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/under-review.md) (Korean).
 
@@ -53,6 +53,57 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.3.0 — attributing edges to apps (2026-08-12)
+**Goal** — carry observed communication past "somewhere on this server" and **all the way to the app**.
+What a person acts on is an app, not a server.
+
+### What was built
+
+- **`ObservedEdge.app_key` and `app_key_kind`** — filled at capture time by correlating the socket inode
+  from `/proc/net/tcp` against `/proc/*/fd`. The value has the same shape as asset attribution: systemd
+  unit first, exe path otherwise.
+- **`procs.AttributeRemote` and `Attributor`** — attribution happens **where the edge is seen**. Doing it
+  after the capture window loses sockets that closed in between. Only the expensive fd scan is reused,
+  for one second inside the window.
+- **Attribution results in the completeness note** — the count and reasons for what was missed. The
+  reasons are sorted: if their order wobbles, the same observation becomes a different snapshot through
+  its content fingerprint, and history grows without anything having changed.
+- **The inventory shows it** — `@app_key` on the edge line. What was missed is `@?`, not a blank, and if
+  the basis was not a systemd unit, `(exe-path)` is shown alongside. The same value can deserve different
+  trust.
+
+### What was fixed
+
+- **Completeness notes never reached the screen** (v0.1.0–v0.2.0).
+
+  **What was wrong** — the note was printed only when `layers_missing` was non-empty. But notes that are
+  not layer gaps do exist — netcap's warning when the capture window is cut short is one.
+
+  **What came out wrong** — *"the capture window was cut short by a read error — this result does not
+  represent the whole window"* **has never once appeared on screen.** Something written down honestly
+  that never reaches its reader is the same as not writing it. This release's attribution reasons were
+  about to land in the same place; writing the test is what exposed it.
+
+### What was learned
+
+- **Measuring on real hardware changed three things in the design.** ① File descriptors are inherited, so
+  several processes hold one socket (three, measured) — taking the first PID found attributes the edge to
+  the process that inherited it, not the one that opened it. Take the shallowest up the parent chain.
+  ② A connection closed immediately is already gone by scan time — **attribution is best-effort.**
+  ③ Reading another user's file descriptors takes more than `CAP_NET_RAW`.
+- **An empty `app_key` means "could not attribute", not "no app".** Four distinct reasons: the socket
+  closed, permission was missing, no stable key could be derived, or it was ambiguous. The rule this repo
+  keeps for observation gaps carries over unchanged.
+- **Ambiguity is not guessed.** When two apps talk to the same peer, the machine does not pick one.
+  Attributing to the wrong app changes what gets acted on — worse than leaving it blank.
+- **The demo missed 3 of 4 edges.** Its traffic is short-lived by construction, so that is close to a
+  worst case, but short-lived connections themselves are not the exception. **The declared lane is now
+  fixed as v0.4.0** — decided after measuring, so it is not speculative abstraction.
+- **The signature range changed** — a contract field was added and `sign.Canonical` updated with it, so
+  **signatures produced at v0.2.0 or earlier are invalid.** [Compatibility policy §2](docs/compatibility.md)
+  is written for exactly this case, and before any real deployment is the cheapest time for it.
+
 
 ## v0.2.0 — moving the ingest path onto a many-users premise (2026-08-12)
 **Goal** — fix the places where the inventory still ran on the assumption of one organization and one
