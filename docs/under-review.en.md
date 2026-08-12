@@ -141,9 +141,9 @@ reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
 
 ---
 
-## 5. Attributing edges to apps (planned for v0.4.0)
+## 5. Attributing edges to apps (planned for v0.2.0)
 
-> **Decided to do it.** It is v0.4.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
+> **Decided to do it.** It is v0.2.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
 > What remains here is **how** — the three paths below, and what was ruled out.
 
 The two observations **meet only at the node** today.
@@ -192,11 +192,23 @@ button follow.** Both are [explicitly excluded](architecture.en.md#62-explicit-e
 and on a screen "let people approve it here too" is the natural next step. At that moment an observation
 tool becomes a judgment tool.
 
-### 5.4 Why v0.4.0
+### 5.4 Why v0.2.0 — ahead of CNG
 
-5.1 touches the contract and 5.2 adds another input format. Both are hard to walk back, so it is better
-done **after Windows CNG has generalized the substrate (v0.3.0)** — deciding the attribution model with
-both a file substrate and a registry one in view leaves less to widen later.
+This work once sat behind CNG. The reason given was **"settle the attribution model after seeing both a
+file substrate and a registry one"** — on a second look, that reason does not hold.
 
-Until then, re-observation covers the gap. Whether an edge follows when one app is moved can be found
-out by **moving it and observing again** — it cannot be predicted, but it can be confirmed.
+**Different axes.** Substrate is a provisioning concept: where generated artifacts land (`/opt/pqcota`
+file staging vs. the registry/GPO). Attribution is discovery: matching a socket inode to a process. What
+changes on Windows is the *collection method* (`GetExtendedTcpTable`), not the attribution model.
+
+**App identity is already settled.** v0.1.0 already separates multiple JVMs per app through `app_key`.
+What 5.1 does is carry that key onto `ObservedEdge` — using something that exists in one more place,
+not standing up a new model.
+
+**The materials are already here.** `/proc/net/tcp` and `/proc/*/fd`, and netcap already runs on that
+node. CNG, by contrast, needs real Windows hardware — doing it first without that would add one more
+place like the v0.1.0 `CngAxes` reservation, **schema present, never run**.
+
+**It makes what already ships more correct.** Singling out communication that no declaration covers is
+the first value of this observation, and an edge that stops at the node stops at "somewhere on this
+server". What a person acts on is an app, not a server.

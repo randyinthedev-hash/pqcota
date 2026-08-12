@@ -13,18 +13,18 @@
 확정된 것이 아니라 방향이다. 각 버전은 착수·완료 시 위 규칙대로 정식 섹션으로 승격한다. **Windows CNG
 런타임은 단계적으로** 도입한다 — 한 번에 넣지 않는 이유와 남은 미결: [검토 중인 설계 §2.2](docs/under-review.md).
 
-- **v0.2.0 (계획)** — **CNG 디스커버리**: Windows 콜렉터(`BCryptEnumProviders`·레지스트리 인트로스펙션)로
-  `CngAxes`를 채워 자산이 인벤토리에 수렴. (스키마는 v0.1.0에서 이미 예약 — 이 릴리스는 "채우는 코드".)
-  설계 검토: [검토 중인 설계 §2.2](docs/under-review.md).
-- **v0.3.0 (계획)** — **CNG 프로비저닝**: **substrate 일반화 선행**(POSIX 파일 가정 탈피 — Windows는
-  레지스트리/GPO라 `/opt/pqcota` 파일 스테이징·파일제거 롤백에 안 맞음) → `renderCNG`. 일반화는 이 구현과
-  함께 한다(투기적 추상화 금지). seam을 어디에 그을지는 아직 정하지 않았다 —
-  [검토 중인 설계 §2.2](docs/under-review.md).
-
-- **v0.4.0 (계획)** — **엣지를 앱에 귀속**: 지금 `ObservedEdge`는 노드까지만 간다. 한 노드에서 두 앱이
+- **v0.2.0 (계획)** — **엣지를 앱에 귀속**: 지금 `ObservedEdge`는 노드까지만 간다. 한 노드에서 두 앱이
   같은 lib을 쓰면 관측된 엣지가 어느 쪽 것인지 알 수 없다. 캡처 시점에 소켓 inode(`/proc/net/tcp`)와
   `/proc/*/fd`를 대조해 `app_key`를 채운다(계약은 순수 additive). 자동으로 못 잡는 것은 선언 레인으로
   받고, 관리 UI는 만들지 않는다 — 설계와 그 이유: [검토 중인 설계](docs/under-review.md).
+
+- **v0.3.0 (계획)** — **CNG 디스커버리**: Windows 콜렉터(`BCryptEnumProviders`·레지스트리 인트로스펙션)로
+  `CngAxes`를 채워 자산이 인벤토리에 수렴. (스키마는 v0.1.0에서 이미 예약 — 이 릴리스는 "채우는 코드".)
+  설계 검토: [검토 중인 설계 §2.2](docs/under-review.md).
+- **v0.4.0 (계획)** — **CNG 프로비저닝**: **substrate 일반화 선행**(POSIX 파일 가정 탈피 — Windows는
+  레지스트리/GPO라 `/opt/pqcota` 파일 스테이징·파일제거 롤백에 안 맞음) → `renderCNG`. 일반화는 이 구현과
+  함께 한다(투기적 추상화 금지). seam을 어디에 그을지는 아직 정하지 않았다 —
+  [검토 중인 설계 §2.2](docs/under-review.md).
 
 - **provider 생태계 수용 (검토 중 · 버전 미정)** — 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다 — provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/under-review.md)에서 다룬다.
 
