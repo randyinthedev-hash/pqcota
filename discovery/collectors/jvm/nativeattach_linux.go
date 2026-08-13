@@ -2,7 +2,7 @@
 
 package jvm
 
-// HotSpot attach 프로토콜을 **Go로 직접** 말한다 — JDK 없이 붙기 위해.
+// HotSpot attach 프로토콜을 **Go로 직접** 구현한다 — JDK 없이 붙기 위해.
 //
 // 왜 필요한가: `jdk.attach`는 이 OS 메커니즘(트리거 파일 + SIGQUIT + 유닉스 소켓)을 감싼 편의
 // API일 뿐이다. 그걸 직접 구현하면 **대상이 순수 JRE·jlink 런타임이어도**, 머신에 JDK가 하나도

@@ -245,11 +245,11 @@ func TestBuildResult(t *testing.T) {
 	}
 }
 
-// ── TD-NETWORK-7: 관측 창 갭 note (미관측 ≠ 부재) ──
+// ── TD-NETWORK-7: 관측 구간 갭 note (미관측 ≠ 부재) ──
 func TestBuildResult_windowNote(t *testing.T) {
 	res := network.BuildResult("web", nil, "")
 	if res.GetCompleteness().GetNote() == "" {
-		t.Error("관측 창 한계를 completeness note로 정직히 표기해야(TD-NETWORK-7)")
+		t.Error("관측 구간 한계를 completeness note로 정직히 표기해야(TD-NETWORK-7)")
 	}
 }
 
@@ -332,7 +332,7 @@ func TestCollect_filtersSelf(t *testing.T) {
 	}
 }
 
-// ── 창이 중단됐을 때: 중단과 무관측을 같은 얼굴로 내보내지 않는다 ──
+// ── 구간이 중단됐을 때: 중단과 무관측을 같은 얼굴로 내보내지 않는다 ──
 type truncSource struct {
 	sliceSource
 	cause error
@@ -340,14 +340,14 @@ type truncSource struct {
 
 func (t truncSource) WindowTruncated() (bool, error) { return true, t.cause }
 
-// TD-NETWORK-19 — 창이 읽기 오류로 중단되면 결과가 창 전체를 대표하지 않는다. 엣지가 하나도 없을
+// TD-NETWORK-19 — 구간이 읽기 오류로 중단되면 결과가 구간 전체를 대표하지 않는다. 엣지가 하나도 없을
 // 때가 특히 위험하다 — 아무 말도 안 하면 "핸드셰이크 없음"으로 읽혀 결함이 갭으로
 // 위장된다(§2.6). 그래서 엣지가 없어도 노드별 결과를 내고 완전성 노트에 중단을 적는다.
 func TestCollect_marksTruncatedWindow(t *testing.T) {
-	const want = "관측 창이 중단됐다"
+	const want = "관측 구간이 중단됐다"
 	cause := errors.New("recvfrom: input/output error")
 
-	// ① 엣지가 하나도 없는데 창이 중단된 경우.
+	// ① 엣지가 하나도 없는데 구간이 중단된 경우.
 	svc := network.NewService(truncSource{cause: cause}, nil)
 	fs := &fakeStream{}
 	if err := svc.Collect(&discoveryv1.CollectRequest{TargetNodeIds: []string{"web"}}, fs); err != nil {
@@ -361,7 +361,7 @@ func TestCollect_marksTruncatedWindow(t *testing.T) {
 		t.Errorf("중단과 사유가 완전성 노트에 없다: %q", note)
 	}
 
-	// ② 엣지가 있어도 그 결과 역시 창 전체를 대표하지 않는다.
+	// ② 엣지가 있어도 그 결과 역시 구간 전체를 대표하지 않는다.
 	hs, _ := network.ParseTLSHandshake(serverHelloX25519MLKEM())
 	src := truncSource{sliceSource: sliceSource{obs: []network.Observation{
 		{Conn: network.ConnTuple{SrcNode: "web", DstAddr: "10.0.1.20:8443"}, HS: hs}}}}

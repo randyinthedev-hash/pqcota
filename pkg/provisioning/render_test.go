@@ -151,7 +151,7 @@ func TestRenderJCAUnknownProviderKeepsPlaceholder(t *testing.T) {
 	}
 }
 
-// JAR 배치 안내는 실제 배치 경로와 JDK 세대 차이를 말해야 한다(lib/ext는 JDK 9에서 제거됨).
+// JAR 배치 안내는 실제 배치 경로와 JDK 세대 차이를 밝혀야 한다(lib/ext는 JDK 9에서 제거됨).
 func TestRenderJCAJarPlacementGuidance(t *testing.T) {
 	out := provisioning.Render(&provisioningv1.RemediationAction{
 		CryptoRuntime:   commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
@@ -169,7 +169,7 @@ func TestRenderJCAJarPlacementGuidance(t *testing.T) {
 
 // BC 기본 클래스의 정답은 **버전에 달렸다** — 실측: 1.80/1.81의 BouncyCastleProvider에는 ML-KEM
 // 서비스가 17개, 1.78.1에는 0개(Kyber는 BouncyCastlePQCProvider에 따로). 계획은 JAR 버전을
-// 말해주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 조용히 단언하지 않는다(§2.5).
+// 알려주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 조용히 단언하지 않는다(§2.5).
 func TestBCDefaultClassStatesVersionAssumption(t *testing.T) {
 	bc := action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC")

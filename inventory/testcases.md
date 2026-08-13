@@ -55,7 +55,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 ### TV-HISTORY. 이력 열람·변화 diff (설계 §7 이력·보존)
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TV-HISTORY-1](../pkg/inventory/history_view_test.go) | `TestRenderHistory` — 스냅샷 이력 조회(`-history`) | 변화 지점을 오래된 것부터 + 관측 횟수·관측 창. 스냅샷 id는 **자르지 않는다** | 스냅샷 id가 다음 명령의 입력이 된다 — 자르면 이력에서 상세·diff로 이어갈 수 없다 |
+| [TV-HISTORY-1](../pkg/inventory/history_view_test.go) | `TestRenderHistory` — 스냅샷 이력 조회(`-history`) | 변화 지점을 오래된 것부터 + 관측 횟수·관측 구간. 스냅샷 id는 **자르지 않는다** | 스냅샷 id가 다음 명령의 입력이 된다 — 자르면 이력에서 상세·diff로 이어갈 수 없다 |
 | [TV-HISTORY-2](../pkg/inventory/history_view_test.go) | `TestByID` · `TestRenderDetailShowsEdges` — 스냅샷 단건 조회(`-snapshot`) | 자산 표 + **그 스냅샷의 관측 엣지**. 없는 id는 `(nil, nil)` | 그 시점의 자산과 엣지를 함께 편다. 누적 뷰는 합계만 내므로 여기서만 볼 수 있다 |
 | [TV-HISTORY-3](../pkg/inventory/history_view_test.go) | `TestRenderDiff` — 버전이 바뀐 자산으로 두 스냅샷 diff | finding id가 (node, name, runtime, fork) 해시라 유지 → **"변경"** 한 줄. 판정 어휘 없음 | 버전만 바뀐 자산이 추가+삭제로 흩어지면 무엇이 달라졌는지 읽을 수 없다. 그리고 관측 사실만 서술한다(§2.1) |
 | [TV-HISTORY-4](../pkg/inventory/history_view_test.go) | `TestRenderDiffNoChange` — 같은 스냅샷끼리 diff | "변화 없음"을 **명시**(빈 출력 아님) | 변화가 없을 때 없다고 말한다. 빈 출력은 "안 봤다"와 구분되지 않는다 |

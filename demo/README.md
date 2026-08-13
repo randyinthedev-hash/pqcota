@@ -163,7 +163,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 - **L2는 조각을 놓기만 한다** — 참조되게 만들지 않으므로 모든 산출물이 완전히 가역이다.
 - **L3는 여기에 활성화·재시작을 더한다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 쓴다 — 환경마다 활성화 지점이 다르므로 도구가 추측하지 않는다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킨다(현실의 systemd unit·사내 기동 스크립트에 해당).
-- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**이다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않는다** — 그 노드의 실제 조치는 fork 교체이고, 그건 config로 배포되지 않는다고 플레이북이 주석으로 말한다.
+- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**이다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않는다** — 그 노드의 실제 조치는 fork 교체이고, 그건 config로 배포되지 않는다고 플레이북 주석에 적혀 있다.
 
 ### 선택 단계 — 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
 
@@ -207,7 +207,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 > 노드에만** 갑니다. 실환경 이식은 `collector_bin_dir`를 자기 빌드 산출(arch별)로 바꾸는 것뿐입니다.
 >
 > **데모에만 있는 것 두 가지** — 그대로 옮기면 안 됩니다:
-> - **트래픽 생성**(`groups.ini`의 `traffic=`·`pqcota-gen-traffic.sh`): 데모는 관측할 핸드셰이크가 없어 **일부러 만들어 냅니다.** 실제 환경엔 진짜 트래픽이 흐르므로 `pqcota-netcap <node> <iface> <창>`으로 **관측만** 하면 됩니다.
+> - **트래픽 생성**(`groups.ini`의 `traffic=`·`pqcota-gen-traffic.sh`): 데모는 관측할 핸드셰이크가 없어 **일부러 만들어 냅니다.** 실제 환경엔 진짜 트래픽이 흐르므로 `pqcota-netcap <node> <iface> <구간초>`로 **관측만** 하면 됩니다.
 > - **그룹 멤버십**(`groups.ini`의 `[java]`): 어느 노드에 `pqcota-jvmscan`을 돌릴지 고르는 데모의 방식일 뿐, 자기 인벤토리 방식대로 하면 됩니다.
 
 **선택 사항**: 노드 등재 게이트(`pqcota-ingest <dir> <scope-file>`) · 자산 스코프(`-scope-assets`) · CMDB 프로필(`pqcota-profile`) · Postgres 영속(`PQCOTA_DSN`) · 서명 검증(`PQCOTA_VERIFY_KEY`). 무엇이 필수·선택인지: [discovery/cmd README](../discovery/cmd/README.md#필수인가--아니다-원격으로-여러-노드를-훑을-때만-필요하다).

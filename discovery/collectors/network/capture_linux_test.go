@@ -42,10 +42,10 @@ func TestEdgeFor_clientOnly(t *testing.T) {
 	}
 }
 
-// ★ 관측 창은 **끝까지 채워져야 한다.** 원시 syscall은 시그널에 깨어 EINTR을 돌려주는데(Go 런타임이
-// 고루틴 선점을 위해 SIGURG를 보낸다), 그걸 치명적 오류로 보고 루프를 나가면 창이 무작위 시점에
+// ★ 관측 구간은 **끝까지 채워져야 한다.** 원시 syscall은 시그널에 깨어 EINTR을 돌려주는데(Go 런타임이
+// 고루틴 선점을 위해 SIGURG를 보낸다), 그걸 치명적 오류로 보고 루프를 나가면 구간이 무작위 시점에
 // 조용히 끝나고 결과가 "핸드셰이크 없음"이 된다 — 결함이 갭처럼 보인다(§2.6).
-// 실측으로 재현했던 증상: 25초 창이 0·0·14·25초에 끝남.
+// 실측으로 재현했던 증상: 25초 구간이 0·0·14·25초에 끝남.
 //
 // CAP_NET_RAW가 없으면 소켓 자체가 안 열려 이 경로를 못 타므로 스킵한다.
 func TestObserveFillsTheWholeWindow(t *testing.T) {
@@ -56,10 +56,10 @@ func TestObserveFillsTheWholeWindow(t *testing.T) {
 		t.Skip("CAP_NET_RAW 없음 — 캡처 루프 미실행")
 	}
 	elapsed := time.Since(start)
-	// 200ms 수신 타임아웃으로 폴링하므로 창보다 한 틱 정도만 짧을 수 있다. 그보다 일찍 끝났다면
+	// 200ms 수신 타임아웃으로 폴링하므로 구간보다 한 틱 정도만 짧을 수 있다. 그보다 일찍 끝났다면
 	// 루프가 오류로 빠져나온 것이다.
 	if elapsed < window-300*time.Millisecond {
-		t.Errorf("창(%v)을 다 채우지 못하고 %v에 끝났다 — EINTR 등을 치명적으로 다루면 관측이 조용히 잘린다", window, elapsed)
+		t.Errorf("구간(%v)을 다 채우지 못하고 %v에 끝났다 — EINTR 등을 치명적으로 다루면 관측이 조용히 잘린다", window, elapsed)
 	}
 	if ls.Truncated {
 		t.Errorf("정상 종료인데 Truncated가 섰다: %v", ls.TruncErr)

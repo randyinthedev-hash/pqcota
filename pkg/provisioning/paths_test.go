@@ -23,7 +23,7 @@ func injectPlan(runtime commonv1.CryptoRuntime, provider string) *provisioningv1
 }
 
 // config가 참조하는 모듈 경로와 플레이북이 배치하는 경로가 어긋나면 OpenSSL이 모듈을 못 찾고
-// 조용히 실패한다. 셋(생성 config·배치·롤백)이 같은 경로를 말하는지 여기서 고정한다.
+// 조용히 실패한다. 셋(생성 config·배치·롤백)이 같은 경로를 가리키는지 여기서 고정한다.
 func TestModulePathAgreesAcrossGenerators(t *testing.T) {
 	plan := injectPlan(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL, "myprovider")
 	want := provisioning.ModulePath("myprovider", false) // /opt/pqcota/myprovider.so

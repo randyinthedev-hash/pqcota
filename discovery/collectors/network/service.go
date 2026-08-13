@@ -25,8 +25,8 @@ type Source interface {
 	Observe(nodes []string, opts map[string]string) ([]Observation, error)
 }
 
-// TruncatingSource — 관측 창을 끝까지 채우지 못한 소스가 그 사실을 알리는 선택 인터페이스.
-// Observe가 오류를 돌려주지 않아도(부분 관측은 성공이다) 창이 중단됐으면 결과가 창 전체를
+// TruncatingSource — 관측 구간을 끝까지 채우지 못한 소스가 그 사실을 알리는 선택 인터페이스.
+// Observe가 오류를 돌려주지 않아도(부분 관측은 성공이다) 구간이 중단됐으면 결과가 구간 전체를
 // 대표하지 않는다. 중단과 무관측을 같은 얼굴로 내보내면 결함이 갭으로 위장된다(§2.6).
 type TruncatingSource interface {
 	// WindowTruncated — 중단됐나, 그리고 사유. 중단되지 않았으면 (false, nil).
@@ -90,9 +90,9 @@ func (s *Service) Collect(req *discoveryv1.CollectRequest, stream grpc.ServerStr
 	note := ""
 	if ts, ok := s.Source.(TruncatingSource); ok {
 		if cut, cause := ts.WindowTruncated(); cut {
-			// 창이 중단됐으면 관측 결과가 창 전체를 대표하지 않는다 — 엣지가 없더라도
+			// 구간이 중단됐으면 관측 결과가 구간 전체를 대표하지 않는다 — 엣지가 없더라도
 			// "핸드셰이크 없음"이 아니라 "끝까지 관측하지 못했음"이다.
-			note = "관측 창이 중단됐다 — 이 결과는 창 전체를 대표하지 않는다(미관측 ≠ 부재)"
+			note = "관측 구간이 중단됐다 — 이 결과는 구간 전체를 대표하지 않는다(미관측 ≠ 부재)"
 			if cause != nil {
 				note += ": " + cause.Error()
 			}

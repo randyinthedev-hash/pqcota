@@ -31,7 +31,7 @@
 | **TD-JVM-4** attach 차단(`DisableAttachMechanism`·JEP 451) 시 열화 | 데모 JVM은 attach를 허용한다 | 폴백 경로는 unit(`attach_test.go`·`staticfallback_test.go`) |
 | **TD-CONTAINER-2** 네임스페이스 분리 | 데모는 대상 안에서 돌리므로 분리 상황이 생기지 않는다 | 없음 — 미검증 |
 | **TD-SIGN-1** 서명된 결과 반입 | 데모는 `PQCOTA_SIGN_KEY`를 주지 않아 서명 검증을 건너뛴다(출력이 `서명 검증: 생략`이라 고지) | 서명·거부는 unit(`sign_test.go`·`central_test.go` `TestIngestSignatureReject`) |
-| **오래된 커널** | 컨테이너는 호스트 커널을 공유한다 | 없음 — 실기 확인이 릴리스 블로커 |
+| **오래된 커널** | 컨테이너는 호스트 커널을 공유한다 | 없음 — 실제 장비 확인이 릴리스 블로커 |
 
 ## 돌리는 법
 

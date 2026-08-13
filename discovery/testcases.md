@@ -114,7 +114,7 @@
 | [TD-SIGN-3](../pkg/kernel/sign/coverage_test.go) | unit | `TestTamperBreaksVerification` · `EdgeOrderDoesNotMatter` · `CanonicalCoversAllFields` — 필드를 하나씩 변조, 엣지 순서 뒤섞기, 계약 필드 수 가드 | 어느 필드를 건드려도 검증이 깨지고, 순서만 다른 같은 관측은 통과. 계약에 필드가 늘면 **실패** | 완전성 선언과 `raw_capture`까지 서명이 덮는지, 그리고 **서명 사각지대가 조용히 생기지 않는지** |
 | [TD-SIGN-4](../pkg/inventory/ingest/central_test.go) | unit | `TestIngestAcceptsValidSignature` — 서명한 결과를 검증기와 함께 적재 | 거부 0, 수용 1, 스냅샷 1 | 거부만 시험하면 게이트가 정상 반입까지 막는 것을 못 잡는다 |
 | [TD-SIGN-5](../pkg/kernel/sign/sign_test.go) | unit | `TestVerifyFromBindsKeysToCollectors` — A의 키로 서명한 결과에 **B의 collector 이름**을 달아 검증 | `Verify`는 통과시키고 `VerifyFrom`은 거절. 모르는 collector도 거절 | `Verify`는 넘긴 키를 전부 시도해 "누군가는 냈다"까지만 답한다. 서명은 **누가 냈나**를 답해야 한다 |
-| [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket` — 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛에 귀속. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실기에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 틀린 앱에 귀속된다 |
+| [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket` — 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛에 귀속. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실제 장비에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 틀린 앱에 귀속된다 |
 | [TD-ATTR-2](../pkg/discovery/procs/socket_test.go) | unit | `TestUnattributedIsNotNoApp` — 소켓이 닫힌 경우·안정 키를 못 뽑는 경우 | 빈 키 + **사유가 남는다** | 빈 `app_key`가 "이 통신에 앱이 없다"로 읽히면 안 된다. 관측 갭과 같은 규칙 |
 | [TD-ATTR-3](../pkg/discovery/procs/socket_test.go) | unit | `TestAmbiguousIsNotGuessed` · `TestSameAppOnBothSocketsIsNotAmbiguous` — 같은 상대로 두 앱 / 한 앱이 연결 둘 | 앞은 **고르지 않고**, 뒤는 잡는다 | 틀린 앱에 귀속하면 조치 대상이 바뀐다 — 비워 두는 것이 낫다. 다만 과하게 비우면 쓸모가 없다 |
 | [TD-ATTR-4](../discovery/cmd/pqcota-netcap/note_test.go) | unit(linux) | `TestAttributionNoteSaysWhatItDoesNotMean` — 못 잡은 엣지가 있는 결과 | 완전성 노트에 건수·사유가 남고 **순서가 흔들리지 않는다** | 사유 순서가 흔들리면 같은 관측이 내용 지문 차이로 다른 스냅샷이 된다 |
@@ -134,18 +134,18 @@
 | [TD-NETWORK-5](collectors/network/network_test.go) | unit | `TestBuildEdge` — 파싱 결과 → 엣지 | `ObservedEdge`{src_node · dst_addr:port · protocol · negotiated_group · role} | 관측이 자산과 이어지려면 노드·상대·프로토콜이 한 레코드에 함께 있어야 한다 |
 | [TD-NETWORK-6](collectors/network/network_test.go) | unit | `TestQUICUnknownPosture` — 암호화된 핸드셰이크 | `negotiated_group`="" → **불명**(코어에서 등급 ⚪) | 관측하지 못한 것을 고전으로 단정하지 않는다 |
 | [TD-NETWORK-7](collectors/network/network_test.go) | unit | `TestBuildResult` — CollectionResult 조립 | `crypto_runtime` **미귀속**, `layers_covered`=[NETWORK], `observed_edges` 채움 | 그 연결이 무엇으로 구현됐는지는 회선에서 안 보인다 — TLS 엣지를 OpenSSL 자산에 귀속하지 않는다 |
-| [TD-NETWORK-8](collectors/network/network_test.go) | unit | `TestBuildResult_windowNote` — 창 안에 트래픽이 없던 링크 | completeness에 관측창 갭 note(§2.6) | 창 안에 없던 것을 "암호를 안 쓴다"로 보지 않는다 |
+| [TD-NETWORK-8](collectors/network/network_test.go) | unit | `TestBuildResult_windowNote` — 구간 안에 트래픽이 없던 링크 | completeness에 관측 구간 갭 note(§2.6) | 구간 안에 없던 것을 "암호를 안 쓴다"로 보지 않는다 |
 | [TD-NETWORK-9](collectors/network/network_test.go) | unit | `TestShouldObserve_selfReference` · `TestCollect_filtersSelf` — 자기 노드/자기 트래픽 | 엣지에서 **제외** | 관측 도구가 만든 트래픽이 결과에 섞이면 토폴로지가 자기 자신을 가리킨다 |
 | [TD-NETWORK-10](collectors/network/network_test.go) | unit | `TestBuildEdge_offScopeRawAddr` — dst가 스코프 밖 | `dst_node_id` 빈칸 + `dst_addr` 채움 → 코어가 등재 판정 | 모르는 상대라고 버리면 등재 판정의 입력이 사라진다 |
 | [TD-NETWORK-11](collectors/network/network_test.go) | unit | `TestDescribe` — 능력 신고 | layers=[NETWORK], detection_methods=[runtime-introspection], **invasive=false**, Apache-2.0 | 신고가 실제와 어긋나면 완전성 계산과 침습성 판단이 함께 틀린다 |
 | [TD-NETWORK-12](collectors/network/dissect_test.go) | unit | `TestDissectAndParse_TLS` · `_SSH` · `_IPv6` · `TestDissect_skipsNonTCP` — 프레임 → TCP 세그먼트 → 핸드셰이크 | IPv4·IPv6 모두 종단 디섹션, 비-TCP는 건너뜀 | 라이브 캡처 파이프라인의 순수 코어다. 여기가 막히면 파서가 옳아도 아무것도 도달하지 않는다 |
 | [TD-NETWORK-13](collectors/network/dissect_test.go) | unit | `TestCollect_degradesOnCaptureUnavailable` — 소스가 `ErrCaptureUnavailable` | 노드별 완전성 갭 결과를 스트림 | 캡처가 불가할 때 크래시하거나 "없음"으로 보고하지 않는다 |
 | [TD-NETWORK-14](collectors/network/capture_linux_test.go) | unit(linux) | `TestEdgeFor_clientOnly` — 양쪽 방향 관측 | **로컬이 클라이언트인 엣지만** client→server로 방출(낮은 포트=서버) | 같은 연결을 양쪽에서 두 번 세지 않는다 |
-| [TD-NETWORK-15](collectors/network/capture_linux_test.go) | unit(linux) | `TestObserveFillsTheWholeWindow` — 원시 syscall이 시그널(SIGURG 선점)에 깨어 EINTR | 재시도하고 창을 유지. 정상 종료면 `Truncated`가 서지 않는다 | 창이 무작위 시점에 잘려 결과가 "핸드셰이크 없음"이 되는 것 — **결함이 갭으로 위장**(§2.6). 실측: 25초 창이 0·0·14·25초에 종료 |
+| [TD-NETWORK-15](collectors/network/capture_linux_test.go) | unit(linux) | `TestObserveFillsTheWholeWindow` — 원시 syscall이 시그널(SIGURG 선점)에 깨어 EINTR | 재시도하고 구간을 유지. 정상 종료면 `Truncated`가 서지 않는다 | 구간이 무작위 시점에 잘려 결과가 "핸드셰이크 없음"이 되는 것 — **결함이 갭으로 위장**(§2.6). 실측: 25초 구간이 0·0·14·25초에 종료 |
 | [TD-NETWORK-16](collectors/network/capture_linux_test.go) | **integration** | `TestLiveSource_noCapPerm` — `CAP_NET_RAW` 없이 AF_PACKET | EPERM→`ErrCaptureUnavailable`(크래시 아님). 권한이 있으면 스킵 | 권한이 없을 때 갭으로 강등한다 |
 | [TD-NETWORK-17](collectors/network/real_test.go) | **integration** | `TestRealTLSHandshake` — 실 crypto/tls 핸드셰이크 | ClientHello의 후보에 X25519MLKEM768, ServerHello의 `negotiated_group`이 X25519MLKEM768. 그 값이 코어에서 🟢(PQC_HYBRID)로 분류된다 | 손으로 만든 바이트가 아니라 진짜 와이어에서 파서가 도는지. 관측과 등급 파생이 실물에서 맞물리는지도 함께 본다 |
 | [TD-NETWORK-18](collectors/network/real_test.go) | **integration** | `TestRealSSHKexInit` — 로컬 sshd(OpenSSH 9.6) | **제공 목록**에 `sntrup761x25519`가 있고, 단일 KEXINIT 관측이라 `negotiated_group`은 **비어 있다** | 〃 (실물 sshd). 서버가 제안한 것이지 합의된 것이 아니라는 구분이 실물에서도 지켜지는지 |
-| [TD-NETWORK-19](collectors/network/network_test.go) | unit | `TestCollect_marksTruncatedWindow` — 창이 중단된 소스(엣지 있음/없음) | 완전성 노트에 중단과 사유. **엣지가 하나도 없어도** 노드별 결과를 내보낸다. 중단 안 됐으면 안 뜬다 | 아무 말도 안 하면 "핸드셰이크 없음"으로 읽혀 결함이 갭으로 위장된다(§2.6) |
+| [TD-NETWORK-19](collectors/network/network_test.go) | unit | `TestCollect_marksTruncatedWindow` — 구간이 중단된 소스(엣지 있음/없음) | 완전성 노트에 중단과 사유. **엣지가 하나도 없어도** 노드별 결과를 내보낸다. 중단 안 됐으면 안 뜬다 | 아무 말도 안 하면 "핸드셰이크 없음"으로 읽혀 결함이 갭으로 위장된다(§2.6) |
 
 ---
 

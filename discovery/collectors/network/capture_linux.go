@@ -10,17 +10,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// LiveSource — AF_PACKET 원시 소켓 캡처(§2.4, CAP_NET_RAW 필요). 관측 창 동안 핸드셰이크
+// LiveSource — AF_PACKET 원시 소켓 캡처(§2.4, CAP_NET_RAW 필요). 관측 구간 동안 핸드셰이크
 // 프레임을 읽어 통신 엣지 관측으로 바꾼다. 조립은 순수 부분(DissectTCPPayload·ParseHandshakePayload)의 합성.
 // 소켓을 못 열면(권한 등) ErrCaptureUnavailable로 감싸 반환 → 코어가 완전성 갭으로 강등(TD-NETWORK-13).
 type LiveSource struct {
 	Iface      string          // 캡처 인터페이스(예 "eth0"). ""=모든 인터페이스
 	Node       string          // 캡처 호스트 스코프 노드 ID(앵커)
 	SelfIPs    map[string]bool // 자기 IP — 방향 판정·자기참조(§2.6)
-	Window     time.Duration   // 관측 창(0이면 3초)
-	MaxPackets int             // 상한(0=창으로만 종료)
+	Window     time.Duration   // 관측 구간(0이면 3초)
+	MaxPackets int             // 상한(0=구간으로만 종료)
 
-	// Truncated — 창을 다 채우지 못하고 읽기 오류로 중단됐나. 중단을 조용히 "관측 없음"으로
+	// Truncated — 구간을 다 채우지 못하고 읽기 오류로 중단됐나. 중단을 조용히 "관측 없음"으로
 	// 보고하면 **결함이 갭처럼 보인다**(§2.6) — 호출자가 완전성 노트에 반영하라고 남긴다.
 	Truncated bool
 	TruncErr  error
@@ -28,7 +28,7 @@ type LiveSource struct {
 
 func htons(x uint16) uint16 { return (x << 8) | (x >> 8) }
 
-// WindowTruncated — TruncatingSource 구현. 창이 읽기 오류로 중단됐는지 서비스에 알린다.
+// WindowTruncated — TruncatingSource 구현. 구간이 읽기 오류로 중단됐는지 서비스에 알린다.
 func (s *LiveSource) WindowTruncated() (bool, error) { return s.Truncated, s.TruncErr }
 
 func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, error) {
@@ -43,7 +43,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 			_ = unix.Bind(fd, &unix.SockaddrLinklayer{Protocol: htons(unix.ETH_P_ALL), Ifindex: ifi.Index})
 		}
 	}
-	// 수신 타임아웃으로 관측 창을 폴링한다(handshake-only 필터는 BPF로 확장 예정, §2.4).
+	// 수신 타임아웃으로 관측 구간을 폴링한다(handshake-only 필터는 BPF로 확장 예정, §2.4).
 	tv := unix.NsecToTimeval(int64(200 * time.Millisecond))
 	_ = unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
 
@@ -60,13 +60,13 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 		if err != nil {
 			// ★ EINTR을 반드시 재시도한다. Go 런타임은 고루틴 선점을 위해 스레드에 SIGURG를 보내는데,
 			// 그 시그널이 블로킹 syscall을 깨우면 EINTR이 돌아온다(netpoller가 감싸주지 않는 원시
-			// syscall이라 자동 재시도가 없다). 이걸 치명적 오류로 보고 break 하면 관측 창이 **무작위
-			// 시점에 조용히 끝난다** — 실측: 25초 창이 0·0·14·25초에 끝났고, 그때마다 "핸드셰이크
+			// syscall이라 자동 재시도가 없다). 이걸 치명적 오류로 보고 break 하면 관측 구간이 **무작위
+			// 시점에 조용히 끝난다** — 실측: 25초 구간이 0·0·14·25초에 끝났고, 그때마다 "핸드셰이크
 			// 없음"으로 보고돼 결함이 갭처럼 보였다(§2.6).
 			if err == unix.EAGAIN || err == unix.EWOULDBLOCK || err == unix.EINTR {
-				continue // 창 내 타임아웃·시그널 인터럽트 — 계속 관측
+				continue // 구간 내 타임아웃·시그널 인터럽트 — 계속 관측
 			}
-			// 그 밖의 읽기 오류로 중단되면 창을 다 못 채운 것이다. 숨기지 않고 표시한다.
+			// 그 밖의 읽기 오류로 중단되면 구간을 다 못 채운 것이다. 숨기지 않고 표시한다.
 			s.Truncated, s.TruncErr = true, err
 			break
 		}
@@ -82,7 +82,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 		if !emit {
 			continue // 서버측 관측 — 중복·방향 혼선 방지(클라이언트가 보고)
 		}
-		// SSH는 양쪽 KEXINIT을 다 봐야 협상 결과를 알 수 있다(RFC 4253) — 연결별로 모았다가 창이
+		// SSH는 양쪽 KEXINIT을 다 봐야 협상 결과를 알 수 있다(RFC 4253) — 연결별로 모았다가 구간이
 		// 끝난 뒤 계산한다. TLS는 ServerHello에 확정 그룹이 있어 그대로 방출한다.
 		if hs.Protocol == "SSH" {
 			pend.add(conn, hs, s.SelfIPs[seg.SrcIP])

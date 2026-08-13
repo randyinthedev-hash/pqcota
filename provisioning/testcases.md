@@ -77,7 +77,7 @@
 | [TP-RENDER-7](../pkg/provisioning/render_test.go) | `TestRenderJCAExplicitProviderClass` — `providerClass`에 FQCN 명시 | 그 FQCN이 그대로 등록. placeholder 경고 **없음** | 사용자가 이미 준 답을 다시 찾게 만들지 않는다 |
 | [TP-RENDER-8](../pkg/provisioning/render_test.go) | `TestRenderJCAUnknownProviderKeepsPlaceholder` — 모르는 이름, 클래스 미지정 | `<이름: …>` placeholder + `providerClass`로 푸는 법 | 모르는 provider의 클래스명을 지어내지 않는다(§2.5) |
 | [TP-RENDER-9](../pkg/provisioning/render_test.go) | `TestRenderJCAJarPlacementGuidance` — JAR 배치 안내 | 실제 배치 경로 + **JDK 9+** 세대 차이 | 안내가 실제 경로와 어긋나지 않게. `lib/ext`는 JDK 9에서 없어졌다 |
-| [TP-RENDER-10](../pkg/provisioning/render_test.go) | `TestBCDefaultClassStatesVersionAssumption` — BC 기본 클래스 | **버전 전제 명시**(`1.80+` · `BouncyCastlePQCProvider`). 클래스를 명시했거나 BCFIPS면 안 붙음 | 실측: 1.80/1.81엔 ML-KEM 서비스 17개, 1.78.1엔 0개. 계획은 JAR 버전을 말해주지 않는다 |
+| [TP-RENDER-10](../pkg/provisioning/render_test.go) | `TestBCDefaultClassStatesVersionAssumption` — BC 기본 클래스 | **버전 전제 명시**(`1.80+` · `BouncyCastlePQCProvider`). 클래스를 명시했거나 BCFIPS면 안 붙음 | 실측: 1.80/1.81엔 ML-KEM 서비스 17개, 1.78.1엔 0개. 계획은 JAR 버전을 알려주지 않는다 |
 | [TP-RENDER-11](../pkg/provisioning/render_test.go) | `TestProviderSlotReplacementIsStated` — `security.provider.2=` | **자리 대체**임을 조각과 `ProviderSlotWarnings` 양쪽에 명시. config-only엔 경고 없음 | 실측: JDK 21에서 목록은 12개 그대로고 원래 2번이던 SunRsaSign이 사라진다. 삽입처럼 읽히면 생성물이 거짓말을 한다 |
 | [TP-RENDER-12](../pkg/provisioning/render_test.go) | `TestNamedGroupsAlwaysKeepsClassicFallback` — config-only·주입 둘 다 | PQC 그룹 뒤에 **고전 폴백**을 항상 남긴다 | 실측: 미지 그룹만 주면 JDK 21 JSSE가 초기화에서 터진다 — 생성물이 앱을 죽인다 |
 | [TP-RENDER-13](../pkg/provisioning/render_test.go) | `TestFillPlan` — 혼합 계획에 계획 채움 | 모든 조치의 `config_artifact`가 채워짐 | 스냅샷과 ruleset만으로 같은 아티팩트가 다시 나와야 한다(§1.2) |
@@ -130,7 +130,7 @@
 
 **핵심 인수 기준**: **TP-GATE-1(finalized+서명+조치 아니면 실행 거부)** — 확정되지 않은 계획으로 머신을 건드리지 못하게 하는 최강 게이트. 그리고 **TP-RENDER-3·A2(config로 못 넣는 조치는 정직하게 주석·L2에서는 재시작을 만들지 않음)** — 단계 경계가 코드로 강제됨을 보장. **TP-PLAYBOOK-6–A9**는 L3 훅의 의미 순서·롤백 대칭, 빈 훅에서 명령을 지어내지 않음, 그리고 **조각·재시작이 서로를 덮어쓰지 않음**을 못박는다.
 
-**실기에서 잡힌 회귀**는 따로 못 박아 뒀다 — TP-PLAYBOOK-12(경로 삼자 일치)·TP-PLAYBOOK-17(깨끗한 노드의 디렉터리)·TP-PLAYBOOK-11(YAML 문법)·TP-RENDER-11(JSSE 초기화)·TP-RENDER-10(provider 자리 대체). 생성만 보면 통과하고 적용에서 깨지던 것들이다.
+**실제 장비에서 잡힌 회귀**는 따로 못 박아 뒀다 — TP-PLAYBOOK-12(경로 삼자 일치)·TP-PLAYBOOK-17(깨끗한 노드의 디렉터리)·TP-PLAYBOOK-11(YAML 문법)·TP-RENDER-11(JSSE 초기화)·TP-RENDER-10(provider 자리 대체). 생성만 보면 통과하고 적용에서 깨지던 것들이다.
 
 ---
 

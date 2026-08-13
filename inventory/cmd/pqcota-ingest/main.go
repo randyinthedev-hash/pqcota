@@ -126,7 +126,7 @@ func main() {
 		fmt.Printf("서명 미확인: %d건 — 틀렸다는 것이 아니라 **물어보지 못했다**는 뜻이다.\n", rep.Unverified)
 	}
 	if rep.ExcludedByScope > 0 {
-		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 말한다(§2.6).
+		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 밝힌다(§2.6).
 		fmt.Printf("자산 스코프: 관리 대상 아님으로 %d건 제외(관측은 됐으나 적재 안 함)\n", rep.ExcludedByScope)
 	}
 
