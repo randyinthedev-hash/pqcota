@@ -41,9 +41,9 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
   posture 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
 ```
 
-같은 관측을 토폴로지로도 낸다 — 색이 posture다.
+같은 관측을 토폴로지로도 낸다.
 
-![관측 토폴로지 — 색이 posture(🟢 PQC/하이브리드 · 🔴 고전 · ⚪ 불명)](demo/expected-output/topology.svg)
+![관측 토폴로지 — 색이 등급(🟢 PQC/하이브리드 · 🔴 고전 · ⚪ 불명)](demo/expected-output/topology.svg)
 
 **🔴는 "취약하다"는 판정이 아니라 "고전 알고리즘으로 협상됐다"는 관측이다.** 무엇을 언제 바꿀지는 사용자가 정한다. 전체 예상 출력은 [demo/expected-output](demo/expected-output/README.md)에 있다.
 
