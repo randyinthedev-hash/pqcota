@@ -18,7 +18,7 @@ const (
 	collectorLicense = "Apache-2.0"
 )
 
-// ConnTuple — 관측된 TCP 연결의 종단 정보(캡처 계층이 채운다). posture·협상은 Handshake에.
+// ConnTuple — 관측된 TCP 연결의 종단 정보(캡처 계층이 채운다). 등급·협상은 Handshake에.
 type ConnTuple struct {
 	SrcNode      string // 캡처 호스트 = 스코프 노드 ID(앵커, 알려짐)
 	DstNodeID    string // 코어가 스코프 마스터로 해소했으면 채워짐. 보통 "" (코어가 사후 해소)
@@ -28,7 +28,7 @@ type ConnTuple struct {
 }
 
 // BuildEdge — 파싱된 핸드셰이크 + 연결 튜플 → 관측 통신 엣지(ObservedEdge). TD-NETWORK-4.
-// posture는 넣지 않는다 — negotiated_group만 채우고 코어가 분류(§1.2).
+// 등급은 넣지 않는다 — negotiated_group만 채우고 코어가 분류(§1.2).
 func BuildEdge(conn ConnTuple, hs *Handshake) *discoveryv1.ObservedEdge {
 	e := &discoveryv1.ObservedEdge{
 		SrcNodeId:       conn.SrcNode,
@@ -75,7 +75,7 @@ func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote stri
 			CollectorLicense: collectorLicense,
 		},
 		// raw_format·raw_capture를 비운다 — 이 collector의 네이티브 형식은 **observed_edges 그 자체**라
-		// 따로 담으면 같은 관측을 두 벌 나르게 된다. 재정규화(posture 파생)도 edges에서 다시 한다.
+		// 따로 담으면 같은 관측을 두 벌 나르게 된다. 재정규화(등급 파생)도 edges에서 다시 한다.
 		Completeness: &commonv1.Completeness{
 			LayersCovered: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK},
 			Note:          windowNote,

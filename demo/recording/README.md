@@ -70,7 +70,7 @@ ffmpeg -i take.gif -movflags faststart -pix_fmt yuv420p take.mp4
 
 ## 함께 쓸 소재
 
-- 관측 토폴로지 — `demo/.generated/topology.svg` (색이 posture)
+- 관측 토폴로지 — `demo/.generated/topology.svg` (색이 등급)
 - 플랫폼 구조도 — [`docs/architectures/platform-structure.html`](../../docs/architectures/platform-structure.html)
 - 예상 출력 — [`expected-output/`](../expected-output/)
 

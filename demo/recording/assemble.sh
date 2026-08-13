@@ -58,8 +58,8 @@ still .cap/c1.png 3.5                       # 카드 ① 관측
 clip  "$O" 0     10.0                       #   정적 스캔 → 0건
 hold  "$O" 9.95  1.5                        #   (정지 — 0건)
 clip  "$O" 10.0  14.2                       #   attach로 조회한 체인
-clip  "$O" 14.2  16.4                       #   posture 표
-hold  "$O" 16.35 5.0                        #   (정지 — posture)
+clip  "$O" 14.2  16.4                       #   등급 표
+hold  "$O" 16.35 5.0                        #   (정지 — 등급)
 still .cap/topo.png 8.0                     # 토폴로지
 still .cap/c2.png 4.5                       # 카드 ② 전환물 생성
 clip  "$P" 0     7.0                        #   조치 전 0

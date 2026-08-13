@@ -11,7 +11,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/inventory"
 )
 
-// RenderStore — 적재된 히스토리 저장소 전체를 읽어 누적 인벤토리 뷰 + posture 집계.
+// RenderStore — 적재된 히스토리 저장소 전체를 읽어 누적 인벤토리 뷰 + 등급 집계.
 func TestRenderStore(t *testing.T) {
 	store := history.NewMemStore()
 	_ = store.Append(&history.Snapshot{ID: "s1", NodeID: "web-01", RulesetVersion: "r",

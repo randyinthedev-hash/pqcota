@@ -107,7 +107,7 @@ func TestParseClientHello(t *testing.T) {
 	}
 }
 
-// ── TD-NETWORK-2: ServerHello 선택 그룹·cipher·version → negotiated_group + posture 연동 ──
+// ── TD-NETWORK-2: ServerHello 선택 그룹·cipher·version → negotiated_group + 등급 연동 ──
 func TestParseServerHello(t *testing.T) {
 	hs, err := network.ParseTLSHandshake(serverHelloX25519MLKEM())
 	if err != nil {
@@ -125,7 +125,7 @@ func TestParseServerHello(t *testing.T) {
 	if hs.Version != "TLS1.3" {
 		t.Errorf("version = %q", hs.Version)
 	}
-	// 코어 posture 파생과 맞물리는지 교차 확인.
+	// 코어 등급 파생과 맞물리는지 교차 확인.
 	if posture.Classify(hs.NegotiatedGroup, hs.Cipher) != discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID {
 		t.Error("X25519MLKEM768 → PQC_HYBRID(🟢)이어야")
 	}

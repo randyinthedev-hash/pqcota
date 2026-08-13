@@ -272,7 +272,7 @@ type ProviderSignature struct {
 
 `MatchPQC(name)`은 협상 그룹/알고리즘명을 정규화(대문자·구분자 제거)해 부분문자열 매칭 → `(PQCAlgorithm, ok)`. 예: `X25519MLKEM768`→ML-KEM(fips), `sntrup761x25519-sha512@openssh.com`→NTRU-Prime(experimental), `x25519`→(false, 고전).
 
-**성숙도 축은 등급 축과 직교한다** — `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §1.6) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(posture→registry).
+**성숙도 축은 등급 축과 직교한다** — `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §1.6) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(등급→registry).
 
 **remediation 분기** — `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)`가 성숙도를 조치로 라우팅하고, `posture.Recommend(group, cipher, regulated)`가 엣지 하나에 대한 종합 권고를 낸다(고전·미관측 포함):
 
@@ -351,7 +351,7 @@ pqcota/            # Apache-2.0 · 공개 · 전 범위(Discovery·인벤토리�
   │    ├─ discovery/    #   관측 레인: normalize(§2.4)·history(§2.4⑥ 스냅샷 스토어)
   │    ├─ inventory/    #   ingest(적재·CBOM 수신 SV-2)·중앙 뷰(§5)·머신 메타데이터 저장소(엔드포인트·프로필 upsert)·hosts 파서 + declaration(선언 레인). 대조·판정 엔진은 없다
   │    ├─ provisioning/ #   확정계획 게이트(§3.7)·taxonomy→config 생성기(프로비저닝 설계 §4.1·§4.2)·L1/L2 플레이북·before 캡처·롤백 레코드 저장소. 생성·영속까지
-  │    └─ kernel/       #   단계 가로지르는 공유 규칙: registry·posture·scope·machineid·sign
+  │    └─ kernel/       #   단계 가로지르는 공유 규칙: registry·등급·scope·machineid·sign
   ├─ discovery/         # 실행 진입점(단계별):
   │    ├─ collectors/{openssl(Go),jvm(Java 사이드카 ★),network(Go)}  # §1.6 플러그인·GPL 격리 경계
   │    └─ cmd/{pqcota-hosts(접근준비),nodescan,netcap,jvmscan,procs,keygen}  # (테스트 하네스는 collectors/openssl/integration/probe)

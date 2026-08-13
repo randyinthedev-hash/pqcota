@@ -44,7 +44,7 @@ func (c *capRecorder) bytes() []byte {
 }
 
 // TD-NETWORK-11: 실 crypto/tls 핸드셰이크를 관측 → 파서가 진짜 와이어 ClientHello/ServerHello를 읽는다.
-// Go 1.24+는 X25519MLKEM768을 지원하므로 강제 협상해 실제 PQC posture를 관측한다.
+// Go 1.24+는 X25519MLKEM768을 지원하므로 강제 협상해 실제 PQC 등급을 관측한다.
 func TestRealTLSHandshake(t *testing.T) {
 	cert := selfSignedCert(t)
 	cli, srv := net.Pipe()
@@ -105,7 +105,7 @@ func TestRealTLSHandshake(t *testing.T) {
 	t.Logf("실 TLS 관측: negotiated=%s cipher=%s version=%s", sh.NegotiatedGroup, sh.Cipher, sh.Version)
 }
 
-// TD-NETWORK-12: 로컬 sshd(실물)의 KEXINIT를 직접 수신해 파싱 → 실제 협상 posture 관측.
+// TD-NETWORK-12: 로컬 sshd(실물)의 KEXINIT를 직접 수신해 파싱 → 실제 협상 등급 관측.
 func TestRealSSHKexInit(t *testing.T) {
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:22", 2*time.Second)
 	if err != nil {

@@ -2,7 +2,7 @@
 // "배포된 Java 앱"을 실제 실행 상태로 두어, pqcota-jvmscan이 JCA provider 체인을 관측하게 한다.
 //
 // 등록할 provider는 환경변수 PQCOTA_PROVIDERS(콤마 목록)로 받는다 — 미설정이면 BC(기존 데모 호환).
-// 커스텀 토폴로지가 노드별로 provider를 달리해 posture 차이(BC 유무)를 보이게 한다.
+// 커스텀 토폴로지가 노드별로 provider를 달리해 등급 차이(BC 유무)를 보이게 한다.
 import java.security.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 

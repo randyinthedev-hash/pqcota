@@ -1,14 +1,14 @@
 // Package network implements the network-collector (디스커버리 설계 §2.5) — TLS/SSH
 // 핸드셰이크를 수동 관측해 협상된 KEX 그룹과 통신 엣지를 잡는다. 복호화 없이 평문 핸드셰이크만 본다.
 //
-// 책임 경계(§1.6 유지): collector는 협상 그룹 "관측"까지. posture 분류(🟢🔴⚪)는 코어 파생(§1.2, pkg/kernel/posture).
+// 책임 경계(§1.6 유지): collector는 협상 그룹 "관측"까지. 등급 분류(🟢🔴⚪)는 코어 파생(§1.2, pkg/kernel/posture).
 // 산출은 노드 내부 Finding이 아니라 통신 엣지(contracts ObservedEdge, 인벤토리 설계 §6 토폴로지 그래프)다.
 package network
 
 import "fmt"
 
 // tlsGroupNames — TLS supported_groups/key_share 코드포인트 → 이름(IANA + PQC 하이브리드).
-// 이름 문자열이 pkg/kernel/posture.Classify의 입력이 된다(MLKEM 포함 여부로 posture 판정).
+// 이름 문자열이 pkg/kernel/posture.Classify의 입력이 된다(MLKEM 포함 여부로 등급 판정).
 var tlsGroupNames = map[uint16]string{
 	0x0017: "secp256r1",
 	0x0018: "secp384r1",
