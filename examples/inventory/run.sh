@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# examples/inventory — 회수된 CollectionResult를 읽기전용 인벤토리 뷰로 조회한다(자산·앱 귀속·posture).
+# examples/inventory — 회수된 CollectionResult를 읽기전용 인벤토리 뷰로 조회한다(자산·앱 표시·posture).
 # 전제: Go 툴체인만. 저장소·타깃 노드 불필요(파일 취합 모드).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

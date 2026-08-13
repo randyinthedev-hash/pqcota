@@ -51,10 +51,10 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 |---|---|
 | `node_id` | 관측 호스트(엣지의 src) |
 | `dst` | 상대. 엣지에 찍힌 주소 그대로 — `pqcota-inventory -snapshot`에서 보인다. **포트를 따로 적지 않는다**: 계약이 `dst_addr`를 `"ip:port"`로 정해 이미 들어 있고, 두 곳에 적으면 한쪽만 틀렸을 때 조용히 안 맞는다 |
-| `app_key` | 귀속시킬 앱 |
+| `app_key` | 이 엣지를 연 앱 |
 
 > **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,
-> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 잡은 귀속은 덮지 않고 **빈 자리만**
+> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 짚은 앱은 덮지 않고 **빈 자리만**
 > 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
 >
 > 저장을 가르는 이유는 둘이다 — 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과
@@ -81,7 +81,7 @@ include,openssl,libcrypto.so.3,/opt/apps/payment-gw,결제 게이트웨이만 �
 
 - 빈 칸과 `*`는 "모두". 패턴은 glob. 규칙이 없으면 **전부 관리 대상**(기본 포함).
 - 판정: 기본 포함 → `exclude`로 빼고 → `include`로 되돌린다. **include가 exclude를 이기므로** "이 계열은 전부 빼되 이것만 예외"를 쓸 수 있다.
-- 공유 `.so`는 귀속 앱이 여럿이라, **하나만 맞아도** 규칙이 걸린다.
+- 공유 `.so`는 쓰는 앱이 여럿이라, **하나만 맞아도** 규칙이 걸린다.
 - **제외는 "없음"이 아니다** — 뺀 건수를 적재 요약과 인벤토리 뷰가 고지한다. 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다.
 
 > 근거·경계 상세: [인벤토리 설계 §14 자산 스코프](../design.md), 인수 기준: [테스트케이스 S](../testcases.md).
@@ -139,7 +139,7 @@ pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <과거id>,<최신id>]
 ```
 
-인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다 — `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 귀속(공유 `.so`는 다중)이 붙는다. `env PQCOTA_DSN` 필수(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
+인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다 — `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)이 붙는다. `env PQCOTA_DSN` 필수(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
 
 | 플래그 | 하는 일 |
 |---|---|
@@ -203,6 +203,6 @@ pqcota-declare [--out <dir>] <declaration.csv>
 
 ## 언제 무엇을 쓰나
 - 회수한 결과 파일을 **한 번 취합해 그 자리에서 보기** → **`pqcota-discover-view`**(저장소 불필요·휘발성).
-- 여러 노드가 시간에 걸쳐 쌓은 **누적 인벤토리를 중앙에서 조회**(엔드포인트·프로필·앱 귀속 포함) → **`pqcota-inventory`**(Postgres).
+- 여러 노드가 시간에 걸쳐 쌓은 **누적 인벤토리를 중앙에서 조회**(엔드포인트·프로필·앱 표시 포함) → **`pqcota-inventory`**(Postgres).
 
 > 로직은 `pkg/inventory/`(적재 어댑터 `ingest`·뷰 렌더·`RenderStore`·머신 메타데이터 `MetaStore`·hosts 파서)와 `pkg/discovery/`(정규화·히스토리 스토어)에 있고, 이 커맨드들은 그걸 조립하는 얇은 진입점이다.

@@ -91,7 +91,7 @@ func TestTamperBreaksVerification(t *testing.T) {
 		"edge.role":           func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].Role = discoveryv1.EdgeRole_EDGE_ROLE_SERVER },
 		"edge.observed_count": func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].ObservedCount = 1 },
 		"edge.last_seen":      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].LastSeen = timestamppb.Now() },
-		// 귀속을 갈아끼우는 변조 — 어느 앱이 그 통신을 했나가 바뀌면 조치 대상이 바뀐다.
+		// 앱을 갈아끼우는 변조 — 어느 앱이 그 통신을 했나가 바뀌면 조치 대상이 바뀐다.
 		"edge.app_key":      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKey = "other.service" },
 		"edge.app_key_kind": func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKeyKind = "exe-path" },
 		"edge 추가": func(r *discoveryv1.CollectionResult) {

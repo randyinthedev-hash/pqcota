@@ -44,14 +44,14 @@
 | 문서 | 단계 |
 |---|---|
 | [디스커버리 설계](../discovery/design.md) · [collector 배포](../discovery/collector-deployment.md) · [위임 수신](../inventory/cbom-intake.md) | Discovery — collector(직접 관측)·CBOM 위임 수신·파이프라인·SD-1–SV-2·자산 모델 |
-| [인벤토리 설계](../inventory/design.md) | Inventory — 머신 메타데이터(엔드포인트·프로필) 저장소·중앙 뷰(앱 귀속) [이 리포] |
+| [인벤토리 설계](../inventory/design.md) | Inventory — 머신 메타데이터(엔드포인트·프로필) 저장소·중앙 뷰(앱 표시) [이 리포] |
 | [프로비저닝 설계](../provisioning/design.md) | Provisioning — 계획 게이트·taxonomy→아티팩트·L1/L2/L3 플레이북 생성(L3=계획의 `activation` 훅으로 활성화·재시작)·before 롤백 레코드 |
 
 ## 테스트·검증
 | 문서 | 내용 |
 |---|---|
 | [**테스트 명세 지도**](test-map.md) | 케이스가 어디 적혀 있고 어디서 도나 — 그룹→코드 대응, 레벨 분포, 미검증 셋. **여기서 시작** |
-| [커널 테스트케이스](kernel-testcases.md) | 단계를 가로지르는 **파생 규칙** — 증거 강도·정규화·등급·조치 taxonomy·앱 귀속 |
+| [커널 테스트케이스](kernel-testcases.md) | 단계를 가로지르는 **파생 규칙** — 증거 강도·정규화·등급·조치 taxonomy·앱 표시 |
 | [디스커버리 테스트케이스](../discovery/testcases.md) · [인벤토리 테스트케이스](../inventory/testcases.md) · [프로비저닝 테스트케이스](../provisioning/testcases.md) | 상황별 인수 기준 + 구현 순서 (TDD) |
 | [데모가 검증하는 것](../demo/integration-verification.md) | 실물이 필요한 케이스를 데모 6단계가 맡는다. 덮지 않는 것도 적어 둔다 |
 

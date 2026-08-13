@@ -121,7 +121,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
 | `pqcota:jca.provider_set` | 등록 순서 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
-| `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산 귀속(§1.5) |
+| `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산이 어느 앱 것인지(§1.5) |
 
 > `evidence_strength`·`pqc_readiness`는 **여기 넣지 않는다** — 코어 파생 값이다(위 결정 1).
 

@@ -29,8 +29,8 @@ attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README
 
 이후 단계에서 추가로 보게 되는 것:
 - **접근준비(0)** — `pqcota-hosts`가 hosts.csv→Ansible 인벤토리(접속 키·런타임 전용) + 엔드포인트 upsert. 인벤토리엔 **비밀 0건**.
-- **중앙 인벤토리(5)** — `▸ 결제 DB (ip:22) │ 결제 DB · production · db · owner=DBA팀` 처럼 **엔드포인트·프로필 헤더** + `@앱` 귀속. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 동시 귀속**.
-- **엣지 귀속(5)** — 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
+- **중앙 인벤토리(5)** — `▸ 결제 DB (ip:22) │ 결제 DB · production · db · owner=DBA팀` 처럼 **엔드포인트·프로필 헤더** + `@앱` 표시. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 모두에 걸림**.
+- **엣지의 앱(5)** — 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
   `@/usr/bin/openssl(exe-path)`, **못 잡으면 `@?`**다. 이 데모에서는 네 엣지 중 셋이 `@?`로 나오고
   사유가 함께 찍힌다 — *"캡처와 조회 사이에 소켓이 닫혔다 — 짧은 연결은 놓친다(3)"*. 데모 트래픽이
   전부 짧은 연결이라 그렇다. 그중 하나를 `pqcota-declare-attribution`으로 지정하면

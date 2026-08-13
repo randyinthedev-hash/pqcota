@@ -35,7 +35,7 @@ type ScanStats struct {
 
 // ScanHost — 접근 가능한 모든 프로세스의 /proc를 스캔해 로드된 OpenSSL을 **경로별 유니크**로 수집한다.
 // 여러 프로세스가 같은 .so를 로드하므로 경로 dedup. root(또는 CAP_SYS_PTRACE)면 전 프로세스를 본다.
-// ★ 같은 .so를 서로 다른 앱이 로드하면 app_key를 **합집합**한다(§1.5 다중 귀속) — 그 .so 교체는
+// ★ 같은 .so를 서로 다른 앱이 로드하면 app_key를 **합집합**한다(§1.5 여러 앱에 걸침) — 그 .so 교체는
 //
 //	로더 앱 전부에 영향이므로 하나로 뭉개면 안 된다.
 func ScanHost(sigs []registry.ForkSignature) ([]Detection, ScanStats) {
@@ -66,7 +66,7 @@ func ScanHost(sigs []registry.ForkSignature) ([]Detection, ScanStats) {
 }
 
 // mergeByPath — 프로세스별 탐지들을 **경로별 유니크**로 합치되, 서로 다른 앱이 같은 .so를 로드하면
-// app_key를 **합집합**한다(§1.5 다중 귀속). 첫 관측 순서 보존·app_key 정렬로 결정적. 순수 함수(테스트 가능).
+// app_key를 **합집합**한다(§1.5 여러 앱에 걸침). 첫 관측 순서 보존·app_key 정렬로 결정적. 순수 함수(테스트 가능).
 func mergeByPath(perPID [][]Detection) []Detection {
 	byPath := map[string]Detection{}
 	appsByPath := map[string]map[string]bool{}

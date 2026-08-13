@@ -77,7 +77,7 @@ type MemStore struct {
 	obs    map[string]map[string]*ObsStat // node → 스냅샷 id → 관측 요약
 	events []RetentionEvent               // 절단 기록(보존 정책 집행 흔적)
 	rej    memRejections                  // 거절 기록(받지 않은 사실)
-	attr   memAttributions                // 선언된 귀속(스냅샷 타임라인 밖)
+	attr   memAttributions                // 사람이 선언한 앱(스냅샷 타임라인 밖)
 }
 
 // NewMemStore — 조직을 대지 않고 연다. org.Default에 묶인다(시그니처를 바꾸지 않는다 —

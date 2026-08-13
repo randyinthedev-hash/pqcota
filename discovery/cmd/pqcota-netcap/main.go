@@ -83,7 +83,7 @@ func main() {
 	// 같은 엣지의 여러 관측(ClientHello/ServerHello 등)을 키별로 병합한다.
 	// TLS는 ServerHello에만 협상 그룹이 실리므로 "그룹 있는 관측"을 우선 채택한다.
 	self := src.SelfIPs
-	// 귀속은 **엣지를 보는 그 자리에서** 한다. 캡처가 끝난 뒤 몰아 하면 그 사이에 닫힌 소켓을
+	// 앱은 **엣지를 보는 그 자리에서** 짚는다. 캡처가 끝난 뒤 몰아 하면 그 사이에 닫힌 소켓을
 	// 더 놓친다. 비싼 fd 스캔만 구간 안에서 짧게 재사용한다.
 	att := procs.NewAttributor("/proc", time.Second)
 	unattributed := map[string]int{} // 사유 → 건수
@@ -118,7 +118,7 @@ func main() {
 		edges = append(edges, byKey[k])
 	}
 	// 구간이 중간에 끊겼으면 "관측 없음"과 구별되게 노트에 남긴다 — 결함을 갭으로 위장하지 않는다.
-	// 귀속하지 못한 엣지는 **"앱 없음"이 아니라 "귀속하지 못함"이다.** 사유별로 몇 건인지
+	// 어느 앱인지 못 밝힌 엣지는 **"앱 없음"이 아니라 "어느 앱인지 밝히지 못함"이다.** 사유별로 몇 건인지
 	// 완전성 노트에 남긴다 — 안 적으면 빈 app_key가 "이 통신에 앱이 없다"로 읽힌다.
 	note := attributionNote(len(order), unattributed)
 	if src.Truncated {
@@ -128,7 +128,7 @@ func main() {
 	emit(network.BuildResult(node, edges, note))
 	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개", len(edges))
 	if n := total(unattributed); n > 0 {
-		fmt.Fprintf(os.Stderr, " · 앱 귀속 못 함 %d개", n)
+		fmt.Fprintf(os.Stderr, "  · 앱 못 짚음 %d개", n)
 	}
 	fmt.Fprintln(os.Stderr)
 	for reason, n := range unattributed {
@@ -136,7 +136,7 @@ func main() {
 	}
 }
 
-// attributionNote — 귀속 결과를 완전성 노트 문장으로. 전부 잡았으면 빈 문자열.
+// attributionNote — 앱을 짚은 결과를 완전성 노트 문장으로. 전부 잡았으면 빈 문자열.
 func attributionNote(edges int, unattributed map[string]int) string {
 	n := total(unattributed)
 	if n == 0 {
@@ -147,7 +147,7 @@ func attributionNote(edges int, unattributed map[string]int) string {
 		reasons = append(reasons, fmt.Sprintf("%s(%d)", r, c))
 	}
 	sort.Strings(reasons) // 순서가 흔들리면 같은 관측이 다른 스냅샷으로 보인다
-	return fmt.Sprintf("엣지 %d개 중 %d개를 앱에 귀속하지 못했다 — **앱이 없다는 뜻이 아니다**. 사유: %s",
+	return fmt.Sprintf("엣지 %d개 중 %d개는 어느 앱인지 밝히지 못했다 — **앱이 없다는 뜻이 아니다**. 사유: %s",
 		edges, n, strings.Join(reasons, " · "))
 }
 

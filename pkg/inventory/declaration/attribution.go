@@ -14,10 +14,10 @@ import (
 //
 // 계약을 늘리지 않고 이 자리를 쓰는 이유: `ObservedEdge.detection_method`는 **엣지 자체를 어떻게
 // 관측했나**를 말하지 키의 출처가 아니다. 거기에 UNSPECIFIED를 넣으면 "이 통신을 실제로 봤다"는
-// 사실까지 흐려진다. 엣지는 관측된 것이 맞고, **그 귀속만** 사람이 적은 것이다.
+// 사실까지 흐려진다. 엣지는 관측된 것이 맞고, **어느 앱이 열었는지만** 사람이 적은 것이다.
 const KindDeclared = "declared"
 
-// EdgeAttribution — 사람이 지정한 엣지→앱 귀속 한 건.
+// EdgeAttribution — 사람이 지정한 엣지의 앱 한 건.
 type EdgeAttribution struct {
 	NodeID string // 관측 호스트(엣지의 src)
 	// Dst — 엣지에 찍힌 상대 주소 그대로. 계약이 `dst_addr`를 `"ip:port"`로 정하므로 포트가
@@ -53,7 +53,7 @@ func ImportAttributionCSV(r io.Reader) ([]*discoveryv1.CollectionResult, error) 
 			AppKey: strings.TrimSpace(row[2]),
 		}
 		// 셋 중 하나라도 비면 어느 엣지를 가리키는지 알 수 없다. 추측하지 않고 알린다 —
-		// 틀린 앱에 귀속하면 조치 대상이 바뀐다.
+		// 앱을 잘못 짚으면 조치 대상이 바뀐다.
 		if a.NodeID == "" || a.Dst == "" || a.AppKey == "" {
 			return nil, fmt.Errorf("%d행: node_id·dst·app_key는 셋 다 있어야 한다", i+1)
 		}
@@ -77,7 +77,7 @@ func buildDeclaredAttribution(node string, as []EdgeAttribution) *discoveryv1.Co
 			SrcNodeId: a.NodeID,
 			DstAddr:   a.Dst,
 			AppKey:    a.AppKey,
-			// 이 엣지는 관측된 것이 아니다 — 귀속을 나르는 그릇일 뿐이다.
+			// 이 엣지는 관측된 것이 아니다 — 앱 이름을 나르는 그릇일 뿐이다.
 			DetectionMethod: commonv1.DetectionMethod_DETECTION_METHOD_UNSPECIFIED,
 			AppKeyKind:      KindDeclared,
 		})
@@ -97,7 +97,7 @@ func buildDeclaredAttribution(node string, as []EdgeAttribution) *discoveryv1.Co
 		ObservedEdges: edges,
 		// 관측한 계층이 없다 — 이 결과는 아무것도 관측하지 않았다.
 		Completeness: &commonv1.Completeness{
-			Note: "선언된 귀속이다 — 관측이 아니다. 관측 엣지의 빈 app_key를 화면에서 메우는 데만 쓴다",
+			Note: "사람이 선언한 앱이다 — 관측이 아니다. 관측 엣지의 빈 app_key를 화면에서 메우는 데만 쓴다",
 		},
 	}
 }

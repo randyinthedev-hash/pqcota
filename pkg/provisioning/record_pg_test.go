@@ -71,6 +71,6 @@ func TestPgRecordStore(t *testing.T) {
 		t.Errorf("초기 상태는 STAGED여야: %v", got[0].GetStatus())
 	}
 	if len(got[0].GetAppKeys()) != 1 || got[0].GetAppKeys()[0] != "pay.service" {
-		t.Errorf("app_keys 다중 귀속이 보존되지 않았다: %v", got[0].GetAppKeys())
+		t.Errorf("app_keys 여러 앱에 걸침이 보존되지 않았다: %v", got[0].GetAppKeys())
 	}
 }

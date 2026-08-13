@@ -28,7 +28,7 @@ enum CryptoRuntime {
   // 디스커버리(콜렉터)는 다음 릴리스, 프로비저닝은 그 다음(substrate 일반화 선행).
   // 상세: docs/런타임_확장_계약.md
   CRYPTO_RUNTIME_WIN_CNG = 3;
-  // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG로 귀속(peer 아님) — 위 문서 참조.
+  // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG 쪽으로 묶인다(peer 아님) — 위 문서 참조.
 }
 
 // 탐지 방법 (규정서 §2.3 표의 detection_method 열). Collector가 신고한다.

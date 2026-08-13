@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pqcota 데모 — 접근 준비(hosts→Ansible·엔드포인트) → 디스커버리 → 중앙 인벤토리(엔드포인트·
-# 프로필·앱 귀속) → 프로비저닝 생성(플레이북 + before/롤백 레코드). 전부 이 리포 범위.
+# 프로필·앱 표시) → 프로비저닝 생성(플레이북 + before/롤백 레코드). 전부 이 리포 범위.
 set -euo pipefail
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DSN="postgres://postgres:pqcota@pqcota-demo-pg:5432/pqcota"
@@ -94,9 +94,9 @@ if docker exec pqcota-ctl bash -lc 'command -v dot >/dev/null && dot -Tsvg /work
 fi
 docker cp pqcota-ctl:/work/topology.dot "$GEN/topology.dot" 2>/dev/null || true
 
-echo "▶ 5/6 중앙 인벤토리 적재·조회 (Postgres append-only · 엔드포인트·프로필·앱 귀속 · 이력·변화)…"
+echo "▶ 5/6 중앙 인벤토리 적재·조회 (Postgres append-only · 엔드포인트·프로필·앱 표시 · 이력·변화)…"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
-echo "   ── 조회(pqcota-inventory) — ▸머신 헤더(엔드포인트·프로필) · @앱 귀속(공유 .so는 다중) ──"
+echo "   ── 조회(pqcota-inventory) — ▸머신 헤더(엔드포인트·프로필) · @앱 표시(공유 .so는 다중) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
   | grep -E '중앙 인벤토리|▸|@|합계' | sed 's/^/   /'
 
@@ -113,15 +113,15 @@ PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order
 echo "   ── 스냅샷 상세(-snapshot): 자산 + 그 스냅샷의 관측 엣지(누적 뷰는 합계만 낸다) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
-# 엣지 귀속 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
-# 그 창을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "귀속하지 못했다"이고**, 그 자리를
+# 엣지의 앱 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
+# 그 창을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 그 자리를
 # 사람이 선언으로 메운다. 관측을 고치지 않고 자기 레인으로 들어가며, 메운 것은 (declared)로 표시된다.
 # dst는 **엣지에 찍힌 그대로** 적는다(이 데모에서는 "ip:port" 모양이다) — 화면에서 보이는 값을
 # 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
 UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_elements(s.edges) e
   where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
 if [ -n "$UNATTR_DST" ]; then
-  echo "   ── 귀속 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
+  echo "   ── 앱 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
   echo "      대상 $UNATTR_DST — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
   docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
 node_id,dst,app_key
@@ -132,7 +132,7 @@ CSV
     | sed 's/^/      /'
   echo "   ── 다시 조회: 관측 엣지는 그대로고, 빈 자리만 메워진다 ──"
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" \
-    | grep -E '관측 엣지|→|선언된 귀속' | sed 's/^/   /'
+    | grep -E '관측 엣지|→|사람이 선언한 앱' | sed 's/^/   /'
 else
   echo "   (이 창에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
 fi
@@ -167,13 +167,13 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-prune -keep-last 1'
 
 echo "▶ 6/6 프로비저닝 — 확정 계획 → L2/L3 플레이북 생성 → 적용 → 되돌림…"
 # 프로비저닝 대상 노드(PNODE) — openssl finding이 있는 노드를 인벤토리에서 고른다(공유 .so로 다중
-# 귀속된 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.5).
+# 앱이 붙은 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.5).
 PNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where f ? 'openssl' order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, s.node_id limit 1" | tr -d '[:space:]')
 if [ -z "$PNODE" ]; then
   echo "   (openssl finding을 가진 노드가 없어 프로비저닝 시연은 생략 — 토폴로지에 openssl 서버를 두면 보인다)"
 else
-# 인벤토리에서 실제 finding을 골라 확정 계획을 만든다. 공유 libssl(다중 귀속) 우선, 없으면 아무 finding.
+# 인벤토리에서 실제 finding을 골라 확정 계획을 만든다. 공유 libssl(여러 앱에 걸침) 우선, 없으면 아무 finding.
 pick() { pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where s.seq=(select max(seq) from pqcota_snapshots where node_id='$PNODE') and ($1)
   order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, f->>'id' limit 1" | tr -d '[:space:]'; }
@@ -348,7 +348,7 @@ fi  # RNODE 가드 끝
 fi  # DEMO_REAL_PROVIDER 끝
 
 echo
-echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱귀속·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
+echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱 표시·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
 echo "   산출물: demo/.generated/topology.svg (색=posture) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
 echo "   ※ 생성물을 실제로 적용·활성화·되돌림까지 실행해 확인한 것 — 생성만 보면 깨끗한 노드에서 깨지는 플레이북도 통과한다."
 echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§1.5)."

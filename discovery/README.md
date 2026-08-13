@@ -30,7 +30,7 @@ flowchart LR
 
 | collector | 관측 대상 | 방법 |
 |---|---|---|
-| **[openssl](collectors/openssl/README.md)** | 로드된 libcrypto/libssl, fork, 앱 귀속 | `/proc`·ELF **자체 파싱**(Linux) — `ldd`·`readelf` 비의존 |
+| **[openssl](collectors/openssl/README.md)** | 로드된 libcrypto/libssl, fork, 앱 표시 | `/proc`·ELF **자체 파싱**(Linux) — `ldd`·`readelf` 비의존 |
 | **[jvm](collectors/jvm/README.md)** ★ | 살아있는 JCA provider 체인의 **실체**(등록 순서 포함) | JVM attach → `getProviders()` (순수 Java 사이드카) |
 | **[network](collectors/network/README.md)** | TLS/SSH 핸드셰이크 협상 그룹 → 통신 엣지 | AF_PACKET 수동 캡처(Linux), 복호화 없음 |
 

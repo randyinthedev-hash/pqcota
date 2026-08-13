@@ -108,7 +108,7 @@ func main() {
 	}
 	defer recs.Close()
 
-	// 노드별 최신 findings 캐시(before 기준·app_key 귀속).
+	// 노드별 최신 findings 캐시(before 기준·app_key 부착).
 	byNode := map[string][]*discoveryv1.Finding{}
 	findingByID := map[string]*discoveryv1.Finding{}
 	load := func(node string) []*discoveryv1.Finding {
@@ -135,7 +135,7 @@ func main() {
 	for _, a := range plan.GetActions() {
 		node := a.GetTargetNodeId()
 		before := load(node)
-		var appKeys []string // 근거 Finding의 자산 귀속(§1.5) — 공유 .so면 다중
+		var appKeys []string // 근거 Finding의 자산이 어느 앱 것인지(§1.5) — 공유 .so면 다중
 		if f := findingByID[a.GetFindingId()]; f != nil {
 			appKeys = f.GetAppKeys()
 		}

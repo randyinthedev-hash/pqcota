@@ -18,7 +18,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 
 적재→조회→이력→절단→스코프 **종단**은 여기 케이스가 아니라 [데모 5/6](../demo/integration-verification.md)이 확인한다.
 
-케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE` · `TV-ORG`(조직 격리) · `TV-REJECT`(받지 않은 사실) · `TV-ATTR`(선언된 귀속). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
+케이스 번호는 **`TV`(인벤토리) - 무엇을 보나 - 순번**이다 — `TV-IMPORT`(사용자 입력) · `TV-CBOM`(외부 수신) · `TV-INGEST`(적재 관문) · `TV-HISTORY` · `TV-RETENTION` · `TV-SCOPE` · `TV-ORG`(조직 격리) · `TV-REJECT`(받지 않은 사실) · `TV-ATTR`(사람이 선언한 앱). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
 
 절 제목의 `SV-*`는 설계 문서가 매긴 **상황**(Scenario·inVentory) 번호이고([인벤토리 설계](design.md)의 선언 임포터, [위임 수신 설계](cbom-intake.md)), 표 안의 `TV-*`는 그 상황을 검증하는 **테스트** 번호다.
 
@@ -73,14 +73,14 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-RETENTION-6](../pkg/discovery/history/prune_test.go) | `TestPruneConservativeWithBothAxes` — `older-than` + `keep-last` 동시 | **보수적** — 최근 N개 안이면 오래돼도 보존 | 두 축이 부딪히면 더 많이 남기는 쪽으로. 지운 것은 되돌릴 수 없다 |
 | [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent` — 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 구멍이 "관측 안 함"과 구분되지 않는다 |
 | [TV-RETENTION-8](../pkg/discovery/history/pg_test.go) | `TestPgStore` — Postgres 영속(`PQCOTA_TEST_DSN` 있을 때) | 2층 저장·조회가 인메모리와 같은 계약 | 저장소를 바꿔도 이력의 뜻이 달라지지 않는다 |
-| [TV-ATTR-0](../pkg/inventory/edge_app_test.go) | `TestUnattributedEdgeIsMarkedNotBlank` — 귀속된 엣지·exe 경로로 귀속된 엣지·못 잡은 엣지 셋 | `@app` · `@app(exe-path)` · **`@?`**. 완전성 노트도 함께 나온다 | 빈칸은 "그런 열이 없다"와 구별되지 않는다. 무엇을 모르는지 보여야 선언으로 채울지 판단한다 |
-| [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverEntersTheTimeline` — 선언을 적재하고 노드 목록·스냅샷 수를 본다 | 노드가 안 생기고 스냅샷도 0. 귀속 저장소에만 들어간다 | 타임라인에 넣으면 조회·이력·diff가 저마다 걸러 내야 한다 — **실제로 기본 조회와 이력에서 두 번 샜다** |
+| [TV-ATTR-0](../pkg/inventory/edge_app_test.go) | `TestUnattributedEdgeIsMarkedNotBlank` — 앱이 붙은 엣지·exe 경로로 붙은 엣지·못 잡은 엣지 셋 | `@app` · `@app(exe-path)` · **`@?`**. 완전성 노트도 함께 나온다 | 빈칸은 "그런 열이 없다"와 구별되지 않는다. 무엇을 모르는지 보여야 선언으로 채울지 판단한다 |
+| [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverEntersTheTimeline` — 선언을 적재하고 노드 목록·스냅샷 수를 본다 | 노드가 안 생기고 스냅샷도 0. 선언 저장소에만 들어간다 | 타임라인에 넣으면 조회·이력·diff가 저마다 걸러 내야 한다 — **실제로 기본 조회와 이력에서 두 번 샜다** |
 | [TV-ATTR-6](../pkg/inventory/attribution_overlay_test.go) | `TestRedeclaringOverwrites` — 같은 엣지를 두 번 선언 | 뒤엣것으로 덮인다 | 선언은 사람이 고치는 것이라 append-only가 아니다 — 관측(불변)과 규칙이 다르다 |
 | [TV-ATTR-7](../pkg/discovery/history/attribution_pg_test.go) | `TestPgAttributionsShareATableAndStillDoNotSeeEachOther` — 두 조직이 **같은 (node, dst)**를 선언한다(`PQCOTA_TEST_DSN` 있을 때) | 각자 자기 것만 본다 | 키가 겹치는 최악의 경우다. 인메모리 케이스는 객체가 달라 통과해도 격리를 증명하지 못한다 |
 | [TV-ATTR-8](../pkg/discovery/history/attribution_pg_test.go) | `TestPgRedeclaringOverwrites` — 같은 엣지를 Postgres에 두 번 선언 | 덮이고, 선언 시각이 남는다 | Pg의 `ON CONFLICT` 경로는 인메모리와 구현이 다르다 — 저장소를 바꿔도 규칙이 유지되는지 따로 본다 |
 | [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation` — 관측이 이미 채운 자리를 노리는 선언을 함께 넣는다 | 관측이 이긴다. 빈 자리만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다 — 선언 레인을 따로 둔 이유가 사라진다 |
 | [TV-ATTR-2](../pkg/inventory/attribution_overlay_test.go) | `TestOverlayDoesNotMutateTheStoredEdge` — 얹어서 렌더한 뒤 원본 확인 | 저장된 엣지의 `app_key`가 그대로 비어 있다 | 서명이 `app_key`를 덮는다. 적재·조회가 관측을 고치면 collector가 서명한 것과 달라지고, 원본에서 재계산할 때도 갈린다 |
-| [TV-ATTR-4](../pkg/inventory/attribution_overlay_test.go) | `TestAttributionCSVRefusesWhatItCannotPlace` — 포트가 숫자가 아님 · app_key 없음 · node_id 없음 | 전부 에러 | 어느 엣지를 가리키는지 모르는 줄을 추측으로 붙이면 틀린 앱에 귀속된다 |
+| [TV-ATTR-4](../pkg/inventory/attribution_overlay_test.go) | `TestAttributionCSVRefusesWhatItCannotPlace` — 포트가 숫자가 아님 · app_key 없음 · node_id 없음 | 전부 에러 | 어느 엣지를 가리키는지 모르는 줄을 추측으로 붙이면 앱을 잘못 짚게 된다 |
 | [TV-ORG-1](../pkg/org/org_test.go) | `TestParseRejectsWhatCannotBeToldApart` · `TestEmptyIsNotAChoice` · `TestResolveFallsBackButNeverGuesses` — `Acme`·`ACME`·빈 값·`acme_corp` 등 | 전부 거절. 소문자·숫자·하이픈 2–64자만 | 사람은 같게 읽고 기계는 다르게 읽는 이름이 있으면 한 조직이 둘로 갈린다 |
 | [TV-ORG-2](../pkg/org/org_test.go) | `TestRequiredModeRefusesTheDefaultStore` · `TestDefaultIsReservedInRequiredMode` — 필수 모드에서 조직 없음·`default` | 둘 다 **여는 자리에서** 거절 | 데이터가 섞인 뒤에는 되돌릴 수 없다. `default`는 모양 규칙을 통과하므로 막지 않으면 배정된다 |
 | [TV-ORG-5](../pkg/org/org_test.go) | `TestScopedIsSatisfiedByTheStores` — 저장소 다섯을 `org.Scoped`로 받아 본다 | 전부 만족하고, `history.Store`에서도 타입 단언으로 물을 수 있다 | 인터페이스에 메서드를 더하면 밖의 구현체가 깨진다. 별도 인터페이스로 두되 **실제로 만족하는지**는 잠가 둔다 |
@@ -95,9 +95,9 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
 | [TV-SCOPE-1](../pkg/kernel/scope/asset_test.go) | `TestNoPolicyKeepsEverything` — 정책 없음(nil) | 관측된 자산 **전부 관리 대상** | 정책을 안 쓰는 사용자를 막지 않는다 |
-| [TV-SCOPE-2](../pkg/kernel/scope/asset_test.go) | `TestExcludeByAppKeyGlob` — `exclude`가 app_key glob에 매치 | 그 finding 제외 | 잡음을 앱 귀속으로 걸러낸다 — 없으면 인벤토리가 못 쓰게 된다 |
+| [TV-SCOPE-2](../pkg/kernel/scope/asset_test.go) | `TestExcludeByAppKeyGlob` — `exclude`가 app_key glob에 매치 | 그 finding 제외 | 잡음을 앱 이름으로 걸러낸다 — 없으면 인벤토리가 못 쓰게 된다 |
 | [TV-SCOPE-3](../pkg/kernel/scope/asset_test.go) | `TestIncludeOverridesExclude` — `exclude` **뒤에** `include` | **뒤 규칙이 이긴다**(순서 기반) | "계열 전부 빼되 이것만 예외"를 쓸 수 있어야 한다 |
-| [TV-SCOPE-4](../pkg/kernel/scope/asset_test.go) | `TestMultiAppAttribution` — 공유 `.so`(귀속 앱 다중) 중 하나만 매치 | 매치로 판정 | 공유 `.so`는 귀속 앱이 여럿이라 하나만 걸려도 규칙이 걸린다 |
+| [TV-SCOPE-4](../pkg/kernel/scope/asset_test.go) | `TestMultiAppAttribution` — 공유 `.so`(쓰는 앱 여럿) 중 하나만 매치 | 매치로 판정 | 공유 `.so`는 쓰는 앱이 여럿이라 하나만 걸려도 규칙이 걸린다 |
 | [TV-SCOPE-5](../pkg/kernel/scope/asset_test.go) | `TestBadAction` — `action`에 오타(`drop` 등) | 오류 | 조용히 무시하면 정책이 안 먹은 걸 모른다 |
 | [TV-SCOPE-6](../pkg/kernel/scope/asset_test.go) | `TestSharedLibExcludeRescuedByTrailingInclude` — 공유 `.so`를 한 앱만 겨냥해 exclude | 그 `.so`를 함께 쓰는 **운영 앱까지 제외됨**. 운영 앱 `include`를 뒤에 두어 구제 | 겨냥한 앱만 빠질 것 같지만 영향 반경이 넓다는 것을 드러낸다 |
 | [TV-SCOPE-7](../pkg/inventory/ingest/central_test.go) | `TestIngestReportsScopeExclusions` — 정책이 자산을 뺀 적재 | 적재 요약·스냅샷·인벤토리 뷰 **셋 다** 건수 고지, 제외한 자산은 남지 않음 | 스코프가 조용히 자산을 지우면 인벤토리가 거짓말을 한다(§2.6·§8.3) |

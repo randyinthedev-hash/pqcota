@@ -352,7 +352,7 @@ L3 후 **재스캔으로 상태 변경 확인**(§4.3). Deploy가 만든 변화(
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).
 - **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다 — before 원문 재생성 불필요. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.
 - **대칭**: forward가 놓은 것을 롤백이 지운다. L3면 활성화도 되돌린다 — `deactivate` 훅이 없으면 파일만 지워지므로 그 사실을 경고한다(§2.5).
-- **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 귀속 → 레코드 영속.
+- **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 부착 → 레코드 영속.
 
 ---
 

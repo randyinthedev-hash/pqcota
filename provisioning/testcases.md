@@ -45,7 +45,7 @@
 
 #### SP-6. 롤백 — before 캡처와 되돌림
 - **상황**: 조치 후 검증 실패, 또는 되돌리기로 결정.
-- **생성물**: 조치 *전* `CaptureState`로 before(모듈@버전·config·provider 체인) 캡처 + `ProvisioningRecord`(STAGED, `app_keys` 다중 귀속) append-only 영속(§6A). 되돌림은 `--rollback` 플레이북 — forward가 원본을 덮지 않고 파일을 *추가*하므로 그 추가분 제거가 곧 복원이다. L3면 `deactivate` 훅으로 활성화까지 되돌린다.
+- **생성물**: 조치 *전* `CaptureState`로 before(모듈@버전·config·provider 체인) 캡처 + `ProvisioningRecord`(STAGED, `app_keys` 여러 앱에 걸침) append-only 영속(§6A). 되돌림은 `--rollback` 플레이북 — forward가 원본을 덮지 않고 파일을 *추가*하므로 그 추가분 제거가 곧 복원이다. L3면 `deactivate` 훅으로 활성화까지 되돌린다.
 
 ---
 
@@ -111,7 +111,7 @@
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
 | [TP-RECORD-1](../pkg/provisioning/capture_test.go) | `TestCaptureState` — findings → `CaptureState` | before `modules`에 `libcrypto.so.3@3.0.13`(버전 없으면 이름만)·`jca:BC` + `provider_chain` | 되돌릴 때 무엇으로 돌아가야 하는지는 조치 전에만 알 수 있다 |
-| [TP-RECORD-2](../pkg/provisioning/record_test.go) | `TestMemRecordStore` — 여러 노드 레코드 append | before 캡처 + 초기 **STAGED** + `app_keys` 다중 귀속. **append-only**, 노드별 조회가 순서 보존·노드 간 격리 | 롤백 근거를 덮어쓰지 않는다 |
+| [TP-RECORD-2](../pkg/provisioning/record_test.go) | `TestMemRecordStore` — 여러 노드 레코드 append | before 캡처 + 초기 **STAGED** + `app_keys` 여러 앱에 걸침. **append-only**, 노드별 조회가 순서 보존·노드 간 격리 | 롤백 근거를 덮어쓰지 않는다 |
 | [TP-RECORD-3](../pkg/provisioning/record_pg_test.go) | `TestPgRecordStore` — 노드 둘에 레코드 append(`PQCOTA_TEST_DSN` 있을 때) | append 순서 보존·노드 간 격리, before 상태와 `app_keys`·STAGED가 왕복 | 저장소를 바꿨더니 순서가 섞이거나 노드가 새면, 되돌릴 때 무엇으로 돌아가야 하는지를 잘못 짚는다 |
 
 > **영속화**: `PgRecordStore`는 `PQCOTA_TEST_DSN`이 있을 때 TP-RECORD-3가 실 Postgres로 돌고, 종단은 [데모 6/6](../demo/integration-verification.md)이 `pqcota-records` 조회로 확인한다.

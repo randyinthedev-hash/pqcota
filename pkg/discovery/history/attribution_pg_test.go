@@ -14,7 +14,7 @@ import (
 //
 // 인메모리 쪽 테스트는 저장소 객체가 달라서 통과한다 — 모양은 확인해도 격리를 증명하지 못한다.
 // 두 조직이 **한 테이블**을 공유하면서도 서로를 못 보는지는 Postgres에서만 잴 수 있다.
-// 히스토리에는 이 짝이 있었는데(TV-ORG-4) 귀속 저장소에는 없었다.
+// 히스토리에는 이 짝이 있었는데(TV-ORG-4) 선언 저장소에는 없었다.
 //
 // PQCOTA_TEST_DSN이 있을 때만 돈다. 스킵은 통과가 아니다.
 func TestPgAttributionsShareATableAndStillDoNotSeeEachOther(t *testing.T) {

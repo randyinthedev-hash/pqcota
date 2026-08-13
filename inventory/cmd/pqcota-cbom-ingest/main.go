@@ -8,7 +8,7 @@
 // usage: pqcota-cbom-ingest <cbom.json | -> <target-node-id>
 //
 //	<cbom.json | ->   : CycloneDX CBOM 파일(또는 stdin '-')
-//	<target-node-id>  : 이 CBOM을 귀속할 스코프 노드 ID(§1.4 앵커). 없으면 스코프 판정 요청(SD-5).
+//	<target-node-id>  : 이 CBOM을 달아 둘 스코프 노드 ID(§1.4 앵커). 없으면 스코프 판정 요청(SD-5).
 //	env PQCOTA_DSN     : (선택) 있으면 Postgres 영속화, 없으면 인메모리(요약만).
 package main
 

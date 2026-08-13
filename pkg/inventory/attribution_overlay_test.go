@@ -12,7 +12,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/inventory/ingest"
 )
 
-// declaredInto — CSV를 적재 경로로 넣는다. 선언은 스냅샷이 아니라 귀속 저장소로 간다.
+// declaredInto — CSV를 적재 경로로 넣는다. 선언은 스냅샷이 아니라 선언 저장소로 간다.
 func declaredInto(t *testing.T, store *history.MemStore, csv string) {
 	t.Helper()
 	res, err := declaration.ImportAttributionCSV(strings.NewReader(csv))
@@ -26,7 +26,7 @@ func declaredInto(t *testing.T, store *history.MemStore, csv string) {
 		t.Fatal(err)
 	}
 	if rep.DeclaredAttributions == 0 {
-		t.Fatal("선언이 귀속 저장소로 가지 않았다")
+		t.Fatal("선언이 선언 저장소로 가지 않았다")
 	}
 	if rep.Snapshots != 0 {
 		t.Fatalf("선언이 스냅샷을 %d개 만들었다 — 노드의 상태 이력에 줄을 세우면 안 된다", rep.Snapshots)
@@ -37,7 +37,7 @@ func observed(t *testing.T) *history.Snapshot {
 	t.Helper()
 	return &history.Snapshot{
 		ID: "s1", NodeID: "web-01",
-		Completeness: &commonv1.Completeness{Note: "엣지 2개 중 1개를 앱에 귀속하지 못했다"},
+		Completeness: &commonv1.Completeness{Note: "엣지 2개 중 1개는 어느 앱인지 밝히지 못했다"},
 		Edges: []*discoveryv1.ObservedEdge{
 			// 관측이 이미 잡은 것
 			{SrcNodeId: "web-01", DstAddr: "10.0.0.5", Port: 443, AppKey: "payment.service", AppKeyKind: "systemd-unit"},
@@ -60,7 +60,7 @@ func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 		t.Error("선언이 관측을 덮어썼다")
 	}
 	if !strings.Contains(out, "@payment.service") {
-		t.Error("관측한 귀속이 사라졌다")
+		t.Error("관측이 짚은 앱이 사라졌다")
 	}
 	if !strings.Contains(out, "@batch-job.service(declared)") {
 		t.Error("빈 자리를 선언으로 메우지 못했다 — 메웠어도 declared 표시가 없다")
@@ -101,7 +101,7 @@ func TestDeclarationNeverEntersTheTimeline(t *testing.T) {
 	}
 	got, err := store.Attributions()
 	if err != nil || len(got) != 1 {
-		t.Fatalf("귀속 저장소에 안 들어갔다: %v %v", got, err)
+		t.Fatalf("선언 저장소에 안 들어갔다: %v %v", got, err)
 	}
 }
 
@@ -119,7 +119,7 @@ func TestRedeclaringOverwrites(t *testing.T) {
 // TestAttributionCSVRefusesWhatItCannotPlace — 어느 엣지를 가리키는지 모르는 줄은 받지 않는다.
 func TestAttributionCSVRefusesWhatItCannotPlace(t *testing.T) {
 	for _, bad := range []string{
-		"web-01,10.0.0.7,\n", // 귀속할 앱이 없다
+		"web-01,10.0.0.7,\n", // 어느 앱인지가 없다
 		",10.0.0.7,app\n",    // 어느 노드인지 모른다
 		"web-01,,app\n",      // 어느 엣지인지 모른다
 	} {

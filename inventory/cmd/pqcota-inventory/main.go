@@ -77,7 +77,7 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 		if err != nil {
 			return "", err
 		}
-		// 선언된 귀속을 **읽을 때만** 얹는다 — 저장된 관측 엣지는 그대로다.
+		// 사람이 선언한 앱을 **읽을 때만** 얹는다 — 저장된 관측 엣지는 그대로다.
 		return inventory.RenderDetailWith(snap, declaredOverlay(store)), nil
 
 	case diffPair != "":
@@ -112,7 +112,7 @@ func run(store history.Store, dsn, histNode, snapID, diffPair string) (string, e
 	return out, nil
 }
 
-// declaredOverlay — 귀속 저장소에서 선언 색인을 만든다. 담지 못하는 저장소면 빈 색인이다.
+// declaredOverlay — 선언 저장소에서 색인을 만든다. 담지 못하는 저장소면 빈 색인이다.
 func declaredOverlay(store history.Store) *inventory.AttributionOverlay {
 	as, _ := store.(history.AttributionStore)
 	return inventory.BuildAttributionOverlay(as)

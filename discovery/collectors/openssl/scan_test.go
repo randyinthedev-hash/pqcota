@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// mergeByPath — 서로 다른 앱이 같은 .so를 로드하면 app_key를 합집합(#3 host-wide 다중 귀속).
+// mergeByPath — 서로 다른 앱이 같은 .so를 로드하면 app_key를 합집합(#3 host-wide 여러 앱에 걸침).
 func TestMergeByPathUnionsAppKeys(t *testing.T) {
 	// payment.service와 api.service가 같은 libcrypto.so.3을, batch.service는 libssl.so.3만.
 	perPID := [][]Detection{
@@ -25,17 +25,17 @@ func TestMergeByPathUnionsAppKeys(t *testing.T) {
 	}
 	crypto := byPath["/usr/lib/libcrypto.so.3"]
 	if strings.Join(crypto, ",") != "api.service,payment.service" { // 합집합·정렬·중복제거
-		t.Errorf("공유 .so 다중 귀속 실패: %v", crypto)
+		t.Errorf("공유 .so 여러 앱에 걸침 실패: %v", crypto)
 	}
 	if ssl := byPath["/usr/lib/libssl.so.3"]; len(ssl) != 1 || ssl[0] != "batch.service" {
-		t.Errorf("단일 귀속: %v", ssl)
+		t.Errorf("앱 하나로 합쳐야: %v", ssl)
 	}
 }
 
-// 빈 app_key(비-PID 스캔·귀속 불가)는 nil로 — CSV 속성이 빈 문자열이어도 무해.
+// 빈 app_key(비-PID 스캔·앱을 못 짚는 경우)는 nil로 — CSV 속성이 빈 문자열이어도 무해.
 func TestMergeByPathNoAppKeys(t *testing.T) {
 	out := mergeByPath([][]Detection{{{Path: "/usr/lib/libcrypto.so.3"}}})
 	if len(out) != 1 || out[0].AppKeys != nil {
-		t.Errorf("귀속 없으면 nil: %v", out)
+		t.Errorf("쓰는 앱이 없으면 nil: %v", out)
 	}
 }
