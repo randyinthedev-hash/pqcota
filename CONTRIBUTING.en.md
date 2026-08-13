@@ -161,19 +161,6 @@ Words like `축` (axis) that have settled into Korean technical writing are fine
 vocabulary but **carrying English sentence structure across**. Nominalising verbs into `~을 가진다`
 or `~을 제공한다` is usually a sign that a sentence was translated rather than written.
 
-**Do not reach for the English word first when naming a new concept.** Sentence structure is fixed
-once; vocabulary is not. Every feature names new concepts, and a name translated from English makes
-the prose awkward again — replacing the word later does not help, because the next feature brings
-another one. It has to be caught **where the name is chosen**. These actually entered the repository
-between v0.2.0 and v0.4.0 and were rolled back.
-
-| Not this | This | The English behind it · why |
-|---|---|---|
-| 관측 **창** (observation *window*) | 관측 **구간** (observation *span*) | observation window — `창` reads as an on-screen window |
-| **실기** | **실제 장비** (real hardware) | from Japanese `実機`; Korean developers do not use it |
-| note가 **말한다** (the note *says*) | note에 **적혀 있다** (it is *written* in the note) | the note says — inanimate things do not speak |
-| 부모 **사슬** | 부모 **체인** | parent chain — `사슬` is a physical chain, not a linked structure |
-
 **No gate catches this.** `make check-docs` checks links, anchors and scope wording, not the grain of a
 sentence. Read it aloud; if it sounds off, that is the evidence.
 
