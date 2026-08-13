@@ -60,10 +60,10 @@ func ShouldObserve(conn ConnTuple, selfAddrs map[string]bool) bool {
 
 // BuildResult — 관측 엣지들을 관측 레인 CollectionResult로 조립한다(TD-NETWORK-6).
 // crypto_runtime은 귀속하지 않는다(TLS≠OpenSSL, 노드 내부 Finding 아님). NETWORK 계층만 커버.
-// windowNote: 관측 창 한계를 정직히 기록(미관측 링크 ≠ 부재, TD-NETWORK-7/§2.6).
+// windowNote: 관측 구간 한계를 정직히 기록(미관측 링크 ≠ 부재, TD-NETWORK-7/§2.6).
 func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote string) *discoveryv1.CollectionResult {
 	if windowNote == "" {
-		windowNote = "관측 창 동안 흐른 핸드셰이크만 — 유휴·배치·DR 링크는 미관측(갭≠부재)"
+		windowNote = "관측 구간 동안 흐른 핸드셰이크만 — 유휴·배치·DR 링크는 미관측(갭≠부재)"
 	}
 	return &discoveryv1.CollectionResult{
 		Envelope: &commonv1.Envelope{

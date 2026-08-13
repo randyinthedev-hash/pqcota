@@ -1,6 +1,6 @@
 //go:build linux
 
-// Command pqcota-netcap — 타깃 노드에서 실행. 관측 창 동안 TLS/SSH 핸드셰이크를 AF_PACKET으로
+// Command pqcota-netcap — 타깃 노드에서 실행. 관측 구간 동안 TLS/SSH 핸드셰이크를 AF_PACKET으로
 // 수동 관측해 통신 엣지를 CollectionResult JSON으로 stdout에 낸다(디스커버리 §2.4).
 // CAP_NET_RAW 필요. 없으면 **관측이 안 된다** — 그 사실을 stderr로 분명히 알리고, stdout으로는
 // 완전성 갭(DegradedResult)을 낸다. 갭을 중앙까지 보내야 인벤토리가 "관측하지 못했다"와 "링크가 없다"를
@@ -62,8 +62,8 @@ func main() {
 	if err != nil {
 		if errors.Is(err, network.ErrCaptureUnavailable) {
 			emit(network.DegradedResult(node, "CAP_NET_RAW 없음 — 미관측(부재 아님): "+err.Error()))
-			// **관측은 실패했다**고 분명히 말한다. 이전 메시지("캡처 불가 → 완전성 갭 강등")는
-			// 무엇이 없는지도 어떻게 고치는지도 말하지 않아, 손으로 돌린 사람이 성공으로 읽었다.
+			// **관측은 실패했다**고 분명히 밝힌다. 이전 메시지("캡처 불가 → 완전성 갭 강등")는
+			// 무엇이 없는지도 어떻게 고치는지도 알리지 않아, 손으로 돌린 사람이 성공으로 읽었다.
 			exe, _ := os.Executable()
 			fmt.Fprintf(os.Stderr, `[netcap] ✗ 관측하지 못했다 — AF_PACKET 소켓을 열 수 없다(CAP_NET_RAW 없음).
           부여: sudo setcap cap_net_raw+ep %s   (또는 root로 실행)
@@ -84,7 +84,7 @@ func main() {
 	// TLS는 ServerHello에만 협상 그룹이 실리므로 "그룹 있는 관측"을 우선 채택한다.
 	self := src.SelfIPs
 	// 귀속은 **엣지를 보는 그 자리에서** 한다. 캡처가 끝난 뒤 몰아 하면 그 사이에 닫힌 소켓을
-	// 더 놓친다. 비싼 fd 스캔만 창 안에서 짧게 재사용한다.
+	// 더 놓친다. 비싼 fd 스캔만 구간 안에서 짧게 재사용한다.
 	att := procs.NewAttributor("/proc", time.Second)
 	unattributed := map[string]int{} // 사유 → 건수
 	byKey := map[string]*discoveryv1.ObservedEdge{}
@@ -117,12 +117,12 @@ func main() {
 	for _, k := range order {
 		edges = append(edges, byKey[k])
 	}
-	// 창이 중간에 끊겼으면 "관측 없음"과 구별되게 노트에 남긴다 — 결함을 갭으로 위장하지 않는다.
+	// 구간이 중간에 끊겼으면 "관측 없음"과 구별되게 노트에 남긴다 — 결함을 갭으로 위장하지 않는다.
 	// 귀속하지 못한 엣지는 **"앱 없음"이 아니라 "귀속하지 못함"이다.** 사유별로 몇 건인지
 	// 완전성 노트에 남긴다 — 안 적으면 빈 app_key가 "이 통신에 앱이 없다"로 읽힌다.
 	note := attributionNote(len(order), unattributed)
 	if src.Truncated {
-		note = strings.TrimSpace(note + " " + fmt.Sprintf("관측 창이 읽기 오류로 중단됨(%v) — 이 결과는 창 전체를 대표하지 않는다(갭≠부재)", src.TruncErr))
+		note = strings.TrimSpace(note + " " + fmt.Sprintf("관측 구간이 읽기 오류로 중단됨(%v) — 이 결과는 구간 전체를 대표하지 않는다(갭≠부재)", src.TruncErr))
 		fmt.Fprintln(os.Stderr, "[netcap] ⚠ "+note)
 	}
 	emit(network.BuildResult(node, edges, note))

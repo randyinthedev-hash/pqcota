@@ -7,7 +7,7 @@ import (
 
 // 배치 경로 — **여기서만 정의한다.**
 //
-// 생성기가 세 곳(플레이북 dest, config의 module 참조, 롤백 제거 대상)에서 같은 경로를 말해야
+// 생성기가 세 곳(플레이북 dest, config의 module 참조, 롤백 제거 대상)에서 같은 경로를 가리켜야
 // 하는데, 각자 문자열을 들고 있으면 조용히 어긋난다. 실제로 그랬다 — config는 `module =
 // oqsprovider.so`(상대명)를 냈고 파일은 `/opt/pqcota/oqsprovider.so`에 놓여, OpenSSL이
 // 모듈 디렉터리에서 찾다 로드에 실패하는 구성이었다. 상수 한 벌로 묶어 재발을 막는다.

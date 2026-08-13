@@ -36,7 +36,7 @@ func TestUnattributedEdgeIsMarkedNotBlank(t *testing.T) {
 	if !strings.Contains(out, "@?") {
 		t.Error("귀속하지 못한 엣지가 빈칸이다 — 열이 없는 것과 구별되지 않는다")
 	}
-	// 왜 못 잡았는지는 완전성 노트가 말한다. 화면이 그것을 감추면 안 된다.
+	// 왜 못 잡았는지는 완전성 노트에 적힌다. 화면이 그것을 감추면 안 된다.
 	if !strings.Contains(out, "귀속하지 못했다") {
 		t.Error("완전성 노트가 화면에 안 나온다")
 	}

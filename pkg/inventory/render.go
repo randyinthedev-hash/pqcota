@@ -39,7 +39,7 @@ func Render(snap *history.Snapshot) string {
 			}
 			fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
 		} else if n := c.GetNote(); n != "" {
-			// **계층 갭이 없어도 노트는 낸다.** 계층이 빈 노트를 흘려보내던 탓에, 창이 중간에
+			// **계층 갭이 없어도 노트는 낸다.** 계층이 빈 노트를 흘려보내던 탓에, 구간이 중간에
 			// 끊겼다는 netcap의 경고와 앱 귀속 실패가 화면까지 오지 못했다 — 정직하게 적어 둔
 			// 것이 읽는 사람에게 도달하지 않으면 적지 않은 것과 같다(§2.6).
 			fmt.Fprintf(&b, "관측 한계: %s\n", n)
@@ -85,7 +85,7 @@ func gapOf(snap *history.Snapshot) string {
 }
 
 // RenderHistory — 한 노드의 **변화 지점**을 오래된 것부터 나열한다. 스냅샷은 실질 내용이
-// 바뀔 때만 쌓이므로, 각 줄은 "이 상태였던 구간"이고 obs 열이 그동안 몇 번 관측했는지 말한다.
+// 바뀔 때만 쌓이므로, 각 줄은 "이 상태였던 구간"이고 obs 열이 그동안 몇 번 관측했는지 보여준다.
 // 관측 사실 서술이지 판정이 아니다 — 변화가 선언과 맞는지·의미 있는지는 판정이라 하지 않는다(아키텍처 §6).
 func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]history.ObsStat,
 	pruned []history.RetentionEvent) string {
@@ -117,7 +117,7 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 			s.Seq, s.CreatedAt.Format("2006-01-02 15:04:05"), s.RulesetVersion,
 			len(s.Findings), len(s.Edges), obs, window, gapOf(s), s.ID)
 	}
-	b.WriteString("\n(스냅샷은 내용이 바뀔 때만 쌓인다 — obs·observed가 그 상태를 몇 번·언제까지 재확인했는지 말한다.\n")
+	b.WriteString("\n(스냅샷은 내용이 바뀔 때만 쌓인다 — obs·observed가 그 상태를 몇 번·언제까지 재확인했는지 보여준다.\n")
 	b.WriteString(" gap = 원리상 관측하지 못한 계층으로 \"부재\"가 아니다. snapshot 값을 -snapshot·-diff에 그대로 쓴다.)\n")
 	return b.String()
 }

@@ -118,7 +118,7 @@ func TestNodeEnvDerivedFromEdges(t *testing.T) {
 	}
 }
 
-// 트래픽 시나리오는 소스 노드에 붙는다(관측 창을 그 노드에서 채운다).
+// 트래픽 시나리오는 소스 노드에 붙는다(관측 구간을 그 노드에서 채운다).
 func TestGroupsTraffic(t *testing.T) {
 	out := GroupsINI(parse(t, sample))
 	if !strings.Contains(out, `web-gw traffic="pqc:pay-app:8443 ssl:pay-db:4433"`) {

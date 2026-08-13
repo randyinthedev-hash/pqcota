@@ -8,7 +8,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/discovery/procs"
 )
 
-// fakeProc — /proc 흉내. 실기에서 잰 모양을 그대로 옮긴다.
+// fakeProc — /proc 흉내. 실제 장비에서 잰 모양을 그대로 옮긴다.
 type fakeProc struct{ root string }
 
 func newFakeProc(t *testing.T, tcpLines ...string) *fakeProc {
@@ -69,7 +69,7 @@ const lineTo10005 = "   0: 0100007F:9C40 0500000A:01BB 01 00000000:00000000 00:0
 
 // TestAttributionPicksTheProcessThatOpenedTheSocket — fd 상속을 실제로 다룬다.
 //
-// 실기에서 한 inode에 PID 셋이 걸렸다 — 연결을 연 `bash`와 그것을 물려받은 자식 둘. 먼저 찾은
+// 실제 장비에서 한 inode에 PID 셋이 걸렸다 — 연결을 연 `bash`와 그것을 물려받은 자식 둘. 먼저 찾은
 // PID를 쓰면 자식에 귀속되는데, **연결을 연 것은 부모다.**
 func TestAttributionPicksTheProcessThatOpenedTheSocket(t *testing.T) {
 	f := newFakeProc(t, lineTo10005)

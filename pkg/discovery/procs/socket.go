@@ -14,8 +14,8 @@ import (
 
 // Attribution — 엣지 하나를 앱에 귀속시킨 결과.
 //
-// **Key가 비었다는 것은 "앱이 없다"가 아니라 "귀속하지 못했다"이다.** 왜 못 했는지는 Reason이
-// 말한다 — 관측 갭을 "없음"으로 적지 않는 것과 같은 규칙이다(§2.6).
+// **Key가 비었다는 것은 "앱이 없다"가 아니라 "귀속하지 못했다"이다.** 왜 못 했는지는 Reason에
+// 적힌다 — 관측 갭을 "없음"으로 적지 않는 것과 같은 규칙이다(§2.6).
 type Attribution struct {
 	Key    string // app_key. 못 잡았으면 빈 값
 	Kind   string // "systemd-unit" | "exe-path". Key가 비면 함께 빈다
@@ -25,7 +25,7 @@ type Attribution struct {
 // 귀속하지 못한 이유 — 사유가 다르면 대응이 다르다.
 const (
 	// ReasonSocketGone — /proc을 읽는 시점에 그 소켓이 이미 없다. 짧게 붙었다 끊긴 연결이다.
-	// 구현으로 창을 좁힐 수는 있어도 없앨 수 없다.
+	// 구현으로 틈을 좁힐 수는 있어도 없앨 수 없다.
 	ReasonSocketGone = "캡처와 조회 사이에 소켓이 닫혔다 — 짧은 연결은 놓친다"
 	// ReasonNoPermission — 소켓은 찾았는데 그것을 쥔 프로세스의 fd를 읽을 권한이 없다.
 	// CAP_NET_RAW로는 부족하다.
@@ -40,12 +40,12 @@ const (
 // AttributeRemote — 이 호스트에서 remote(ip:port)로 나간 연결을 연 앱을 찾는다.
 //
 // 흐름: /proc/net/tcp·tcp6에서 그 상대와 맺은 소켓 inode를 찾고 → /proc/*/fd에서 그 inode를 쥔
-// PID들을 찾고 → 그중 **부모 사슬에서 가장 얕은 것**을 골라 [AppKey]로 키를 뽑는다.
+// PID들을 찾고 → 그중 **부모 체인에서 가장 얕은 것**을 골라 [AppKey]로 키를 뽑는다.
 //
 // 가장 얕은 것을 고르는 이유: fd는 상속되므로 부모가 연 연결을 자식들이 그대로 들고 있다.
 // 먼저 찾은 PID를 쓰면 연결을 연 쪽이 아니라 그것을 물려받은 쪽에 귀속된다.
 func AttributeRemote(procRoot, remoteIP string, remotePort uint32) Attribution {
-	// 한 번 쓰고 버리는 경로 — /proc을 그 자리에서 훑는다. 창 안에서 여러 번 물을 거면
+	// 한 번 쓰고 버리는 경로 — /proc을 그 자리에서 훑는다. 구간 안에서 여러 번 물을 거면
 	// [Attributor]를 쓴다. 그쪽은 비싼 fd 스캔을 짧게 재사용한다.
 	a := &Attributor{procRoot: procRoot, ttl: time.Second, now: time.Now}
 	return a.Remote(remoteIP, remotePort)
@@ -140,7 +140,7 @@ func scanOwners(procRoot string) (map[uint64][]int, bool) {
 	return out, denied
 }
 
-// shallowest — 같은 소켓을 쥔 PID 집합에서 **부모 사슬의 가장 위**를 고른다.
+// shallowest — 같은 소켓을 쥔 PID 집합에서 **부모 체인의 가장 위**를 고른다.
 // 집합 안에 조상이 있으면 그쪽이 그 소켓을 연 쪽이다. 뿌리가 여럿이면(예: SCM_RIGHTS로
 // 남남끼리 소켓을 주고받은 경우) 결정론을 위해 가장 작은 PID를 고른다.
 func shallowest(procRoot string, pids []int) int {
@@ -151,7 +151,7 @@ func shallowest(procRoot string, pids []int) int {
 	roots := map[int]bool{}
 	for _, p := range pids {
 		cur := p
-		for hops := 0; hops < 64; hops++ { // 사슬이 집합 밖으로 나갈 때까지
+		for hops := 0; hops < 64; hops++ { // 체인이 집합 밖으로 나갈 때까지
 			pp := ppid(procRoot, cur)
 			if pp <= 0 || !in[pp] {
 				break
@@ -200,7 +200,7 @@ func ppid(procRoot string, pid int) int {
 	return 0
 }
 
-// Attributor — 캡처 창 하나 동안 쓰는 귀속기.
+// Attributor — 수집 구간 하나 동안 쓰는 귀속기.
 //
 // **왜 캐시가 필요한가** — 엣지마다 `/proc/*/fd`를 전부 훑으면 프로세스 수 × 엣지 수만큼 읽는다.
 // 그렇다고 캡처가 끝난 뒤 한 번에 몰아 하면 짧은 연결을 더 놓친다([AttributeRemote]의 경합).

@@ -104,7 +104,7 @@ func TestRepeatObservationDoesNotDuplicateSnapshot(t *testing.T) {
 		t.Errorf("첫 상태는 2번 관측됐어야 함, 실제 %d", got)
 	}
 	if stats[first.ID].First.After(stats[first.ID].Last) {
-		t.Error("관측 창은 First ≤ Last 여야 함")
+		t.Error("관측 구간은 First ≤ Last 여야 함")
 	}
 }
 

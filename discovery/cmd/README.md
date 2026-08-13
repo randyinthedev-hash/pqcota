@@ -112,7 +112,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 |---|---|---|
 | `<node-id>` | `host://local` | 관측 결과를 귀속할 노드 |
 | `[iface]` | `eth0` (env `NETCAP_IFACE`) | 포집할 인터페이스 |
-| `[window-seconds]` | `8` (env `NETCAP_WINDOW_SEC`) | 관측 창 길이 |
+| `[window-seconds]` | `8` (env `NETCAP_WINDOW_SEC`) | 관측 구간 길이 |
 | `--strict` | 꺼짐 | 관측 불가일 때 종료코드 1로 실패 |
 
 **`CAP_NET_RAW`가 없으면 관측이 안 된다.** 그때 netcap은 stderr로 그 사실과 부여 방법(`setcap cap_net_raw+ep`)을 알리고, stdout으로는 `layers_missing=[NETWORK]`인 **갭 기록**을 낸다. 기본 종료코드는 **0**이다.
@@ -162,7 +162,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 
 | 커널 | 배포판 | 결과 |
 |---|---|---|
-| **3.2.0** | Ubuntu 12.04 | 세 collector 모두 정상 종료. OpenSSL 1.0.0g 탐지(fork=OpenSSL·dynamic), AF_PACKET 8초 창 관측 성공. systemd가 없어 앱 귀속은 **실행 파일 경로**로 떨어짐(`/usr/sbin/sshd` 등) |
+| **3.2.0** | Ubuntu 12.04 | 세 collector 모두 정상 종료. OpenSSL 1.0.0g 탐지(fork=OpenSSL·dynamic), AF_PACKET 8초 구간 관측 성공. systemd가 없어 앱 귀속은 **실행 파일 경로**로 떨어짐(`/usr/sbin/sshd` 등) |
 | **3.10.0** | CentOS 7.9 | 세 collector 모두 정상 종료. OpenSSL 1.0.2k 탐지, cgroup v1에서 **systemd 유닛명 귀속 성공**(`sshd.service` 등) |
 
 두 커널 모두 `/proc/<pid>/status`에 **`NSpid` 줄이 없고**, 호스트 PID 폴백이 동작해 죽지 않았다 — 4.1 경계가 실물로 확인된 셈이다.

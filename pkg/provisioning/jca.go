@@ -31,7 +31,7 @@ func renderJCA(a *provisioningv1.RemediationAction) string {
 //
 // ★ BC의 정답은 **버전에 달렸다**(실측): 1.80·1.81의 BouncyCastleProvider에는 ML-KEM 서비스가
 // 17개 있으나 1.78.1에는 **0개**이고 Kyber가 BouncyCastlePQCProvider에 따로 있다. 기본값은 현재
-// 통용되는 1.80+ 기준으로 두되, 그 전제를 조각에 적어 둔다 — 계획이 JAR 버전을 말해주지 않으므로
+// 통용되는 1.80+ 기준으로 두되, 그 전제를 조각에 적어 둔다 — 계획이 JAR 버전을 알려주지 않으므로
 // 도구가 대신 안다고 할 수 없다(§2.5).
 func providerClass(choice, explicit string) (class string, exact bool) {
 	if explicit != "" {
@@ -91,7 +91,7 @@ func jcaProviderInject(group, target, choice, explicitClass string) string {
 	//
 	// ★ 이 줄은 **끼워 넣지 않고 그 자리를 차지한다**(실측: JDK 21에서 provider.2를 이 값으로 두면
 	// 원래 2번이던 SunRsaSign이 목록에서 사라진다 — 12개가 12개 그대로이고 이름만 바뀐다). 삽입처럼
-	// 읽히게 적으면 거짓말이 되므로 조각이 직접 그렇게 말한다. 밀어내지 않고 넣으려면 뒤 번호를 전부
+	// 읽히게 적으면 거짓말이 되므로 조각에 그렇게 적는다. 밀어내지 않고 넣으려면 뒤 번호를 전부
 	// 한 칸씩 미뤄야 하는데, 그러려면 그 노드의 java.security 원본을 알아야 한다 — 도구는 모른다(§2.5).
 	fmt.Fprintf(&b, "security.provider.2=%s\n", class)
 	b.WriteString("# ↑ 우선순위 2 — PQC 알고리즘이 먼저 디스패치되게(수용 원칙 §2.2(d) 순서 협상).\n")
