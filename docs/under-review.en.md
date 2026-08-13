@@ -1,12 +1,12 @@
 English · [한국어](under-review.md)
 
-# Designs under review — what is not built yet
+# Designs under review
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](under-review.md) is authoritative.
 
 > **This document changes no code.** It is where the design work happens for things that made the roadmap
 > but are not committed to implementation. The real design documents (discovery, inventory, provisioning)
-> record **only what stands today** — mixing in what is under review makes it impossible to tell fact from plan.
+> record **only what has been decided** — mixing in what is under review makes it impossible to tell fact from plan.
 
 > **§ notation**: unless stated otherwise, these are section numbers in the
 > [process regulation](regulation.en.md). Sections of this document itself are referred to in context,
