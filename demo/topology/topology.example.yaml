@@ -36,7 +36,7 @@ nodes:
     kind: openssl
     role: server
     openssl: { fork: openssl, version: "1.1.1" } # 레거시(1.1.1) = 양자취약
-    apps: [payment-gw, api-gw] # 한 libssl을 두 앱이 로드 → 공유 .so 다중 귀속(영향 반경)
+    apps: [payment-gw, api-gw] # 한 libssl을 두 앱이 로드 → 공유 .so를 여러 앱이 쓴다(영향 반경)
     networks: [corp, db] # corp(web-gw가 도달·관측) + db(격리 tier) 양쪽에 걸침
     profile: { env: production, role: db, owner: DBA팀 }
 

@@ -92,7 +92,7 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 
 	compName := "jca-provider-chain"
 	var appKeys []string
-	if ident != "" { // 다중 JVM 구별 — 컴포넌트명·귀속에 안정 식별자
+	if ident != "" { // 다중 JVM 구별 — 컴포넌트명·앱 표시에 안정 식별자
 		compName += "@" + ident
 		appKeys = []string{ident}
 	}
@@ -141,7 +141,7 @@ func buildJcaCycloneDX(providerNames []string, detectionMethod, compName string,
 		{"pqcota:jca.provider_set", strings.Join(providerNames, ",")},
 		{"pqcota:jca.registration_mode", "dynamic"},
 	}
-	if len(appKeys) > 0 { // 다중 JVM 귀속(§1.5와 같은 결) — 어느 JDK/앱의 체인인지
+	if len(appKeys) > 0 { // JVM이 여럿일 때의 앱 표시(§1.5와 같은 결) — 어느 JDK/앱의 체인인지
 		props = append(props, prop{"pqcota:app_keys", strings.Join(appKeys, ",")})
 	}
 	c := comp{Type: "cryptographic-asset", Name: compName, Properties: props}

@@ -49,7 +49,7 @@ func (s *Service) Describe(_ context.Context, _ *discoveryv1.DescribeRequest) (*
 	return &discoveryv1.CollectorCapabilities{
 		CollectorId: collectorID,
 		Version:     collectorVersion,
-		// crypto_runtimes 비움 — 네트워크 엣지는 특정 런타임에 귀속하지 않는다(TLS≠OpenSSL, §2.2).
+		// crypto_runtimes 비움 — 네트워크 엣지는 특정 런타임으로 단정하지 않는다(TLS≠OpenSSL, §2.2).
 		Layers: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK},
 		DetectionMethods: []commonv1.DetectionMethod{
 			commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,

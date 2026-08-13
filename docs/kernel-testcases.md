@@ -2,7 +2,7 @@
 
 커널(`pkg/kernel/` + 정규화 파이프라인)은 **단계를 가로지르는 결정론적 판정 규칙**이다. 어느 단계의 관측이든 이 규칙을 거쳐 값이 정해지므로, 단계별 명세 어디에도 자리가 없다. 그래서 따로 세운다.
 
-**커널이 하는 일은 파생이다.** collector는 본 것을 그대로 내고, 등급·강도·조치·귀속은 여기서 계산된다(§1.2 — 규칙이 한 곳에 있어야 재계산이 가능하다). 그래서 여기가 틀리면 관측이 옳아도 결론이 틀린다.
+**커널이 하는 일은 파생이다.** collector는 본 것을 그대로 내고, 등급·강도·조치·앱은 여기서 계산된다(§1.2 — 규칙이 한 곳에 있어야 재계산이 가능하다). 그래서 여기가 틀리면 관측이 옳아도 결론이 틀린다.
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
 
@@ -12,7 +12,7 @@
 
 **전부 unit이다** — 순수 함수와 인메모리 픽스처만 쓴다. 실물 호스트도, 외부 저장소도 필요 없다.
 
-케이스 번호는 **`TK`(커널) - 무엇을 보나 - 순번**이다 — `TK-EVIDENCE`(증거 강도) · `TK-PIPELINE`(정규화) · `TK-RAW`(원본 보존) · `TK-POSTURE`(등급·권고) · `TK-ALGO`(알고리즘 레지스트리) · `TK-REMEDIATION`(조치 taxonomy) · `TK-ATTRIBUTION`(앱 귀속) · `TK-MACHINE`(머신 식별). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
+케이스 번호는 **`TK`(커널) - 무엇을 보나 - 순번**이다 — `TK-EVIDENCE`(증거 강도) · `TK-PIPELINE`(정규화) · `TK-RAW`(원본 보존) · `TK-POSTURE`(등급·권고) · `TK-ALGO`(알고리즘 레지스트리) · `TK-REMEDIATION`(조치 taxonomy) · `TK-ATTRIBUTION`(어느 앱 것인가) · `TK-MACHINE`(머신 식별). 번호는 그것을 검증하는 **테스트 파일로 이어진다**.
 
 ---
 
@@ -64,11 +64,11 @@
 | [TK-REMEDIATION-1](../pkg/kernel/registry/remediation_test.go) | `TestRemediate` — 성숙도 × 규제 여부 | 조치 종류와 **우선순위**(표준 0 · 규제+표준 1 · 초안 2 · 실험 3 · 파훼 4) | 무엇부터 손댈지가 여기서 정해진다. 파훼된 것을 초안과 같은 급으로 두면 순서가 무너진다 |
 | [TK-REMEDIATION-2](../pkg/kernel/registry/remediation_test.go) | `TestRemediateTarget` — KEM / 서명 자산 | KEM은 ML-KEM, 서명은 ML-DSA를 목표로 | 목표를 잘못 잡으면 생성물이 엉뚱한 알고리즘을 켠다 |
 
-### TK-ATTRIBUTION. 앱 귀속 — 자산을 누가 쓰나
+### TK-ATTRIBUTION. 어느 앱 것인가 — 자산을 누가 쓰나
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TK-ATTRIBUTION-1](../pkg/discovery/procs/procs_test.go) | `TestMatch` — `systemd_unit` · `exe_path` · `cmdline_regex`, 그리고 둘을 함께 준 규칙 | 각각 매칭하고, 함께 주면 **둘 다** 만족해야 한다. 다른 유닛은 안 걸린다 | 귀속이 틀리면 스코프 정책이 엉뚱한 자산을 빼고 조치가 엉뚱한 앱에 간다 |
+| [TK-ATTRIBUTION-1](../pkg/discovery/procs/procs_test.go) | `TestMatch` — `systemd_unit` · `exe_path` · `cmdline_regex`, 그리고 둘을 함께 준 규칙 | 각각 매칭하고, 함께 주면 **둘 다** 만족해야 한다. 다른 유닛은 안 걸린다 | 앱을 잘못 짚으면 스코프 정책이 엉뚱한 자산을 빼고 조치가 엉뚱한 앱에 간다 |
 | [TK-ATTRIBUTION-2](../pkg/discovery/procs/procs_test.go) | `TestResolve` — 가짜 `/proc` 트리(exe·cmdline) | 프로세스에서 앱 키를 해소한다 | 프로세스는 휘발이라 실시간으로만 풀 수 있다. 이 해소가 자산과 앱을 잇는 유일한 다리다 |
 
 ### TK-MACHINE. 머신 식별 — 같은 머신을 같은 것으로

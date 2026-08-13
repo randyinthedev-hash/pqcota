@@ -59,7 +59,7 @@ func TestDeriveFindings(t *testing.T) {
 	}
 }
 
-// #3 다중 앱 귀속: pqcota:app_keys CSV → Finding.app_keys(정렬·복수).
+// #3 한 자산에 앱 여럿: pqcota:app_keys CSV → Finding.app_keys(정렬·복수).
 func TestDeriveFindings_MultiApp(t *testing.T) {
 	cbom := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.6","components":[
       {"type":"cryptographic-asset","name":"libcrypto","properties":[
@@ -74,7 +74,7 @@ func TestDeriveFindings_MultiApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := fs[0].GetAppKeys(); len(got) != 2 || got[0] != "api.service" || got[1] != "payment.service" {
-		t.Errorf("공유 .so 다중 귀속 파싱 실패: %v", got)
+		t.Errorf("공유 .so의 앱 여럿 파싱 실패: %v", got)
 	}
 }
 

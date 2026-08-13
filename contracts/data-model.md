@@ -71,7 +71,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 | `OpensslAxes` | OpenSSL 분기축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode` |
 | `JcaAxes` | JCA 분기축 | `jdk_vendor`·`jdk_version`·`provider_set`(**순서 유의미** — 우선순위 협상)·`registration_mode` |
 | `CngAxes` | Windows CNG 분기축 (**v0.1.0 예약**, 미구현) | `provider_set`(KSP/SSP, **순서 유의미**). 실물 관측이 정할 나머지 필드는 v0.5.0에서 additive로 추가 |
-| **`Finding`** | 크립토 자산 한 건(파생 뷰) | `id`(정규화 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method`+**`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id`+`ruleset_version`(재현) · **`app_keys`**(자산 귀속, 공유 .so는 다중) |
+| **`Finding`** | 크립토 자산 한 건(파생 뷰) | `id`(정규화 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method`+**`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id`+`ruleset_version`(재현) · **`app_keys`**(자산이 어느 앱 것인지, 공유 .so는 다중) |
 
 ### `asset.proto` — 자산 계층 (Machine → Application → Process)
 | 메시지/enum | 목적 | 핵심 필드 |
@@ -145,7 +145,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
                                      ▼
 [정규화]  ──파생──▶  Finding[] (evidence_strength·app_keys) ─┐   ObservedEdge + QuantumPosture(파생)
                                      │                            │
-                              app_keys│귀속                        │
+                              app_keys│앱                          │
                                      ▼                            ▼
                              Application (node_id, app_key)   [중앙 인벤토리 뷰]
                                      │                            ▲  ▸MachineEndpoint · MachineProfile (메타데이터 레인)
@@ -160,15 +160,15 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
                           before = CryptoState(Finding들)  ─────────────────▶  { before/after · app_keys · status }  (append-only 롤백 근거)
 ```
 
-**레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 귀속시켜 discovery→provisioning까지 흐른다.
+**레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 이어 discovery→provisioning까지 흐른다.
 
 > **`app_key`가 늘 채워지는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 관측한 프로세스에서
-> 바로 나오므로 항상 귀속된다. **`ObservedEdge`는 v0.3.0부터 앱까지 가되, 조회하는 순간 소켓이
+> 바로 나오므로 앱이 항상 붙는다. **`ObservedEdge`는 v0.3.0부터 앱까지 가되, 조회하는 순간 소켓이
 > 살아 있어야 된다** — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없어서, 캡처 시점에 소켓
 > inode를 `/proc/*/fd`와 대조해 채우기 때문이다.
 >
 > 그래서 짧게 붙었다 끊긴 연결은 비고, 권한이 모자라 남의 프로세스를 못 읽어도 빈다. **빈
-> `app_key`는 "이 엣지에 앱이 없다"가 아니라 "귀속하지 못했다"이고**, 왜 못 했는지는 완전성 맵의
+> `app_key`는 "이 엣지에 앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 왜 못 했는지는 완전성 맵의
 > note에 적혀 있다. 못 채운 자리는 v0.4.0부터 사람이 지정할 수 있다
 > (`pqcota-declare-attribution`) — 다만 그 선언은 **관측을 고치지 않고** 자기 레인에 쌓이고,
 > 합치는 일은 조회 화면에서 일어난다([검토 중인 설계 §5.2](../docs/under-review.md)).

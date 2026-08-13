@@ -26,7 +26,7 @@ func TestNoPolicyKeepsEverything(t *testing.T) {
 	}
 }
 
-// 잡음(패키지 런타임 등)을 앱 귀속으로 걸러낸다 — 이게 없으면 인벤토리가 못 쓰게 된다.
+// 잡음(패키지 런타임 등)을 앱 이름으로 걸러낸다 — 이게 없으면 인벤토리가 못 쓰게 된다.
 func TestExcludeByAppKeyGlob(t *testing.T) {
 	p, err := scope.LoadAssetPolicy(strings.NewReader(`action,runtime,lib,app_key,note
 exclude,*,*,/usr/bin/python*,python 런타임 — 관리 대상 아님
@@ -71,7 +71,7 @@ func TestMultiAppAttribution(t *testing.T) {
 		openssl("libcrypto.so.3", "/opt/apps/payment-gw", "/usr/sbin/sshd"),
 	})
 	if len(kept) != 0 || excluded != 1 {
-		t.Errorf("귀속 앱 중 하나만 맞아도 매치해야 함: kept=%d excluded=%d", len(kept), excluded)
+		t.Errorf("쓰는 앱 중 하나만 맞아도 매치해야 함: kept=%d excluded=%d", len(kept), excluded)
 	}
 }
 
@@ -79,7 +79,7 @@ func TestMultiAppAttribution(t *testing.T) {
 // 쓰는 운영 앱까지 빠진다. 규칙은 순서대로·뒤가 이기므로, 운영 앱을 되살리는 include를 exclude
 // 뒤에 두어 구제한다. include는 "무조건 우선"이 아니라 순서 기반임을 함께 못박는다(TV-SCOPE-3×TV-SCOPE-4).
 func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
-	// libcrypto.so.3을 테스트 앱과 운영 앱이 함께 로드(다중 귀속).
+	// libcrypto.so.3을 테스트 앱과 운영 앱이 함께 로드(여러 앱에 걸침).
 	shared := func() *discoveryv1.Finding {
 		return openssl("libcrypto.so.3", "/opt/apps/internal-test-x", "/opt/apps/payment-gw")
 	}
@@ -88,7 +88,7 @@ func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
 	p1, _ := scope.LoadAssetPolicy(strings.NewReader(
 		"exclude,openssl,libcrypto.so.*,/opt/apps/internal-test-*,테스트 앱 잡음\n"))
 	if kept, excl := p1.Apply([]*discoveryv1.Finding{shared()}); len(kept) != 0 || excl != 1 {
-		t.Fatalf("공유 .so는 귀속 앱 하나만 맞아도 전체가 빠짐(blast radius): kept=%d excl=%d", len(kept), excl)
+		t.Fatalf("공유 .so는 쓰는 앱 하나만 맞아도 전체가 빠짐(blast radius): kept=%d excl=%d", len(kept), excl)
 	}
 
 	// (2) 구제: 운영 앱을 되살리는 include를 exclude '뒤에' 두면 보존된다(뒤가 이긴다).

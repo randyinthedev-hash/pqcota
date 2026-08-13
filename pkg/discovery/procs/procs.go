@@ -65,7 +65,7 @@ func Resolve(procRoot string, m *discoveryv1.ProcessMatch) ([]*discoveryv1.LiveP
 	return out, nil
 }
 
-// AppKey — PID에서 안정 app_key를 파생한다(§1.5 자산 귀속). systemd 유닛(cgroup) 우선, 없으면 exe 경로.
+// AppKey — PID에서 안정 app_key를 파생한다(§1.5 자산이 어느 앱 것인지). systemd 유닛(cgroup) 우선, 없으면 exe 경로.
 // 반환: (app_key, kind). 둘 다 실패면 ("","").
 func AppKey(procRoot string, pid int) (key, kind string) {
 	base := filepath.Join(procRoot, strconv.Itoa(pid))

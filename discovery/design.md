@@ -173,7 +173,7 @@ attach를 기본 차단** — 3단 전략으로 대응한다:
 캡처   : 순수 Go AF_PACKET(x/sys/unix, CAP_NET_RAW), BPF 필터로 핸드셰이크 레코드만(페이로드 제외 → 프라이버시)
 파싱   : ClientHello/ServerHello, SSH KEXINIT → 협상 알고리즘·KEX 그룹
 산출   : 통신 엣지(src→dst:port, negotiated_group, role, tls/ssh version)
-반환   : CollectionResult(관측 레인). crypto_runtime=UNSPECIFIED(TLS≠OpenSSL 귀속 약함, §2.2)
+반환   : CollectionResult(관측 레인). crypto_runtime=UNSPECIFIED(TLS를 OpenSSL로 단정할 수 없다, §2.2)
          — 노드 crypto Finding이 아니라 **통신 엣지**를 채운다(인벤토리 §2 ObservedEdge)
 ```
 
@@ -183,7 +183,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 **한계(반드시 갭으로 표기)**:
 - **관측 구간**: 캡처 중 흐른 트래픽만 — 유휴·배치·DR 링크 미관측 → 갭(≠부재, §2.6). 시간대별 반복(§2.3).
 - **coverage 의존**: collector 도는 호스트의 연결만. 양쪽 다 미설치 엣지는 SPAN/탭 없으면 안 보임.
-- **귀속**: 스코프 밖 IP·NAT·프록시 → "등재 판정 요청"(§5).
+- **어느 노드인가**: 스코프 밖 IP·NAT·프록시 → "등재 판정 요청"(§5).
 
 > **Phase 1 기능**(관측 병행 + shadow 발견). 이 엣지 관측이 인벤토리 reconciliation의
 > 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/design.md) §12).
@@ -235,7 +235,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 
 식별 안정성이 계층마다 다르다:
 - **Machine** = node_id (안정).
-- **Application** = `(node_id, app_key)` — app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 귀속 — 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 다중 귀속**한다(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
+- **Application** = `(node_id, app_key)` — app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다 — 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸침**한다(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
 - **Process** = **PID 휘발 → 저장 안 함.** `ProcessMatch`(systemd_unit>exe_path>cmdline_regex)로 **프로비저닝 직전 실시간 해소**(`LiveProcess`) — 저장된 PID는 이미 낡음.
 
 ### 4A.3 접근 — 사용자 hosts 파일 → Ansible (비밀 미영속)
@@ -284,7 +284,7 @@ collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립�
 | **SD-6** 배치 노드 | 완전성 맵(§5) + 시간대별 반복 | 갭 기록(≠부재) |
 | **SD-7** 에어갭 | T1 오프라인 번들 | T1 배치 수집 |
 
-**미스 없음 확인**: SD-1–SD-7 전부 최소 하나의 컴포넌트에 귀속되고, 새로 만드는 건 §2.1–2.4(런타임 collector 3) + §3 파이프라인 + §4·§5 코어뿐.
+**미스 없음 확인**: SD-1–SD-7 전부 최소 하나의 컴포넌트에 담기고, 새로 만드는 건 §2.1–2.4(런타임 collector 3) + §3 파이프라인 + §4·§5 코어뿐.
 
 ---
 

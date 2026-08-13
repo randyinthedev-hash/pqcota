@@ -7,7 +7,7 @@
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
 
-**범위**: 3단계 종단 — Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 귀속) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(아래 [§6 무판단 원칙](#6-무판단-원칙)).
+**범위**: 3단계 종단 — Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 표시) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(아래 [§6 무판단 원칙](#6-무판단-원칙)).
 
 > **규정서 핵심의 아키텍처 영향**:
 > - **§4.3 단계적 배포 모델** = 위임 레벨 L1/L2/L3. **Ansible `copy` + sha256 게이트**로 구현한다
@@ -355,7 +355,7 @@ pqcota/            # Apache-2.0 · 공개 · 전 범위(Discovery·인벤토리�
   ├─ discovery/         # 실행 진입점(단계별):
   │    ├─ collectors/{openssl(Go),jvm(Java 사이드카 ★),network(Go)}  # §1.6 플러그인·GPL 격리 경계
   │    └─ cmd/{pqcota-hosts(접근준비),nodescan,netcap,jvmscan,procs,keygen}  # (테스트 하네스는 collectors/openssl/integration/probe)
-  ├─ inventory/cmd/     # pqcota-ingest(적재) · pqcota-cbom-ingest(CBOM 수신) · pqcota-discover-view(파일 뷰) · pqcota-inventory(중앙 Postgres 조회: 엔드포인트·프로필·앱 귀속) · pqcota-profile(프로필 upsert) · pqcota-declare(선언 임포트) · pqcota-prune(보존 절단)
+  ├─ inventory/cmd/     # pqcota-ingest(적재) · pqcota-cbom-ingest(CBOM 수신) · pqcota-discover-view(파일 뷰) · pqcota-inventory(중앙 Postgres 조회: 엔드포인트·프로필·앱 표시) · pqcota-profile(프로필 upsert) · pqcota-declare(선언 임포트) · pqcota-prune(보존 절단)
   ├─ provisioning/cmd/  # pqcota-provision(확정계획→L2 플레이북+before/롤백 레코드) · pqcota-records(롤백 레코드 조회) — 생성까지
   └─ LICENSE (Apache-2.0), CONTRIBUTING.md, README.md
 
@@ -390,7 +390,7 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 | **관측 기록/스냅샷 2층 분리** — 스냅샷은 실질 내용이 바뀔 때만, 관측 기록은 적재마다. 같은 상태 반복 관측이 저장을 늘리지 않되 "언제 봤나"는 보존 | §2.4-6, §1.2 | AUTO |
 | **보존 정책 절단**(`pqcota-prune`) — 오래된 변화 지점 절단. 최신 불가침, 절단 사실을 기록으로 남겨 이력의 구멍을 고지 | §2.6 | — (사용자 지시) |
 | **자산 스코프 게이트**(`scope.AssetPolicy`) — 노드 게이트(§1.4)를 자산 단위로. 사용자가 선언한 관리 대상만 적재, 제외 건수는 고지 | §1.4, §2.6 | AUTO(집행) |
-| 중앙 인벤토리 뷰 (CLI+UI) + 머신 메타데이터(엔드포인트·프로필)·**앱 귀속** | §6 | — |
+| 중앙 인벤토리 뷰 (CLI+UI) + 머신 메타데이터(엔드포인트·프로필)·**앱 표시** | §6 | — |
 | 프로비저닝 생성 (확정계획 게이트 → L1/L2 플레이북 + before·**롤백 레코드**) | 프로비저닝 설계 §4.1·§4.2 | — (생성만) |
 
 ### 6.2 명시적 제외 / 경계
@@ -401,7 +401,7 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 - **이 리포에 없음 (다른 엔진, 공개 계약 `contracts/`로 연동)** — **선언(CMDB) 대조** 3-상태 reconciliation·confidence 스코어링, 리뷰-확정 거버넌스, 단계적 배포 오케스트레이션·안전 레일(L3 drain·rolling·fleet), 동적 프로비저닝, 배포 채널. *단, 스냅샷 간 변화 diff는 대조가 아니라 관측 사실이므로 이 리포다(§6 기준).*
 - **PROPOSE 기본 비활성** — dynamic-trace(eBPF 침습, §2.5).
 
-> **기능은 이 순서로 늘어난다** — ① Discovery MVP → ② 중앙 인벤토리(적재·영속·조회 + 머신 메타데이터[엔드포인트·프로필]·**앱 귀속**) → ③ Provisioning 생성(L1/L2 플레이북 + before·**롤백 레코드**). 바깥과는 `contracts/` 하나로만 이어진다. 이 리포는 관측 결과를 내놓을 뿐이고, 그것을 가져다 쓰는 쪽은 계약 너머에 있다 — 위에서 뺀 것들이 바로 거기다.
+> **기능은 이 순서로 늘어난다** — ① Discovery MVP → ② 중앙 인벤토리(적재·영속·조회 + 머신 메타데이터[엔드포인트·프로필]·**앱 표시**) → ③ Provisioning 생성(L1/L2 플레이북 + before·**롤백 레코드**). 바깥과는 `contracts/` 하나로만 이어진다. 이 리포는 관측 결과를 내놓을 뿐이고, 그것을 가져다 쓰는 쪽은 계약 너머에 있다 — 위에서 뺀 것들이 바로 거기다.
 
 ### 6.3 "동작"의 정의 (Definition of Done)
 

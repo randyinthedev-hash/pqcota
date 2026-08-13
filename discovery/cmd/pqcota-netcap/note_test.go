@@ -4,10 +4,10 @@ package main
 
 import "testing"
 
-// TestAttributionNoteSaysWhatItDoesNotMean — 귀속하지 못한 것을 "앱 없음"으로 읽히게 두지 않는다.
+// TestAttributionNoteSaysWhatItDoesNotMean — 어느 앱인지 못 밝힌 것을 "앱 없음"으로 읽히게 두지 않는다.
 //
 // 빈 `app_key`만 남기고 끝내면 그 엣지는 "이 통신에 앱이 없다"로 읽힌다. 관측 갭을 부재로
-// 적지 않는 것과 같은 규칙이 귀속에도 적용된다(§2.6).
+// 적지 않는 것과 같은 규칙이 여기에도 적용된다(§2.6).
 func TestAttributionNoteSaysWhatItDoesNotMean(t *testing.T) {
 	if got := attributionNote(5, nil); got != "" {
 		t.Errorf("전부 잡았는데 노트가 남았다: %q", got)

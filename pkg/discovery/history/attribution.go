@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// EdgeAttribution — 사람이 지정한 엣지→앱 귀속 한 건.
+// EdgeAttribution — 사람이 지정한 엣지의 앱 한 건.
 //
 // **스냅샷이 아니다.** 선언은 그 노드를 다시 관측한 결과가 아니므로 노드의 상태 이력에 줄을
 // 세우면 안 된다 — 세우면 조회·이력·diff가 저마다 그것을 걸러 내야 하고, 화면이 늘 때마다
@@ -21,7 +21,7 @@ type EdgeAttribution struct {
 	DeclaredAt time.Time
 }
 
-// AttributionStore — 선언된 귀속을 담는 곳. 스냅샷 저장소와 분리돼 있다.
+// AttributionStore — 사람이 선언한 앱을 담는 곳. 스냅샷 저장소와 분리돼 있다.
 type AttributionStore interface {
 	// PutAttribution — 같은 (node,dst,port)에 다시 선언하면 덮어쓴다. 선언은 사람이 고치는
 	// 것이므로 append-only가 아니다 — 관측(불변)과 다른 규칙이다.

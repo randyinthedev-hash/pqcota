@@ -1,4 +1,4 @@
-// Command pqcota-declare-attribution — 사람이 지정한 **엣지→앱 귀속**을 선언 레인으로 임포트한다.
+// Command pqcota-declare-attribution — 사람이 지정한 **엣지의 앱**을 선언 레인으로 임포트한다.
 //
 // 왜 필요한가: 네트워크 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다
 // 끊기는 연결(배치·헬스체크·cron·SSH)은 그 구간을 벗어나므로 `app_key`가 빈다. 그 자리를 운영자가
@@ -46,7 +46,7 @@ func main() {
 
 	results, err := declaration.ImportAttributionCSV(f)
 	if err != nil {
-		// 어느 엣지를 가리키는지 모르는 줄은 추측하지 않고 멈춘다 — 틀린 앱에 귀속하면
+		// 어느 엣지를 가리키는지 모르는 줄은 추측하지 않고 멈춘다 — 앱을 잘못 짚으면
 		// 조치 대상이 바뀐다.
 		fmt.Fprintln(os.Stderr, "선언을 읽을 수 없다:", err)
 		os.Exit(1)
@@ -76,8 +76,8 @@ func main() {
 		total += len(res.GetObservedEdges())
 	}
 
-	fmt.Printf("선언된 귀속 %d건 (노드 %d개) → %s\n", total, len(results), *out)
+	fmt.Printf("사람이 선언한 앱 %d건 (노드 %d개) → %s\n", total, len(results), *out)
 	fmt.Println("이건 **관측이 아니다** — detection_method=UNSPECIFIED로 선언 레인에 쌓인다.")
-	fmt.Println("관측이 이미 잡은 귀속은 덮지 않는다. 빈 자리만 조회 화면에서 메운다.")
+	fmt.Println("관측이 이미 짚은 앱은 덮지 않는다. 빈 자리만 조회 화면에서 메운다.")
 	fmt.Printf("다음: pqcota-ingest %s\n", *out)
 }

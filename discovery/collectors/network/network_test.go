@@ -229,7 +229,7 @@ func TestQUICUnknownPosture(t *testing.T) {
 	}
 }
 
-// ── TD-NETWORK-6: BuildResult 관측 레인 — NETWORK 커버, crypto_runtime 미귀속(CBOM 없음) ──
+// ── TD-NETWORK-6: BuildResult 관측 레인 — NETWORK 커버, crypto_runtime 미상(CBOM 없음) ──
 func TestBuildResult(t *testing.T) {
 	e := network.BuildEdge(network.ConnTuple{SrcNode: "web", DstAddr: "a:443"}, &network.Handshake{Protocol: "TLS", NegotiatedGroup: "x25519"})
 	res := network.BuildResult("web", []*discoveryv1.ObservedEdge{e}, "")
@@ -237,7 +237,7 @@ func TestBuildResult(t *testing.T) {
 		t.Fatalf("observed_edges = %d", len(res.GetObservedEdges()))
 	}
 	if len(res.GetCbomCyclonedx()) != 0 {
-		t.Error("네트워크 엣지는 노드 내부 CBOM을 채우지 않는다(미귀속)")
+		t.Error("네트워크 엣지는 노드 내부 CBOM을 채우지 않는다(미상)")
 	}
 	covered := res.GetCompleteness().GetLayersCovered()
 	if len(covered) != 1 || covered[0] != commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK {
@@ -292,7 +292,7 @@ func TestDescribe(t *testing.T) {
 		t.Errorf("layers = %v, want [NETWORK]", caps.GetLayers())
 	}
 	if len(caps.GetCryptoRuntimes()) != 0 {
-		t.Error("네트워크 엣지는 런타임 미귀속 → crypto_runtimes 비어야")
+		t.Error("네트워크 엣지는 런타임 미상 → crypto_runtimes 비어야")
 	}
 }
 

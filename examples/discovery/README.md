@@ -56,7 +56,7 @@ ssh -i ~/.ssh/id_ed25519 deploy@10.0.0.2 true && echo OK
 ### 2) `pqcota-ingest` — 회수 결과 → 스코프 게이트 → 정규화 → 적재
 [`../data/results`](../data)의 `CollectionResult` JSON들을 읽어 파생 `Finding`으로 정규화·적재한다. `PQCOTA_DSN`이 없으면 **인메모리 요약**(스냅샷·노드별 자산/엣지 수), 있으면 Postgres에 append-only 영속. 서명 검증은 `PQCOTA_VERIFY_KEY`가 있을 때만.
 
-`node-a-openssl.json`의 CBOM(디코드)에는 공유 라이브러리의 다중 앱 귀속이 들어 있다:
+`node-a-openssl.json`의 CBOM(디코드)에는 한 공유 라이브러리에 앱이 여럿 붙은 것이 들어 있다:
 ```json
 {"name":"pqcota:openssl.lib","value":"libssl.so.3"},
 {"name":"pqcota:app_keys","value":"/opt/apps/api-gw,/opt/apps/payment-gw"}

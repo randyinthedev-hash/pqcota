@@ -16,7 +16,7 @@ if [ "${PQC_SERVER:-0}" = "1" ]; then
   echo "[$NODE_NAME] pqc-echo(🟢 X25519MLKEM768) :8443"
 fi
 
-# ── 🔴 고전 TLS 서버 (s_server) — SSL_APPS의 각 앱이 같은 libssl 로드 → 공유 .so 다중 귀속(#3) ──
+# ── 🔴 고전 TLS 서버 (s_server) — SSL_APPS의 각 앱이 같은 libssl 로드 → 공유 .so 여러 앱에 걸침(#3) ──
 # SSL_APPS: 콤마 목록. 기본은 payment-gw,api-gw(공유 .so 시연). fork 무관하게 openssl CLI를 찾는다.
 if [ "${SSL_SERVER:-0}" = "1" ]; then
   # fork별 CLI 이름이 다르다 — LibreSSL은 libressl-openssl. 있는 것을 쓴다.
@@ -24,14 +24,14 @@ if [ "${SSL_SERVER:-0}" = "1" ]; then
   "$OSSL" req -x509 -newkey rsa:2048 -keyout /tmp/k.pem -out /tmp/c.pem \
     -days 3650 -nodes -subj "/CN=$NODE_NAME" >/dev/null 2>&1
   # openssl 바이너리를 앱 이름으로 복사 → exe 경로가 곧 app_key(§1.5). 같은 .so를 동적 링크하므로
-  # ScanHost가 그 .so를 여러 앱으로 **합집합** 귀속한다(공유 라이브러리 교체 영향 반경).
+  # ScanHost가 그 .so를 여러 앱에 **합집합**으로 붙인다(공유 라이브러리 교체 영향 반경).
   mkdir -p /opt/apps
   port=4433
   : > /run/pqcota-ssl-apps.map
   IFS=',' read -ra APPS <<< "${SSL_APPS:-payment-gw,api-gw}"
   for app in "${APPS[@]}"; do
     cp "$OSSL" "/opt/apps/$app"
-    # 앱→포트 매핑을 기록한다 — 기동·재시작이 같은 매핑을 쓰게(엔드포인트↔앱 귀속이 흔들리지 않게).
+    # 앱→포트 매핑을 기록한다 — 기동·재시작이 같은 매핑을 쓰게(엔드포인트↔앱 매핑이 흔들리지 않게).
     echo "$app $port" >> /run/pqcota-ssl-apps.map
     port=$((port + 1))
   done

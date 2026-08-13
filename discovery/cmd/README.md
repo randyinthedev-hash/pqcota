@@ -110,7 +110,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 
 | 인자·옵션 | 기본값 | 하는 일 |
 |---|---|---|
-| `<node-id>` | `host://local` | 관측 결과를 귀속할 노드 |
+| `<node-id>` | `host://local` | 관측 결과를 달아 둘 노드 |
 | `[iface]` | `eth0` (env `NETCAP_IFACE`) | 포집할 인터페이스 |
 | `[window-seconds]` | `8` (env `NETCAP_WINDOW_SEC`) | 관측 구간 길이 |
 | `--strict` | 꺼짐 | 관측 불가일 때 종료코드 1로 실패 |
@@ -153,7 +153,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 |---|---|---|
 | 노드 스캔 · fork 판정 · JVM 정찰 | **3.2**(툴체인 하한) | 바이너리가 실행되지 않는다 |
 | 통신 엣지 관측 | 추가 요구 없음 (`AF_PACKET`은 2.2 계열) | — |
-| 앱 귀속(systemd 유닛) | systemd가 도는 환경 | 유닛명 대신 **실행 파일 경로**로 귀속(upstart 시절 배포판) |
+| 앱 표시(systemd 유닛) | systemd가 도는 환경 | 유닛명 대신 **실행 파일 경로**로 짚는다(upstart 시절 배포판) |
 | **컨테이너 안 JVM attach** | **4.1**(`/proc/<pid>/status`의 `NSpid`) | 호스트 PID로 폴백 — 그 JVM만 미관측(갭으로 고지) |
 
 하한 미만에서도 **조용히 틀리지 않는다**. 관측하지 못한 것은 완전성 갭으로 나가고(§2.6), `NSpid`가 없으면 호스트 PID를 그대로 쓴다.
@@ -162,8 +162,8 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 
 | 커널 | 배포판 | 결과 |
 |---|---|---|
-| **3.2.0** | Ubuntu 12.04 | 세 collector 모두 정상 종료. OpenSSL 1.0.0g 탐지(fork=OpenSSL·dynamic), AF_PACKET 8초 구간 관측 성공. systemd가 없어 앱 귀속은 **실행 파일 경로**로 떨어짐(`/usr/sbin/sshd` 등) |
-| **3.10.0** | CentOS 7.9 | 세 collector 모두 정상 종료. OpenSSL 1.0.2k 탐지, cgroup v1에서 **systemd 유닛명 귀속 성공**(`sshd.service` 등) |
+| **3.2.0** | Ubuntu 12.04 | 세 collector 모두 정상 종료. OpenSSL 1.0.0g 탐지(fork=OpenSSL·dynamic), AF_PACKET 8초 구간 관측 성공. systemd가 없어 앱을 **실행 파일 경로**로 짚음(`/usr/sbin/sshd` 등) |
+| **3.10.0** | CentOS 7.9 | 세 collector 모두 정상 종료. OpenSSL 1.0.2k 탐지, cgroup v1에서 **systemd 유닛명으로 짚기 성공**(`sshd.service` 등) |
 
 두 커널 모두 `/proc/<pid>/status`에 **`NSpid` 줄이 없고**, 호스트 PID 폴백이 동작해 죽지 않았다 — 4.1 경계가 실물로 확인된 셈이다.
 

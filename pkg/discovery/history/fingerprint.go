@@ -18,7 +18,7 @@ import (
 //   - Finding.derived_from_snapshot_id·ruleset_version (스냅샷마다 다름)
 //   - ObservedEdge.observed_count·first_seen·last_seen (관측 빈도·시각)
 //
-// 반대로 실질 내용(자산 동일성·버전·바인딩·귀속·협상 그룹·완전성 갭)은 전부 포함한다.
+// 반대로 실질 내용(자산 동일성·버전·바인딩·앱·협상 그룹·완전성 갭)은 전부 포함한다.
 // 여기서 빠뜨린 필드가 바뀌면 "변화 없음"으로 접혀 이력에서 사라지므로, 필드를 추가할 땐
 // 이 함수도 함께 갱신해야 한다.
 func ContentHash(s *Snapshot) string {

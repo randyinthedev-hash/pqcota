@@ -42,7 +42,7 @@ type Node struct {
 	Role     string   `yaml:"role"` // openssl: client | server
 	OpenSSL  *OpenSSL `yaml:"openssl"`
 	JCA      *JCA     `yaml:"jca"`
-	Apps     []string `yaml:"apps"` // openssl server: 한 libssl을 로드하는 앱들(다중 귀속)
+	Apps     []string `yaml:"apps"` // openssl server: 한 libssl을 로드하는 앱들(여러 앱에 걸침)
 	Networks []string `yaml:"networks"`
 	Profile  *Profile `yaml:"profile"`
 }
@@ -230,7 +230,7 @@ func nodeEnv(n Node, edges []Edge) [][2]string {
 	if ssl || (n.Kind == "openssl" && n.roleName() == "server") {
 		apps := n.Apps
 		if len(apps) == 0 {
-			apps = []string{n.ID} // 기본=단일 앱(node id). 목록을 주면 공유 .so 다중 귀속.
+			apps = []string{n.ID} // 기본=단일 앱(node id). 목록을 주면 공유 .so 여러 앱에 걸침.
 		}
 		env = append(env, [2]string{"SSL_SERVER", "1"}, [2]string{"SSL_APPS", strings.Join(apps, ",")})
 	}

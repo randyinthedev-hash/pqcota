@@ -8,7 +8,7 @@
 
 ## 무슨 일이 일어나나
 
-### `pqcota-discover-view` — 결과 취합 → 자산 + 앱 귀속 + 등급
+### `pqcota-discover-view` — 결과 취합 → 자산 + 앱 + 등급
 [`../data/results`](../data)의 `CollectionResult` JSON들을 모아 **발견 자산**과 **관측 통신 엣지 등급**를 보여준다(파일 취합·휘발성, 저장소 불필요). 대조·판정(reconcile)은 하지 않는다(§2.1).
 
 기대 출력(요지):
@@ -30,7 +30,7 @@
 - **IP→노드 해소**: `nodes.json`으로 `10.0.0.9` → `node-c`(엣지의 `dstAddr`가 이름으로 표시됨).
 - 토폴로지 **DOT**도 함께 생성(색=등급) — `dot -Tsvg`로 SVG 렌더 가능.
 
-> 앱 귀속(`@app`)·엔드포인트/프로필 헤더는 **중앙 영속 뷰**(`pqcota-inventory`, Postgres)에서 함께 표시된다. 이 파일-취합 뷰는 자산·엣지 중심이다.
+> 앱 표시(`@app`)·엔드포인트/프로필 헤더는 **중앙 영속 뷰**(`pqcota-inventory`, Postgres)에서 함께 표시된다. 이 파일-취합 뷰는 자산·엣지 중심이다.
 
 ## 중앙 영속 조회 (`pqcota-inventory`)
 파일 취합이 아니라 **여러 노드가 시간에 걸쳐 쌓은 누적 인벤토리**를 조회하려면 Postgres가 필요하다:
@@ -38,7 +38,7 @@
 # 먼저 같은 DSN에 적재(pqcota-ingest)한 뒤:
 PQCOTA_DSN=postgres://… go run ./inventory/cmd/pqcota-inventory
 ```
-→ ▸엔드포인트·프로필 헤더 + `@`앱 귀속(공유 .so는 다중)까지. 종단 흐름은 [demo/](../../demo) 참고. 커맨드 지도: [inventory/cmd/README](../../inventory/cmd/README.md).
+→ ▸엔드포인트·프로필 헤더 + `@`앱 표시(공유 .so는 다중)까지. 종단 흐름은 [demo/](../../demo) 참고. 커맨드 지도: [inventory/cmd/README](../../inventory/cmd/README.md).
 
 ### `pqcota-cbom-ingest` — 외부 도구가 낸 CBOM 받기
 collector가 관측하지 않는 소스·빌드 아티팩트는, 사용자 CI에서 **CBOMkit** 등이 낸 표준 CycloneDX를 **받아서** 적재한다. [`sample-cbom.json`](sample-cbom.json)을 넣으면:

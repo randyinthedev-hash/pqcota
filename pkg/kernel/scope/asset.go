@@ -28,7 +28,7 @@ type AssetRule struct {
 	Exclude bool   // false면 include(제외를 되돌리는 예외)
 	Runtime string // openssl | jca | * — Finding.crypto_runtime
 	Lib     string // 자산 이름 glob (openssl은 lib, jca는 provider 이름)
-	AppKey  string // 귀속 앱 glob. 하나라도 맞으면 매치
+	AppKey  string // 쓰는 앱 glob. 하나라도 맞으면 매치
 	Note    string // 왜 이 규칙을 뒀는지(사람용, 판정에 영향 없음)
 }
 
@@ -38,7 +38,7 @@ type AssetRule struct {
 // 결정). 그래서 include를 exclude "뒤에" 두면 "이 계열은 전부 빼되 이것만 예외"가 된다 — 무조건
 // 우선이 아니라 순서 기반이다(include를 앞에 두면 뒤의 exclude가 이긴다).
 //
-// ★ 공유 .so 주의: 귀속 앱이 여럿이라(§1.5) 한 앱만 겨냥해 exclude해도 그 .so를 함께 쓰는
+// ★ 공유 .so 주의: 쓰는 앱이 여럿이라(§1.5) 한 앱만 겨냥해 exclude해도 그 .so를 함께 쓰는
 // 다른 앱 자산까지 빠진다(matches가 app_key 하나만 맞아도 참). 운영 앱을 지키려면 그 앱을
 // 되살리는 include를 exclude 뒤에 둔다.
 type AssetPolicy struct {

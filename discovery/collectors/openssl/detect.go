@@ -20,7 +20,7 @@ type Detection struct {
 	Version         string   `json:"version,omitempty"`
 	BindingMode     string   `json:"bindingMode,omitempty"`     // maps에서 .so로 발견 → dynamic
 	DetectionMethod string   `json:"detectionMethod,omitempty"` // runtime-introspection(maps) + symbol-analysis(fork)
-	AppKeys         []string `json:"appKeys,omitempty"`         // 자산 귀속(§1.5) — 이 .so를 로드한 앱(들). host-wide 스캔에서 dedup 시 합집합.
+	AppKeys         []string `json:"appKeys,omitempty"`         // 자산이 어느 앱 것인지(§1.5) — 이 .so를 로드한 앱(들). host-wide 스캔에서 dedup 시 합집합.
 }
 
 // RawCapture — 탐지 결과를 collector 네이티브 형식(JSON)으로. CycloneDX 변환 **전**의 원본이라
@@ -46,7 +46,7 @@ func DetectForPID(pid int, sigs []registry.ForkSignature) ([]Detection, error) {
 	}
 	defer maps.Close()
 
-	appKey, _ := procs.AppKey("/proc", pid) // 이 PID의 앱 귀속(§1.5) — cgroup systemd 유닛 or exe
+	appKey, _ := procs.AppKey("/proc", pid) // 이 PID의 앱 키(§1.5) — cgroup systemd 유닛 or exe
 	var appKeys []string
 	if appKey != "" {
 		appKeys = []string{appKey}

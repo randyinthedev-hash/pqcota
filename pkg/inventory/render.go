@@ -40,7 +40,7 @@ func Render(snap *history.Snapshot) string {
 			fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
 		} else if n := c.GetNote(); n != "" {
 			// **계층 갭이 없어도 노트는 낸다.** 계층이 빈 노트를 흘려보내던 탓에, 구간이 중간에
-			// 끊겼다는 netcap의 경고와 앱 귀속 실패가 화면까지 오지 못했다 — 정직하게 적어 둔
+			// 끊겼다는 netcap의 경고와 앱을 못 짚은 것이 화면까지 오지 못했다 — 정직하게 적어 둔
 			// 것이 읽는 사람에게 도달하지 않으면 적지 않은 것과 같다(§2.6).
 			fmt.Fprintf(&b, "관측 한계: %s\n", n)
 		}
@@ -60,7 +60,7 @@ func detailOf(f *discoveryv1.Finding) string {
 		detail = fmt.Sprintf("providers=%d %s", len(f.GetJca().GetProviderSet()), f.GetPqcReadiness())
 	}
 	if ak := f.GetAppKeys(); len(ak) > 0 {
-		detail += "  @" + strings.Join(ak, ",") // 자산 귀속(§1.5) — 공유 .so면 다중 앱
+		detail += "  @" + strings.Join(ak, ",") // 자산이 어느 앱 것인지(§1.5) — 공유 .so면 다중 앱
 	}
 	return detail
 }
@@ -128,7 +128,7 @@ func RenderDetail(snap *history.Snapshot) string {
 	return RenderDetailWith(snap, nil)
 }
 
-// RenderDetailWith — 선언된 귀속을 얹어 낸다. overlay가 nil이면 [RenderDetail]과 같다.
+// RenderDetailWith — 사람이 선언한 앱을 얹어 낸다. overlay가 nil이면 [RenderDetail]과 같다.
 //
 // 얹는 일은 **읽을 때만** 일어난다 — 저장된 관측 엣지는 그대로다(검토 중인 설계 §5.2).
 func RenderDetailWith(snap *history.Snapshot, overlay *AttributionOverlay) string {
@@ -150,14 +150,14 @@ func RenderDetailWith(snap *history.Snapshot, overlay *AttributionOverlay) strin
 	}
 	if declared > 0 {
 		// 몇 개가 선언으로 메워졌는지 밝힌다 — 화면만 보면 관측과 구별되지 않는다.
-		fmt.Fprintf(&b, "  (그중 %d개는 관측이 아니라 **선언된 귀속**이다 — `(declared)` 표시)\n", declared)
+		fmt.Fprintf(&b, "  (그중 %d개는 관측이 아니라 **사람이 선언한 앱**이다 — `(declared)` 표시)\n", declared)
 	}
 	return b.String()
 }
 
 // edgeApp — 엣지를 연 앱. 사람이 조치할 대상은 서버가 아니라 앱이다.
 //
-// **비어 있으면 "귀속하지 못함"이지 "앱 없음"이 아니다.** 그래서 빈칸으로 두지 않고 `@?`로
+// **비어 있으면 "어느 앱인지 밝히지 못함"이지 "앱 없음"이 아니다.** 그래서 빈칸으로 두지 않고 `@?`로
 // 적는다 — 빈칸은 열이 없는 것과 구별되지 않는다. 왜 못 잡았는지는 그 스냅샷의 완전성 노트에
 // 있다(§2.6).
 //

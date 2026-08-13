@@ -6,7 +6,7 @@ import (
 	"github.com/pqcota/pqcota/pkg/inventory/declaration"
 )
 
-// AttributionOverlay — 선언된 엣지→앱 귀속을 조회 시점에 얹기 위한 색인.
+// AttributionOverlay — 선언된 엣지의 앱을 조회 시점에 얹기 위한 색인.
 //
 // **저장을 고치지 않는다.** 선언은 자기 레인에 그대로 있고, 관측 엣지도 그대로다. 둘을 합치는
 // 일은 여기서, **읽을 때만** 일어난다 — 적재가 관측을 고치면 collector의 서명과 어긋나고,
@@ -18,7 +18,7 @@ type AttributionOverlay struct {
 // edgeKey — (관측 호스트, 상대 주소). 상대 주소가 이미 포트를 담으므로 포트를 따로 두지 않는다.
 type edgeKey struct{ node, dst string }
 
-// BuildAttributionOverlay — 귀속 저장소에서 색인을 만든다.
+// BuildAttributionOverlay — 선언 저장소에서 색인을 만든다.
 //
 // **스냅샷을 읽지 않는다.** 선언은 노드의 상태 이력 밖에 산다 — 거기 넣으면 조회·이력·diff가
 // 저마다 그것을 걸러 내야 하고, 화면이 늘 때마다 같은 자리가 다시 샌다.

@@ -22,7 +22,7 @@ type IngestReport struct {
 	Changed   int // 그중 실질 내용이 바뀌어 **새 스냅샷**이 생긴 노드 수
 	// ExcludedByScope — 자산 스코프 정책으로 관리 대상에서 뺀 finding 수(제외 ≠ 부재 — 고지용).
 	ExcludedByScope int
-	// DeclaredAttributions — 이번에 받은 귀속 선언 수. 관측이 아니므로 Accepted와 섞지 않는다.
+	// DeclaredAttributions — 이번에 받은 앱 선언 수. 관측이 아니므로 Accepted와 섞지 않는다.
 	DeclaredAttributions int
 	// Unverified — 서명을 **확인하지 못한** 건수. 검증 실패(Rejected)와 다르다 — 틀렸다는 것이
 	// 아니라 물어보지 못했다는 것이다. 이 둘을 한 숫자로 합치면 "검증했고 통과했다"와
@@ -93,7 +93,7 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	if o.RequireSignature && o.VerifySig == nil {
 		return nil, ErrSignatureRequired
 	}
-	// 귀속 선언은 **노드의 상태가 아니다** — 스냅샷 타임라인에 넣으면 조회·이력·diff가 저마다
+	// 앱 선언은 **노드의 상태가 아니다** — 스냅샷 타임라인에 넣으면 조회·이력·diff가 저마다
 	// 그것을 걸러 내야 하고, 화면이 늘 때마다 같은 자리가 다시 샌다. 여기서 갈라낸다.
 	results, declared := splitAttributionDeclarations(results)
 	master, verifySig, store := o.Master, o.VerifySig, o.Store
@@ -102,7 +102,7 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	if len(declared) > 0 {
 		as, ok := o.Store.(history.AttributionStore)
 		if !ok {
-			return nil, errors.New("귀속 선언이 왔는데 저장소가 그것을 담지 못한다")
+			return nil, errors.New("앱 선언이 왔는데 저장소가 그것을 담지 못한다")
 		}
 		for _, a := range declared {
 			if err := as.PutAttribution(a); err != nil {
@@ -167,7 +167,7 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	return rep, nil
 }
 
-// splitAttributionDeclarations — 귀속 선언을 관측 결과에서 갈라낸다.
+// splitAttributionDeclarations — 앱 선언을 관측 결과에서 갈라낸다.
 //
 // 판정은 내용으로 한다: 자산(CBOM)이 없고, 엣지가 전부 선언 표시를 달고 있으면 선언이다.
 // 관측 결과는 어느 쪽이든 관측한 것을 담고 있으므로 여기 걸리지 않는다.

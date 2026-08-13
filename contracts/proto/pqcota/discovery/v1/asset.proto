@@ -4,7 +4,7 @@
 //   Machine     = node_id(스코프 마스터, §1.4) — 안정·전역 유일.
 //   Application = (node_id, app_key) — app_key는 머신 스코프 안정 키. 전역 유일(충돌·중복 없음).
 //   Process     = PID 휘발 → 저장 안 함. ProcessMatch로 프로비저닝 직전 "실시간 해소".
-// 크립토 Finding(cbom.proto)은 app_key로 애플리케이션에 귀속된다.
+// 크립토 Finding(cbom.proto)은 app_key로 애플리케이션에 붙는다.
 
 syntax = "proto3";
 

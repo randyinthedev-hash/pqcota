@@ -70,7 +70,7 @@ const lineTo10005 = "   0: 0100007F:9C40 0500000A:01BB 01 00000000:00000000 00:0
 // TestAttributionPicksTheProcessThatOpenedTheSocket — fd 상속을 실제로 다룬다.
 //
 // 실제 장비에서 한 inode에 PID 셋이 걸렸다 — 연결을 연 `bash`와 그것을 물려받은 자식 둘. 먼저 찾은
-// PID를 쓰면 자식에 귀속되는데, **연결을 연 것은 부모다.**
+// PID를 쓰면 자식을 짚게 되는데, **연결을 연 것은 부모다.**
 func TestAttributionPicksTheProcessThatOpenedTheSocket(t *testing.T) {
 	f := newFakeProc(t, lineTo10005)
 	f.proc(t, 100, 1, "0::/system.slice/payment.service", "socket:[26014316]")   // 연 쪽
@@ -79,7 +79,7 @@ func TestAttributionPicksTheProcessThatOpenedTheSocket(t *testing.T) {
 
 	got := procs.AttributeRemote(f.root, "10.0.0.5", 443)
 	if got.Key != "payment.service" {
-		t.Fatalf("app_key=%q kind=%q reason=%q — 연결을 연 부모가 아니라 상속한 자식에 귀속됐다",
+		t.Fatalf("app_key=%q kind=%q reason=%q — 연결을 연 부모가 아니라 상속한 자식을 짚었다",
 			got.Key, got.Kind, got.Reason)
 	}
 	if got.Kind != "systemd-unit" {
@@ -92,8 +92,8 @@ func TestAttributionPicksTheProcessThatOpenedTheSocket(t *testing.T) {
 
 // TestUnattributedIsNotNoApp — 못 잡은 것과 앱이 없는 것을 가른다.
 //
-// 이 리포가 관측 갭에 대해 지켜 온 규칙이 귀속에도 그대로 적용된다. 빈 키는 "앱이 없다"가
-// 아니라 "귀속하지 못했다"이고, **왜 못 했는지가 남아야** 대응이 갈린다.
+// 이 리포가 관측 갭에 대해 지켜 온 규칙이 여기에도 그대로 적용된다. 빈 키는 "앱이 없다"가
+// 아니라 "어느 앱인지 밝히지 못했다"이고, **왜 못 했는지가 남아야** 대응이 갈린다.
 func TestUnattributedIsNotNoApp(t *testing.T) {
 	// ① 소켓이 이미 닫혔다 — /proc/net/tcp에 그 상대가 없다.
 	f := newFakeProc(t)
@@ -112,7 +112,7 @@ func TestUnattributedIsNotNoApp(t *testing.T) {
 
 // TestAmbiguousIsNotGuessed — 같은 상대로 두 앱이 통신 중이면 기계가 고르지 않는다.
 //
-// 틀린 앱에 귀속하면 조치 대상이 바뀐다 — 비워 두는 것보다 나쁘다. UNOBSERVED를 기계가
+// 앱을 잘못 짚으면 조치 대상이 바뀐다 — 비워 두는 것보다 나쁘다. UNOBSERVED를 기계가
 // 확정하지 않는 것과 같은 자리다.
 func TestAmbiguousIsNotGuessed(t *testing.T) {
 	f := newFakeProc(t,

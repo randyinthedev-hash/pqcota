@@ -23,7 +23,7 @@
 
 ## 1. 시나리오별 테스트케이스
 
-케이스 번호는 **`TD`(디스커버리) - 무엇을 보나 - 순번**이다 — `TD-OPENSSL` · `TD-JVM` · `TD-FORK` · `TD-CONTAINER` · `TD-SCOPE` · `TD-GAP` · `TD-SIGN` · `TD-NETWORK` · `TD-PROVENANCE`(수집 시각) · `TD-ATTR`(엣지→앱 귀속). 번호는 그것을 검증하는 **테스트 파일로 이어진다**(링크가 없는 것은 데모가 본다).
+케이스 번호는 **`TD`(디스커버리) - 무엇을 보나 - 순번**이다 — `TD-OPENSSL` · `TD-JVM` · `TD-FORK` · `TD-CONTAINER` · `TD-SCOPE` · `TD-GAP` · `TD-SIGN` · `TD-NETWORK` · `TD-PROVENANCE`(수집 시각) · `TD-ATTR`(엣지를 연 앱). 번호는 그것을 검증하는 **테스트 파일로 이어진다**(링크가 없는 것은 데모가 본다).
 
 절 제목의 `SD-*`는 [디스커버리 설계](design.md)가 매긴 **상황**(Scenario·Discovery) 번호이고, 표 안의 `TD-*`는 그 상황을 검증하는 **테스트** 번호다 — 다른 축이라 섞지 않는다.
 
@@ -36,7 +36,7 @@
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
 | [TD-OPENSSL-1](collectors/openssl/procmaps_test.go) | unit | `TestParseProcMaps` · `_none` — `/proc/<pid>/maps` 스냅샷 파싱 | 로드된 `libssl`/`libcrypto` 경로 목록. 없으면 빈 목록 | 실행 중인 프로세스에 로드된 lib을 잡아낸다 — 디스커버리의 출발점이다 |
-| [TD-OPENSSL-2](collectors/openssl/scan_test.go) | unit | `TestMergeByPathUnionsAppKeys` · `NoAppKeys` — 같은 `.so`를 여러 프로세스가 물고 있을 때 | 경로 하나로 합치고 `app_keys`는 **합집합**. 귀속이 없으면 `nil` | 공유 라이브러리를 프로세스 수만큼 중복 등재하지 않으면서, 그것을 쓰는 앱을 하나도 잃지 않는다 |
+| [TD-OPENSSL-2](collectors/openssl/scan_test.go) | unit | `TestMergeByPathUnionsAppKeys` · `NoAppKeys` — 같은 `.so`를 여러 프로세스가 물고 있을 때 | 경로 하나로 합치고 `app_keys`는 **합집합**. 쓰는 앱이 없으면 `nil` | 공유 라이브러리를 프로세스 수만큼 중복 등재하지 않으면서, 그것을 쓰는 앱을 하나도 잃지 않는다 |
 | [TD-OPENSSL-3](collectors/openssl/service_test.go) | unit | `TestCollectorServiceContract` — Describe·Collect gRPC 왕복 | 능력 신고와 결과 스트림이 계약대로 | 코어가 collector를 계약으로만 부르는지 — 배선이 끊기면 실물이 멀쩡해도 아무것도 안 온다 |
 | TD-OPENSSL-4 | **integration** — [데모 2/6](../demo/integration-verification.md) | 실 OpenSSL 컨테이너 노드 수집 | 정규화된 CBOM, evidence_strength=CONFIRMED | 손으로 만든 스냅샷이 아니라 실물 호스트에서 같은 결과가 나오는지 확인한다 |
 | [TD-OPENSSL-5](collectors/openssl/build_test.go) | unit | `TestBuildResult` · `NoDetection` · `RawCaptureRoundTripsAndIsStable` — 탐지 결과 → CollectionResult | CycloneDX 본문·원본·완전성이 채워지고, 탐지가 없으면 전 계층 갭 + 사유. 같은 관측이면 같은 바이트 | 조립이 비면 무엇을 봤든 코어에 도달하지 않는다. 원본이 흔들리면 서명이 깨진다(§2.6) |
@@ -114,9 +114,9 @@
 | [TD-SIGN-3](../pkg/kernel/sign/coverage_test.go) | unit | `TestTamperBreaksVerification` · `EdgeOrderDoesNotMatter` · `CanonicalCoversAllFields` — 필드를 하나씩 변조, 엣지 순서 뒤섞기, 계약 필드 수 가드 | 어느 필드를 건드려도 검증이 깨지고, 순서만 다른 같은 관측은 통과. 계약에 필드가 늘면 **실패** | 완전성 선언과 `raw_capture`까지 서명이 덮는지, 그리고 **서명 사각지대가 조용히 생기지 않는지** |
 | [TD-SIGN-4](../pkg/inventory/ingest/central_test.go) | unit | `TestIngestAcceptsValidSignature` — 서명한 결과를 검증기와 함께 적재 | 거부 0, 수용 1, 스냅샷 1 | 거부만 시험하면 게이트가 정상 반입까지 막는 것을 못 잡는다 |
 | [TD-SIGN-5](../pkg/kernel/sign/sign_test.go) | unit | `TestVerifyFromBindsKeysToCollectors` — A의 키로 서명한 결과에 **B의 collector 이름**을 달아 검증 | `Verify`는 통과시키고 `VerifyFrom`은 거절. 모르는 collector도 거절 | `Verify`는 넘긴 키를 전부 시도해 "누군가는 냈다"까지만 답한다. 서명은 **누가 냈나**를 답해야 한다 |
-| [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket` — 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛에 귀속. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실제 장비에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 틀린 앱에 귀속된다 |
+| [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket` — 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛으로 짚는다. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실제 장비에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 앱을 잘못 짚게 된다 |
 | [TD-ATTR-2](../pkg/discovery/procs/socket_test.go) | unit | `TestUnattributedIsNotNoApp` — 소켓이 닫힌 경우·안정 키를 못 뽑는 경우 | 빈 키 + **사유가 남는다** | 빈 `app_key`가 "이 통신에 앱이 없다"로 읽히면 안 된다. 관측 갭과 같은 규칙 |
-| [TD-ATTR-3](../pkg/discovery/procs/socket_test.go) | unit | `TestAmbiguousIsNotGuessed` · `TestSameAppOnBothSocketsIsNotAmbiguous` — 같은 상대로 두 앱 / 한 앱이 연결 둘 | 앞은 **고르지 않고**, 뒤는 잡는다 | 틀린 앱에 귀속하면 조치 대상이 바뀐다 — 비워 두는 것이 낫다. 다만 과하게 비우면 쓸모가 없다 |
+| [TD-ATTR-3](../pkg/discovery/procs/socket_test.go) | unit | `TestAmbiguousIsNotGuessed` · `TestSameAppOnBothSocketsIsNotAmbiguous` — 같은 상대로 두 앱 / 한 앱이 연결 둘 | 앞은 **고르지 않고**, 뒤는 잡는다 | 앱을 잘못 짚으면 조치 대상이 바뀐다 — 비워 두는 것이 낫다. 다만 과하게 비우면 쓸모가 없다 |
 | [TD-ATTR-4](../discovery/cmd/pqcota-netcap/note_test.go) | unit(linux) | `TestAttributionNoteSaysWhatItDoesNotMean` — 못 잡은 엣지가 있는 결과 | 완전성 노트에 건수·사유가 남고 **순서가 흔들리지 않는다** | 사유 순서가 흔들리면 같은 관측이 내용 지문 차이로 다른 스냅샷이 된다 |
 | [TD-PROVENANCE-1](../discovery/collectors/network/collected_at_test.go) | unit | `TestEveryResultCarriesCollectedAt`(network·jvm) · `TestBuildResultCarriesCollectedAt`(openssl) — 세 collector가 내는 모든 결과 | 주입한 시계가 `collected_at`에 실린다. 관측 실패(`DegradedResult`)도 예외 아님 | 비어 있으면 서명이 빈 값을 덮는다 — "언제 봤는지 모른다"에 서명하는 것이다. 갭 기록도 **언제 시도했는지**가 근거다 |
 
@@ -133,7 +133,7 @@
 | [TD-NETWORK-4](collectors/network/network_test.go) | unit | `TestNegotiateSSHKex` — 클라이언트는 제안, **서버는 미지원** | 협상 결과는 **고전** — 양쪽 교집합으로 판정 | 제안만 보고 PQC로 보고하면 레거시 서버(OpenSSH 8.2)와의 SSH가 🟢로 나간다 — 서버가 지원하지 않아 실제로는 고전인데도 |
 | [TD-NETWORK-5](collectors/network/network_test.go) | unit | `TestBuildEdge` — 파싱 결과 → 엣지 | `ObservedEdge`{src_node · dst_addr:port · protocol · negotiated_group · role} | 관측이 자산과 이어지려면 노드·상대·프로토콜이 한 레코드에 함께 있어야 한다 |
 | [TD-NETWORK-6](collectors/network/network_test.go) | unit | `TestQUICUnknownPosture` — 암호화된 핸드셰이크 | `negotiated_group`="" → **불명**(코어에서 등급 ⚪) | 관측하지 못한 것을 고전으로 단정하지 않는다 |
-| [TD-NETWORK-7](collectors/network/network_test.go) | unit | `TestBuildResult` — CollectionResult 조립 | `crypto_runtime` **미귀속**, `layers_covered`=[NETWORK], `observed_edges` 채움 | 그 연결이 무엇으로 구현됐는지는 회선에서 안 보인다 — TLS 엣지를 OpenSSL 자산에 귀속하지 않는다 |
+| [TD-NETWORK-7](collectors/network/network_test.go) | unit | `TestBuildResult` — CollectionResult 조립 | `crypto_runtime` **미상**, `layers_covered`=[NETWORK], `observed_edges` 채움 | 그 연결이 무엇으로 구현됐는지는 회선에서 안 보인다 — TLS 엣지를 OpenSSL 자산으로 잇지 않는다 |
 | [TD-NETWORK-8](collectors/network/network_test.go) | unit | `TestBuildResult_windowNote` — 구간 안에 트래픽이 없던 링크 | completeness에 관측 구간 갭 note(§2.6) | 구간 안에 없던 것을 "암호를 안 쓴다"로 보지 않는다 |
 | [TD-NETWORK-9](collectors/network/network_test.go) | unit | `TestShouldObserve_selfReference` · `TestCollect_filtersSelf` — 자기 노드/자기 트래픽 | 엣지에서 **제외** | 관측 도구가 만든 트래픽이 결과에 섞이면 토폴로지가 자기 자신을 가리킨다 |
 | [TD-NETWORK-10](collectors/network/network_test.go) | unit | `TestBuildEdge_offScopeRawAddr` — dst가 스코프 밖 | `dst_node_id` 빈칸 + `dst_addr` 채움 → 코어가 등재 판정 | 모르는 상대라고 버리면 등재 판정의 입력이 사라진다 |

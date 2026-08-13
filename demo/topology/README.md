@@ -38,7 +38,7 @@
 |---|---|---|
 | `web-gw` | OpenSSL **3.x** 클라이언트 (corp) | 현대 스택 · 트래픽 소스(**SSH 등급은 이 노드의 클라이언트가 가른다**) |
 | `pay-app` | Java + **BC 런타임 등록** (corp) | 정적 스캔으론 안 보이고 **attach로만** 잡히는 provider |
-| `pay-db` | OpenSSL **1.1.1** 서버, 앱 2개 (corp+db) | **레거시=양자취약** · 공유 `.so` **다중 귀속**(영향 반경) · 세그먼트 2개에 걸침 |
+| `pay-db` | OpenSSL **1.1.1** 서버, 앱 2개 (corp+db) | **레거시=양자취약** · 공유 `.so` **여러 앱에 걸침**(영향 반경) · 세그먼트 2개에 걸침 |
 
 엣지 4개가 **TLS·SSH 각각에서 현대↔레거시**를 가른다:
 
@@ -88,7 +88,7 @@ nodes:
     kind: openssl
     role: server
     openssl: { fork: openssl, version: "1.1.1" }  # 레거시 = 양자취약
-    apps: [payment-gw, api-gw]  # (openssl server) 여러 앱이 한 libssl 로드 → 공유 .so 다중 귀속
+    apps: [payment-gw, api-gw]  # (openssl server) 여러 앱이 한 libssl 로드 → 공유 .so 여러 앱에 걸침
 
 edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC / 🔴 고전)
   - { from: web-gw, to: pay-app, proto: pqc, port: 8443 }
@@ -104,7 +104,7 @@ edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC 
 | **openssl version** | `1.1.1` · `3.0` · `3` | base 이미지의 OpenSSL 버전(레거시↔현대·버전 탐지) |
 | **jca providers** | 예: `[BC]` · `[]` | BC 유무 → JCA posture 차이(attach로 동적 등록 포착) |
 | **networks** | 임의 세그먼트 목록 | 다중 브리지로 망 분리, 노드가 여러 세그먼트에 걸침 |
-| **apps** (openssl server) | 앱 이름 목록 | 공유 `.so`를 여러 앱이 로드 → **다중 귀속·영향 반경** |
+| **apps** (openssl server) | 앱 이름 목록 | 공유 `.so`를 여러 앱이 로드 → **여러 앱에 걸침·영향 반경** |
 | **edges** | `pqc` · `ssl` · `ssh` | 핸드셰이크 관측 → 🟢/🔴 등급 |
 
 ### 서버/트래픽 규칙 (자동 유도)

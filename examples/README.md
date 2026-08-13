@@ -11,7 +11,7 @@ cmd가 여럿이라 **실제로 어떻게 돌리는지** 감을 잡기 위한 �
 |---|---|---|---|
 | **Discovery** | [`discovery/`](discovery) | `pqcota-hosts`(hosts→Ansible·엔드포인트) · `pqcota-ingest`(① 직접 관측 적재) · `pqcota-cbom-ingest`(② 위임 CBOM 수신) | Go만 |
 | ↳ JVM | [`discovery/jvm/`](discovery/jvm) | `pqcota-jvmscan` 정찰→attach(실행 중 JVM의 동적 등록 실체) | **Go + Docker + JDK** |
-| **Inventory** | [`inventory/`](inventory) | `pqcota-discover-view`(자산·앱 귀속·등급) | Go만 |
+| **Inventory** | [`inventory/`](inventory) | `pqcota-discover-view`(자산·앱 표시·등급) | Go만 |
 | **Provisioning** | [`provisioning/`](provisioning) | `pqcota-provision`(확정 계획→L2 플레이북) | Go만 |
 
 ```bash
@@ -23,7 +23,7 @@ cmd가 여럿이라 **실제로 어떻게 돌리는지** 감을 잡기 위한 �
 
 ## 공유 샘플 데이터 — [`data/`](data)
 Discovery·Inventory 예제가 함께 쓰는 **회수된 결과**(실물 collector가 낼 법한 `CollectionResult` JSON):
-- `data/results/node-a-openssl.json` — OpenSSL 자산(공유 `libssl.so.3`이 두 앱 `api-gw`·`payment-gw`에 **다중 귀속**).
+- `data/results/node-a-openssl.json` — OpenSSL 자산(공유 `libssl.so.3`이 두 앱 `api-gw`·`payment-gw`에 **걸쳐 있다**).
 - `data/results/node-b-jca.json` — JCA provider 체인(SUN·SunJCE·**BC**).
 - `data/results/node-a-net.json` — 관측 통신 엣지 3개(🟢 MLKEM · 🔴 x25519 · 🟢 SSH sntrup761).
 - `data/nodes.json` — 관측 IP→노드명 해소(10.0.0.9 → node-c).
