@@ -43,7 +43,7 @@ Observations are tied to nodes and apps, and the **group actually negotiated on 
   posture totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
 ```
 
-The same observation is also rendered as a topology — color is posture.
+The same observation is also rendered as a topology.
 
 ![Observed topology — color is posture (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
 
