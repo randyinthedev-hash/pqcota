@@ -11,7 +11,7 @@ const (
 )
 
 // PQCMaturity — PQC 알고리즘의 표준화 성숙도. FIPS 라우팅·remediation 분기의 입력.
-// posture(PQC vs 고전)에 "표준이냐 실험이냐" 축을 더한다.
+// 등급(PQC vs 고전)에 "표준이냐 실험이냐" 축을 더한다.
 type PQCMaturity string
 
 const (

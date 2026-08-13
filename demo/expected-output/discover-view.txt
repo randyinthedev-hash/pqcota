@@ -12,12 +12,12 @@
   web-gw
     • OpenSSL  libcrypto.so.3 3.0.13 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
 
-──────── ② 관측 통신 엣지 + 양자내성 posture ────────
+──────── ② 관측 통신 엣지 + 양자내성 등급 ────────
   🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [표준]
   🟢 web-gw     → pay-app            SSH   sntrup761x25519-sha512@openssh.com [실험]
   🔴 web-gw     → pay-db             TLS   x25519
   🔴 web-gw     → pay-db             SSH   curve25519-sha256
 
-  posture 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
+  등급 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
 
-관측 토폴로지 DOT 저장: /work/topology.dot (색=posture, 실선=관측). 선언 대비 3-상태 대조는 이 뷰의 범위 밖.
+관측 토폴로지 DOT 저장: /work/topology.dot (색=등급, 실선=관측). 선언 대비 3-상태 대조는 이 뷰의 범위 밖.

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# 관측 창을 채울 핸드셰이크를 생성한다. 인자: 대상 목록(타입:host:port).
+# 관측 구간을 채울 핸드셰이크를 생성한다. 인자: 대상 목록(타입:host:port).
 #   pqc:node-app:8443   → Go TLS X25519MLKEM768 (🟢)
 #   ssl:node-db:4433    → OpenSSL 고전 TLS (🔴)
 #   ssh:node-db:22      → SSH KEXINIT (🟢 sntrup761x25519)
-# 여러 번 반복해 캡처 창 안에 확실히 들어가게 한다.
+# 여러 번 반복해 수집 구간 안에 확실히 들어가게 한다.
 set -u
 ROUNDS="${TRAFFIC_ROUNDS:-4}"
 
-# 캡처(비동기 netcap)가 AF_PACKET 바인딩을 마칠 시간을 준다 — 트래픽이 관측 창 안에 들도록.
+# 캡처(비동기 netcap)가 AF_PACKET 바인딩을 마칠 시간을 준다 — 트래픽이 관측 구간 안에 들도록.
 sleep "${TRAFFIC_WARMUP:-3}"
 
 gen_one() {

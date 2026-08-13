@@ -80,7 +80,7 @@ nodes:
   - id: pay-app
     name: 결제 앱
     kind: java
-    jca: { providers: [BC] }    # 런타임 등록 provider(SUN·SunJCE는 JDK 기본). BC 유무가 posture를 가른다
+    jca: { providers: [BC] }    # 런타임 등록 provider(SUN·SunJCE는 JDK 기본). BC 유무가 등급을 가른다
     networks: [app]
 
   - id: pay-db
@@ -102,7 +102,7 @@ edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC 
 | **노드 종류** | `openssl` · `java` | pqcota가 관측하는 런타임만 |
 | **openssl fork** | `openssl` · `libressl` | discovery의 **fork 판별**(수용 원칙 §2.2, 같은 soname 다른 fork) |
 | **openssl version** | `1.1.1` · `3.0` · `3` | base 이미지의 OpenSSL 버전(레거시↔현대·버전 탐지) |
-| **jca providers** | 예: `[BC]` · `[]` | BC 유무 → JCA posture 차이(attach로 동적 등록 포착) |
+| **jca providers** | 예: `[BC]` · `[]` | BC 유무 → JCA 등급 차이(attach로 동적 등록 포착) |
 | **networks** | 임의 세그먼트 목록 | 다중 브리지로 망 분리, 노드가 여러 세그먼트에 걸침 |
 | **apps** (openssl server) | 앱 이름 목록 | 공유 `.so`를 여러 앱이 로드 → **여러 앱에 걸침·영향 반경** |
 | **edges** | `pqc` · `ssl` · `ssh` | 핸드셰이크 관측 → 🟢/🔴 등급 |

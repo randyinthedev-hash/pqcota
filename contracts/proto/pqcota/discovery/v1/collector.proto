@@ -69,6 +69,6 @@ message CollectionResult {
   pqcota.common.v1.Completeness completeness = 6;  // 이 결과가 커버/미커버한 계층 (§2.6)
 
   // 관측된 통신 엣지 (인벤토리 설계 §6, network-collector). 노드 내부 자산(cbom_cyclonedx)과 달리
-  // 노드 간 관계라 CycloneDX 본문이 아닌 별도 목록으로 운반한다. posture는 코어가 파생(§1.2).
+  // 노드 간 관계라 CycloneDX 본문이 아닌 별도 목록으로 운반한다. 등급은 코어가 파생(§1.2).
   repeated ObservedEdge observed_edges = 7;
 }

@@ -1,5 +1,5 @@
 // Command pqcota-discover-view — OSS 읽기전용 디스커버리 인벤토리 뷰(설계 §5 "읽기전용 인벤토리 뷰").
-// 각 노드가 낸 CollectionResult JSON들을 모아 발견 자산(OpenSSL·JCA)과 관측 통신 엣지(posture)를
+// 각 노드가 낸 CollectionResult JSON들을 모아 발견 자산(OpenSSL·JCA)과 관측 통신 엣지(등급)를
 // 그대로 보여준다. 선언 대비 3-상태 대조(reconcile)는 하지 않는다.
 //
 // usage: pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
@@ -80,15 +80,15 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n──────── ② 관측 통신 엣지 + 양자내성 posture ────────")
+	fmt.Println("\n──────── ② 관측 통신 엣지 + 양자내성 등급 ────────")
 	pqc, classical, unknown := printEdges(edges, ip2node)
-	fmt.Printf("\n  posture 합계: 🟢 PQC %d · 🔴 고전 %d · ⚪ 불명 %d\n", pqc, classical, unknown)
+	fmt.Printf("\n  등급 합계: 🟢 PQC %d · 🔴 고전 %d · ⚪ 불명 %d\n", pqc, classical, unknown)
 
 	dot := renderObservedDOT(edges, ip2node)
 	if err := os.WriteFile(dotOut, []byte(dot), 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "write dot:", err)
 	} else {
-		fmt.Printf("\n관측 토폴로지 DOT 저장: %s (색=posture, 실선=관측). 선언 대비 3-상태 대조는 하지 않는다.\n", dotOut)
+		fmt.Printf("\n관측 토폴로지 DOT 저장: %s (색=등급, 실선=관측). 선언 대비 3-상태 대조는 하지 않는다.\n", dotOut)
 	}
 }
 
@@ -156,7 +156,7 @@ func renderObservedDOT(edges []*discoveryv1.ObservedEdge, ip2node map[string]str
 	var b strings.Builder
 	// rankdir=TB(위→아래) 세로 배치 + 하단 캡션 범례(옆으로 안 퍼지게). 폭 축소.
 	b.WriteString("digraph crypto_observed {\n  rankdir=TB;\n  ranksep=0.5;\n  nodesep=0.3;\n")
-	b.WriteString(`  labelloc="b"; fontsize=11; label="posture:  🟢 PQC/하이브리드   🔴 고전=양자취약   ⚪ 불명";` + "\n")
+	b.WriteString(`  labelloc="b"; fontsize=11; label="등급:  🟢 PQC/하이브리드   🔴 고전=양자취약   ⚪ 불명";` + "\n")
 	b.WriteString(`  node [shape=box, style="rounded,filled", fillcolor="#eeeeff", fontname="sans"];` + "\n")
 	b.WriteString(`  edge [fontname="sans", fontsize=10];` + "\n\n")
 	seen := map[string]bool{}

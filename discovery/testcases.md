@@ -128,7 +128,7 @@
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
 | [TD-NETWORK-1](collectors/network/network_test.go) | unit | `TestParseClientHello` — ClientHello 레코드 | `supported_groups`/`key_share`에서 후보 KEX 그룹, role=client | 제안된 후보를 못 읽으면 협상 관측의 입력이 빈다 |
-| [TD-NETWORK-2](collectors/network/network_test.go) | unit | `TestParseServerHello` — ServerHello 레코드 | 선택 그룹=X25519MLKEM768 + cipher + TLS version → `negotiated_group` | 인벤토리의 posture 근거는 제안이 아니라 합의된 결과여야 한다 |
+| [TD-NETWORK-2](collectors/network/network_test.go) | unit | `TestParseServerHello` — ServerHello 레코드 | 선택 그룹=X25519MLKEM768 + cipher + TLS version → `negotiated_group` | 인벤토리의 등급 근거는 제안이 아니라 합의된 결과여야 한다 |
 | [TD-NETWORK-3](collectors/network/network_test.go) | unit | `TestParseSSHKexInit` — SSH KEXINIT | KEX 목록에서 `sntrup761x25519` 관측, protocol=SSH | SSH는 TLS와 프레이밍이 달라 같은 파서로 못 읽는다 |
 | [TD-NETWORK-4](collectors/network/network_test.go) | unit | `TestNegotiateSSHKex` — 클라이언트는 제안, **서버는 미지원** | 협상 결과는 **고전** — 양쪽 교집합으로 판정 | 제안만 보고 PQC로 보고하면 레거시 서버(OpenSSH 8.2)와의 SSH가 🟢로 나간다 — 서버가 지원하지 않아 실제로는 고전인데도 |
 | [TD-NETWORK-5](collectors/network/network_test.go) | unit | `TestBuildEdge` — 파싱 결과 → 엣지 | `ObservedEdge`{src_node · dst_addr:port · protocol · negotiated_group · role} | 관측이 자산과 이어지려면 노드·상대·프로토콜이 한 레코드에 함께 있어야 한다 |

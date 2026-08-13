@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# examples/inventory — 회수된 CollectionResult를 읽기전용 인벤토리 뷰로 조회한다(자산·앱 표시·posture).
+# examples/inventory — 회수된 CollectionResult를 읽기전용 인벤토리 뷰로 조회한다(자산·앱 표시·등급).
 # 전제: Go 툴체인만. 저장소·타깃 노드 불필요(파일 취합 모드).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,7 +7,7 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 cd "$ROOT"
 
-echo "▶ pqcota-discover-view — ../data/results 취합 → 발견 자산 + 관측 엣지 posture + 토폴로지 DOT"
+echo "▶ pqcota-discover-view — ../data/results 취합 → 발견 자산 + 관측 엣지 등급 + 토폴로지 DOT"
 echo "   (nodes.json으로 관측 IP→노드명 해소: 10.0.0.9 → node-c)"
 echo
 go run ./inventory/cmd/pqcota-discover-view \
@@ -16,7 +16,7 @@ go run ./inventory/cmd/pqcota-discover-view \
     "$TMP/topology.dot"
 
 echo
-echo "생성된 토폴로지 DOT(색=posture) 앞부분:"
+echo "생성된 토폴로지 DOT(색=등급) 앞부분:"
 head -6 "$TMP/topology.dot" | sed 's/^/   /'
 echo
 echo "▶ pqcota-cbom-ingest — 외부 도구가 낸 CBOM을 검증·적재"

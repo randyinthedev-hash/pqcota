@@ -33,7 +33,7 @@
 | # | 소재 | 확보 |
 |---|---|---|
 | 1·2 | 도입 슬라이드 | [`intro-slides.html`](intro-slides.html)을 브라우저로 열고 전체화면 → 화면 녹화 |
-| 3·4 | 관측 대조 + posture | `record-take.sh observe` |
+| 3·4 | 관측 대조 + 등급 | `record-take.sh observe` |
 | 4 | 토폴로지 그림 | `demo/.generated/topology.svg` (데모가 만든다) |
 | 5·6 | 0 → 14 → 0 | `record-take.sh provision` |
 | 7 | 갭 | `record-take.sh gap` |

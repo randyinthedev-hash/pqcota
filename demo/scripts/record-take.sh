@@ -101,7 +101,7 @@ take_observe() {
 
 	say "회선에서 실제로 협상된 것 — 복호화 없이 핸드셰이크만 본다"
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
-		sed -n '/관측 통신 엣지/,/posture 합계/p' | head -10
+		sed -n '/관측 통신 엣지/,/등급 합계/p' | head -10
 	note "   같은 게이트웨이인데 상대에 따라 갈린다 — 능력이 아니라 협상 결과다."
 }
 

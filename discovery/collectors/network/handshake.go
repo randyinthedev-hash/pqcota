@@ -1,7 +1,7 @@
 package network
 
 // Handshake — 하나의 핸드셰이크 관측 결과(파싱 산출). 복호화 없이 평문에서 뽑는 협상 정보만 담는다.
-// posture는 여기 없다 — 코어가 NegotiatedGroup에서 파생한다(§1.2).
+// 등급은 여기 없다 — 코어가 NegotiatedGroup에서 파생한다(§1.2).
 type Handshake struct {
 	Protocol        string   // "TLS" | "SSH"
 	Role            string   // "client"(ClientHello/클라이언트 KEXINIT) | "server"(ServerHello)

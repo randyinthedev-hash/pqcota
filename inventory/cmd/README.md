@@ -129,7 +129,7 @@ pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 |---|---|
 | `<results-dir>` | 회수된 `CollectionResult` JSON들을 그 자리에서 취합 |
 | `[nodes.json]` | 관측 IP를 노드명으로 해소(`10.0.0.9` → `node-c`) |
-| `[topology-out.dot]` | 통신 토폴로지를 DOT로 쓴다(색=posture) |
+| `[topology-out.dot]` | 통신 토폴로지를 DOT로 쓴다(색=등급) |
 
 발견 자산(OpenSSL·JCA)과 관측 통신 엣지 등급을 낸다. **저장소를 쓰지 않는다** — 휘발성 뷰다.
 

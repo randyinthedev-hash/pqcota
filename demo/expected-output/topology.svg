@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 143)">
 <title>crypto_observed</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-143 574.22,-143 574.22,4 -4,4"/>
-<text text-anchor="middle" x="285.11" y="-7.2" font-family="Times,serif" font-size="11.00">posture: &#160;🟢 PQC/하이브리드 &#160;&#160;🔴 고전=양자취약 &#160;&#160;⚪ 불명</text>
+<text text-anchor="middle" x="285.11" y="-7.2" font-family="Times,serif" font-size="11.00">등급: &#160;🟢 PQC/하이브리드 &#160;&#160;🔴 고전=양자취약 &#160;&#160;⚪ 불명</text>
 <!-- web&#45;gw -->
 <g id="node1" class="node">
 <title>web&#45;gw</title>

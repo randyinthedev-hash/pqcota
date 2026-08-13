@@ -65,10 +65,10 @@ echo "▶ 1/6 컨트롤러 → 타깃 SSH 연결 확인 (Ansible ping, pqcota-ho
 docker exec pqcota-ctl bash -lc "$ANS $INV -m ping targets"
 
 echo "▶ 2/6 디스커버리 실행 (OpenSSL /proc · JCA provider · 네트워크 핸드셰이크)…"
-# 목표 엣지 수에 못 미치면 재수집한다. 관측 창 안에 트래픽이 안 흐를 수 있는 것은 실환경에서도
+# 목표 엣지 수에 못 미치면 재수집한다. 관측 구간 안에 트래픽이 안 흐를 수 있는 것은 실환경에서도
 # 참이라(유휴 링크) 이 backstop은 남긴다. 다만 예전에 이 루프가 자주 돌던 진짜 이유는 타이밍이
-# 아니라 **collector 결함**이었다 — 원시 syscall의 EINTR을 치명적으로 다뤄 관측 창이 무작위로
-# 잘렸다(25초 창이 0·0·14·25초에 끝남). 고친 뒤로는 첫 시도에 다 잡힌다.
+# 아니라 **collector 결함**이었다 — 원시 syscall의 EINTR을 치명적으로 다뤄 관측 구간이 무작위로
+# 잘렸다(25초 구간이 0·0·14·25초에 끝남). 고친 뒤로는 첫 시도에 다 잡힌다.
 TARGET_EDGES="${DEMO_TARGET_EDGES:-${EDGE_COUNT:-3}}"
 MAX_ATTEMPTS="${DEMO_MAX_ATTEMPTS:-4}"
 edge_count() {
@@ -82,7 +82,7 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
   if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then echo "   엣지 부족 → 재수집(컨테이너 warm)…"; fi
 done
 
-echo "▶ 3/6 읽기전용 디스커버리 뷰 (자산 + posture)…"
+echo "▶ 3/6 읽기전용 디스커버리 뷰 (자산 + 등급)…"
 docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results /work/nodes.json /work/topology.dot'
 
 echo "▶ 4/6 관측 토폴로지 SVG 렌더 + 회수…"
@@ -114,7 +114,7 @@ echo "   ── 스냅샷 상세(-snapshot): 자산 + 그 스냅샷의 관측 �
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
 # 엣지의 앱 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
-# 그 창을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 그 자리를
+# 그 구간을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 그 자리를
 # 사람이 선언으로 메운다. 관측을 고치지 않고 자기 레인으로 들어가며, 메운 것은 (declared)로 표시된다.
 # dst는 **엣지에 찍힌 그대로** 적는다(이 데모에서는 "ip:port" 모양이다) — 화면에서 보이는 값을
 # 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
@@ -122,7 +122,7 @@ UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_
   where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
 if [ -n "$UNATTR_DST" ]; then
   echo "   ── 앱 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
-  echo "      대상 $UNATTR_DST — 짧은 연결이라 캡처 창에서 소켓이 이미 닫혀 있었다"
+  echo "      대상 $UNATTR_DST — 짧은 연결이라 수집 구간에서 소켓이 이미 닫혀 있었다"
   docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
 node_id,dst,app_key
 $HNODE,$UNATTR_DST,batch-runner.service
@@ -134,7 +134,7 @@ CSV
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" \
     | grep -E '관측 엣지|→|사람이 선언한 앱' | sed 's/^/   /'
 else
-  echo "   (이 창에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
+  echo "   (이번 구간에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
 fi
 
 # 자산 스코프 — 노드는 등재됐어도(§1.4) 그 안에서 계속 관리할 자산만 남긴다. 시스템 기본
@@ -349,7 +349,7 @@ fi  # DEMO_REAL_PROVIDER 끝
 
 echo
 echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱 표시·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
-echo "   산출물: demo/.generated/topology.svg (색=posture) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
+echo "   산출물: demo/.generated/topology.svg (색=등급) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
 echo "   ※ 생성물을 실제로 적용·활성화·되돌림까지 실행해 확인한 것 — 생성만 보면 깨끗한 노드에서 깨지는 플레이북도 통과한다."
 echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§1.5)."
 echo "   (선언 대비 3-상태 대조·거버넌스는 이 리포가 하지 않는다)"

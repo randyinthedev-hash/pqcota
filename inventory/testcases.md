@@ -30,7 +30,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-IMPORT-1](../pkg/inventory/declaration/import_test.go) | `TestImportCSV` — CMDB 선언 CSV 임포트 | **선언 레인** 라벨, detection_method=미지정(선언 ≠ 관측) | 선언을 관측과 섞지 않는다 — 강도가 unknown으로 남는 것이 정직하다 |
 | [TV-IMPORT-2](../pkg/inventory/hosts_test.go) | `TestParseHostsAndSecretBoundary` · `NoNodeID` — 접속 정보 CSV | 계정·키는 인벤토리에 **남기지 않는다**. `node_id` 없는 헤더는 오류 | 접근 비밀이 인벤토리에 영속되지 않게 한다 |
 | [TV-IMPORT-3](../pkg/inventory/profile_test.go) | `TestParseProfiles` — 머신 프로필 | 파싱된 속성이 머신 메타로 | 사용자가 적는 머신 정보의 형식을 고정한다 |
-| [TV-IMPORT-4](../pkg/inventory/store_test.go) | `TestRenderStore` — 적재된 저장소 전체 | 누적 인벤토리 뷰 + posture 집계 | 스냅샷 여러 개가 하나의 현재 뷰로 접히는지 |
+| [TV-IMPORT-4](../pkg/inventory/store_test.go) | `TestRenderStore` — 적재된 저장소 전체 | 누적 인벤토리 뷰 + 등급 집계 | 스냅샷 여러 개가 하나의 현재 뷰로 접히는지 |
 
 ### SV-2. CBOM 수신 — 위임 경계
 | 케이스 | Given → When | Then | 목적 |
@@ -48,7 +48,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-INGEST-1](../pkg/inventory/ingest/central_test.go) | `TestIngestResults` — 스코프 게이트 + Normalize + 히스토리 적재 + 엣지 부착 종단 | 통과분이 스냅샷으로, 엣지가 붙어서 | 관문 하나가 네 일을 순서대로 하는지 — 하나라도 빠지면 뒤가 조용히 빈다 |
 | [TV-INGEST-2](../pkg/inventory/ingest/central_test.go) | `TestIngestSignatureReject` — 서명 검증 실패 | **거부**(§2.6) | 손댄 결과가 인벤토리에 들어오지 않게 한다 |
 | [TV-INGEST-3](../pkg/inventory/ingest/central_test.go) | `TestIngestNoMaster` — 스코프 마스터가 없을 때(로컬·데모) | 게이트 생략, 전부 수용 | 스코프를 안 쓰는 사용자를 막지 않는다 |
-| [TV-INGEST-4](../pkg/inventory/render_test.go) | `TestRenderEndToEnd` — collector 산출물(CycloneDX) → Normalize → 읽기전용 뷰 | 관측이 자산 표와 posture 집계까지 이어진다 | 적재와 뷰가 따로는 되는데 이어지지 않으면 사용자에게는 아무것도 안 보인다 |
+| [TV-INGEST-4](../pkg/inventory/render_test.go) | `TestRenderEndToEnd` — collector 산출물(CycloneDX) → Normalize → 읽기전용 뷰 | 관측이 자산 표와 등급 집계까지 이어진다 | 적재와 뷰가 따로는 되는데 이어지지 않으면 사용자에게는 아무것도 안 보인다 |
 
 ---
 
