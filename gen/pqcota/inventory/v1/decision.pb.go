@@ -352,7 +352,7 @@ const file_pqcota_inventory_v1_decision_proto_rawDesc = "" +
 	"\x1aDECISION_CONCLUSION_EXISTS\x10\x01\x12\x1d\n" +
 	"\x19DECISION_CONCLUSION_STALE\x10\x02\x12 \n" +
 	"\x1cDECISION_CONCLUSION_EXCLUDED\x10\x03\x12 \n" +
-	"\x1cDECISION_CONCLUSION_APPROVED\x10\x04B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1;inventoryv1b\x06proto3"
+	"\x1cDECISION_CONCLUSION_APPROVED\x10\x04BJZHgithub.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1;inventoryv1b\x06proto3"
 
 var (
 	file_pqcota_inventory_v1_decision_proto_rawDescOnce sync.Once
