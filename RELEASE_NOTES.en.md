@@ -92,13 +92,11 @@ contract nobody could fetch came first.
 
 ### Learned
 
-- **Changing one word moves four places at once.** Vocabulary carried over from English was rewritten
-  in Korean, and fixing only the prose makes **the documents and the screen call the same thing
-  differently.** The strings printed on screen, the sample artifacts that contain them, and the
-  scripts and tests that `grep`/`sed` that output all have to move together to stay one set.
-- **Identifiers do not follow.** `procs.Attribution`, `pqcota-declare-attribution`,
-  `pqcota_edge_attribution`, and `pkg/kernel/posture` were left alone — renaming a released CLI,
-  table, or package as part of a wording cleanup is no longer a wording cleanup.
+- **The documents' vocabulary changed; the identifiers did not.** Words carried over from English were
+  rewritten in Korean and the on-screen strings moved with them, but `procs.Attribution`,
+  `pqcota-declare-attribution`, `pqcota_edge_attribution`, and `pkg/kernel/posture` were left alone.
+  **The only thing a consumer has to change is the module path** — CLI names, table names, and package
+  names are unchanged.
 
 
 ## v0.4.0 — a person fills what observation could not attribute (2026-08-12)
