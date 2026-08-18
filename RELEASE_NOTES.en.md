@@ -74,6 +74,10 @@ contract nobody could fetch came first.
   says `gen/` is committed. The ten already tracked stay, but **adding a new proto would silently drop
   its generated code** — a consumer would meet a type that isn't there. The rule was removed.
 
+- **A build binary was committed to the repository**(v0.4.0). `checkdocs` (3.3 MB, a macOS
+  executable) sat tracked at the root. `make check-docs` builds into `build/`; one made by hand at the
+  root had slipped in. Removed, and blocked in `.gitignore`.
+
 - **A sample artifact had gone stale against the code**(v0.3.0–v0.4.0). The last line of the discovery
   view had changed, but `demo/expected-output/discover-view.txt` still carried the old sentence. The
   demo was re-run and the artifact recaptured.

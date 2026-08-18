@@ -354,7 +354,7 @@ const file_pqcota_inventory_v1_machine_proto_rawDesc = "" +
 	"\x1aPROFILE_SOURCE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PROFILE_SOURCE_CMDB\x10\x01\x12\x1b\n" +
 	"\x17PROFILE_SOURCE_REVIEWER\x10\x02\x12\x1b\n" +
-	"\x17PROFILE_SOURCE_OBSERVED\x10\x03B>Z<github.com/pqcota/pqcota/gen/pqcota/inventory/v1;inventoryv1b\x06proto3"
+	"\x17PROFILE_SOURCE_OBSERVED\x10\x03B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1;inventoryv1b\x06proto3"
 
 var (
 	file_pqcota_inventory_v1_machine_proto_rawDescOnce sync.Once

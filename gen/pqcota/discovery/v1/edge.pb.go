@@ -17,7 +17,7 @@
 package discoveryv1
 
 import (
-	v1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	v1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -381,7 +381,7 @@ const file_pqcota_discovery_v1_edge_proto_rawDesc = "" +
 	"\x0eQuantumPosture\x12\x1f\n" +
 	"\x1bQUANTUM_POSTURE_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aQUANTUM_POSTURE_PQC_HYBRID\x10\x01\x12\x1d\n" +
-	"\x19QUANTUM_POSTURE_CLASSICAL\x10\x02B>Z<github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\x19QUANTUM_POSTURE_CLASSICAL\x10\x02B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_edge_proto_rawDescOnce sync.Once

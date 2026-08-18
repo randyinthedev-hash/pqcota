@@ -384,7 +384,7 @@ const file_pqcota_discovery_v1_asset_proto_rawDesc = "" +
 	"\x1cAPPLICATION_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dAPPLICATION_KIND_SYSTEMD_UNIT\x10\x01\x12\x1d\n" +
 	"\x19APPLICATION_KIND_EXE_PATH\x10\x02\x12\x1d\n" +
-	"\x19APPLICATION_KIND_DECLARED\x10\x03B>Z<github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\x19APPLICATION_KIND_DECLARED\x10\x03B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_asset_proto_rawDescOnce sync.Once

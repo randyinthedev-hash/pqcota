@@ -17,7 +17,7 @@
 package discoveryv1
 
 import (
-	v1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	v1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -360,7 +360,7 @@ const file_pqcota_discovery_v1_collector_proto_rawDesc = "" +
 	"\x0eobserved_edges\x18\a \x03(\v2!.pqcota.discovery.v1.ObservedEdgeR\robservedEdges2\xc2\x01\n" +
 	"\tCollector\x12\\\n" +
 	"\bDescribe\x12$.pqcota.discovery.v1.DescribeRequest\x1a*.pqcota.discovery.v1.CollectorCapabilities\x12W\n" +
-	"\aCollect\x12#.pqcota.discovery.v1.CollectRequest\x1a%.pqcota.discovery.v1.CollectionResult0\x01B>Z<github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\aCollect\x12#.pqcota.discovery.v1.CollectRequest\x1a%.pqcota.discovery.v1.CollectionResult0\x01B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_collector_proto_rawDescOnce sync.Once
