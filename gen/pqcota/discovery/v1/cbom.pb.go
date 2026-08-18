@@ -240,9 +240,9 @@ type Finding struct {
 	// ─ 파생 뷰 재현성 (§1.2) ─
 	DerivedFromSnapshotId string `protobuf:"bytes,12,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"` // 어떤 원시 스냅샷에서 파생됐나
 	RulesetVersion        string `protobuf:"bytes,13,opt,name=ruleset_version,json=rulesetVersion,proto3" json:"ruleset_version,omitempty"`                          // 어떤 강화 규칙 버전으로 파생됐나 (재계산 재현)
-	// ─ 자산 귀속 (asset.proto) ─
+	// ─ 자산이 어느 앱 것인지 (asset.proto) ─
 	// 이 finding(라이브러리)을 로드한 애플리케이션(들). 보통 1개지만, host-wide 스캔에서 하나의 공유
-	// 라이브러리(예: libcrypto.so.3)를 여러 앱이 로드하면 **다중 귀속**된다 — 그 .so 교체는 모든
+	// 라이브러리(예: libcrypto.so.3)를 여러 앱이 로드하면 **여러 앱에 걸린다** — 그 .so 교체는 모든
 	// 로더 앱에 영향. 각 원소가 머신 스코프 키라 (node_id[스냅샷]+app_key)=전역 유일.
 	AppKeys       []string `protobuf:"bytes,14,rep,name=app_keys,json=appKeys,proto3" json:"app_keys,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -457,7 +457,7 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\x18derived_from_snapshot_id\x18\f \x01(\tR\x15derivedFromSnapshotId\x12'\n" +
 	"\x0fruleset_version\x18\r \x01(\tR\x0erulesetVersion\x12\x19\n" +
 	"\bapp_keys\x18\x0e \x03(\tR\aappKeysB\x0e\n" +
-	"\fruntime_axesB>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\fruntime_axesBJZHgithub.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_cbom_proto_rawDescOnce sync.Once

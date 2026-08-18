@@ -242,7 +242,7 @@ type CollectionResult struct {
 	CyclonedxSpecVersion string           `protobuf:"bytes,5,opt,name=cyclonedx_spec_version,json=cyclonedxSpecVersion,proto3" json:"cyclonedx_spec_version,omitempty"` // "1.6" | "1.7" — 코어가 내부 정규 버전으로 수렴(§3.2)
 	Completeness         *v1.Completeness `protobuf:"bytes,6,opt,name=completeness,proto3" json:"completeness,omitempty"`                                               // 이 결과가 커버/미커버한 계층 (§2.6)
 	// 관측된 통신 엣지 (인벤토리 설계 §6, network-collector). 노드 내부 자산(cbom_cyclonedx)과 달리
-	// 노드 간 관계라 CycloneDX 본문이 아닌 별도 목록으로 운반한다. posture는 코어가 파생(§1.2).
+	// 노드 간 관계라 CycloneDX 본문이 아닌 별도 목록으로 운반한다. 등급은 코어가 파생(§1.2).
 	ObservedEdges []*ObservedEdge `protobuf:"bytes,7,rep,name=observed_edges,json=observedEdges,proto3" json:"observed_edges,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -360,7 +360,7 @@ const file_pqcota_discovery_v1_collector_proto_rawDesc = "" +
 	"\x0eobserved_edges\x18\a \x03(\v2!.pqcota.discovery.v1.ObservedEdgeR\robservedEdges2\xc2\x01\n" +
 	"\tCollector\x12\\\n" +
 	"\bDescribe\x12$.pqcota.discovery.v1.DescribeRequest\x1a*.pqcota.discovery.v1.CollectorCapabilities\x12W\n" +
-	"\aCollect\x12#.pqcota.discovery.v1.CollectRequest\x1a%.pqcota.discovery.v1.CollectionResult0\x01B>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\aCollect\x12#.pqcota.discovery.v1.CollectRequest\x1a%.pqcota.discovery.v1.CollectionResult0\x01BJZHgithub.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_collector_proto_rawDescOnce sync.Once

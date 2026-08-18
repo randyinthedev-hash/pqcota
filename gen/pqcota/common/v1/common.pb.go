@@ -41,7 +41,7 @@ const (
 	// 단계적 도입: 이 값은 v0.1.0에서 **스키마로만 예약**한다(디스커버리·프로비저닝 미구현).
 	// 디스커버리(콜렉터)는 다음 릴리스, 프로비저닝은 그 다음(substrate 일반화 선행).
 	// 상세: docs/런타임_확장_계약.md
-	CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG CryptoRuntime = 3 // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG로 귀속(peer 아님) — 위 문서 참조.
+	CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG CryptoRuntime = 3 // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG 쪽으로 묶인다(peer 아님) — 위 문서 참조.
 )
 
 // Enum value maps for CryptoRuntime.
@@ -764,7 +764,7 @@ const file_pqcota_common_v1_common_proto_rawDesc = "" +
 	"!JCA_REGISTRATION_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cJCA_REGISTRATION_MODE_STATIC\x10\x01\x12!\n" +
 	"\x1dJCA_REGISTRATION_MODE_DYNAMIC\x10\x02\x12\"\n" +
-	"\x1eJCA_REGISTRATION_MODE_EXPLICIT\x10\x03B8Z6github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1;commonv1b\x06proto3"
+	"\x1eJCA_REGISTRATION_MODE_EXPLICIT\x10\x03BDZBgithub.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1;commonv1b\x06proto3"
 
 var (
 	file_pqcota_common_v1_common_proto_rawDescOnce sync.Once
