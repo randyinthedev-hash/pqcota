@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/openssl"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/openssl"
 )
 
 // TD-OPENSSL-1 (testcases.md §2). /proc/<pid>/maps 파싱.

@@ -11,7 +11,7 @@ package pqcota.provisioning.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1;provisioningv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1;provisioningv1";
 
 // CryptoState — 특정 시점 애플리케이션의 암호 상태 스냅샷(롤백 기준). before/after 모두 이 형태.
 message CryptoState {

@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory/declaration"
-	"github.com/pqcota/pqcota/pkg/kernel/posture"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
 )
 
 // Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 관측하지 못함"으로 명시(§2.6).

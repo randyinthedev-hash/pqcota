@@ -3,9 +3,9 @@ package posture_test
 import (
 	"testing"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/posture"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // Grade — PQC 그룹의 표준화 성숙도 축 (PQC vs 고전 위에 표준 vs 실험).

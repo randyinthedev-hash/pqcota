@@ -3,8 +3,8 @@ package provisioning_test
 import (
 	"testing"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 // RecordStore — append-only. 노드별 조회로 롤백 근거를 되찾는다.

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/discovery/procs"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/procs"
 )
 
 // fakeProc — /proc 흉내. 실제 장비에서 잰 모양을 그대로 옮긴다.

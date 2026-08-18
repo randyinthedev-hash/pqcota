@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // Match — 한 프로세스(exe·cmdline·cgroup)가 ProcessMatch 규칙에 맞는지. 순수(TDD).

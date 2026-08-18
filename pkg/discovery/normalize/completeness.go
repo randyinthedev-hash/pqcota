@@ -1,6 +1,6 @@
 package normalize
 
-import commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+import commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 
 // MissingLayers — Collector가 커버 가능하다고 선언한(declared) 계층 대비
 // 실제 커버한(covered) 계층의 차집합 = 갭 (규정서 §2.6).

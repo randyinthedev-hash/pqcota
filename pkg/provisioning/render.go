@@ -1,9 +1,9 @@
 package provisioning
 
 import (
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // Render — 확정 계획의 조치 한 건에 대한 배포 아티팩트(config 조각)를 결정론적으로 생성한다(§1.2 파생).

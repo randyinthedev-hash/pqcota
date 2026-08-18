@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/openssl"
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/openssl"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 )
 
 func det(lib, path, fork, ver string, apps ...string) openssl.Detection {

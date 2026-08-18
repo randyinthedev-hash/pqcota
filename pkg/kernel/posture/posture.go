@@ -6,8 +6,8 @@ package posture
 import (
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // pqcTokens — 협상 그룹 이름에 이 토큰이 들어가면 PQC(하이브리드 포함)로 본다(🟢).

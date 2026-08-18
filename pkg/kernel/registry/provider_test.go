@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // TD-JVM-1 (testcases.md §2). provider 레지스트리 매핑.

@@ -37,18 +37,14 @@
 
 ```go
 import (
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 ```
 
-> **모듈 경로 주의** — `go.mod`가 선언한 경로(`github.com/pqcota/pqcota`)와 현재 리포 주소
-> (`github.com/randyinthedev-hash/pqcota`)가 다르다. 정리 전까지 소비자는 `replace`로 우회한다:
->
-> ```
-> require github.com/pqcota/pqcota v0.1.1
-> replace github.com/pqcota/pqcota => github.com/randyinthedev-hash/pqcota v0.1.1
-> ```
+> **v0.5.0에서 모듈 경로가 바뀌었다** — `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
+> 선언한 경로가 리포 주소와 달라 `go get`이 해소하지 못했고, 소비자는 `replace`로 우회해야 했다.
+> v0.4.0 이하를 쓰던 쪽은 그 줄을 지우고 import를 새 경로로 옮긴다.
 
 생성 코드는 손으로 고치지 않는다. proto를 고치고 `make generate`를 돌린다 — CI가 둘이
 어긋나는지 매 변경 검사한다.

@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	inventoryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 )
 
 // RenderStore — 적재된 히스토리 저장소 전체를 읽어 누적 인벤토리 뷰 + 등급 집계.

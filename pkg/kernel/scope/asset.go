@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // 자산 스코프 (인벤토리 설계 §14) — 노드 게이트(§0.4)를 **자산 단위로** 넓힌 것.

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
+	inventoryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1"
 )
 
 // Host — 사용자 관리 hosts 파일의 한 행. **연결 비밀**(SSHUser/SSHKey/SSHPass)은 **런타임 전용**이며

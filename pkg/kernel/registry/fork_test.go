@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // TD-FORK-1 (testcases.md §2). fork 시그니처 매처.

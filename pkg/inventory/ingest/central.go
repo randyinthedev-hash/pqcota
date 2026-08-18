@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/discovery/normalize"
-	"github.com/pqcota/pqcota/pkg/kernel/scope"
-	"github.com/pqcota/pqcota/pkg/kernel/sign"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 )
 
 // IngestReport — 중앙 적재 결과 요약.

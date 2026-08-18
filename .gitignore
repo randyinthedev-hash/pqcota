@@ -1,11 +1,11 @@
 # macOS
 .DS_Store
 
-# 빌드 산출물 (빌드는 ubuntu-dev)
-# gen/ 은 커밋한다 — 소비자가 `go get`만으로 계약 타입을 쓸 수 있어야 한다.
+# 빌드 산출물
+# gen/ 의 .pb.go는 **커밋한다** — 소비자가 `go get`만으로 계약 타입을 쓸 수 있어야 한다.
 # 계약이 SSOT라는 말이 성립하려면 그 코드가 받아지는 자리에 있어야 한다.
 # proto와 어긋나면 CI의 generate 드리프트 검사가 끊는다.
-*.pb.go
+# (그래서 `*.pb.go`를 여기 두지 않는다 — 두면 새 proto의 생성 코드가 조용히 빠진다.)
 node_modules/
 dist/
 build/

@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 func TestRemediate(t *testing.T) {

@@ -45,7 +45,7 @@ go test ./...   # 단위
 테스트는 실 JVM 없이 돈다.
 
 > **`no required module provides package .../gen/pqcota/...`가 뜨면** 생성을 건너뛴 것이다.
-> Go가 함께 제안하는 `go get github.com/pqcota/pqcota/gen/...`는 **답이 아니다** — 받을 수 있는
+> Go가 함께 제안하는 `go get github.com/randyinthedev-hash/pqcota/gen/...`는 **답이 아니다** — 받을 수 있는
 > 모듈이 아니라 이 리포에서 만들어내는 코드다. `make generate`를 먼저 돌린다.
 
 계약을 바꿨으면 `make lint`(buf lint) + 하위호환 확인:
@@ -64,7 +64,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 | 최상위 | 무엇 |
 |---|---|
 | `contracts/` | 계약 SSOT (protobuf). 네임스페이스가 곧 단계: `pqcota.{common,discovery,inventory,provisioning}.v1` |
-| `gen/` | proto 생성 코드 (gitignore) |
+| `gen/` | proto 생성 코드 — **커밋한다**(소비자가 `go get`만으로 쓰도록) |
 | `pkg/` | 라이브러리 로직 — 단계 그룹 `discovery`·`inventory`·`provisioning` + 공유 `kernel`(registry·posture·scope·machineid·sign)·`cbom` |
 | `discovery/` · `inventory/` · `provisioning/` | **실행 진입점**(단계별) — 각 `cmd/`(스캐너·드라이버·조회·생성), `discovery/`엔 `collectors/`(레퍼런스 collector)도 |
 | `examples/` | **단계별 실행 예제** — 샘플 입력 + `run.sh`로 각 cmd를 최소 설정으로 돌려본다 |

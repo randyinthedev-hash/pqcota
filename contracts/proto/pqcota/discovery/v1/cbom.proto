@@ -11,7 +11,7 @@ package pqcota.discovery.v1;
 
 import "pqcota/common/v1/common.proto";
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1";
 
 // ─────────────────────────────────────────────────────────────────────────
 // 런타임별 분기 축 (수용 원칙 §2.4)

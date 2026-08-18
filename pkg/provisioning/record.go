@@ -3,7 +3,7 @@ package provisioning
 import (
 	"sync"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // RecordStore — 프로비저닝 레코드(before 상태·롤백 근거) 저장소. **append-only**다(§1.3 원본 불변):

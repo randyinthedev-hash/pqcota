@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 // L2 롤백: forward가 배치한 config 조각 + 스테이지한 모듈을 제거(state: absent). 재시작은 하지 않는다 — 그건 L3.

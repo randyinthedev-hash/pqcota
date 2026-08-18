@@ -3,8 +3,8 @@ package inventory
 import (
 	"sync"
 
-	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
-	"github.com/pqcota/pqcota/pkg/org"
+	inventoryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 
 // MetaStore — 머신 메타데이터(엔드포인트·프로필) 저장소. 히스토리(append-only)와 달리 **upsert**한다

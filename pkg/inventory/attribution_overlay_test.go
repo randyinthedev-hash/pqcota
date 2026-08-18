@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory"
-	"github.com/pqcota/pqcota/pkg/inventory/declaration"
-	"github.com/pqcota/pqcota/pkg/inventory/ingest"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 )
 
 // declaredInto — CSV를 적재 경로로 넣는다. 선언은 스냅샷이 아니라 선언 저장소로 간다.

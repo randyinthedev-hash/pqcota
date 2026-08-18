@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/openssl"
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/openssl"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 	"google.golang.org/grpc"
 )
 

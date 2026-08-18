@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	"github.com/pqcota/pqcota/pkg/inventory/declaration"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
 )
 
 // TC-S8 (testcases.md). 선언 임포트 → 선언 레인.

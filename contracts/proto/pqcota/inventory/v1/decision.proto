@@ -13,7 +13,7 @@ package pqcota.inventory.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/inventory/v1;inventoryv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1;inventoryv1";
 
 // 판정 lifecycle (§3.3③). finalize 전에는 프로비저닝 실행 불가(§3.7). PlanStatus(provisioning)와 평행.
 enum DecisionStatus {

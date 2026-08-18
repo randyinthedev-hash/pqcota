@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pqcota/pqcota/pkg/kernel/sign"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 )
 
 func main() {

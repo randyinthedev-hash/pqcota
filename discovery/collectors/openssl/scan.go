@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // sortedKeys — 집합을 결정적(정렬) 슬라이스로. 빈 집합이면 nil(속성 미emit).

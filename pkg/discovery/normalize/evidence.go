@@ -2,7 +2,7 @@
 // 강화·검증·동일성해소가 코어 단독 책임 — Collector는 강화하지 않는다(설계 문서 §3, contracts/README §1).
 package normalize
 
-import commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+import commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 
 // EvidenceStrength derives the evidence strength from a detection method.
 //

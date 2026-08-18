@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/org"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 
 // TestStoreIsBoundToAnOrg — 저장소를 열면 반드시 어떤 조직에 묶인다. 안 묶인 저장소는 만들 수 없다.

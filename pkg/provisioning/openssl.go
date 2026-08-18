@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // renderOpenSSL — OpenSSL remediation taxonomy(프로비저닝 설계 §4.1) → openssl.cnf 조각.

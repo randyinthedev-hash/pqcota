@@ -3,8 +3,8 @@ package normalize_test
 import (
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/normalize"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 )
 
 // TD-GAP-1 (testcases.md §2). 완전성 맵 — 갭 ≠ 부재.

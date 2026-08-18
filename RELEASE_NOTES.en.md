@@ -26,8 +26,8 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.5.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.en.md).
-- **v0.6.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
+- **v0.6.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.en.md).
+- **v0.7.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
 
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/under-review.en.md).
 
@@ -47,6 +47,55 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.5.0 — Aligning the module path with the repository address (2026-08-18)
+**Goal** — let anyone consuming the contract start with a single `go get`, and make the documents and
+the screen call the same thing by the same name. **CNG discovery moved back one slot** — unblocking a
+contract nobody could fetch came first.
+
+### Fixed
+
+- **`go get` could not resolve the module, because its path did not match the repository**(v0.1.0–v0.4.0).
+
+  **What was wrong** — `go.mod` declared `github.com/pqcota/pqcota`, and no repository lives at that
+  address. `gen/` is committed precisely so that *"a consumer can use the contract types with `go get`
+  alone"*, and the path was cancelling that.
+
+  **What came out wrong** — consumers had to carry a `replace` line in their own `go.mod`
+  **permanently**. The documentation described that workaround, so it was a known flaw — and settling
+  for documenting it was the mistake. A newcomer only sees "module declares its path as …" and has no
+  way to trace the cause.
+
+  **What changes** — the path becomes `github.com/randyinthedev-hash/pqcota`. In Go a path change makes
+  it a **new module**, so every import must move. Anyone on v0.4.0 or below drops the `replace` and
+  fetches the new path. No signature or type changed ([compatibility policy §3④](docs/compatibility.md) (Korean)).
+
+- **`.gitignore` swallowed new `*.pb.go` files**(v0.1.0–v0.4.0). `*.pb.go` sat in the very block that
+  says `gen/` is committed. The ten already tracked stay, but **adding a new proto would silently drop
+  its generated code** — a consumer would meet a type that isn't there. The rule was removed.
+
+- **A sample artifact had gone stale against the code**(v0.3.0–v0.4.0). The last line of the discovery
+  view had changed, but `demo/expected-output/discover-view.txt` still carried the old sentence. The
+  demo was re-run and the artifact recaptured.
+
+### Built
+
+- **[The journey](docs/journey.md) (Korean)** — one document that walks the whole way: preparation,
+  observation, ingestion, querying, generation, application, rollback. The regulation fixes the rules
+  and each stage design covers its own inside, but nothing answered "in what order does what come out,
+  from start to finish". It puts the three entrances (one node in place · many nodes over Ansible ·
+  delegated CBOM intake from CI) and the single exit (a playbook) in one picture.
+
+### Learned
+
+- **Changing one word moves four places at once.** Vocabulary carried over from English was rewritten
+  in Korean, and fixing only the prose makes **the documents and the screen call the same thing
+  differently.** The strings printed on screen, the sample artifacts that contain them, and the
+  scripts and tests that `grep`/`sed` that output all have to move together to stay one set.
+- **Identifiers do not follow.** `procs.Attribution`, `pqcota-declare-attribution`,
+  `pqcota_edge_attribution`, and `pkg/kernel/posture` were left alone — renaming a released CLI,
+  table, or package as part of a wording cleanup is no longer a wording cleanup.
+
 
 ## v0.4.0 — a person fills what observation could not attribute (2026-08-12)
 **Goal** — fill the place v0.3.0's automatic path cannot see by construction. The demo **missed 3 of 4

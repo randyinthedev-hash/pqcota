@@ -3,8 +3,8 @@ package ingest
 import (
 	"sort"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // IdentityConflict — 사용자 제공 node_id와 물리 머신 지문이 어긋나는 경우(§1.4 혼선·중복).

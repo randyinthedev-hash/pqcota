@@ -3,8 +3,8 @@ package provisioning
 import (
 	"sort"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // CaptureState — 앱의 현재 크립토 상태(롤백 before 기준)를 findings에서 요약한다(§6A).

@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/org"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 
 func main() {

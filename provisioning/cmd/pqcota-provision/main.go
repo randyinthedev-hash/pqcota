@@ -19,13 +19,13 @@ import (
 	"fmt"
 	"os"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/org"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 func main() {

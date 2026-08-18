@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory"
-	"github.com/pqcota/pqcota/pkg/inventory/ingest"
-	"github.com/pqcota/pqcota/pkg/kernel/scope"
-	"github.com/pqcota/pqcota/pkg/kernel/sign"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 )
 
 func edgeResult(node string) *discoveryv1.CollectionResult {
