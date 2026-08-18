@@ -22,6 +22,7 @@ flowchart TB
       B["1 · 준비"] --> C["2 · 접근 준비<br/>(여러 노드일 때만)"]
       C --> D["3 · 관측"]
       D --> E["4 · 적재"]
+      W["3′ · 위임 수신<br/>CI가 낸 CycloneDX"] --> E
       E --> F["5 · 조회"]
       F --> G["6 · 확정 계획"]
       G --> H["7 · 생성"]
@@ -123,6 +124,28 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml  # 여러 노드
 엣지에는 그 통신을 연 앱이 붙는다. 짧게 붙었다 끊긴 연결은 조회 시점에 소켓이 이미 없어 `@?`로
 남고, 그 자리는 [`pqcota-declare-attribution`](../inventory/cmd/README.md)으로 메운다 — 선언은
 관측을 고치지 않고 자기 레인에 쌓인다.
+
+---
+
+## 3′. 위임 수신 — 직접 관측하지 않는 것은 받는다
+
+**소스와 빌드 아티팩트는 스캔하지 않는다.** 소스가 있으면 CI가 이미 보고 있거나 봐야 할 일이라,
+그 자리를 겹쳐 만들 이유가 없다. 대신 CI가 낸 **표준 CycloneDX를 받아** 검증·정규화해서
+collector가 낸 것과 **같은 히스토리로 수렴**시킨다.
+
+```bash
+pqcota-cbom-ingest cbom.json cmdb://payment-gw     # 파일로
+cbomkit scan ./repo | pqcota-cbom-ingest - cmdb://payment-gw   # CI에서 바로
+```
+
+| | |
+|---|---|
+| 거부하는 것 | **둘뿐이다** — 구조 부적합(CycloneDX가 아니거나 미지원 `specVersion`) · 서명 검증 실패. 기계적으로 판정되는 것만 막는다 |
+| 거부가 아닌 것 | 앵커(`target_node_id`)가 없으면 **스코프 판정으로 라우팅**하고, `pqcota:` 프로퍼티가 없는 자산은 강도 미상으로 남긴다 — 못 믿을 것은 버리되 안 본 것을 없다고 하지 않는다 |
+| 어느 레인인가 | **관측 레인**이다. `detection_method=source/artifact`가 붙어 런타임 관측과 구별되고, 증거 강도도 거기서 갈린다 |
+
+**파일만 오간다.** 스캐너를 부르거나 링크하지 않으므로 그쪽 라이선스가 전염되지 않는다 →
+[위임 수신 설계](../inventory/cbom-intake.md).
 
 ---
 
@@ -240,6 +263,7 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 | 여정 | 어디에 | 상태 |
 |---|---|---|
 | 3 · 관측 — openssl · jvm · network | [`discovery/`](../discovery/README.md) | **끝** — 리눅스 · 커널 3.2+ |
+| 3′ · 위임 수신 — CI가 낸 CycloneDX | [위임 수신 설계](../inventory/cbom-intake.md) | **끝** — 스캐너는 돌리지 않는다 |
 | 4 · 적재 — 관문 다섯 · 거절 이력 · 조직 | [`inventory/cmd`](../inventory/cmd/README.md) | **끝** |
 | 5 · 조회 — 이력 · 스냅샷 · 변화 diff | [`inventory/`](../inventory/README.md) | **끝** |
 | 7 · 생성 — L1/L2/L3 · 롤백 · before 레코드 | [`provisioning/`](../provisioning/README.md) | **끝** |
