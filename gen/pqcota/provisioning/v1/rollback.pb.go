@@ -306,7 +306,7 @@ const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
 	"\x1dPROVISIONING_STATUS_INSTALLED\x10\x02\x12!\n" +
 	"\x1dPROVISIONING_STATUS_ACTIVATED\x10\x03\x12#\n" +
 	"\x1fPROVISIONING_STATUS_ROLLED_BACK\x10\x04\x12\x1e\n" +
-	"\x1aPROVISIONING_STATUS_FAILED\x10\x05BDZBgithub.com/pqcota/pqcota/gen/pqcota/provisioning/v1;provisioningv1b\x06proto3"
+	"\x1aPROVISIONING_STATUS_FAILED\x10\x05BDZBgithub.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1;provisioningv1b\x06proto3"
 
 var (
 	file_pqcota_provisioning_v1_rollback_proto_rawDescOnce sync.Once

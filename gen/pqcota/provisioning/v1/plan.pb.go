@@ -19,7 +19,7 @@
 package provisioningv1
 
 import (
-	v1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	v1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -607,7 +607,7 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\x18REMEDIATION_KIND_REBUILD\x10\x05\x12 \n" +
 	"\x1cREMEDIATION_KIND_JDK_UPGRADE\x10\x06\x12!\n" +
 	"\x1dREMEDIATION_KIND_APP_RECONFIG\x10\a\x12!\n" +
-	"\x1dREMEDIATION_KIND_DECOMMISSION\x10\bBDZBgithub.com/pqcota/pqcota/gen/pqcota/provisioning/v1;provisioningv1b\x06proto3"
+	"\x1dREMEDIATION_KIND_DECOMMISSION\x10\bBDZBgithub.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1;provisioningv1b\x06proto3"
 
 var (
 	file_pqcota_provisioning_v1_plan_proto_rawDescOnce sync.Once

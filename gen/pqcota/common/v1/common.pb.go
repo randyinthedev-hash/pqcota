@@ -764,7 +764,7 @@ const file_pqcota_common_v1_common_proto_rawDesc = "" +
 	"!JCA_REGISTRATION_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cJCA_REGISTRATION_MODE_STATIC\x10\x01\x12!\n" +
 	"\x1dJCA_REGISTRATION_MODE_DYNAMIC\x10\x02\x12\"\n" +
-	"\x1eJCA_REGISTRATION_MODE_EXPLICIT\x10\x03B8Z6github.com/pqcota/pqcota/gen/pqcota/common/v1;commonv1b\x06proto3"
+	"\x1eJCA_REGISTRATION_MODE_EXPLICIT\x10\x03B8Z6github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1;commonv1b\x06proto3"
 
 var (
 	file_pqcota_common_v1_common_proto_rawDescOnce sync.Once

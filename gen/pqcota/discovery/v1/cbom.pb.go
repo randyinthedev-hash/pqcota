@@ -14,7 +14,7 @@
 package discoveryv1
 
 import (
-	v1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	v1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -457,7 +457,7 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\x18derived_from_snapshot_id\x18\f \x01(\tR\x15derivedFromSnapshotId\x12'\n" +
 	"\x0fruleset_version\x18\r \x01(\tR\x0erulesetVersion\x12\x19\n" +
 	"\bapp_keys\x18\x0e \x03(\tR\aappKeysB\x0e\n" +
-	"\fruntime_axesB>Z<github.com/pqcota/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
+	"\fruntime_axesB>Z<github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1;discoveryv1b\x06proto3"
 
 var (
 	file_pqcota_discovery_v1_cbom_proto_rawDescOnce sync.Once

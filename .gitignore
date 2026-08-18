@@ -33,6 +33,7 @@ collectors/**/*.jar
 
 # 로컬 빌드 바이너리
 /bin/
+/checkdocs
 
 # 데모 산출물 (위 /demo/.generated/ 로 통합 — 옛 경로는 잔재 정리용으로만 남긴다)
 demo/results/
