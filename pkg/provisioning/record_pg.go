@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/org"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/encoding/protojson"

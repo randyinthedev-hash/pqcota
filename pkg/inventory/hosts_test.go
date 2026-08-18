@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

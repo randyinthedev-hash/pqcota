@@ -5,7 +5,7 @@ package ingest
 import (
 	"encoding/json"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 )
 
 // ValidateResult — `ValidateCBOM`의 구조 검증 결과. `ImportCBOM`이 적재 전 내부에서 사용한다.

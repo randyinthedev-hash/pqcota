@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 func action(rt commonv1.CryptoRuntime, kind provisioningv1.RemediationKind, target, provider string) *provisioningv1.RemediationAction {

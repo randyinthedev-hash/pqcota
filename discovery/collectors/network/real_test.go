@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pqcota/pqcota/discovery/collectors/network"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/posture"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/network"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
 )
 
 // capRecorder — net.Conn을 감싸 읽은 바이트(상대→이쪽 방향)를 누적한다. 실 핸드셰이크 관측 모사.

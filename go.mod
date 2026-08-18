@@ -1,4 +1,4 @@
-module github.com/pqcota/pqcota
+module github.com/randyinthedev-hash/pqcota
 
 go 1.26.4
 

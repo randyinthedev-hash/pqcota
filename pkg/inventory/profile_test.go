@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
-	"github.com/pqcota/pqcota/pkg/inventory"
+	inventoryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 )
 
 func TestParseProfiles(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/org"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

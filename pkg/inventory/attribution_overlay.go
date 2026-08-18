@@ -1,9 +1,9 @@
 package inventory
 
 import (
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory/declaration"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
 )
 
 // AttributionOverlay — 선언된 엣지의 앱을 조회 시점에 얹기 위한 색인.

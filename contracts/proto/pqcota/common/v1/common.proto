@@ -11,7 +11,7 @@ package pqcota.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/common/v1;commonv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1;commonv1";
 
 // ─────────────────────────────────────────────────────────────────────────
 // 통제 어휘 (수용 원칙 §2.4 · 규정서 §2.4) — 전 단계 공유

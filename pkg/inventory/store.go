@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/kernel/posture"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
 )
 
 // RenderStore — 히스토리 저장소에 누적된 전 노드의 최신 스냅샷을 읽어 중앙 인벤토리 뷰를 낸다.

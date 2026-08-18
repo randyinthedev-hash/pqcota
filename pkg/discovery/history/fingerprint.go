@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // ContentHash — 스냅샷의 **실질 내용** 지문. "같은 상태를 다시 관측한 것인가"를 판정하는 근거다.

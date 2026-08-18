@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/kernel/scope"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
 )
 
 // TD-SCOPE-1 (testcases.md §2). 스코프 게이트·라우팅.

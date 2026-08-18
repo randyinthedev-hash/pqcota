@@ -8,7 +8,7 @@ syntax = "proto3";
 
 package pqcota.inventory.v1;
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/inventory/v1;inventoryv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1;inventoryv1";
 
 // 배포 환경(시각 구분·정책의 1급 축). 자유 태그로도 표현 가능하나 흔한 축이라 enum으로 고정.
 enum Environment {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // TestEveryResultCarriesCollectedAt — JVM 결과가 수집 시각을 싣는다.

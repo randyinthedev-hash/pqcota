@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pqcota/pqcota/discovery/collectors/jvm"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/jvm"
 )
 
 // javaBin — 샌드박스/시스템 JDK. 없으면 이 파일의 테스트는 스킵한다.

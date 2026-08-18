@@ -11,9 +11,9 @@ import (
 	"os"
 	"strings"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/org"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 func main() {

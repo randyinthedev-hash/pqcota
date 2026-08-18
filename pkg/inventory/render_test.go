@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/discovery/normalize"
-	"github.com/pqcota/pqcota/pkg/inventory"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 )
 
 // -diff 방향 규약: 첫 인자=과거, 둘째=최신. 추가=둘째에만, 사라짐=첫째에만. 인자를 시간 역순으로

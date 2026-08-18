@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // GenerateRollbackPlaybook — GenerateProvisioningPlaybook의 역방향(§6A). forward가 스테이지한

@@ -11,10 +11,10 @@ package localview
 import (
 	"fmt"
 
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/discovery/normalize"
-	"github.com/pqcota/pqcota/pkg/inventory"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 )
 
 // Render — 수집 결과들을 정규화해 인벤토리 뷰 문자열로 만든다.

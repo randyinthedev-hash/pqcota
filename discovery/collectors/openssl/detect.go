@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pqcota/pqcota/pkg/discovery/procs"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/procs"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // Detection — 한 로드된 OpenSSL 라이브러리의 탐지 결과(설계 §2.1).

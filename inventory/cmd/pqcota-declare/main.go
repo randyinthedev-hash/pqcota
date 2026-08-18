@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pqcota/pqcota/pkg/inventory/declaration"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

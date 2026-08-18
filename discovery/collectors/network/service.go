@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 	"google.golang.org/grpc"
 )
 

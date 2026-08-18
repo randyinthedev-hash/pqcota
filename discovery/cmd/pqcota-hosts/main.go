@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pqcota/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 )
 
 func main() {

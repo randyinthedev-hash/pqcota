@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 )
 
 // SelfAssign — 지문에서 결정론적 node_id를 파생한다(§1.4 self-id). CMDB 미등재 폴백.

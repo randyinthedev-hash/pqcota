@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory"
-	"github.com/pqcota/pqcota/pkg/org"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/org"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 // TestParseRejectsWhatCannotBeToldApart — 사람이 같게 읽고 기계가 다르게 읽는 이름을 받지 않는다.

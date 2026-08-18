@@ -3,8 +3,8 @@ package ingest_test
 import (
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	"github.com/pqcota/pqcota/pkg/inventory/ingest"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 )
 
 const validCBOM = `{"bomFormat":"CycloneDX","specVersion":"1.6","components":[]}`

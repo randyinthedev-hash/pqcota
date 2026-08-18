@@ -3,8 +3,8 @@ package machineid_test
 import (
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	"github.com/pqcota/pqcota/pkg/kernel/machineid"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/machineid"
 )
 
 // SelfAssign은 결정론적(같은 지문→같은 id)이고 우선순위를 지킨다.

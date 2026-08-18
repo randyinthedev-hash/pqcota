@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // ErrNotFinalized — FINALIZED 아닌 계획을 실행 근거로 쓰려 할 때(§3.7 최강 게이트).

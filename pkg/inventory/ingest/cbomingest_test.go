@@ -3,8 +3,8 @@ package ingest_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/inventory/ingest"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 )
 
 const sampleCBOM = `{"bomFormat":"CycloneDX","specVersion":"1.6","components":[

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 	"gopkg.in/yaml.v3"
 )
 

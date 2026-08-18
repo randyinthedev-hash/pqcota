@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.1.0** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. Windows(CNG)는 계약에 스키마만 예약돼 있다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
+> **v0.5.0** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. Windows(CNG)는 계약에 스키마만 예약돼 있다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
 
 PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). 레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 **Discovery → Inventory → Provisioning** 3단계로 다룬다.
 
@@ -90,7 +90,7 @@ pqcota는 **중앙 컨트롤러 노드** 하나와, 그 컨트롤러가 Ansible/
 **빌드는 컨트롤러에서 한다** — 컨트롤러에서 실행할 CLI와 대상 노드로 보낼 collector를 여기서 함께 만든다.
 
 **① 계약 코드 생성** — 계약(`contracts/*.proto`)에서 Go 코드를 만든다. `make tools`가 생성
-플러그인(`protoc-gen-go`·`-grpc`)을 설치하고, `make generate`가 변환한다. 생성된 `gen/`은 gitignore 대상이다.
+플러그인(`protoc-gen-go`·`-grpc`)을 설치하고, `make generate`가 변환한다. 생성된 `gen/`은 **커밋돼 있다** — 소비자가 `go get`만으로 계약 타입을 쓰게 하려는 것이다. proto를 고치면 다시 만들어 함께 커밋한다.
 
 ```bash
 make tools && make generate     # contracts/*.proto → gen/
@@ -163,7 +163,7 @@ Windows(CNG)는 [로드맵](RELEASE_NOTES.md)에 있다 — v0.1.0은 계약에 
 
 ## 상태 · 버전
 
-**v0.1.0** — arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
+**v0.5.0** — arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
 버전별 목표·성과는 [릴리스 노트](RELEASE_NOTES.md).
 

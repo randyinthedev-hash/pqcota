@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/jvm"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/jvm"
 )
 
 // TD-JVM-6 — 정찰→attach 오케스트레이션. 실 JVM·agent 없이 attach를 주입해 검증한다.

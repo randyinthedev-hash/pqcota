@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // KindDeclared — 이 app_key가 무엇에 기대고 있나. `systemd-unit`·`exe-path` 옆에 오는 세 번째 값이다.

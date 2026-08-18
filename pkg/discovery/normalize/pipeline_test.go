@@ -3,10 +3,10 @@ package normalize_test
 import (
 	"testing"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
-	"github.com/pqcota/pqcota/pkg/discovery/history"
-	"github.com/pqcota/pqcota/pkg/discovery/normalize"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 )
 
 // openssl-collector가 낼 법한 CollectionResult(CycloneDX + Envelope + 완전성) 픽스처.

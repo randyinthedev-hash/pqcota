@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 // TP-RECORD-3 — 롤백 근거는 append-only로 남아야 되찾을 수 있다. 인메모리로 고정한 계약이

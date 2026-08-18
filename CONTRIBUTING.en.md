@@ -47,7 +47,7 @@ compile (so Linux-only files are covered). Build the binaries you use with `-o`,
 without one. Tests run without a real JVM.
 
 > **If you see `no required module provides package .../gen/pqcota/...`**, you skipped generation.
-> The `go get github.com/pqcota/pqcota/gen/...` that Go suggests alongside it is **not the fix** —
+> The `go get github.com/randyinthedev-hash/pqcota/gen/...` that Go suggests alongside it is **not the fix** —
 > that is not a fetchable module but code this repo generates. Run `make generate` first.
 
 If you changed a contract, run `make lint` (buf lint) and check compatibility **from the repo root**:
@@ -63,7 +63,7 @@ Also read [the ripple checklist for contract changes](contracts/README.en.md) (s
 | Top level | What |
 |---|---|
 | `contracts/` | Contract SSOT (protobuf). The namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1` |
-| `gen/` | proto-generated code (gitignored) |
+| `gen/` | proto-generated code — **committed** (so consumers can use it with `go get` alone) |
 | `pkg/` | Library logic — stage groups `discovery`·`inventory`·`provisioning` + shared `kernel` (registry·posture·scope·machineid·sign)·`cbom` |
 | `discovery/` · `inventory/` · `provisioning/` | **Execution entry points** (per stage) — each with `cmd/` (scanner·driver·query·generate); `discovery/` also has `collectors/` (reference collectors) |
 | `examples/` | **Per-stage runnable examples** — sample inputs + `run.sh` to run each cmd with minimal setup |

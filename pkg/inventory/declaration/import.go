@@ -8,8 +8,8 @@ import (
 	"io"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // ImportCSV — 선언 CSV(node_id,crypto_runtime,component)를 선언 레인 CollectionResult로 임포트.

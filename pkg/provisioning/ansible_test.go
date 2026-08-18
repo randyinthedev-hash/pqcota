@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/provisioning"
+	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
 func TestGeneratePlaybook(t *testing.T) {

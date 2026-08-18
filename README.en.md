@@ -8,7 +8,7 @@ English · [한국어](README.md)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.1.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
+> **v0.5.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) has only its schema reserved in the contract → [roadmap](RELEASE_NOTES.en.md)
 
 A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
 
@@ -95,7 +95,7 @@ ship to the target nodes are produced here.
 
 **① Generate the contract code** — Go code is generated from the contracts (`contracts/*.proto`).
 `make tools` installs the generator plugins (`protoc-gen-go`, `-grpc`) and `make generate` does the
-conversion. The generated `gen/` is gitignored.
+conversion. The generated `gen/` is **committed** — so that consumers can use the contract types with `go get` alone. When a proto changes, regenerate and commit it along with the change.
 
 ```bash
 make tools && make generate     # contracts/*.proto → gen/
@@ -165,7 +165,7 @@ Windows (CNG) is on the [roadmap](RELEASE_NOTES.en.md) — v0.1.0 reserves the s
 
 ## Status · version
 
-**v0.1.0** — per-architecture static binaries and `SHA256SUMS` are attached to the
+**v0.5.0** — per-architecture static binaries and `SHA256SUMS` are attached to the
 [releases](https://github.com/randyinthedev-hash/pqcota/releases). Verify what you download with
 `sha256sum -c SHA256SUMS`; signed releases are on the [roadmap](RELEASE_NOTES.en.md).
 Per-version goals and results are in the [release notes](RELEASE_NOTES.en.md).

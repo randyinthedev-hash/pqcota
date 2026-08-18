@@ -3,7 +3,7 @@ package jvm_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/jvm"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/jvm"
 )
 
 // java.security 파싱 — 정적 등록 provider를 **N 순서대로**. 순서가 곧 우선순위라(수용 원칙 §2.2)

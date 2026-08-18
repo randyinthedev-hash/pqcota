@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	provisioningv1 "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 )
 
 // GenerateProvisioningPlaybook — 확정 계획의 조치를 L1/L2로 배포하는 Ansible 플레이북을 생성한다(규정서 §4.4 표준 substrate).

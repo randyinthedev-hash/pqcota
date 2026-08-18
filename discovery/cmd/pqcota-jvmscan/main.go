@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/pqcota/pqcota/discovery/cmd/internal/localview"
-	"github.com/pqcota/pqcota/discovery/collectors/jvm"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/discovery/cmd/internal/localview"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/jvm"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

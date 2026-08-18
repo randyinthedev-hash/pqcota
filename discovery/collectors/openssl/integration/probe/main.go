@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/pqcota/pqcota/discovery/collectors/openssl"
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/openssl"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 func main() {

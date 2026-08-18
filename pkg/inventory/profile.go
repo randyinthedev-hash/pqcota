@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	inventoryv1 "github.com/pqcota/pqcota/gen/pqcota/inventory/v1"
+	inventoryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/inventory/v1"
 )
 
 // ParseProfiles — 사용자/CMDB가 관리하는 CSV 프로필 파일을 MachineProfile로 읽는다(§2.0 선언·리뷰 레인).

@@ -3,7 +3,7 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/pqcota/pqcota/pkg/kernel/registry"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 func TestMatchPQC(t *testing.T) {

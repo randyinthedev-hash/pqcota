@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pqcota/pqcota/discovery/collectors/network"
-	commonv1 "github.com/pqcota/pqcota/gen/pqcota/common/v1"
-	discoveryv1 "github.com/pqcota/pqcota/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota/discovery/collectors/network"
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
 // ethIPv4TCP — 페이로드를 Ethernet II + IPv4 + TCP 프레임으로 감싼다(디섹션 테스트용).

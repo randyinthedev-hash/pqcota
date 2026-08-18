@@ -17,7 +17,7 @@ package pqcota.provisioning.v1;
 import "google/protobuf/timestamp.proto";
 import "pqcota/common/v1/common.proto";
 
-option go_package = "github.com/pqcota/pqcota/gen/pqcota/provisioning/v1;provisioningv1";
+option go_package = "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1;provisioningv1";
 
 // 단계적 배포 위임 레벨 (규정서 §4.3 v4). 자산별 1급 속성 `deploy_automation_level`.
 // ★ Discovery 산출물(Finding)이 아니다 — 리뷰어가 자산별로 판정하는 계획·자산 속성(MANUAL, §4.7).
