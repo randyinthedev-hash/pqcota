@@ -143,7 +143,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 |---|---|
 | 현관 — README · CONTRIBUTING · SECURITY · RELEASE_NOTES | 테스트 케이스 목록 · 테스트 맵 · 커널 케이스 |
 | 규정서 · 아키텍처 · 단계별 설계 · 계약 | collector 배포 설계 · 각 `cmd/README` |
-| 라이선스 · 런타임 수용 · 검토 중 | **호환성 정책** · 데모 · 예제 전부 |
+| 라이선스 · 런타임 수용 · 검토 중 | **호환성 정책** · 여정 · 데모 · 예제 전부 |
 
 영문 짝이 없는 문서를 영문에서 가리킬 때는 `(Korean)`으로 밝힌다. 이 표를 넓히는 기여는 환영한다 —
 넓힌 만큼 유지 비용도 함께 든다는 것만 알고 시작하면 된다.
