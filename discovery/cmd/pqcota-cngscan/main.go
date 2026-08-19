@@ -25,10 +25,10 @@ import (
 )
 
 func main() {
-	out := flag.String("output", "json", "출력 형식: json | table")
+	out := flag.String("output", "json", "output format: json | table")
 	flag.Parse()
 	if *out != "json" && *out != "table" {
-		fmt.Fprintf(os.Stderr, "알 수 없는 --output %q — json | table\n", *out)
+		fmt.Fprintf(os.Stderr, "unknown --output %q — use json | table\n", *out)
 		os.Exit(2)
 	}
 
@@ -53,14 +53,14 @@ func main() {
 		if sig, sErr := sign.Sign(key, res); sErr == nil {
 			res.GetEnvelope().Signature = sig
 		} else {
-			fmt.Fprintln(os.Stderr, "[cngscan] 서명 실패:", sErr)
+			fmt.Fprintln(os.Stderr, "[cngscan] signing failed:", sErr)
 		}
 	}
 
 	if *out == "table" {
 		view, vErr := localview.Render(node, []*discoveryv1.CollectionResult{res})
 		if vErr != nil {
-			fmt.Fprintln(os.Stderr, "뷰 렌더 실패:", vErr)
+			fmt.Fprintln(os.Stderr, "rendering the view failed:", vErr)
 			os.Exit(1)
 		}
 		fmt.Print(view)
@@ -68,7 +68,7 @@ func main() {
 	}
 	b, mErr := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(res)
 	if mErr != nil {
-		fmt.Fprintln(os.Stderr, "직렬화 실패:", mErr)
+		fmt.Fprintln(os.Stderr, "serialization failed:", mErr)
 		os.Exit(1)
 	}
 	fmt.Println(string(b))
