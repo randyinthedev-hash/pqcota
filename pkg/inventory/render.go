@@ -89,18 +89,27 @@ func gapOf(snap *history.Snapshot) string {
 	return strings.Join(g, ",")
 }
 
+// Plural — 수와 단위를 영어 어법에 맞춰 붙인다. 1이면 단수다.
+// 화면에 나온 "1 change points"는 그대로 문서의 샘플 출력이 되므로 눈에 띈다.
+func Plural(n int, unit string) string {
+	if n == 1 {
+		return "1 " + unit
+	}
+	return fmt.Sprintf("%d %ss", n, unit)
+}
+
 // RenderHistory — 한 노드의 **변화 지점**을 오래된 것부터 나열한다. 스냅샷은 실질 내용이
 // 바뀔 때만 쌓이므로, 각 줄은 "이 상태였던 구간"이고 obs 열이 그동안 몇 번 관측했는지 보여준다.
 // 관측 사실 서술이지 판정이 아니다 — 변화가 선언과 맞는지·의미 있는지는 판정이라 하지 않는다(아키텍처 §6).
 func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]history.ObsStat,
 	pruned []history.RetentionEvent) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "node %s — %d change points (oldest first)\n", nodeID, len(snaps))
+	fmt.Fprintf(&b, "node %s — %s (oldest first)\n", nodeID, Plural(len(snaps), "change point"))
 	// 절단이 있었으면 먼저 고지한다 — 안 그러면 이력의 구멍이 "관측을 안 함"으로 읽힌다(§2.6 정신).
 	for _, e := range pruned {
-		fmt.Fprintf(&b, "⌫ %[2]d change points before %[1]s were pruned by the retention policy (%[3]s, %[4]d observations · run %[5]s)\n",
-			e.PrunedUpTo.Format("2006-01-02 15:04:05"), e.Snapshots, e.Policy, e.Observations,
-			e.ExecutedAt.Format("2006-01-02"))
+		fmt.Fprintf(&b, "⌫ pruned by the retention policy: %[2]s before %[1]s (%[3]s, %[4]s · run %[5]s)\n",
+			e.PrunedUpTo.Format("2006-01-02 15:04:05"), Plural(e.Snapshots, "change point"), e.Policy,
+			Plural(e.Observations, "observation"), e.ExecutedAt.Format("2006-01-02"))
 	}
 	b.WriteByte('\n')
 	if len(snaps) == 0 {

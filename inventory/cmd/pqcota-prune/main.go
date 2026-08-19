@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 
@@ -78,7 +79,7 @@ func render(rep *history.PruneReport) string {
 			n.NodeID, n.Snapshots, n.Observations, n.UpTo.Format("2006-01-02 15:04:05"))
 	}
 	s, o := rep.Total()
-	fmt.Fprintf(&b, "\ntotals: %d change points · %d observations\n", s, o)
+	fmt.Fprintf(&b, "\ntotals: %s · %s\n", inventory.Plural(s, "change point"), inventory.Plural(o, "observation"))
 	if !rep.Applied {
 		b.WriteString("add -apply to actually delete. The pruning itself is recorded and reported in the history.\n")
 	}
