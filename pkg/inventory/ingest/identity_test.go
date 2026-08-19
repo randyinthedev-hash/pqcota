@@ -30,7 +30,7 @@ func TestCheckIdentity(t *testing.T) {
 		if c.Kind == "duplicate" && c.Key == "node:aaa" {
 			dup = true
 			if len(c.Members) != 2 {
-				t.Errorf("중복 멤버 수: %v", c.Members)
+				t.Errorf("duplicate member count: %v", c.Members)
 			}
 		}
 		if c.Kind == "collision" && c.Key == "db-01" {
@@ -38,15 +38,15 @@ func TestCheckIdentity(t *testing.T) {
 		}
 	}
 	if !dup {
-		t.Error("중복(한 머신 여러 node_id) 미탐지")
+		t.Error("a duplicate (one machine, several node_ids) was not detected")
 	}
 	if !col {
-		t.Error("충돌(한 node_id 여러 머신) 미탐지")
+		t.Error("a conflict (one node_id, several machines) was not detected")
 	}
 	// 정상 항목은 conflict 아님
 	for _, c := range conflicts {
 		if c.Key == "node:ddd" || c.Key == "clean" {
-			t.Errorf("정상 항목이 conflict로: %+v", c)
+			t.Errorf("a healthy entry was reported as a conflict: %+v", c)
 		}
 	}
 }

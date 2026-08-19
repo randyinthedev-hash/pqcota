@@ -41,24 +41,24 @@ func TestMatchPQC(t *testing.T) {
 func TestFIPSValidatable(t *testing.T) {
 	mlkem, _ := registry.MatchPQC("MLKEM768")
 	if !mlkem.FIPSValidatable() {
-		t.Error("ML-KEM은 FIPS 검증 대상이어야")
+		t.Error("ML-KEM must be FIPS-validatable")
 	}
 	falcon, _ := registry.MatchPQC("falcon1024")
 	if falcon.FIPSValidatable() {
-		t.Error("Falcon(초안)은 FIPS 검증 대상이 아니어야")
+		t.Error("Falcon (draft) must not be FIPS-validatable")
 	}
 	sntrup, _ := registry.MatchPQC("sntrup761")
 	if sntrup.FIPSValidatable() {
-		t.Error("sntrup(실험)은 FIPS 검증 대상이 아니어야")
+		t.Error("sntrup (experimental) must not be FIPS-validatable")
 	}
 }
 
 // Kind: KEM vs signature 구분.
 func TestPQCKind(t *testing.T) {
 	if a, _ := registry.MatchPQC("MLKEM768"); a.Kind != registry.KindKEM {
-		t.Errorf("ML-KEM은 KEM이어야, got %s", a.Kind)
+		t.Errorf("ML-KEM must be a KEM, got %s", a.Kind)
 	}
 	if a, _ := registry.MatchPQC("MLDSA65"); a.Kind != registry.KindSignature {
-		t.Errorf("ML-DSA는 signature여야, got %s", a.Kind)
+		t.Errorf("ML-DSA must be a signature, got %s", a.Kind)
 	}
 }

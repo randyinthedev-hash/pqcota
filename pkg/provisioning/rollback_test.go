@@ -20,14 +20,14 @@ func TestRollbackPlaybookL2(t *testing.T) {
 		"a3 (REMEDIATION_KIND_FORK_REPLACE): it was never delivered through config", // 비-config는 수동
 	} {
 		if !strings.Contains(pb, want) {
-			t.Errorf("L2 롤백 플레이북에 %q 없음:\n%s", want, pb)
+			t.Errorf("the L2 rollback playbook does not contain %q:\n%s", want, pb)
 		}
 	}
 	if strings.Contains(pb, "④ restart") {
-		t.Errorf("롤백에 재시작이 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
+		t.Errorf("a rollback must not restart (restart is the L3 restart hook):\n%s", pb)
 	}
 	if strings.Contains(pb, "ansible.builtin.copy") {
-		t.Errorf("롤백은 배치(copy)가 아니라 제거(absent)여야:\n%s", pb)
+		t.Errorf("a rollback must remove (absent), not place (copy):\n%s", pb)
 	}
 }
 
@@ -35,9 +35,9 @@ func TestRollbackPlaybookL2(t *testing.T) {
 func TestRollbackPlaybookL1(t *testing.T) {
 	pb := provisioning.GenerateRollbackPlaybook(samplePlan(), provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
 	if !strings.Contains(pb, "/opt/pqcota/BC.jar") {
-		t.Error("L1 롤백도 스테이지한 모듈은 제거해야")
+		t.Error("an L1 rollback must also remove the staged module")
 	}
 	if strings.Contains(pb, "remove the config fragment") {
-		t.Errorf("L1(stage-only)은 config를 배치 안 했으니 config 제거도 없어야:\n%s", pb)
+		t.Errorf("L1 (stage-only) placed no config, so it must not remove one either:\n%s", pb)
 	}
 }

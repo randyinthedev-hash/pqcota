@@ -21,20 +21,20 @@ func TestIngestCBOM(t *testing.T) {
 	}
 	snap, _ := store.Latest("cbom-node")
 	if snap == nil || len(snap.Findings) != 1 {
-		t.Fatalf("적재된 CBOM 스냅샷 finding 미생성: %+v", snap)
+		t.Fatalf("the ingested CBOM snapshot produced no finding: %+v", snap)
 	}
 
 	// 구조 부적합 → 거부, 저장 안 함.
 	store2 := history.NewMemStore()
 	if d, _ := ingest.IngestCBOM([]byte(`{"bomFormat":"SPDX"}`), "n", nil, "s", "r", store2); d != ingest.Rejected {
-		t.Errorf("비-CycloneDX는 Rejected여야, got %v", d)
+		t.Errorf("a non-CycloneDX input must be Rejected, got %v", d)
 	}
 	if s, _ := store2.Latest("n"); s != nil {
-		t.Error("거부된 CBOM이 저장됨")
+		t.Error("a refused CBOM was stored")
 	}
 
 	// 스코프 앵커(target) 없으면 등재요청 — 저장 안 함.
 	if d, _ := ingest.IngestCBOM([]byte(sampleCBOM), "", nil, "s", "r", history.NewMemStore()); d != ingest.NeedsScopeBinding {
-		t.Errorf("앵커 없으면 NeedsScopeBinding여야, got %v", d)
+		t.Errorf("with no anchor it must be NeedsScopeBinding, got %v", d)
 	}
 }
