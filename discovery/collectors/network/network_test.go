@@ -102,7 +102,7 @@ func TestParseClientHello(t *testing.T) {
 	}
 	for g, seen := range want {
 		if !seen {
-			t.Errorf("supported_groups에 %s 없음: %v", g, hs.OfferedGroups)
+			t.Errorf("supported_groups is missing %s: %v", g, hs.OfferedGroups)
 		}
 	}
 }
@@ -127,7 +127,7 @@ func TestParseServerHello(t *testing.T) {
 	}
 	// 코어 등급 파생과 맞물리는지 교차 확인.
 	if posture.Classify(hs.NegotiatedGroup, hs.Cipher) != discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID {
-		t.Error("X25519MLKEM768 → PQC_HYBRID(🟢)이어야")
+		t.Error("X25519MLKEM768 must map to PQC_HYBRID (🟢)")
 	}
 }
 
@@ -147,12 +147,12 @@ func TestParseSSHKexInit(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Errorf("kex 목록에 sntrup761x25519-sha512 없음: %v", hs.OfferedGroups)
+		t.Errorf("the kex list is missing sntrup761x25519-sha512: %v", hs.OfferedGroups)
 	}
 	// ★ KEXINIT 하나는 **제안**일 뿐이다 — 협상 결과로 채우면 안 된다(§2.1·§2.5).
 	// (이전엔 "최선호 → 🟢"를 단언해 버그를 정답으로 못박고 있었다. 그 단언을 뒤집는다.)
 	if hs.NegotiatedGroup != "" {
-		t.Errorf("단일 KEXINIT에서 negotiated를 채우면 안 된다(제안≠협상): %q", hs.NegotiatedGroup)
+		t.Errorf("a single KEXINIT must not fill negotiated (offered != negotiated): %q", hs.NegotiatedGroup)
 	}
 }
 
@@ -164,34 +164,34 @@ func TestNegotiateSSHKex(t *testing.T) {
 
 	// 레거시 서버 → 공통은 고전. 여기서 sntrup을 내면 "실제 협상"을 거짓 보고하는 것이다.
 	if got := network.NegotiateSSHKex(modern, legacy); got != "curve25519-sha256" {
-		t.Errorf("레거시 서버와의 협상 = %q, want curve25519-sha256 (🔴)", got)
+		t.Errorf("negotiation with a legacy server = %q, want curve25519-sha256 (🔴)", got)
 	}
 	if posture.Classify(network.NegotiateSSHKex(modern, legacy), "") == discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID {
-		t.Error("서버가 PQC KEX를 지원 안 하는데 🟢로 등급되면 안 된다")
+		t.Error("the server supports no PQC KEX, so it must not be graded 🟢")
 	}
 	// 양쪽 다 현대 → 클라이언트 선호대로 PQC.
 	if got := network.NegotiateSSHKex(modern, modern); got != "sntrup761x25519-sha512@openssh.com" {
-		t.Errorf("현대↔현대 협상 = %q, want sntrup761", got)
+		t.Errorf("modern-to-modern negotiation = %q, want sntrup761", got)
 	}
 	// 선호 순서는 **클라이언트**가 정한다(RFC 4253 §7.1) — 서버 순서가 반대여도 결과는 같다.
 	rev := []string{"ecdh-sha2-nistp256", "curve25519-sha256", "sntrup761x25519-sha512@openssh.com"}
 	if got := network.NegotiateSSHKex(modern, rev); got != "sntrup761x25519-sha512@openssh.com" {
-		t.Errorf("클라이언트 선호가 결정해야: %q", got)
+		t.Errorf("the client preference must decide: %q", got)
 	}
 	// 한쪽만 관측 → 미상. 본 것만으로 협상을 지어내지 않는다(§2.5).
 	for name, got := range map[string]string{
-		"서버 미관측":    network.NegotiateSSHKex(modern, nil),
-		"클라이언트 미관측": network.NegotiateSSHKex(nil, modern),
-		"공통 없음":     network.NegotiateSSHKex([]string{"a"}, []string{"b"}),
+		"server not observed": network.NegotiateSSHKex(modern, nil),
+		"client not observed": network.NegotiateSSHKex(nil, modern),
+		"no common algorithm": network.NegotiateSSHKex([]string{"a"}, []string{"b"}),
 	} {
 		if got != "" {
-			t.Errorf("%s: 협상 미상이어야 하는데 %q", name, got)
+			t.Errorf("%s: the negotiation must be unknown, got %q", name, got)
 		}
 	}
 	// 미상은 ⚪로 분류되어야 한다(🟢/🔴 어느 쪽으로도 단정하지 않는다).
 	if p := posture.Classify("", ""); p == discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID ||
 		p == discoveryv1.QuantumPosture_QUANTUM_POSTURE_CLASSICAL {
-		t.Errorf("협상 미상은 불명이어야: %v", p)
+		t.Errorf("an unknown negotiation must grade as unknown: %v", p)
 	}
 }
 
@@ -201,7 +201,7 @@ func TestBuildEdge(t *testing.T) {
 	conn := network.ConnTuple{SrcNode: "web-01", DstAddr: "10.0.1.20:8443", Port: 8443}
 	e := network.BuildEdge(conn, hs)
 	if e.GetSrcNodeId() != "web-01" || e.GetPort() != 8443 {
-		t.Errorf("tuple 매핑 실패: %+v", e)
+		t.Errorf("tuple mapping failed: %+v", e)
 	}
 	if e.GetProtocol() != discoveryv1.NetworkProtocol_NETWORK_PROTOCOL_TLS {
 		t.Errorf("protocol = %v", e.GetProtocol())
@@ -222,10 +222,10 @@ func TestQUICUnknownPosture(t *testing.T) {
 	hs := &network.Handshake{Protocol: "QUIC", NegotiatedGroup: ""} // 협상 파라미터 관측하지 못함
 	e := network.BuildEdge(network.ConnTuple{SrcNode: "web", DstAddr: "203.0.113.5:443"}, hs)
 	if e.GetNegotiatedGroup() != "" {
-		t.Error("QUIC는 협상 그룹 불명이어야(빈 문자열)")
+		t.Error("QUIC must leave the negotiated group unknown (empty string)")
 	}
 	if posture.Classify(e.GetNegotiatedGroup(), "") != discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED {
-		t.Error("불명은 ⚪ UNSPECIFIED — 고전으로 단정 금지(라이선스 정리)")
+		t.Error("unknown means ⚪ UNSPECIFIED — never assume classical")
 	}
 }
 
@@ -237,7 +237,7 @@ func TestBuildResult(t *testing.T) {
 		t.Fatalf("observed_edges = %d", len(res.GetObservedEdges()))
 	}
 	if len(res.GetCbomCyclonedx()) != 0 {
-		t.Error("네트워크 엣지는 노드 내부 CBOM을 채우지 않는다(미상)")
+		t.Error("a network edge does not fill the node-internal CBOM (unknown)")
 	}
 	covered := res.GetCompleteness().GetLayersCovered()
 	if len(covered) != 1 || covered[0] != commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK {
@@ -249,7 +249,7 @@ func TestBuildResult(t *testing.T) {
 func TestBuildResult_windowNote(t *testing.T) {
 	res := network.BuildResult("web", nil, "")
 	if res.GetCompleteness().GetNote() == "" {
-		t.Error("관측 구간 한계를 completeness note로 정직히 표기해야(TD-NETWORK-7)")
+		t.Error("the window limit must be stated honestly in the completeness note (TD-NETWORK-7)")
 	}
 }
 
@@ -257,13 +257,13 @@ func TestBuildResult_windowNote(t *testing.T) {
 func TestShouldObserve_selfReference(t *testing.T) {
 	self := map[string]bool{"web-01": true, "10.0.1.10:443": true}
 	if network.ShouldObserve(network.ConnTuple{SrcNode: "web-01", DstNodeID: "web-01"}, self) {
-		t.Error("자기 노드 대상은 제외해야")
+		t.Error("a peer that is this node itself must be excluded")
 	}
 	if network.ShouldObserve(network.ConnTuple{SrcNode: "web-01", DstAddr: "10.0.1.10:443"}, self) {
-		t.Error("자기 주소 대상은 제외해야")
+		t.Error("a peer at this node's own address must be excluded")
 	}
 	if !network.ShouldObserve(network.ConnTuple{SrcNode: "web-01", DstAddr: "10.0.1.20:443"}, self) {
-		t.Error("정상 상대는 관측해야")
+		t.Error("a normal peer must be observed")
 	}
 }
 
@@ -272,7 +272,7 @@ func TestBuildEdge_offScopeRawAddr(t *testing.T) {
 	e := network.BuildEdge(network.ConnTuple{SrcNode: "web", DstNodeID: "", DstAddr: "203.0.113.5:443", Port: 443},
 		&network.Handshake{Protocol: "TLS", NegotiatedGroup: "x25519"})
 	if e.GetDstNodeId() != "" {
-		t.Error("미해소 상대는 dst_node_id 비워야(코어가 등재 판정)")
+		t.Error("an unresolved peer must leave dst_node_id empty (the core decides registration)")
 	}
 	if e.GetDstAddr() != "203.0.113.5:443" {
 		t.Errorf("dst_addr = %q", e.GetDstAddr())
@@ -286,13 +286,13 @@ func TestDescribe(t *testing.T) {
 		t.Errorf("collector_id = %q", caps.GetCollectorId())
 	}
 	if caps.GetInvasive() {
-		t.Error("수동·비침습이어야(invasive=false)")
+		t.Error("it must be passive and non-invasive (invasive=false)")
 	}
 	if len(caps.GetLayers()) != 1 || caps.GetLayers()[0] != commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK {
 		t.Errorf("layers = %v, want [NETWORK]", caps.GetLayers())
 	}
 	if len(caps.GetCryptoRuntimes()) != 0 {
-		t.Error("네트워크 엣지는 런타임 미상 → crypto_runtimes 비어야")
+		t.Error("a network edge has an unknown runtime → crypto_runtimes must be empty")
 	}
 }
 
@@ -325,10 +325,10 @@ func TestCollect_filtersSelf(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(fs.sent) != 1 {
-		t.Fatalf("결과 %d개, want 1(노드 web)", len(fs.sent))
+		t.Fatalf("%d results, want 1 (node web)", len(fs.sent))
 	}
 	if n := len(fs.sent[0].GetObservedEdges()); n != 1 {
-		t.Errorf("엣지 %d개, want 1(자기참조 제외)", n)
+		t.Errorf("%d edges, want 1 (self-reference excluded)", n)
 	}
 }
 
@@ -354,11 +354,11 @@ func TestCollect_marksTruncatedWindow(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(fs.sent) != 1 {
-		t.Fatalf("결과 %d개 — 엣지가 없어도 중단 사실은 나가야 한다", len(fs.sent))
+		t.Fatalf("%d results — even with no edges, the truncation must be reported", len(fs.sent))
 	}
 	note := fs.sent[0].GetCompleteness().GetNote()
 	if !strings.Contains(note, want) || !strings.Contains(note, cause.Error()) {
-		t.Errorf("중단과 사유가 완전성 노트에 없다: %q", note)
+		t.Errorf("the truncation and its reason are missing from the completeness note: %q", note)
 	}
 
 	// ② 엣지가 있어도 그 결과 역시 구간 전체를 대표하지 않는다.
@@ -371,7 +371,7 @@ func TestCollect_marksTruncatedWindow(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(fs2.sent) != 1 || !strings.Contains(fs2.sent[0].GetCompleteness().GetNote(), want) {
-		t.Errorf("엣지가 있을 때도 중단을 표시해야: %+v", fs2.sent)
+		t.Errorf("truncation must be reported even when edges exist: %+v", fs2.sent)
 	}
 
 	// ③ 중단되지 않은 소스는 이 문구가 뜨면 안 된다 — 매번 뜨는 경고는 읽히지 않는다.
@@ -381,6 +381,6 @@ func TestCollect_marksTruncatedWindow(t *testing.T) {
 		t.Fatal(err)
 	}
 	if strings.Contains(fs3.sent[0].GetCompleteness().GetNote(), want) {
-		t.Error("중단되지 않았는데 중단 노트가 떴다")
+		t.Error("a truncation note appeared although nothing was truncated")
 	}
 }
