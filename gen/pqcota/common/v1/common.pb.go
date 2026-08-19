@@ -271,6 +271,9 @@ const (
 	CollectionLayer_COLLECTION_LAYER_PROCESS           CollectionLayer = 3 // 런타임/프로세스
 	CollectionLayer_COLLECTION_LAYER_NETWORK           CollectionLayer = 4
 	CollectionLayer_COLLECTION_LAYER_JVM_INTROSPECTION CollectionLayer = 5 // JCA 전용 (§2.2 자체 구현 공백)
+	// CNG 전용. JCA와 같은 이유로 자기 계층을 둔다 — 프로세스도 아티팩트도 아니고
+	// **머신에 등록된 provider를 조회**한 것이라, 무엇을 보고 무엇을 못 봤는지가 다른 계층과 다르다.
+	CollectionLayer_COLLECTION_LAYER_CNG_INTROSPECTION CollectionLayer = 6
 )
 
 // Enum value maps for CollectionLayer.
@@ -282,6 +285,7 @@ var (
 		3: "COLLECTION_LAYER_PROCESS",
 		4: "COLLECTION_LAYER_NETWORK",
 		5: "COLLECTION_LAYER_JVM_INTROSPECTION",
+		6: "COLLECTION_LAYER_CNG_INTROSPECTION",
 	}
 	CollectionLayer_value = map[string]int32{
 		"COLLECTION_LAYER_UNSPECIFIED":       0,
@@ -290,6 +294,7 @@ var (
 		"COLLECTION_LAYER_PROCESS":           3,
 		"COLLECTION_LAYER_NETWORK":           4,
 		"COLLECTION_LAYER_JVM_INTROSPECTION": 5,
+		"COLLECTION_LAYER_CNG_INTROSPECTION": 6,
 	}
 )
 
@@ -746,14 +751,15 @@ const file_pqcota_common_v1_common_proto_rawDesc = "" +
 	"\x14USAGE_CONTEXT_SERVER\x10\x01\x12\x18\n" +
 	"\x14USAGE_CONTEXT_CLIENT\x10\x02\x12\x19\n" +
 	"\x15USAGE_CONTEXT_AT_REST\x10\x03\x12\x19\n" +
-	"\x15USAGE_CONTEXT_SIGNING\x10\x04*\xd3\x01\n" +
+	"\x15USAGE_CONTEXT_SIGNING\x10\x04*\xfb\x01\n" +
 	"\x0fCollectionLayer\x12 \n" +
 	"\x1cCOLLECTION_LAYER_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17COLLECTION_LAYER_SOURCE\x10\x01\x12\x1d\n" +
 	"\x19COLLECTION_LAYER_ARTIFACT\x10\x02\x12\x1c\n" +
 	"\x18COLLECTION_LAYER_PROCESS\x10\x03\x12\x1c\n" +
 	"\x18COLLECTION_LAYER_NETWORK\x10\x04\x12&\n" +
-	"\"COLLECTION_LAYER_JVM_INTROSPECTION\x10\x05*\xc1\x01\n" +
+	"\"COLLECTION_LAYER_JVM_INTROSPECTION\x10\x05\x12&\n" +
+	"\"COLLECTION_LAYER_CNG_INTROSPECTION\x10\x06*\xc1\x01\n" +
 	"\x12OpensslBindingMode\x12$\n" +
 	" OPENSSL_BINDING_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cOPENSSL_BINDING_MODE_DYNAMIC\x10\x01\x12\x1f\n" +
