@@ -16,10 +16,10 @@ func TestBuildResultCarriesCollectedAt(t *testing.T) {
 	now = func() time.Time { return fixed }
 
 	if at := BuildResult("node-a", nil).GetEnvelope().GetCollectedAt().AsTime(); !at.Equal(fixed) {
-		t.Errorf("수집 시각이 %v — 주입한 시계(%v)를 쓰지 않는다", at, fixed)
+		t.Errorf("collected at %v — the injected clock (%v) is not used", at, fixed)
 	}
 	// 서비스 경로도 같은 시계로 떨어진다(Now 미주입 시 패키지 시계로 폴백).
 	if got := (&Service{}).now(); !got.Equal(fixed) {
-		t.Errorf("Service.now()가 패키지 시계로 폴백하지 않는다: %v", got)
+		t.Errorf("Service.now() does not fall back to the package clock: %v", got)
 	}
 }

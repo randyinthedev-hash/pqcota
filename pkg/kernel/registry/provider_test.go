@@ -28,20 +28,20 @@ func TestMatchProvider(t *testing.T) {
 		}
 	})
 
-	t.Run("JDK 네이티브(SunJCE) → SLH-DSA 갭 태깅", func(t *testing.T) {
+	t.Run("JDK-native (SunJCE) → tagged with the SLH-DSA gap", func(t *testing.T) {
 		p, ok := registry.MatchProvider("SunJCE", sigs)
 		if !ok {
 			t.Fatal("expected match for SunJCE")
 		}
 		if !registry.SLHDSAGap(p) {
-			t.Error("JDK-native must be flagged with SLH-DSA gap (수용 원칙 §2.3)")
+			t.Error("JDK-native must be flagged with SLH-DSA gap (acceptance principle §2.3)")
 		}
 		if p.Covers("SLH-DSA") {
 			t.Error("JDK-native must not cover SLH-DSA")
 		}
 	})
 
-	t.Run("미등록 provider → 미매칭", func(t *testing.T) {
+	t.Run("an unregistered provider → no match", func(t *testing.T) {
 		if _, ok := registry.MatchProvider("unknown-provider", sigs); ok {
 			t.Error("unexpected match")
 		}

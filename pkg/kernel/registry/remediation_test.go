@@ -22,7 +22,7 @@ func TestRemediate(t *testing.T) {
 	for _, c := range cases {
 		a, ok := registry.MatchPQC(c.name)
 		if !ok {
-			t.Fatalf("MatchPQC(%q) 실패", c.name)
+			t.Fatalf("MatchPQC(%q) failed", c.name)
 		}
 		r := a.Remediate(c.regulated)
 		if r.Action != c.wantAct || r.Priority != c.wantPrio {
@@ -36,10 +36,10 @@ func TestRemediate(t *testing.T) {
 func TestRemediateTarget(t *testing.T) {
 	kem, _ := registry.MatchPQC("Kyber768")
 	if kem.Remediate(false).Target != "ML-KEM (FIPS 203)" {
-		t.Errorf("KEM 목표 오류: %s", kem.Remediate(false).Target)
+		t.Errorf("wrong KEM target: %s", kem.Remediate(false).Target)
 	}
 	sig, _ := registry.MatchPQC("dilithium3")
 	if sig.Remediate(false).Target != "ML-DSA (FIPS 204)" {
-		t.Errorf("서명 목표 오류: %s", sig.Remediate(false).Target)
+		t.Errorf("wrong signature target: %s", sig.Remediate(false).Target)
 	}
 }

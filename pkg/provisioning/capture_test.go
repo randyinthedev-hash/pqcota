@@ -22,7 +22,7 @@ func TestCaptureState(t *testing.T) {
 	joined := strings.Join(st.GetModules(), ",")
 	for _, want := range []string{"libcrypto.so.3@3.0.13", "libssl.so.3", "jca:BC"} {
 		if !strings.Contains(joined, want) {
-			t.Errorf("before 상태에 %q 없음: %v", want, st.GetModules())
+			t.Errorf("the before state does not contain %q: %v", want, st.GetModules())
 		}
 	}
 	if len(st.GetProviderChain()) != 2 {
@@ -33,9 +33,9 @@ func TestCaptureState(t *testing.T) {
 	rec := provisioning.NewProvisioningRecord("r1", "web-01", []string{"payment.service"}, "plan1",
 		&provisioningv1.RemediationAction{Id: "a1"}, findings)
 	if rec.GetBefore() == nil || len(rec.GetBefore().GetModules()) == 0 {
-		t.Error("레코드에 before 상태 미캡처")
+		t.Error("the record did not capture the before state")
 	}
 	if rec.GetStatus() != provisioningv1.ProvisioningStatus_PROVISIONING_STATUS_STAGED {
-		t.Errorf("초기 상태: %v", rec.GetStatus())
+		t.Errorf("initial state: %v", rec.GetStatus())
 	}
 }

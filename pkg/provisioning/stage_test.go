@@ -268,9 +268,9 @@ func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 // 인용부호가 들어올 수 있고, 그대로 한 줄 스칼라에 붙이면 ansible-playbook이 파일을 읽지도 못한다
 // 여러 줄 명령·따옴표·주석 기호가 훅에 들어오면 특히 위험하다. 그래서 실제로 파싱한다.
 func TestGeneratedPlaybooksAreValidYAML(t *testing.T) {
-	nasty := "printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/x.cnf > /etc/pqcota/service.env\nsystemctl daemon-reload  # 주석: 콜론도 있다"
+	nasty := "printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/x.cnf > /etc/pqcota/service.env\nsystemctl daemon-reload  # comment: it has a colon too"
 	a := &provisioningv1.RemediationAction{
-		Id: "a1: 이상한 id", TargetNodeId: "db-01",
+		Id: "a1: odd id", TargetNodeId: "db-01",
 		CryptoRuntime:  commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		Kind:           provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT,
 		ProviderChoice: `oqs "prov": #1`, TargetAlgorithm: "ML-KEM (FIPS 203)",

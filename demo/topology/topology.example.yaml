@@ -15,30 +15,30 @@ networks: # 브리지 세그먼트(망 분리). 엣지 관측은 트래픽 소�
 
 nodes:
   - id: web-gw
-    name: 결제 웹 게이트웨이
+    name: Payments Web Gateway
     kind: openssl
     role: client
     # 현대 스택. SSH 등급은 **클라이언트**가 가른다 — 여기가 트래픽 소스라, 이 노드의 OpenSSH가
     # sntrup761을 기본 제안해야 🟢 SSH가 관측된다(8.9는 알지만 기본 목록에 없다 → 9.0+ 필요).
     openssl: { fork: openssl, version: "3" }
     networks: [corp] # eth0=corp — 여기서 관측한다
-    profile: { env: production, role: web, owner: 플랫폼팀 }
+    profile: { env: production, role: web, owner: Platform team }
 
   - id: pay-app
-    name: 결제 앱
+    name: Payments App
     kind: java
     jca: { providers: [BC] } # 런타임 addProvider — 정적 스캔으론 안 보이고 attach로만 잡힌다
     networks: [corp]
-    profile: { env: production, role: app, owner: 결제팀 }
+    profile: { env: production, role: app, owner: Payments team }
 
   - id: pay-db
-    name: 결제 DB
+    name: Payments DB
     kind: openssl
     role: server
     openssl: { fork: openssl, version: "1.1.1" } # 레거시(1.1.1) = 양자취약
     apps: [payment-gw, api-gw] # 한 libssl을 두 앱이 로드 → 공유 .so를 여러 앱이 쓴다(영향 반경)
     networks: [corp, db] # corp(web-gw가 도달·관측) + db(격리 tier) 양쪽에 걸침
-    profile: { env: production, role: db, owner: DBA팀 }
+    profile: { env: production, role: db, owner: DBA team }
 
 edges: # 관측할 핸드셰이크 → 등급(🟢 PQC / 🔴 고전). 소스 web-gw의 eth0=corp에서 넷 다 도달한다.
   # TLS·SSH 각각에서 현대↔레거시가 갈리는 걸 한 화면에 보인다 — 등급은 도구가 관측대로 매긴다.

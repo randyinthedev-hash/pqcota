@@ -15,7 +15,7 @@ func TestSafeNameHandlesSchemeIDs(t *testing.T) {
 		"host://local":     "host-local",
 		"web-1":            "web-1",
 		"cmdb://a//b":      "cmdb-a-b",
-		"노드/1":             "1", // 비ASCII는 하이픈으로 바뀌고 앞뒤 하이픈은 잘린다
+		"node/1":           "1", // 비ASCII는 하이픈으로 바뀌고 앞뒤 하이픈은 잘린다
 		"///":              "",
 		"node_1.example":   "node_1.example",
 		"UPPER/lower-MIX!": "UPPER-lower-MIX",
@@ -26,7 +26,7 @@ func TestSafeNameHandlesSchemeIDs(t *testing.T) {
 			t.Errorf("safeName(%q) = %q, want %q", in, got, want)
 		}
 		if strings.ContainsRune(got, filepath.Separator) {
-			t.Errorf("safeName(%q) = %q — 경로 구분자가 남았다", in, got)
+			t.Errorf("safeName(%q) = %q — a path separator survived", in, got)
 		}
 	}
 }
