@@ -110,13 +110,14 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 
 | property key | 값 | 대응 Finding 필드 |
 |---|---|---|
-| `pqcota:crypto_runtime` | `openssl` \| `jca` | `crypto_runtime` |
+| `pqcota:crypto_runtime` | `openssl` \| `jca` \| `cng` | `crypto_runtime` |
 | `pqcota:detection_method` | `source`\|`artifact`\|`symbol-analysis`\|`runtime-introspection`\|`dynamic-trace` | `detection_method` — **어떻게 봤나**. 강도는 여기서 파생된다(실물을 본 것이 추론보다 강하다) |
 | `pqcota:usage_context` | `server`\|`client`\|`at-rest`\|`signing` | `usage_context` |
 | `pqcota:openssl.fork` | `OpenSSL`\|`BoringSSL`\|… | `openssl.fork` |
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
 | `pqcota:jca.provider_set` | 등록 순서 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
+| `pqcota:cng.provider_set` | 등록 순서 CSV | `cng.provider_set` — Windows CNG. JCA와 같이 **순서 유의미**(우선순위) |
 | `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산이 어느 앱 것인지(§1.5) |
 
 > `evidence_strength`·`pqc_readiness`는 **여기 넣지 않는다** — 코어 파생 값이다(위 결정 1).
