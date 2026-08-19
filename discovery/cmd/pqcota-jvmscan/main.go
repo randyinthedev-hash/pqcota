@@ -48,12 +48,12 @@ public class Probe {
 `
 
 func main() {
-	recon := flag.Bool("recon", false, "정찰만 → 발견 JVM JSON(관측 안 함)")
-	pidOnly := flag.Int("pid", 0, "이 PID의 JVM 하나만 관측(0이면 정찰로 찾은 전부)")
-	out := flag.String("output", "json", "출력 형식: json | table")
+	recon := flag.Bool("recon", false, "recon only → JSON of discovered JVMs (no observation)")
+	pidOnly := flag.Int("pid", 0, "observe only the JVM with this PID (0 = every JVM found by recon)")
+	out := flag.String("output", "json", "output format: json | table")
 	flag.Parse()
 	if *out != "json" && *out != "table" {
-		fmt.Fprintf(os.Stderr, "알 수 없는 --output %q — json | table\n", *out)
+		fmt.Fprintf(os.Stderr, "unknown --output %q — use json | table\n", *out)
 		os.Exit(2)
 	}
 
@@ -78,14 +78,14 @@ func main() {
 		if j.ViaLibjvm {
 			via = "libjvm"
 		}
-		fmt.Fprintf(os.Stderr, "[jvmscan] 발견 JVM pid=%d ver=%s home=%s (%s)\n",
+		fmt.Fprintf(os.Stderr, "[jvmscan] found JVM pid=%d ver=%s home=%s (%s)\n",
 			j.PID, nz(j.Version), nz(j.JavaHome), via)
 	}
 	if st.ProcUnavailable {
 		// "JVM 0개"와 "관측하지 못했다"를 같은 얼굴로 내보내지 않는다(§2.6).
-		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc를 열 수 없어 프로세스를 열거하지 못했다 — JVM이 없는 것이 아니라 관측하지 못한 것이다(리눅스에서 실행할 것)")
+		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc could not be opened, so processes were not enumerated — no JVM was observed, which is not the same as no JVM existing (run this on Linux)")
 	}
-	fmt.Fprintf(os.Stderr, "[jvmscan] 정찰: 접근 %d · 불가 %d(관측하지 못함) · JVM %d\n", st.Accessible, st.Denied, st.WithJVM)
+	fmt.Fprintf(os.Stderr, "[jvmscan] recon: reachable %d · denied %d (not observed) · JVMs %d\n", st.Accessible, st.Denied, st.WithJVM)
 
 	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
 	// 대상을 관측하지 못한 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
@@ -97,7 +97,7 @@ func main() {
 			}
 		}
 		if len(only) == 0 {
-			fmt.Fprintf(os.Stderr, "[jvmscan] pid=%d 를 실행 중 JVM에서 찾지 못했다(권한·종료 확인)\n", *pidOnly)
+			fmt.Fprintf(os.Stderr, "[jvmscan] pid=%d was not among the running JVMs (check permissions, or it exited)\n", *pidOnly)
 			os.Exit(1)
 		}
 		jvms = only
@@ -117,10 +117,10 @@ func main() {
 		j := jvms[0]
 		c, err := jvm.StaticFallbackGo(j.PID, j.JavaHome)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "[jvmscan] pid=%d 정적 폴백 실패: %v\n", j.PID, err)
+			fmt.Fprintf(os.Stderr, "[jvmscan] static fallback failed for pid=%d: %v\n", j.PID, err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 관측하지 못함)\n",
+		fmt.Fprintf(os.Stderr, "[jvmscan] static fallback pid=%d: %d providers (dynamic registrations are a blind spot — not observed)\n",
 			j.PID, len(c.Providers))
 		emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResultFor(node, c, j.Ident())}, false)
 		return
@@ -154,12 +154,12 @@ func main() {
 	args = append(args, src)
 	probeOut, err := exec.Command(javaBin, args...).CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[jvmscan] java 실행 경고: %v\n%s\n", err, probeOut)
+		fmt.Fprintf(os.Stderr, "[jvmscan] warning while running java: %v\n%s\n", err, probeOut)
 	}
 
 	c := jvm.ParseProviders(string(probeOut))
 	emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResult(node, c)}, false)
-	fmt.Fprintf(os.Stderr, "[jvmscan] %s: provider %d개\n", node, len(c.Providers))
+	fmt.Fprintf(os.Stderr, "[jvmscan] %s: %d providers\n", node, len(c.Providers))
 }
 
 // emit — 수집 결과를 요청한 형식으로 낸다. jsonl=true면 한 줄에 하나(여러 JVM), 아니면
@@ -186,8 +186,8 @@ func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool
 			fmt.Fprintln(os.Stderr, "[jvmscan]", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(w, "== pqcota JVM Discovery — %s (읽기전용·저장 안 함) ==\n", node)
-		fmt.Fprintf(w, "관측한 JVM %d개\n\n", len(results))
+		fmt.Fprintf(w, "== pqcota JVM Discovery — %s (read-only; nothing is stored) ==\n", node)
+		fmt.Fprintf(w, "%d JVMs observed\n\n", len(results))
 		fmt.Fprint(w, tbl)
 	}
 }
@@ -215,7 +215,7 @@ func emitRecon() {
 	}
 	os.Stdout.Write(b)
 	os.Stdout.Write([]byte("\n"))
-	fmt.Fprintf(os.Stderr, "[jvmscan -recon] JVM %d개 · 접근 %d · 불가 %d(관측하지 못함)\n", len(out), st.Accessible, st.Denied)
+	fmt.Fprintf(os.Stderr, "[jvmscan -recon] %d JVMs · reachable %d · denied %d (not observed)\n", len(out), st.Accessible, st.Denied)
 }
 
 // nativeOutPath — 에이전트가 **대상 안에서** 쓸 출력 경로. 대상의 /tmp 기준이라 PID로 갈라
@@ -241,7 +241,7 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 		if c, err := jvm.NativeAttach(j.PID, agent, nativeOutPath(j.PID)); err == nil {
 			return c, nil
 		} else {
-			fmt.Fprintf(os.Stderr, "[jvmscan] 네이티브 attach 실패 pid=%d: %v → JDK 클라이언트로 재시도\n", j.PID, err)
+			fmt.Fprintf(os.Stderr, "[jvmscan] native attach failed for pid=%d: %v → retrying with the JDK client\n", j.PID, err)
 		}
 		bin := j.JavaBin
 		if !j.AttachCapable && client != "" {
@@ -252,16 +252,16 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 			if c, err := run(node, map[string]string{"pid": strconv.Itoa(j.PID)}); err == nil {
 				return c, nil
 			} else {
-				fmt.Fprintf(os.Stderr, "[jvmscan] JDK 클라이언트 attach 실패 pid=%d: %v → 정적 폴백\n", j.PID, err)
+				fmt.Fprintf(os.Stderr, "[jvmscan] JDK client attach failed for pid=%d: %v → falling back to static\n", j.PID, err)
 			}
 		}
 		// ③ 정적 폴백 — java.security는 텍스트 파일이라 Go가 직접 읽는다. 어떤 JVM·런타임이어도
 		// 최소한 정적 등록 체인은 낸다(강등·갭 고지). 관측 실패가 조용한 0이 되지 않게(§2.5).
 		c, err := jvm.StaticFallbackGo(j.PID, j.JavaHome)
 		if err != nil {
-			return jvm.Collected{}, fmt.Errorf("attach 전 경로 실패, 정적 폴백도 불가: %w", err)
+			return jvm.Collected{}, fmt.Errorf("every attach path failed and the static fallback is unavailable: %w", err)
 		}
-		fmt.Fprintf(os.Stderr, "[jvmscan] 정적 폴백 pid=%d: provider %d개 (동적 등록은 사각 — 관측하지 못함)\n",
+		fmt.Fprintf(os.Stderr, "[jvmscan] static fallback pid=%d: %d providers (dynamic registrations are a blind spot — not observed)\n",
 			j.PID, len(c.Providers))
 		return c, nil
 	}
@@ -269,13 +269,13 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 	out := make([]*discoveryv1.CollectionResult, 0, len(results))
 	for _, r := range results {
 		if r.Err != nil {
-			fmt.Fprintf(os.Stderr, "[jvmscan] attach 실패 pid=%d: %v (갭)\n", r.JVM.PID, r.Err)
+			fmt.Fprintf(os.Stderr, "[jvmscan] attach failed pid=%d: %v (gap)\n", r.JVM.PID, r.Err)
 			continue
 		}
 		// 식별자는 앱(main·jar) 우선, 없으면 JAVA_HOME→exe — PID는 휘발이라 이력이 깨진다.
 		out = append(out, jvm.BuildResultFor(node, r.Collected, r.JVM.Ident()))
 	}
-	fmt.Fprintf(os.Stderr, "[jvmscan] attach: 발견 %d · 성공 %d · 실패 %d(갭) → 방출 %d\n",
+	fmt.Fprintf(os.Stderr, "[jvmscan] attach: found %d · ok %d · failed %d (gap) → emitted %d\n",
 		ast.Discovered, ast.Attached, ast.Failed, len(out))
 	return out
 }

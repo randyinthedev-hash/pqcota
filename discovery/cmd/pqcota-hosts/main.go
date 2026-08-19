@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	out := flag.String("ansible-out", "", "런타임 Ansible 인벤토리(ini) 출력 경로(미지정 시 생성 안 함)")
-	dsn := flag.String("dsn", "", "인벤토리 Postgres DSN(지정 시 안전 엔드포인트를 upsert — 비밀 제외)")
+	out := flag.String("ansible-out", "", "path for the runtime Ansible inventory (ini); not written unless given")
+	dsn := flag.String("dsn", "", "inventory Postgres DSN; when given, upserts safe endpoints (no secrets)")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-hosts [--ansible-out <path>] [--dsn <postgres>] <hosts.csv>")
@@ -43,12 +43,12 @@ func main() {
 			fmt.Fprintln(os.Stderr, "write ansible:", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "[hosts] Ansible 인벤토리 생성(런타임 전용·0600): %s\n", *out)
+		fmt.Fprintf(os.Stderr, "[hosts] wrote the Ansible inventory (runtime-only, 0600): %s\n", *out)
 	}
 
 	// 안전 엔드포인트(비밀 없음) — 인벤토리 재사용·수정 대상.
 	eps := inventory.Endpoints(hosts)
-	fmt.Printf("엔드포인트 %d개 (인벤토리 적재 대상 — 비밀 제외):\n", len(hosts))
+	fmt.Printf("%d endpoints (to be ingested — no secrets):\n", len(hosts))
 	for _, ep := range eps {
 		fmt.Printf("  %-14s %-16s %s:%d\n", ep.GetNodeId(), ep.GetName(), ep.GetIp(), ep.GetPort())
 	}
@@ -57,7 +57,7 @@ func main() {
 	if *dsn != "" {
 		meta, err := inventory.NewPgMetaStore(context.Background(), *dsn)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "메타 저장소:", err)
+			fmt.Fprintln(os.Stderr, "metadata store:", err)
 			os.Exit(1)
 		}
 		defer meta.Close()
@@ -67,6 +67,6 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		fmt.Fprintf(os.Stderr, "[hosts] 엔드포인트 %d개 인벤토리 upsert 완료(비밀 제외)\n", len(eps))
+		fmt.Fprintf(os.Stderr, "[hosts] upserted %d endpoints into the inventory (no secrets)\n", len(eps))
 	}
 }

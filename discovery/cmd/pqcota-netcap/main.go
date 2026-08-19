@@ -27,7 +27,7 @@ import (
 )
 
 func main() {
-	strict := flag.Bool("strict", false, "관측 불가면 갭만 내고 끝내지 않고 종료코드 1로 실패")
+	strict := flag.Bool("strict", false, "on failure to observe, exit 1 instead of emitting a gap and succeeding")
 	flag.Parse()
 
 	node := flag.Arg(0)
@@ -56,20 +56,20 @@ func main() {
 		SelfIPs: localIPs(),
 		Window:  time.Duration(windowSec) * time.Second,
 	}
-	fmt.Fprintf(os.Stderr, "[netcap] %s iface=%s window=%ds 관측 시작…\n", node, iface, windowSec)
+	fmt.Fprintf(os.Stderr, "[netcap] %s iface=%s window=%ds — starting observation…\n", node, iface, windowSec)
 
 	obs, err := src.Observe(nil, nil)
 	if err != nil {
 		if errors.Is(err, network.ErrCaptureUnavailable) {
-			emit(network.DegradedResult(node, "CAP_NET_RAW 없음 — 미관측(부재 아님): "+err.Error()))
+			emit(network.DegradedResult(node, "no CAP_NET_RAW — not observed (not absent): "+err.Error()))
 			// **관측은 실패했다**고 분명히 밝힌다. 이전 메시지("캡처 불가 → 완전성 갭 강등")는
 			// 무엇이 없는지도 어떻게 고치는지도 알리지 않아, 손으로 돌린 사람이 성공으로 읽었다.
 			exe, _ := os.Executable()
-			fmt.Fprintf(os.Stderr, `[netcap] ✗ 관측하지 못했다 — AF_PACKET 소켓을 열 수 없다(CAP_NET_RAW 없음).
-          부여: sudo setcap cap_net_raw+ep %s   (또는 root로 실행)
-          지금 낸 것은 관측값이 아니라 **관측하지 못했다는 기록**이다 — 링크가 없다는 뜻이 아니다.
-          그래서 실패가 아니라 정상 종료로 낸다: 오류로 끝내면 이 기록이 중앙까지 가지 못한다.
-          실패로 끝내려면 --strict.
+			fmt.Fprintf(os.Stderr, `[netcap] ✗ nothing was observed — the AF_PACKET socket could not be opened (no CAP_NET_RAW).
+          grant it: sudo setcap cap_net_raw+ep %s   (or run as root)
+          what was emitted is not an observation but **a record that nothing was observed** — it does not mean there are no links.
+          that is why this exits successfully rather than failing: an error exit would keep this record from reaching the centre.
+          use --strict to fail instead.
 `, exe)
 			if *strict {
 				os.Exit(1)
@@ -126,13 +126,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, "[netcap] ⚠ "+note)
 	}
 	emit(network.BuildResult(node, edges, note))
-	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개", len(edges))
+	fmt.Fprintf(os.Stderr, "[netcap] %d observed edges", len(edges))
 	if n := total(unattributed); n > 0 {
 		fmt.Fprintf(os.Stderr, "  · %d without an app", n)
 	}
 	fmt.Fprintln(os.Stderr)
 	for reason, n := range unattributed {
-		fmt.Fprintf(os.Stderr, "[netcap]   %d개: %s\n", n, reason)
+		fmt.Fprintf(os.Stderr, "[netcap]   %d: %s\n", n, reason)
 	}
 }
 

@@ -13,13 +13,13 @@ import (
 )
 
 func main() {
-	unit := flag.String("unit", "", "systemd 유닛명 (cgroup 매칭)")
-	exe := flag.String("exe", "", "실행 파일 경로 (정확 일치)")
-	cmd := flag.String("cmd", "", "cmdline 정규식")
+	unit := flag.String("unit", "", "systemd unit name (matched via cgroup)")
+	exe := flag.String("exe", "", "executable path (exact match)")
+	cmd := flag.String("cmd", "", "cmdline regular expression")
 	flag.Parse()
 
 	if *unit == "" && *exe == "" && *cmd == "" {
-		fmt.Fprintln(os.Stderr, "usage: pqcota-procs [--unit UNIT] [--exe PATH] [--cmd REGEX] (하나 이상)")
+		fmt.Fprintln(os.Stderr, "usage: pqcota-procs [--unit UNIT] [--exe PATH] [--cmd REGEX] (at least one)")
 		os.Exit(2)
 	}
 	m := &discoveryv1.ProcessMatch{SystemdUnit: *unit, ExePath: *exe, CmdlineRegex: *cmd}
@@ -29,7 +29,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "resolve:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("라이브 프로세스 %d개 (규칙: unit=%q exe=%q cmd=%q · 호출 시각 스냅샷)\n", len(ps), *unit, *exe, *cmd)
+	fmt.Printf("%d live processes (rule: unit=%q exe=%q cmd=%q · snapshot at call time)\n", len(ps), *unit, *exe, *cmd)
 	for _, p := range ps {
 		fmt.Printf("  pid=%-7d %s\n", p.GetPid(), p.GetCmdline())
 	}

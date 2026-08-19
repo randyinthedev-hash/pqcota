@@ -24,10 +24,10 @@ import (
 )
 
 func main() {
-	out := flag.String("output", "json", "출력 형식: json | table")
+	out := flag.String("output", "json", "output format: json | table")
 	flag.Parse()
 	if *out != "json" && *out != "table" {
-		fmt.Fprintf(os.Stderr, "알 수 없는 --output %q — json | table\n", *out)
+		fmt.Fprintf(os.Stderr, "unknown --output %q — use json | table\n", *out)
 		os.Exit(2)
 	}
 
@@ -58,7 +58,7 @@ func main() {
 		if sig, err := sign.Sign(key, res); err == nil {
 			res.GetEnvelope().Signature = sig
 		} else {
-			fmt.Fprintln(os.Stderr, "[nodescan] 서명 실패:", err)
+			fmt.Fprintln(os.Stderr, "[nodescan] signing failed:", err)
 		}
 	}
 
@@ -77,11 +77,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, "[nodescan]", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(w, "== pqcota Discovery — %s (읽기전용·저장 안 함) ==\n", node)
-		fmt.Fprintf(w, "스캔: 접근가능 %d · 접근불가/종료 %d · OpenSSL lib %d\n\n", st.Accessible, st.Denied, len(dets))
+		fmt.Fprintf(w, "== pqcota Discovery — %s (read-only; nothing is stored) ==\n", node)
+		fmt.Fprintf(w, "scan: reachable %d · unreachable/exited %d · OpenSSL libs %d\n\n", st.Accessible, st.Denied, len(dets))
 		fmt.Fprint(w, tbl)
-		fmt.Fprintf(w, "\n(접근불가 %d = 완전성 맵에 \"관측하지 못함\"으로 남는다 — root 없이는 타 사용자 /proc을 볼 수 없다, 부재 아님 §2.6)\n", st.Denied)
+		fmt.Fprintf(w, "\n(%d unreachable = recorded in the completeness map as \"not observed\" — without root another user's /proc is unreadable; not absence, §2.6)\n", st.Denied)
 	}
-	fmt.Fprintf(os.Stderr, "[nodescan] %s: 접근가능 %d · 거부 %d · OpenSSL lib %d\n",
+	fmt.Fprintf(os.Stderr, "[nodescan] %s: reachable %d · denied %d · OpenSSL libs %d\n",
 		node, st.Accessible, st.Denied, len(dets))
 }

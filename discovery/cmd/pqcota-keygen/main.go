@@ -16,8 +16,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, "keygen:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("# 노드 스캐너에서 서명: export PQCOTA_SIGN_KEY=<priv>\n")
+	fmt.Printf("# sign on the node scanner: export PQCOTA_SIGN_KEY=<priv>\n")
 	fmt.Printf("PQCOTA_SIGN_KEY=%s\n\n", priv)
-	fmt.Printf("# 중앙 적재에서 검증(콤마로 여러 개): export PQCOTA_VERIFY_KEY=<pub>\n")
+	fmt.Printf("# verify at central ingest (comma-separated for several): export PQCOTA_VERIFY_KEY=<pub>\n")
 	fmt.Printf("PQCOTA_VERIFY_KEY=%s\n", pub)
 }

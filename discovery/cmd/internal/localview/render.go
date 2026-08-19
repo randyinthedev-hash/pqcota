@@ -23,7 +23,7 @@ func Render(node string, results []*discoveryv1.CollectionResult) (string, error
 	// 격리할 것이 없다(적재 경로는 org.FromEnv를 쓴다).
 	snap, err := normalize.Normalize(results, "snap-local", node, "ruleset-1", history.NewMemStore(), nil)
 	if err != nil {
-		return "", fmt.Errorf("정규화: %w", err)
+		return "", fmt.Errorf("normalize: %w", err)
 	}
 	return inventory.Render(snap), nil
 }

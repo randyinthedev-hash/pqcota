@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	fmt.Fprintln(os.Stderr, "pqcota-netcap은 리눅스 전용이다(AF_PACKET 원시 소켓, CAP_NET_RAW).")
-	fmt.Fprintln(os.Stderr, "관측 대상에 올릴 바이너리는 교차 빌드로 만든다:")
+	fmt.Fprintln(os.Stderr, "pqcota-netcap is Linux-only (AF_PACKET raw sockets, CAP_NET_RAW).")
+	fmt.Fprintln(os.Stderr, "cross-compile the binary you put on the target node:")
 	fmt.Fprintln(os.Stderr, "  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./discovery/cmd/pqcota-netcap")
 	os.Exit(2)
 }
