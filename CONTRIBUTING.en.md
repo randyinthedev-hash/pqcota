@@ -31,7 +31,7 @@ Runtime requirements (Ansible, SSH) are in the [root README](README.en.md#requir
 
 Linux-only code (`/proc`, AF_PACKET, attach) sits behind `//go:build linux`, with a refusing stub on
 other platforms. So on macOS and Windows that code is excluded from compilation and breaking it would
-still pass a host build — which is why `make build` also cross-compiles **linux/amd64**.
+still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**; the CNG collector will grow on that target.
 
 ## Development loop
 
@@ -42,7 +42,7 @@ make            # all: generate + lint + fmt-check + check-boundary + check-docs
 go test ./...   # unit
 ```
 
-`make build` **leaves no artifacts** — it only checks that the host and linux/amd64 cross-builds
+`make build` **leaves no artifacts** — it only checks that the host, linux/amd64, and windows/amd64 cross-builds
 compile (so Linux-only files are covered). Build the binaries you use with `-o`, as the root README does. `make build-jar` warns and skips without a JDK, so contributors touching only Go can run `make`
 without one. Tests run without a real JVM.
 
@@ -92,7 +92,7 @@ The reference collectors (openssl·jvm·network) are just three examples of ways
 
 This repo enforces **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
 
-**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs `buf lint` · `fmt-check` · `check-boundary` · `check-docs` · `go vet` · `build` (host + linux cross) · `build-jar` · `go test`, so everything must be **green** before a PR. `check-docs` gates the Markdown: broken links/anchors, sentences calling something "out of this repo" that this repo actually does, role-division prose (docs carry **function and usage** only), and personal dev-environment details. Follow standard Go idioms, but use the spec's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
+**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs `buf lint` · `fmt-check` · `check-boundary` · `check-docs` · `go vet` · `build` (host + linux + windows cross) · `build-jar` · `go test`, so everything must be **green** before a PR. `check-docs` gates the Markdown: broken links/anchors, sentences calling something "out of this repo" that this repo actually does, role-division prose (docs carry **function and usage** only), and personal dev-environment details. Follow standard Go idioms, but use the spec's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
 
 **Comments explain "why", with a §.** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong, anchored to a spec § (the original is Korean). This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie (§2.6)`.
 

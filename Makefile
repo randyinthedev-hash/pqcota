@@ -17,7 +17,11 @@ build:
 	@echo "→ 리눅스 타깃 교차 확인(리눅스 전용 파일 포함)"
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /dev/null ./... 2>&1 | head -20; \
 	 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /dev/null ./... >/dev/null
-	@echo "✓ Go 빌드(호스트 + linux/amd64) 통과"
+	@# Windows 타깃도 함께 본다 — CNG collector가 여기서 자란다. 리눅스 전용 코드가
+	@# 빌드 태그 밖으로 새면 **Windows에서만** 깨지므로, 그 코드를 쓰기 전에 게이트를 세운다.
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o /dev/null ./... 2>&1 | head -20; \
+	 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o /dev/null ./... >/dev/null
+	@echo "✓ Go 빌드(호스트 + linux/amd64 + windows/amd64) 통과"
 
 # Java attach 사이드카 — JDK가 없으면 **건너뛰되 조용히 넘기지 않는다**(§2.6 결).
 # 산출물은 build/collector.jar. 데모는 컨테이너 안에서 같은 걸 빌드한다.

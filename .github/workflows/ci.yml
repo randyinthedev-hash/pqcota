@@ -115,3 +115,12 @@ jobs:
             ./discovery/cmd/pqcota-jvmscan
           file dist/linux-${GOARCH}/* | tee /dev/stderr | grep -q "statically linked" \
             || { echo "✗ 정적 링크가 아니다 — 배포판·libc를 가리게 된다"; exit 1; }
+
+      # CNG collector가 자랄 타깃. 산출물을 내지 않고 컴파일만 본다 — 리눅스 전용 코드가
+      # 빌드 태그 밖으로 새면 Windows에서만 깨지고, 그건 여기서만 잡힌다.
+      - name: windows 교차 컴파일 (${{ matrix.goarch }})
+        env:
+          CGO_ENABLED: '0'
+          GOOS: windows
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -o /dev/null ./...
