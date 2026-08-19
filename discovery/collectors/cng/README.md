@@ -77,6 +77,6 @@ Windows Client Key Protection Provider
 |---|---|
 | 순수 조립·완전성 규칙 + 단위 테스트 | **된다** — Windows 없이 돈다 |
 | `bcrypt.dll` 열거 | **된다** — Windows 11 26200에서 실측(위) |
-| 노드 식별 | ⚠ **약하다** — 지문 수집이 리눅스 경로(`/etc/machine-id`·DMI)뿐이라 Windows에선 **fqdn으로 떨어진다.** 호스트명을 바꾸면 같은 머신이 다른 노드가 된다 |
+| 노드 식별 | **고쳤다** — Windows는 레지스트리 `MachineGuid`를 읽는다(`/etc/machine-id`의 대응물). `hardware_uuid`는 아직 빈다: SMBIOS는 펌웨어 테이블을 떠야 나와서, 지어내지 않고 비워 둔다 |
 | 정규화 → 인벤토리 수렴 | 레인은 붙었다(`pqcota:cng.provider_set` → `CngAxes`). 종단 확인은 아직 |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다** — 이 collector는 관측까지다 |

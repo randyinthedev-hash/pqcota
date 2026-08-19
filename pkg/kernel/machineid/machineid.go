@@ -33,12 +33,17 @@ func SelfAssign(fp *commonv1.MachineIdentity) (id, derivedFrom string) {
 	return "node:" + hex.EncodeToString(sum[:])[:16], src
 }
 
-// Fingerprint — 호스트에서 안정 지문을 best-effort 수집한다(linux). 없는 건 빈 값으로 남긴다(§2.5 정직).
+// Fingerprint — 호스트에서 안정 지문을 best-effort 수집한다. 없는 건 빈 값으로 남긴다(§2.5 정직).
 // self_assigned_id/derived_from도 함께 채운다.
+//
+// 지문의 **출처는 OS마다 다르다**(리눅스는 /etc/machine-id·DMI, Windows는 레지스트리) — 그 부분만
+// [platformIDs]로 갈라 두고 나머지 규칙은 한 곳에 둔다. 갈라 두지 않았을 때 Windows 노드가
+// 조용히 fqdn으로 떨어졌다(TD-CNG-7): 호스트명을 바꾸면 같은 머신이 다른 노드가 된다.
 func Fingerprint() *commonv1.MachineIdentity {
+	machineID, hardwareUUID := platformIDs()
 	fp := &commonv1.MachineIdentity{
-		MachineId:       firstLine("/etc/machine-id", "/var/lib/dbus/machine-id"),
-		HardwareUuid:    firstLine("/sys/class/dmi/id/product_uuid"),
+		MachineId:       machineID,
+		HardwareUuid:    hardwareUUID,
 		CloudInstanceId: strings.TrimSpace(os.Getenv("PQCOTA_CLOUD_INSTANCE_ID")),
 	}
 	if h, err := os.Hostname(); err == nil {
