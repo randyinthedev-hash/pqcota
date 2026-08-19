@@ -198,4 +198,30 @@ func TestDeriveFindings_CNG(t *testing.T) {
 			t.Error("관측되지 않은 ML-KEM이 파생 뷰에 나타났다 — 없는 것을 지어냈다")
 		}
 	}
+	// readiness는 판정이 아니라 관측의 요약이다. 서명만 있고 KEM은 없는 것이 이 노드의 사실이다.
+	if got := f.GetPqcReadiness(); got != "네이티브(서명만 — KEM 미관측)" {
+		t.Errorf("pqc_readiness = %q — 실측은 ML-DSA 있음·ML-KEM 없음이다", got)
+	}
+	// CNG의 FIPS 모드는 알고리즘 열거로 알 수 없다 — 모른다고 적어야 한다(§2.5).
+	if got := f.GetFipsValidation(); got != "unknown" {
+		t.Errorf("fips_validation = %q — 관측하지 않은 것을 단정했다", got)
+	}
+}
+
+// 알고리즘을 하나도 못 본 CNG 결과는 "고전뿐"이 아니라 **모른다**여야 한다(§2.6 갭 ≠ 부재).
+func TestDeriveFindings_CNG_NoAlgorithmsIsUnknown(t *testing.T) {
+	cbom := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.6","components":[
+      {"type":"cryptographic-asset","name":"cng-providers","properties":[
+        {"name":"pqcota:crypto_runtime","value":"cng"},
+        {"name":"pqcota:cng.provider_set","value":"Microsoft Primitive Provider"}]}]}`)
+	fs, err := normalize.DeriveFindings(&discoveryv1.CollectionResult{
+		Envelope:      &commonv1.Envelope{TargetNodeId: "cmdb://win-01"},
+		CbomCyclonedx: cbom,
+	}, "snap-1", "ruleset-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fs[0].GetPqcReadiness(); got != "unknown" {
+		t.Errorf("알고리즘 미관측인데 readiness = %q — 못 본 것을 없는 것으로 적었다", got)
+	}
 }

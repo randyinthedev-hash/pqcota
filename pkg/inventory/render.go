@@ -58,6 +58,11 @@ func detailOf(f *discoveryv1.Finding) string {
 			f.GetOpenssl().GetVersion(), short(f.GetOpenssl().GetBindingMode().String(), "OPENSSL_BINDING_MODE_"))
 	case f.GetJca() != nil:
 		detail = fmt.Sprintf("providers=%d %s", len(f.GetJca().GetProviderSet()), f.GetPqcReadiness())
+	case f.GetCng() != nil:
+		// JCA와 같은 모양. 알고리즘 개수를 함께 내는 이유는 CNG의 provider 이름이 전부
+		// Microsoft라 개수만으로는 노드가 갈리지 않기 때문이다(실측: 9개가 전부 같은 벤더).
+		detail = fmt.Sprintf("providers=%d algorithms=%d %s",
+			len(f.GetCng().GetProviderSet()), len(f.GetCng().GetAlgorithms()), f.GetPqcReadiness())
 	}
 	if ak := f.GetAppKeys(); len(ak) > 0 {
 		detail += "  @" + strings.Join(ak, ",") // 자산이 어느 앱 것인지(§1.5) — 공유 .so면 다중 앱

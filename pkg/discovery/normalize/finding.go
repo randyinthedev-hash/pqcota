@@ -74,10 +74,12 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 			// CNG는 JCA와 같은 provider 축이다(수용 원칙 §2.1). provider 이름만으로는
 			// "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없어(실측: provider 9개가 전부
 			// Microsoft 이름) 알고리즘 목록도 함께 파생한다.
+			algs := cngAlgorithms(props["pqcota:cng.algorithms"])
 			f.RuntimeAxes = &discoveryv1.Finding_Cng{Cng: &discoveryv1.CngAxes{
 				ProviderSet: splitCSV(props["pqcota:cng.provider_set"]),
-				Algorithms:  cngAlgorithms(props["pqcota:cng.algorithms"]),
+				Algorithms:  algs,
 			}}
+			f.FipsValidation, f.PqcReadiness = cngEnrichment(algs)
 		}
 
 		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산이 어느 앱 것인지(§1.5) — 어느 앱(들)의 크립토인가
@@ -219,4 +221,42 @@ func cngAlgorithms(s string) []*discoveryv1.CngAlgorithm {
 		out = append(out, &discoveryv1.CngAlgorithm{Name: name, Class: strings.TrimSpace(class)})
 	}
 	return out
+}
+
+// cngEnrichment — 관측된 알고리즘 이름을 PQC 레지스트리와 대조해 readiness를 파생한다(§1.2 —
+// 규칙이 한 곳에 있어야 재계산으로 재현된다).
+//
+// **판정이 아니라 관측의 요약이다.** "이 노드는 위험하다"가 아니라 "이 이름들이 열거됐다"를
+// 줄여 적는다(아키텍처 §6 무판단 원칙). 실측이 보인 모양이 정확히 이 갈래였다 — Windows 11
+// 26200은 ML-DSA는 열거하고 ML-KEM은 열거하지 않는다.
+func cngEnrichment(algs []*discoveryv1.CngAlgorithm) (fips, readiness string) {
+	// CNG의 FIPS 모드 여부는 알고리즘 열거로 알 수 없다 — 관측하지 않은 것을 적지 않는다(§2.5).
+	fips = "unknown"
+
+	var hasKEM, hasSig bool
+	for _, a := range algs {
+		pqc, ok := registry.MatchPQC(a.GetName())
+		if !ok {
+			continue
+		}
+		switch pqc.Kind {
+		case registry.KindKEM:
+			hasKEM = true
+		case registry.KindSignature:
+			hasSig = true
+		}
+	}
+	switch {
+	case hasKEM && hasSig:
+		readiness = "네이티브(KEM·서명)"
+	case hasSig:
+		readiness = "네이티브(서명만 — KEM 미관측)"
+	case hasKEM:
+		readiness = "네이티브(KEM만 — 서명 미관측)"
+	case len(algs) == 0:
+		readiness = "unknown" // 알고리즘을 못 봤다. 없다는 뜻이 아니다(§2.6)
+	default:
+		readiness = "없음(관측된 것은 고전뿐)"
+	}
+	return fips, readiness
 }
