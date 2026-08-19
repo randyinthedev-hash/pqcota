@@ -26,7 +26,6 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.6.0 (planned)** — **CNG discovery**: a Windows collector (`BCryptEnumProviders` · registry introspection) fills `CngAxes` so the assets converge into the inventory. (The schema was already reserved in v0.1.0 — this release is the "code that fills it".) Design review: [Designs under review §2.2](docs/under-review.en.md).
 - **v0.7.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
 
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/under-review.en.md).
@@ -47,6 +46,67 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.6.0 — Observing Windows CNG (2026-08-19)
+**Goal** — fill `CngAxes`, which v0.1.0 **reserved as schema only**. Measure it on real Windows and
+confirm the observation reaches the inventory screen. This release closes the state where the
+contract had a slot but no code to fill it.
+
+### Built
+
+- **`pqcota-cngscan` · [cng-collector](discovery/collectors/cng/README.md) (Korean)** — calls
+  `bcrypt.dll` directly (`BCryptEnumRegisteredProviders`, `BCryptEnumAlgorithms`). It does not invoke
+  `certutil`, PowerShell, or WMI — on servers where script execution is blocked by policy, a failed
+  observation must not scatter into "environment problems" (§2.3). **Off Windows it emits a gap, not
+  an empty result**, and exits 0.
+- **`CngAxes.algorithms` and `CngAlgorithm`** — added after the measurement, with new field numbers
+  (purely additive), exactly as the v0.1.0 reservation note prescribed. Provider names alone do not
+  answer the question (below).
+- **`COLLECTION_LAYER_CNG_INTROSPECTION`** — for the same reason JCA has its own layer. It is neither
+  process nor artifact but **a query of the providers registered on the machine**, so what it fails to
+  see differs from every other layer.
+- **The screen** — the file view and the inventory view both render CNG assets. `readiness` is derived
+  through `registry.MatchPQC` and is **a summary of the observation, not a verdict** (architecture §6).
+- **A Windows cross-compilation gate** — `make build` and CI now also build windows/amd64. It was put
+  in place **before any Windows code was written**: Linux-only code leaking outside its build tag
+  breaks only on Windows, and only this gate catches that.
+- **A sample** — `examples/data/results/node-d-cng.json`. The demo is six Linux containers and cannot
+  host a Windows node, so a real measurement rides in as a sample that runs with the Go toolchain
+  alone (the machine fingerprint was removed).
+
+### Learned
+
+- **The CNG on Windows 11 Pro 25H2 (build 26200) has `ML-DSA` and does not have `ML-KEM`.** Nine
+  providers and fifty algorithms were observed. Signatures can go post-quantum; **TLS key exchange
+  cannot** — that is this node's fact, and it is not generalized to other builds.
+- **Provider names tell nodes apart not at all.** All nine observed are `Microsoft …` names, so the
+  capability difference between nodes appears only in the algorithm list. That is the evidence behind
+  adding the algorithm axis to the contract.
+- **`dwClass` is an interface constant, not the operation bitmask used to request enumeration.** The
+  values overlap (both have a 4), so 18 of 50 came back with an empty class and the five DH/ECDH
+  entries were labelled `asymmetric-encryption` **instead of** `secret-agreement`. A rule that leaves
+  the unknown blank does not save you: **overlapping values fail silently.** Classification buried
+  inside an OS call cannot be caught without the real hardware — it was pulled out into a pure
+  function and pinned to the measurement.
+- **Adding one runtime means two places to render.** Had this been closed at the derived view, the
+  file view and the inventory view would both have shipped **blank**. An observation that never
+  reaches the screen is the same as one never written down.
+- **CNG's FIPS mode cannot be known from an algorithm enumeration** — `fips_validation` is `unknown` (§2.5).
+
+### Fixed
+
+- **Windows nodes hung on the hostname**(v0.1.0–v0.5.0; surfaced by the first Windows observation).
+
+  **What was wrong** — machine fingerprinting only read `/etc/machine-id` and DMI. Those paths do not
+  exist on Windows, so every field came back empty and the last-resort `fqdn` became the anchor.
+
+  **What came out wrong** — the first measurement's `derived_from` was `fqdn`. **Rename the host and
+  the same machine becomes a different node**, splitting its history. Linux nodes never showed this
+  because they were already on `machine-id`.
+
+  **What changes** — only the *source* of the fingerprint is split per OS; the rules stay in one
+  place. Windows reads the registry's `MachineGuid` directly. `hardware_uuid` stays **empty** for now
+  — it lives in SMBIOS, and what cannot be read is not invented (§2.5).
 
 ## v0.5.0 — Aligning the module path with the repository address (2026-08-18)
 **Goal** — let anyone consuming the contract start with a single `go get`, and make the documents and
