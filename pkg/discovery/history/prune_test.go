@@ -30,7 +30,7 @@ func seed(t *testing.T, st *history.MemStore, node string, ages []time.Duration)
 			t.Fatal(err)
 		}
 		if !s.Created {
-			t.Fatalf("내용이 다르므로 새 스냅샷이어야 함: %s", s.ID)
+			t.Fatalf("different content must produce a new snapshot: %s", s.ID)
 		}
 		out = append(out, s)
 	}
@@ -42,7 +42,7 @@ func TestPruneRequiresPolicy(t *testing.T) {
 	st := history.NewMemStore()
 	seed(t, st, "n1", []time.Duration{72 * time.Hour, time.Hour})
 	if _, err := st.Prune(history.Policy{}, true); !errors.Is(err, history.ErrNoPolicy) {
-		t.Errorf("빈 정책은 ErrNoPolicy여야 함, 실제 %v", err)
+		t.Errorf("an empty policy must be ErrNoPolicy, got %v", err)
 	}
 }
 
@@ -56,13 +56,13 @@ func TestPruneDryRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	if s, _ := rep.Total(); s != 2 {
-		t.Errorf("절단 계획 = %d건, want 2", s)
+		t.Errorf("pruning plan = %d, want 2", s)
 	}
 	if snaps, _ := st.Snapshots("n1"); len(snaps) != 3 {
-		t.Errorf("dry-run인데 실제로 지워짐: %d건 남음, want 3", len(snaps))
+		t.Errorf("dry-run actually deleted: %d left, want 3", len(snaps))
 	}
 	if ev, _ := st.RetentionEvents("n1"); len(ev) != 0 {
-		t.Error("dry-run은 절단 기록을 남기지 않아야 함")
+		t.Error("a dry-run must not leave a prune record")
 	}
 }
 
@@ -76,14 +76,14 @@ func TestPruneNeverDeletesLatest(t *testing.T) {
 		t.Fatal(err)
 	}
 	if s, _ := rep.Total(); s != 1 {
-		t.Errorf("절단 = %d건, want 1 (최신 1건은 보존)", s)
+		t.Errorf("pruned = %d, want 1 (the latest one is kept)", s)
 	}
 	left, _ := st.Snapshots("n1")
 	if len(left) != 1 || left[0].ID != snaps[1].ID {
-		t.Errorf("최신이 남아야 함: %+v", left)
+		t.Errorf("the latest must remain: %+v", left)
 	}
 	if latest, _ := st.Latest("n1"); latest == nil {
-		t.Error("Latest가 사라지면 인벤토리 뷰가 깨진다")
+		t.Error("if Latest disappears the inventory view breaks")
 	}
 }
 
@@ -99,10 +99,10 @@ func TestPruneConservativeWithBothAxes(t *testing.T) {
 		t.Fatal(err)
 	}
 	if s, _ := rep.Total(); s != 1 {
-		t.Errorf("절단 = %d건, want 1 (keep-last가 최근 3개를 보존)", s)
+		t.Errorf("pruned = %d, want 1 (keep-last keeps the most recent 3)", s)
 	}
 	if left, _ := st.Snapshots("n1"); len(left) != 3 {
-		t.Errorf("남은 = %d건, want 3", len(left))
+		t.Errorf("remaining = %d, want 3", len(left))
 	}
 }
 
@@ -116,12 +116,12 @@ func TestPruneRecordsEvent(t *testing.T) {
 	}
 	ev, _ := st.RetentionEvents("n1")
 	if len(ev) != 1 {
-		t.Fatalf("절단 기록 = %d건, want 1", len(ev))
+		t.Fatalf("prune records = %d, want 1", len(ev))
 	}
 	if ev[0].Snapshots != 2 || ev[0].Observations != 2 {
-		t.Errorf("기록 내용 불일치: %+v", ev[0])
+		t.Errorf("record content mismatch: %+v", ev[0])
 	}
 	if ev[0].Policy == "" || ev[0].PrunedUpTo.IsZero() {
-		t.Errorf("어떤 정책으로 어디까지 잘랐는지 남아야 함: %+v", ev[0])
+		t.Errorf("which policy cut how far must be recorded: %+v", ev[0])
 	}
 }

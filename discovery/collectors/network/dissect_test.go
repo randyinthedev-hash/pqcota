@@ -52,14 +52,14 @@ func ethIPv6TCP(srcPort, dstPort uint16, payload []byte) []byte {
 func TestDissectAndParse_IPv6(t *testing.T) {
 	seg, ok := network.DissectTCPPayload(ethIPv6TCP(40000, 8443, serverHelloX25519MLKEM()))
 	if !ok {
-		t.Fatal("IPv6 TCP 세그먼트 디섹션 실패")
+		t.Fatal("dissecting the IPv6 TCP segment failed")
 	}
 	if seg.DstPort != 8443 {
-		t.Errorf("포트 오류: %+v", seg)
+		t.Errorf("wrong ports: %+v", seg)
 	}
 	hs, ok := network.ParseHandshakePayload(seg.Payload)
 	if !ok || hs.NegotiatedGroup != "X25519MLKEM768" {
-		t.Errorf("IPv6 핸드셰이크 파싱 오류: %+v", hs)
+		t.Errorf("wrong IPv6 handshake parse: %+v", hs)
 	}
 }
 
@@ -68,17 +68,17 @@ func TestDissectAndParse_TLS(t *testing.T) {
 	frame := ethIPv4TCP(40000, 8443, serverHelloX25519MLKEM())
 	seg, ok := network.DissectTCPPayload(frame)
 	if !ok {
-		t.Fatal("TCP 세그먼트 디섹션 실패")
+		t.Fatal("dissecting the TCP segment failed")
 	}
 	if seg.SrcIP != "10.0.1.10" || seg.DstIP != "10.0.1.20" || seg.DstPort != 8443 {
-		t.Errorf("종단 파싱 오류: %+v", seg)
+		t.Errorf("wrong endpoint parse: %+v", seg)
 	}
 	hs, ok := network.ParseHandshakePayload(seg.Payload)
 	if !ok {
-		t.Fatal("핸드셰이크 파싱 실패")
+		t.Fatal("parsing the handshake failed")
 	}
 	if hs.Protocol != "TLS" || hs.NegotiatedGroup != "X25519MLKEM768" {
-		t.Errorf("파싱 결과: %+v", hs)
+		t.Errorf("parse result: %+v", hs)
 	}
 }
 
@@ -86,22 +86,22 @@ func TestDissectAndParse_SSH(t *testing.T) {
 	frame := ethIPv4TCP(50000, 22, sshKexInitSntrup())
 	seg, ok := network.DissectTCPPayload(frame)
 	if !ok {
-		t.Fatal("디섹션 실패")
+		t.Fatal("dissection failed")
 	}
 	hs, ok := network.ParseHandshakePayload(seg.Payload)
 	if !ok || hs.Protocol != "SSH" {
-		t.Fatalf("SSH 파싱 실패: %+v", hs)
+		t.Fatalf("parsing SSH failed: %+v", hs)
 	}
 }
 
 func TestDissect_skipsNonTCP(t *testing.T) {
 	// 페이로드 없는 세그먼트(SYN 등) → 스킵.
 	if _, ok := network.DissectTCPPayload(ethIPv4TCP(1, 2, nil)); ok {
-		t.Error("빈 페이로드는 스킵해야")
+		t.Error("an empty payload must be skipped")
 	}
 	// 너무 짧은 프레임 → 스킵.
 	if _, ok := network.DissectTCPPayload([]byte{1, 2, 3}); ok {
-		t.Error("절단 프레임은 스킵해야")
+		t.Error("a truncated frame must be skipped")
 	}
 }
 
@@ -116,16 +116,16 @@ func TestCollect_degradesOnCaptureUnavailable(t *testing.T) {
 	svc := network.NewService(errSource{err: fmt.Errorf("no CAP_NET_RAW: %w", network.ErrCaptureUnavailable)}, nil)
 	fs := &fakeStream{}
 	if err := svc.Collect(&discoveryv1.CollectRequest{TargetNodeIds: []string{"web-01"}}, fs); err != nil {
-		t.Fatalf("강등은 RPC 실패가 아니어야: %v", err)
+		t.Fatalf("a degraded result must not be an RPC failure: %v", err)
 	}
 	if len(fs.sent) != 1 {
-		t.Fatalf("노드별 결과 1개여야, got %d", len(fs.sent))
+		t.Fatalf("one result per node expected, got %d", len(fs.sent))
 	}
 	miss := fs.sent[0].GetCompleteness().GetLayersMissing()
 	if len(miss) != 1 || miss[0] != commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK {
-		t.Errorf("NETWORK 계층 갭이어야: %v", miss)
+		t.Errorf("the gap must be at the NETWORK layer: %v", miss)
 	}
 	if len(fs.sent[0].GetObservedEdges()) != 0 {
-		t.Error("강등 결과엔 엣지 없음(부재 아님, 미관측)")
+		t.Error("a degraded result carries no edges (not absent, not observed)")
 	}
 }

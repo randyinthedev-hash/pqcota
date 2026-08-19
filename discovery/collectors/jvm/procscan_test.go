@@ -35,26 +35,26 @@ OS_ARCH="x86_64"`
 		t.Errorf("version = %q, want 17.0.9", got)
 	}
 	if got := parseReleaseVersion("OS_ARCH=\"x86_64\"\n"); got != "" {
-		t.Errorf("JAVA_VERSION 없으면 빈 문자열이어야 함(추측 금지), got %q", got)
+		t.Errorf("without JAVA_VERSION it must be empty (no guessing), got %q", got)
 	}
 }
 
 func TestJavaBinFor(t *testing.T) {
 	if got := javaBinFor("/opt/jdk", "/opt/jdk/bin/java"); got != "/opt/jdk/bin/java" {
-		t.Errorf("home 있으면 <home>/bin/java: %q", got)
+		t.Errorf("with a home it must be <home>/bin/java: %q", got)
 	}
 	// home 못 짚으면 exe로 폴백(그래도 attach 시도는 가능)
 	if got := javaBinFor("", "/app/embedded-java"); got != "/app/embedded-java" {
-		t.Errorf("home 없으면 exe 폴백: %q", got)
+		t.Errorf("without a home it must fall back to exe: %q", got)
 	}
 }
 
 func TestIsJavaExe(t *testing.T) {
 	if !isJavaExe("/opt/jdk/bin/java") {
-		t.Error("java 런처를 인식해야 함")
+		t.Error("a java launcher must be recognised")
 	}
 	if isJavaExe("/app/myserver") {
-		t.Error("java 아닌 것을 java로 보면 안 됨")
+		t.Error("something that is not java must not be taken for java")
 	}
 }
 
@@ -80,19 +80,19 @@ func TestParseMainId(t *testing.T) {
 // Ident — 앱>JAVA_HOME>Exe 우선순위. 한 JDK의 두 앱이 구별되는지가 핵심.
 func TestIdent(t *testing.T) {
 	if got := (JVMProc{App: "payment.jar", JavaHome: "/opt/jdk"}).Ident(); got != "payment.jar" {
-		t.Errorf("앱이 있으면 앱: %q", got)
+		t.Errorf("with an app it must be the app: %q", got)
 	}
 	if got := (JVMProc{JavaHome: "/opt/jdk", Exe: "/opt/jdk/bin/java"}).Ident(); got != "/opt/jdk" {
-		t.Errorf("앱 없으면 JAVA_HOME: %q", got)
+		t.Errorf("without an app it must be JAVA_HOME: %q", got)
 	}
 	if got := (JVMProc{Exe: "/x/java"}).Ident(); got != "/x/java" {
-		t.Errorf("둘 다 없으면 Exe: %q", got)
+		t.Errorf("without either it must be Exe: %q", got)
 	}
 	// ★ 한 JDK, 두 앱 → 구별되어야 한다(dedup으로 하나 사라지면 정직성 위반).
 	a := JVMProc{App: "payment.jar", JavaHome: "/opt/jdk"}
 	b := JVMProc{App: "api.jar", JavaHome: "/opt/jdk"}
 	if a.Ident() == b.Ident() {
-		t.Error("같은 JDK의 다른 앱이 같은 식별자다 — finding이 뭉개진다")
+		t.Error("two apps on the same JDK share one identifier — findings get merged")
 	}
 }
 
@@ -104,13 +104,13 @@ func TestAttachCapable(t *testing.T) {
 	has := func(p string) bool { return jdk[p] }
 
 	if !attachCapable("/opt/jdk21", has) {
-		t.Error("jdk.attach 네이티브 라이브러리가 있으면 attach 가능이어야")
+		t.Error("with the jdk.attach native library present, attach must be possible")
 	}
 	if attachCapable("/opt/jre21", has) { // 순수 JRE엔 없다
-		t.Error("순수 JRE는 ② 클라이언트 후보가 아니어야(jdk.attach 없음)")
+		t.Error("a plain JRE must not be a ② client candidate (no jdk.attach)")
 	}
 	// JAVA_HOME을 못 짚었으면 '모른다' — 가능하다고 단정하지 않는다(§2.5).
 	if attachCapable("", has) {
-		t.Error("JAVA_HOME 미상이면 attach 가능으로 단정하면 안 된다")
+		t.Error("with JAVA_HOME unknown, attach must not be assumed possible")
 	}
 }
