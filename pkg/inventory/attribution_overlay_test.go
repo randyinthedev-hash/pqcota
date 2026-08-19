@@ -26,10 +26,10 @@ func declaredInto(t *testing.T, store *history.MemStore, csv string) {
 		t.Fatal(err)
 	}
 	if rep.DeclaredAttributions == 0 {
-		t.Fatal("선언이 선언 저장소로 가지 않았다")
+		t.Fatal("the declaration did not land in the declaration store")
 	}
 	if rep.Snapshots != 0 {
-		t.Fatalf("선언이 스냅샷을 %d개 만들었다 — 노드의 상태 이력에 줄을 세우면 안 된다", rep.Snapshots)
+		t.Fatalf("the declaration created %d snapshots — it must not take a place in the node's state history", rep.Snapshots)
 	}
 }
 
@@ -56,18 +56,18 @@ func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 	declaredInto(t, store, "node_id,dst,app_key\nweb-01,10.0.0.5,사람이-적은-다른-앱\nweb-01,10.0.0.7,batch-job.service\n")
 	out := inventory.RenderDetailWith(observed(t), inventory.BuildAttributionOverlay(store))
 
-	if strings.Contains(out, "사람이-적은-다른-앱") {
-		t.Error("선언이 관측을 덮어썼다")
+	if strings.Contains(out, "another-app-written-by-a-person") {
+		t.Error("the declaration overwrote an observation")
 	}
 	if !strings.Contains(out, "@payment.service") {
-		t.Error("관측이 짚은 앱이 사라졌다")
+		t.Error("the app that observation attributed has vanished")
 	}
 	if !strings.Contains(out, "@batch-job.service(declared)") {
-		t.Error("빈 자리를 선언으로 메우지 못했다 — 메웠어도 declared 표시가 없다")
+		t.Error("the blank was not filled by the declaration — or it was, without the declared marker")
 	}
 	// 화면만 보면 관측과 구별되지 않으므로 몇 개가 선언인지 밝힌다.
 	if !strings.Contains(out, "1 of them are not observations") {
-		t.Error("몇 개가 선언으로 메워졌는지 안 밝힌다")
+		t.Error("it does not say how many were filled by declarations")
 	}
 }
 
@@ -82,10 +82,10 @@ func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 	_ = inventory.RenderDetailWith(snap, inventory.BuildAttributionOverlay(store))
 
 	if got := snap.Edges[1].GetAppKey(); got != "" {
-		t.Fatalf("저장된 엣지가 %q로 바뀌었다 — 서명이 덮는 필드다", got)
+		t.Fatalf("the stored edge changed to %q — that field is covered by the signature", got)
 	}
 	if got := snap.Edges[1].GetAppKeyKind(); got != "" {
-		t.Fatalf("저장된 엣지의 kind가 %q로 바뀌었다", got)
+		t.Fatalf("the stored edge's kind changed to %q", got)
 	}
 }
 
@@ -97,11 +97,11 @@ func TestDeclarationNeverEntersTheTimeline(t *testing.T) {
 	store := history.NewMemStore()
 	declaredInto(t, store, "web-01,10.0.0.7,batch-job.service\n") // 스냅샷 0을 안에서 검사한다
 	if nodes, _ := store.Nodes(); len(nodes) != 0 {
-		t.Fatalf("선언이 노드를 만들었다: %v", nodes)
+		t.Fatalf("the declaration created a node: %v", nodes)
 	}
 	got, err := store.Attributions()
 	if err != nil || len(got) != 1 {
-		t.Fatalf("선언 저장소에 안 들어갔다: %v %v", got, err)
+		t.Fatalf("it never reached the declaration store: %v %v", got, err)
 	}
 }
 
@@ -112,7 +112,7 @@ func TestRedeclaringOverwrites(t *testing.T) {
 	declaredInto(t, store, "web-01,10.0.0.7,second.service\n")
 	got, _ := store.Attributions()
 	if len(got) != 1 || got[0].AppKey != "second.service" {
-		t.Fatalf("다시 선언했는데 덮이지 않았다: %+v", got)
+		t.Fatalf("declaring again did not overwrite: %+v", got)
 	}
 }
 
@@ -124,7 +124,7 @@ func TestAttributionCSVRefusesWhatItCannotPlace(t *testing.T) {
 		"web-01,,app\n",      // 어느 엣지인지 모른다
 	} {
 		if _, err := declaration.ImportAttributionCSV(strings.NewReader(bad)); err == nil {
-			t.Errorf("받아들이면 안 되는 줄을 받았다: %q", strings.TrimSpace(bad))
+			t.Errorf("a row that must be refused was accepted: %q", strings.TrimSpace(bad))
 		}
 	}
 }

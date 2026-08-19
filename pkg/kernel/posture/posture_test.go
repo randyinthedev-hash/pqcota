@@ -22,8 +22,8 @@ func TestGrade(t *testing.T) {
 			t.Errorf("Grade(%q) = %q, want %q", group, got, want)
 		}
 	}
-	if posture.GradeLabel(registry.MaturityFIPS) != "표준" || posture.GradeLabel("") != "" {
-		t.Error("GradeLabel 매핑 오류")
+	if posture.GradeLabel(registry.MaturityFIPS) != "standard" || posture.GradeLabel("") != "" {
+		t.Error("GradeLabel mapping is wrong")
 	}
 }
 
@@ -47,7 +47,7 @@ func TestRecommend(t *testing.T) {
 	}
 	// 규제 자산의 고전 협상은 최우선(4).
 	if p := posture.Recommend("ECDHE-RSA", "", true).Priority; p != 4 {
-		t.Errorf("규제+고전 우선순위 = %d, want 4", p)
+		t.Errorf("regulated + classical priority = %d, want 4", p)
 	}
 }
 
@@ -81,6 +81,6 @@ func TestSymbol(t *testing.T) {
 		t.Error("PQC → 🟢")
 	}
 	if posture.Symbol(discoveryv1.QuantumPosture_QUANTUM_POSTURE_UNSPECIFIED) != "⚪" {
-		t.Error("불명 → ⚪")
+		t.Error("unknown must map to ⚪")
 	}
 }

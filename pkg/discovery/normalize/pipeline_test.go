@@ -52,10 +52,10 @@ func TestDeriveFindings(t *testing.T) {
 		t.Errorf("binding_mode = %v, want DYNAMIC", f.GetOpenssl().GetBindingMode())
 	}
 	if f.GetDerivedFromSnapshotId() != "snap-1" || f.GetRulesetVersion() != "ruleset-1" {
-		t.Errorf("파생 추적 필드 누락: %+v", f)
+		t.Errorf("the derivation-tracking fields are missing: %+v", f)
 	}
 	if f.GetId() == "" {
-		t.Error("finding id(정규화 해시) 비어 있음")
+		t.Error("the finding id (normalization hash) is empty")
 	}
 }
 
@@ -74,7 +74,7 @@ func TestDeriveFindings_MultiApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := fs[0].GetAppKeys(); len(got) != 2 || got[0] != "api.service" || got[1] != "payment.service" {
-		t.Errorf("공유 .so의 앱 여럿 파싱 실패: %v", got)
+		t.Errorf("failed to parse the several apps on a shared .so: %v", got)
 	}
 }
 
@@ -101,13 +101,13 @@ func TestDeriveFindings_JCA(t *testing.T) {
 		t.Errorf("provider_set = %v", f.GetJca().GetProviderSet())
 	}
 	if f.GetPqcReadiness() != "provider-augmented (all standard algorithms)" {
-		t.Errorf("pqc_readiness = %q (BC는 SLH-DSA 커버)", f.GetPqcReadiness())
+		t.Errorf("pqc_readiness = %q (BC does cover SLH-DSA)", f.GetPqcReadiness())
 	}
 
 	// JDK 네이티브만(SunJCE) → SLH-DSA 갭.
 	fs2, _ := normalize.DeriveFindings(jcaResult("cmdb://j2", "SUN,SunJCE"), "s", "r")
 	if got := fs2[0].GetPqcReadiness(); got != "provider-augmented (SLH-DSA gap)" {
-		t.Errorf("pqc_readiness = %q, want SLH-DSA 갭 (수용 원칙 §2.3)", got)
+		t.Errorf("pqc_readiness = %q, want the SLH-DSA gap (acceptance principles §2.3)", got)
 	}
 }
 
@@ -121,24 +121,24 @@ func TestNormalizePipeline(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(snap.Findings) != 1 {
-		t.Fatalf("dedup 실패: %d findings, want 1", len(snap.Findings))
+		t.Fatalf("dedup failed: %d findings, want 1", len(snap.Findings))
 	}
 	// 히스토리 append 확인.
 	if latest, _ := store.Latest("cmdb://n1"); latest == nil || latest.ID != "snap-1" {
-		t.Error("히스토리에 스냅샷 append 안 됨")
+		t.Error("no snapshot was appended to the history")
 	}
 
 	// 재현성: 같은 입력+ruleset → 같은 finding id(§1.2).
 	snap2, _ := normalize.Normalize([]*discoveryv1.CollectionResult{opensslResult("cmdb://n1")}, "snap-2", "cmdb://n1", "ruleset-1", store, nil)
 	if snap.Findings[0].GetId() != snap2.Findings[0].GetId() {
-		t.Error("결정론 위반: 같은 입력인데 finding id 다름")
+		t.Error("determinism broken: the same input produced different finding ids")
 	}
 	// 같은 내용을 다시 관측한 것이라 스냅샷은 늘지 않고(중복 억제) 관측 기록만 쌓인다.
 	if snaps, _ := store.Snapshots("cmdb://n1"); len(snaps) != 1 {
-		t.Errorf("같은 내용 재관측 → 스냅샷 %d건, want 1", len(snaps))
+		t.Errorf("re-observing identical content → %d snapshots, want 1", len(snaps))
 	}
 	if stats, _ := store.ObservationStats("cmdb://n1"); stats["snap-1"].Count != 2 {
-		t.Errorf("관측 횟수 = %d, want 2 (봤다는 사실은 보존)", stats["snap-1"].Count)
+		t.Errorf("observation count = %d, want 2 (the fact that we looked is kept)", stats["snap-1"].Count)
 	}
 }
 
@@ -171,11 +171,11 @@ func TestDeriveFindings_CNG(t *testing.T) {
 	}
 	// provider 순서는 우선순위다 — 파생에서 흔들리면 안 된다.
 	if got := f.GetCng().GetProviderSet(); len(got) != 3 || got[0] != "Microsoft Key Protection Provider" {
-		t.Errorf("provider_set이 순서대로 오지 않았다: %v", got)
+		t.Errorf("provider_set did not arrive in order: %v", got)
 	}
 	algs := f.GetCng().GetAlgorithms()
 	if len(algs) != 5 {
-		t.Fatalf("알고리즘 %d개, 5개여야 한다", len(algs))
+		t.Fatalf("%d algorithms, want 5", len(algs))
 	}
 	var mldsa, ecdh string
 	for _, a := range algs {
@@ -188,23 +188,23 @@ func TestDeriveFindings_CNG(t *testing.T) {
 	}
 	// 이 두 줄이 이 릴리스의 질문에 답한다: 서명은 양자내성으로 갈 수 있고, 키 교환은 못 간다.
 	if mldsa != "signature" {
-		t.Errorf("ML-DSA가 파생 뷰까지 오지 않았다(class=%q) — 원본에만 있으면 조회되지 않는다", mldsa)
+		t.Errorf("ML-DSA did not reach the derived view (class=%q) — living only in the raw capture means it is never queried", mldsa)
 	}
 	if ecdh != "secret-agreement" {
-		t.Errorf("ECDH_P256 종류가 %q — 실측은 secret-agreement다", ecdh)
+		t.Errorf("ECDH_P256 has class %q — the measurement says secret-agreement", ecdh)
 	}
 	for _, a := range algs {
 		if a.GetName() == "ML-KEM" {
-			t.Error("관측되지 않은 ML-KEM이 파생 뷰에 나타났다 — 없는 것을 지어냈다")
+			t.Error("an ML-KEM that was never observed appeared in the derived view — something absent was invented")
 		}
 	}
 	// readiness는 판정이 아니라 관측의 요약이다. 서명만 있고 KEM은 없는 것이 이 노드의 사실이다.
 	if got := f.GetPqcReadiness(); got != "native (signature only — no KEM observed)" {
-		t.Errorf("pqc_readiness = %q — 실측은 ML-DSA 있음·ML-KEM 없음이다", got)
+		t.Errorf("pqc_readiness = %q — the measurement is ML-DSA present, ML-KEM absent", got)
 	}
 	// CNG의 FIPS 모드는 알고리즘 열거로 알 수 없다 — 모른다고 적어야 한다(§2.5).
 	if got := f.GetFipsValidation(); got != "unknown" {
-		t.Errorf("fips_validation = %q — 관측하지 않은 것을 단정했다", got)
+		t.Errorf("fips_validation = %q — asserting something that was never observed", got)
 	}
 }
 
@@ -222,6 +222,6 @@ func TestDeriveFindings_CNG_NoAlgorithmsIsUnknown(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := fs[0].GetPqcReadiness(); got != "unknown" {
-		t.Errorf("알고리즘 미관측인데 readiness = %q — 못 본 것을 없는 것으로 적었다", got)
+		t.Errorf("no algorithm was observed, yet readiness = %q — recording the unseen as absent", got)
 	}
 }

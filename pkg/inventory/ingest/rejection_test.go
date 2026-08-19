@@ -29,13 +29,13 @@ func TestRequiredModeRefusesToIngestWithoutAVerifier(t *testing.T) {
 	o := opts(history.NewMemStore())
 	o.RequireSignature = true
 	if _, err := ingest.IngestWith([]*discoveryv1.CollectionResult{res("web-01")}, o); !errors.Is(err, ingest.ErrSignatureRequired) {
-		t.Fatalf("필수 모드인데 검증자 없이 적재됐다: %v", err)
+		t.Fatalf("required mode, yet it ingested without a verifier: %v", err)
 	}
 
 	// 검증자가 있으면 통과한다.
 	o.VerifySig = func(*discoveryv1.CollectionResult) bool { return true }
 	if _, err := ingest.IngestWith([]*discoveryv1.CollectionResult{res("web-01")}, o); err != nil {
-		t.Fatalf("검증자가 있는데 막혔다: %v", err)
+		t.Fatalf("a verifier was present, yet it was blocked: %v", err)
 	}
 }
 
@@ -49,13 +49,13 @@ func TestUnverifiedIsNotTheSameAsPassed(t *testing.T) {
 		t.Fatal(err)
 	}
 	if rep.Unverified != 1 {
-		t.Errorf("검증하지 않은 건수가 %d — 1이어야 한다", rep.Unverified)
+		t.Errorf("unverified count is %d — must be 1", rep.Unverified)
 	}
 	if rep.Rejected != 0 {
-		t.Errorf("검증 실패로 셌다(%d) — 실패가 아니라 확인하지 못한 것이다", rep.Rejected)
+		t.Errorf("counted as a verification failure (%d) — it did not fail, it was never checked", rep.Rejected)
 	}
 	if rep.Accepted != 1 {
-		t.Errorf("적재되지 않았다(%d) — 확인하지 못한 것이 거절은 아니다", rep.Accepted)
+		t.Errorf("it was not ingested (%d) — unchecked is not rejected", rep.Accepted)
 	}
 }
 
@@ -81,7 +81,7 @@ func TestRejectionsOutliveTheProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	if rep.OffScope != 2 {
-		t.Fatalf("off-scope %d건 — 2건이어야 한다", rep.OffScope)
+		t.Fatalf("%d off-scope — must be 2", rep.OffScope)
 	}
 
 	got, err := store.Rejections(0)
@@ -89,23 +89,23 @@ func TestRejectionsOutliveTheProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(got) != 2 {
-		t.Fatalf("거절 기록 %d건 — 2건이어야 한다: %+v", len(got), got)
+		t.Fatalf("%d rejection records — must be 2: %+v", len(got), got)
 	}
 	for _, r := range got {
 		if r.Kind != history.RejectOffScope {
-			t.Errorf("갈래가 %q", r.Kind)
+			t.Errorf("kind is %q", r.Kind)
 		}
 		if r.Reason == "" {
-			t.Error("사유가 비었다 — 기록만 있고 왜인지 없으면 못 읽는다")
+			t.Error("the reason is empty — a record without a why cannot be read")
 		}
 		if r.CollectorID == "" {
-			t.Error("collector를 안 남겼다 — 어느 러너가 잘못 설정됐는지 못 짚는다")
+			t.Error("the collector was not recorded — you cannot tell which runner is misconfigured")
 		}
 		if r.CanonicalHash == "" {
-			t.Error("지문이 없다 — 같은 것이 반복해 오는지 셀 수 없다")
+			t.Error("there is no fingerprint — you cannot count whether the same thing keeps arriving")
 		}
 		if r.At.IsZero() {
-			t.Error("언제인지 없다")
+			t.Error("there is no timestamp")
 		}
 	}
 }
@@ -116,6 +116,6 @@ func TestRejectionStoreIsOptional(t *testing.T) {
 	o.Master = scope.NewMaster([]string{"web-01"})
 	rep, err := ingest.IngestWith([]*discoveryv1.CollectionResult{res("db-99")}, o)
 	if err != nil || rep.OffScope != 1 {
-		t.Fatalf("남길 곳 없이 적재가 달라졌다: %+v %v", rep, err)
+		t.Fatalf("ingest behaved differently when there was nowhere to record: %+v %v", rep, err)
 	}
 }

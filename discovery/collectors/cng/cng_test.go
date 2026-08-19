@@ -21,7 +21,7 @@ func TestProviderOrderIsPreserved(t *testing.T) {
 	got := providerSetProp(t, res.GetCbomCyclonedx())
 	want := "Microsoft Primitive Provider,Vendor KSP,Microsoft Smart Card Key Storage Provider"
 	if got != want {
-		t.Errorf("provider_set이 관측 순서와 다르다:\n got %q\nwant %q", got, want)
+		t.Errorf("provider_set does not match the observed order:\n got %q\nwant %q", got, want)
 	}
 }
 
@@ -29,19 +29,19 @@ func TestProviderOrderIsPreserved(t *testing.T) {
 func TestUnobservedIsNotAbsence(t *testing.T) {
 	failed := BuildResult("win-01", Observation{}, ErrNotWindows)
 	if len(failed.GetCompleteness().GetLayersCovered()) != 0 {
-		t.Error("관측하지 못했는데 계층을 커버로 셌다 — 인벤토리에서 부재로 읽힌다")
+		t.Error("nothing was observed, yet the layer counts as covered — the inventory would read that as absence")
 	}
 	if !strings.Contains(failed.GetCompleteness().GetNote(), "not absent, just unobserved") {
-		t.Errorf("못 봤다는 사실이 노트에 없다: %q", failed.GetCompleteness().GetNote())
+		t.Errorf("the note does not say that nothing was seen: %q", failed.GetCompleteness().GetNote())
 	}
 	if len(failed.GetCbomCyclonedx()) != 0 || len(failed.GetRawCapture()) != 0 {
-		t.Error("관측하지 못했는데 본문이 실렸다")
+		t.Error("nothing was observed, yet a body was attached")
 	}
 
 	empty := BuildResult("win-01", Observation{}, nil)
 	covered := empty.GetCompleteness().GetLayersCovered()
 	if len(covered) != 1 || covered[0] != commonv1.CollectionLayer_COLLECTION_LAYER_CNG_INTROSPECTION {
-		t.Errorf("봤는데 없었던 것은 커버다 — covered=%v", covered)
+		t.Errorf("looked and found none — that counts as covered: covered=%v", covered)
 	}
 }
 
@@ -49,11 +49,11 @@ func TestUnobservedIsNotAbsence(t *testing.T) {
 func TestRawFormatEmptyWithoutRaw(t *testing.T) {
 	res := BuildResult("win-01", Observation{}, nil)
 	if res.GetRawFormat() != "" {
-		t.Errorf("원본이 없는데 형식 이름이 붙었다: %q", res.GetRawFormat())
+		t.Errorf("a raw format name is set although there is no raw capture: %q", res.GetRawFormat())
 	}
 	full := BuildResult("win-01", Observation{Providers: []string{"P"}}, nil)
 	if full.GetRawFormat() == "" || len(full.GetRawCapture()) == 0 {
-		t.Error("관측했으면 원본과 형식 이름이 함께 있어야 한다")
+		t.Error("once observed, the raw capture and its format name must both be present")
 	}
 }
 
@@ -69,14 +69,14 @@ func TestAlgorithmsRideOnBothLanes(t *testing.T) {
 	res := BuildResult("win-01", obs, nil)
 
 	if got := propValue(t, res.GetCbomCyclonedx(), "pqcota:cng.algorithms"); got != "ML-DSA:signature,SHA256:hash" {
-		t.Errorf("파생 레인에 실린 알고리즘이 다르다: %q", got)
+		t.Errorf("the algorithms carried on the derived lane differ: %q", got)
 	}
 	var back Observation
 	if err := json.Unmarshal(res.GetRawCapture(), &back); err != nil {
-		t.Fatalf("원본이 다시 읽히지 않는다: %v", err)
+		t.Fatalf("the raw capture cannot be read back: %v", err)
 	}
 	if len(back.Algorithms) != 2 {
-		t.Errorf("관측한 알고리즘이 원본에서 사라졌다: %+v", back.Algorithms)
+		t.Errorf("an observed algorithm vanished from the raw capture: %+v", back.Algorithms)
 	}
 }
 
@@ -85,15 +85,15 @@ func TestUnknownClassKeepsTheAlgorithm(t *testing.T) {
 	// 종류가 빈 값인 관측(모르는 dwClass) → 표기에서도 빈 값 → 되읽어도 이름은 그대로.
 	encoded := EncodeAlgorithms([]Algorithm{{Name: "FUTURE-ALG"}, {Name: "AES", Class: "cipher"}})
 	if encoded != "FUTURE-ALG:,AES:cipher" {
-		t.Fatalf("표기가 다르다: %q", encoded)
+		t.Fatalf("the encoding differs: %q", encoded)
 	}
 	back := DecodeAlgorithms(encoded)
 	if len(back) != 2 || back[0].Name != "FUTURE-ALG" || back[0].Class != "" {
-		t.Errorf("모르는 종류 때문에 알고리즘이 사라지거나 종류가 지어내졌다: %+v", back)
+		t.Errorf("an unknown class either dropped the algorithm or invented a class: %+v", back)
 	}
 	// 이름 없는 항목은 나를 것이 없다 — 빈 줄이 알고리즘 하나로 세어지면 개수가 거짓이 된다.
 	if got := DecodeAlgorithms(",:cipher,AES:cipher"); len(got) != 1 || got[0].Name != "AES" {
-		t.Errorf("이름 없는 항목이 알고리즘으로 세어졌다: %+v", got)
+		t.Errorf("a nameless entry was counted as an algorithm: %+v", got)
 	}
 }
 
@@ -113,7 +113,7 @@ func propValue(t *testing.T, cyclone []byte, key string) string {
 		} `json:"components"`
 	}
 	if err := json.Unmarshal(cyclone, &doc); err != nil {
-		t.Fatalf("CycloneDX 파싱 실패: %v", err)
+		t.Fatalf("failed to parse the CycloneDX: %v", err)
 	}
 	for _, c := range doc.Components {
 		for _, p := range c.Properties {
@@ -122,7 +122,7 @@ func propValue(t *testing.T, cyclone []byte, key string) string {
 			}
 		}
 	}
-	t.Fatalf("%s 속성이 없다", key)
+	t.Fatalf("property %s is missing", key)
 	return ""
 }
 
@@ -152,7 +152,7 @@ func TestAlgorithmClassFollowsTheInterfaceConstants(t *testing.T) {
 	// 모르는 값을 아는 것으로 적지 않는다(§2.5). 0과 미래 값 둘 다 빈 값이어야 한다.
 	for _, unknown := range []uint32{0, 8, 0x10, 0x40, 99} {
 		if got := AlgorithmClass(unknown); got != "" {
-			t.Errorf("모르는 dwClass=%d에 종류를 붙였다: %q", unknown, got)
+			t.Errorf("an unknown dwClass=%d was given a class: %q", unknown, got)
 		}
 	}
 }
@@ -167,17 +167,17 @@ func TestAlgorithmProvidersRoundTrip(t *testing.T) {
 	enc := EncodeAlgorithms(algs)
 	const want = "ML-DSA:signature:Microsoft Primitive Provider|Microsoft Software Key Storage Provider,SHA256:hash"
 	if enc != want {
-		t.Fatalf("표기가 다르다:\n got %q\nwant %q", enc, want)
+		t.Fatalf("the encoding differs:\n got %q\nwant %q", enc, want)
 	}
 	back := DecodeAlgorithms(enc)
 	if len(back) != 2 {
-		t.Fatalf("%d개로 되읽혔다", len(back))
+		t.Fatalf("read back as %d entries", len(back))
 	}
 	if len(back[0].Providers) != 2 || back[0].Providers[0] != "Microsoft Primitive Provider" {
-		t.Errorf("provider가 순서대로 되읽히지 않았다: %v", back[0].Providers)
+		t.Errorf("providers did not read back in order: %v", back[0].Providers)
 	}
 	// **못 물은 것과 "없더라"를 같게 적지 않는다** — 셋째 칸이 없으면 빈 목록으로 남는다.
 	if back[1].Providers != nil {
-		t.Errorf("못 물은 자리에 provider가 생겼다: %v", back[1].Providers)
+		t.Errorf("providers appeared where none were asked for: %v", back[1].Providers)
 	}
 }
