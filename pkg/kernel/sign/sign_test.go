@@ -29,26 +29,26 @@ func TestSignVerify(t *testing.T) {
 	res.Envelope.Signature = sig
 
 	if !sign.Verify([]string{pub}, res) {
-		t.Error("정상 서명이 검증 실패")
+		t.Error("a valid signature failed verification")
 	}
 
 	// 변조(CBOM 변경) → 검증 실패.
 	res.CbomCyclonedx = []byte(`{"a":2}`)
 	if sign.Verify([]string{pub}, res) {
-		t.Error("변조된 결과가 검증 통과 — 무결성 실패")
+		t.Error("a tampered result passed verification — integrity failed")
 	}
 
 	// 다른 키 → 실패.
 	res.CbomCyclonedx = []byte(`{"a":1}`)
 	otherPub, _, _ := sign.Generate()
 	if sign.Verify([]string{otherPub}, res) {
-		t.Error("다른 공개키로 검증 통과")
+		t.Error("it passed verification with a different public key")
 	}
 
 	// 서명 없음 → 실패.
 	res.Envelope.Signature = ""
 	if sign.Verify([]string{pub}, res) {
-		t.Error("무서명이 검증 통과")
+		t.Error("an unsigned result passed verification")
 	}
 }
 
@@ -73,22 +73,22 @@ func TestVerifyFromBindsKeysToCollectors(t *testing.T) {
 	keys := map[string]string{"collector-a": pubA, "collector-b": pubB}
 
 	if !sign.Verify([]string{pubA, pubB}, res) {
-		t.Fatal("전제 확인: 목록 검증은 통과한다 — 그래서 VerifyFrom이 필요하다")
+		t.Fatal("premise check: verification against the list passes — which is why VerifyFrom is needed")
 	}
 	if sign.VerifyFrom(keys, res) {
-		t.Fatal("A의 키로 서명한 것이 collector-b 이름을 달고 통과했다")
+		t.Fatal("something signed with A's key passed under the name collector-b")
 	}
 
 	// 이름을 바로잡으면 통과한다.
 	res.Envelope.CollectorId = "collector-a"
 	res.Envelope.Signature, _ = sign.Sign(privA, res)
 	if !sign.VerifyFrom(keys, res) {
-		t.Fatal("자기 이름·자기 키인데 거절됐다")
+		t.Fatal("its own name with its own key was rejected")
 	}
 	// 등록되지 않은 collector는 받지 않는다.
 	res.Envelope.CollectorId = "collector-unknown"
 	res.Envelope.Signature, _ = sign.Sign(privA, res)
 	if sign.VerifyFrom(keys, res) {
-		t.Fatal("모르는 collector의 주장을 받았다")
+		t.Fatal("a claim from an unknown collector was accepted")
 	}
 }

@@ -38,21 +38,21 @@ func TestParseDetectionMethod(t *testing.T) {
 
 		// 컴포넌트가 적은 것이 Envelope를 이긴다. Envelope는 수집 전체의 방법이고
 		// 프로퍼티는 그 자산 하나를 어떻게 봤나라 더 구체적이다. 더 약해도 그것이 사실이다.
-		{"프로퍼티가 Envelope를 이긴다 — 더 약해도", "symbol-analysis", ri, sym},
+		{"the property beats the Envelope — even when it is weaker", "symbol-analysis", ri, sym},
 
 		// 복합이면 가장 강한 것. 둘 다 사실이므로 약한 쪽으로 깎을 이유가 없다.
-		{"복합 — 강한 쪽을 택한다", "runtime-introspection+symbol-analysis", unspec, ri},
-		{"복합 — 적힌 순서와 무관하다", "symbol-analysis+runtime-introspection", unspec, ri},
-		{"복합 — artifact가 symbol-analysis보다 강하다", "symbol-analysis+artifact", unspec, art},
+		{"combined — the stronger one wins", "runtime-introspection+symbol-analysis", unspec, ri},
+		{"combined — independent of the written order", "symbol-analysis+runtime-introspection", unspec, ri},
+		{"combined — artifact is stronger than symbol-analysis", "symbol-analysis+artifact", unspec, art},
 
 		// 프로퍼티가 없으면 Envelope로 폴백한다.
-		{"프로퍼티 없음 → Envelope", "", art, art},
-		{"Envelope도 미지정 → 미지정", "", unspec, unspec},
+		{"no property → Envelope", "", art, art},
+		{"Envelope unspecified as well → unspecified", "", unspec, unspec},
 
 		// 아는 어휘가 하나도 없으면 Envelope로 폴백한다. 모르는 문자열을
 		// 그럴듯한 값으로 옮기지 않는다(§2.5 추측 금지).
-		{"모르는 어휘 → Envelope", "vendor-magic-scan", art, art},
-		{"모르는 어휘 + Envelope 미지정 → 미지정", "vendor-magic-scan", unspec, unspec},
+		{"unknown vocabulary → Envelope", "vendor-magic-scan", art, art},
+		{"unknown vocabulary with Envelope unspecified → unspecified", "vendor-magic-scan", unspec, unspec},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestDetectionMethodVocabularyDoesNotOverlap(t *testing.T) {
 	for _, a := range vocab {
 		for _, b := range vocab {
 			if a != b && strings.Contains(a, b) {
-				t.Errorf("어휘 %q가 %q를 품는다 — 부분 문자열 매칭으로는 둘이 갈리지 않는다", a, b)
+				t.Errorf("the term %q contains %q — substring matching cannot tell them apart", a, b)
 			}
 		}
 	}

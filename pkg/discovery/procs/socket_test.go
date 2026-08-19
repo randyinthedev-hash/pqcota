@@ -79,14 +79,14 @@ func TestAttributionPicksTheProcessThatOpenedTheSocket(t *testing.T) {
 
 	got := procs.AttributeRemote(f.root, "10.0.0.5", 443)
 	if got.Key != "payment.service" {
-		t.Fatalf("app_key=%q kind=%q reason=%q — 연결을 연 부모가 아니라 상속한 자식을 짚었다",
+		t.Fatalf("app_key=%q kind=%q reason=%q — it picked the child that inherited the connection, not the parent that opened it",
 			got.Key, got.Kind, got.Reason)
 	}
 	if got.Kind != "systemd-unit" {
-		t.Errorf("kind=%q — cgroup에서 뽑았으면 systemd-unit이어야 한다", got.Kind)
+		t.Errorf("kind=%q — derived from cgroup, so it must be systemd-unit", got.Kind)
 	}
 	if got.Reason != "" {
-		t.Errorf("잡았는데 사유가 남았다: %q", got.Reason)
+		t.Errorf("it was attributed but a reason was left behind: %q", got.Reason)
 	}
 }
 
@@ -99,14 +99,14 @@ func TestUnattributedIsNotNoApp(t *testing.T) {
 	f := newFakeProc(t)
 	got := procs.AttributeRemote(f.root, "10.0.0.5", 443)
 	if got.Key != "" || got.Reason != procs.ReasonSocketGone {
-		t.Errorf("닫힌 소켓: key=%q reason=%q", got.Key, got.Reason)
+		t.Errorf("closed socket: key=%q reason=%q", got.Key, got.Reason)
 	}
 
 	// ② 프로세스는 찾았는데 안정 키를 못 뽑는다(cgroup에 유닛 없음, exe 없음).
 	f2 := newFakeProc(t, lineTo10005)
 	f2.proc(t, 100, 1, "0::/", "socket:[26014316]")
 	if got := procs.AttributeRemote(f2.root, "10.0.0.5", 443); got.Reason != procs.ReasonNoAppKey {
-		t.Errorf("키 없음: key=%q reason=%q", got.Key, got.Reason)
+		t.Errorf("no key: key=%q reason=%q", got.Key, got.Reason)
 	}
 }
 
@@ -123,10 +123,10 @@ func TestAmbiguousIsNotGuessed(t *testing.T) {
 
 	got := procs.AttributeRemote(f.root, "10.0.0.5", 443)
 	if got.Key != "" {
-		t.Fatalf("둘 중 하나를 골랐다: %q", got.Key)
+		t.Fatalf("it picked one of the two: %q", got.Key)
 	}
 	if got.Reason != procs.ReasonAmbiguous {
-		t.Errorf("사유=%q — 모호하다고 적어야 한다", got.Reason)
+		t.Errorf("reason=%q — it must say that the answer is ambiguous", got.Reason)
 	}
 }
 
@@ -139,6 +139,6 @@ func TestSameAppOnBothSocketsIsNotAmbiguous(t *testing.T) {
 	f.proc(t, 101, 1, "0::/system.slice/payment.service", "socket:[26014317]")
 
 	if got := procs.AttributeRemote(f.root, "10.0.0.5", 443); got.Key != "payment.service" {
-		t.Fatalf("한 앱이 연결 둘을 연 것뿐인데 못 잡았다: key=%q reason=%q", got.Key, got.Reason)
+		t.Fatalf("one app opened two connections and it still failed to attribute: key=%q reason=%q", got.Key, got.Reason)
 	}
 }

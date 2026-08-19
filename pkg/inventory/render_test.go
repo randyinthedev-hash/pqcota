@@ -31,19 +31,19 @@ func TestRenderDiffDirection(t *testing.T) {
 	// 시간순(과거,최신): 새 자산 B는 '추가'. 역순 경고 없음.
 	fwd := inventory.RenderDiff(older, newer)
 	if !strings.Contains(fwd, "added") || !strings.Contains(fwd, "libcrypto.so.3") {
-		t.Errorf("과거→최신: 새 자산이 '추가'여야:\n%s", fwd)
+		t.Errorf("old→latest: a new asset must read as 'added':\n%s", fwd)
 	}
 	if strings.Contains(fwd, "reverse order") {
-		t.Errorf("정방향인데 역순 경고가 떴다:\n%s", fwd)
+		t.Errorf("the order is forward yet a reversed-order warning appeared:\n%s", fwd)
 	}
 
 	// 역순(최신,과거): 같은 B가 '사라짐'으로 뒤집히고 역순 경고가 떠야 한다.
 	rev := inventory.RenderDiff(newer, older)
 	if !strings.Contains(rev, "removed") {
-		t.Errorf("최신→과거: 같은 자산이 '사라짐'으로 뒤집혀야:\n%s", rev)
+		t.Errorf("latest→old: the same asset must flip to 'removed':\n%s", rev)
 	}
 	if !strings.Contains(rev, "reverse order") {
-		t.Errorf("인자가 시간 역순이면 경고해야:\n%s", rev)
+		t.Errorf("arguments in reverse time order must be warned about:\n%s", rev)
 	}
 }
 
@@ -60,7 +60,7 @@ func TestRenderEndToEnd(t *testing.T) {
 		CbomCyclonedx: cbom,
 		Completeness: &commonv1.Completeness{
 			LayersMissing: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK},
-			Note:          "네트워크 계층 미수집",
+			Note:          "network layer not collected",
 		},
 	}
 	snap, err := normalize.Normalize([]*discoveryv1.CollectionResult{res}, "snap-1", "cmdb://n1", "r1", nil, nil)
@@ -70,7 +70,7 @@ func TestRenderEndToEnd(t *testing.T) {
 	out := inventory.Render(snap)
 	for _, want := range []string{"cmdb://n1", "openssl", "confirmed", "libcrypto/OpenSSL 3.0.20", "gap"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("렌더 결과에 %q 없음:\n%s", want, out)
+			t.Errorf("the rendered output does not contain %q:\n%s", want, out)
 		}
 	}
 }
@@ -91,10 +91,10 @@ func TestRenderDiffWarnsOnRulesetChange(t *testing.T) {
 	}
 	const warn = "the rulesets differ"
 	if out := inventory.RenderDiff(mk("r1", 1, 1), mk("r2", 2, 2)); !strings.Contains(out, warn) {
-		t.Errorf("ruleset이 바뀌었는데 재계산 경고가 없다:\n%s", out)
+		t.Errorf("the ruleset changed but there is no recompute warning:\n%s", out)
 	}
 	// 같은 ruleset이면 뜨면 안 된다 — 매번 뜨는 경고는 읽히지 않는다.
 	if out := inventory.RenderDiff(mk("r1", 1, 1), mk("r1", 2, 2)); strings.Contains(out, warn) {
-		t.Errorf("같은 ruleset인데 경고가 떴다:\n%s", out)
+		t.Errorf("the ruleset is the same yet a warning appeared:\n%s", out)
 	}
 }
