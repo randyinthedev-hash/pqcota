@@ -23,7 +23,7 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 관측한 것을 노드·앱에 이어 붙이고, 회선에서 **실제로 협상된 그룹**까지 함께 본다.
 
 ```
-──────── ① 발견 자산 (노드별) ────────
+──────── ① discovered assets (per node) ────────
   pay-app
     • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
         ↑ 이 BC는 java.security에 한 줄도 없다 (grep 0건).
@@ -32,13 +32,13 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
   pay-db
     • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
 
-──────── ② 관측 통신 엣지 + 양자내성 등급 ────────
-  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [표준]
-  🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [실험]
+──────── ② observed edges + quantum-resistance grade ────────
+  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [standard]
+  🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw  → pay-db    TLS  x25519
   🔴 web-gw  → pay-db    SSH  curve25519-sha256
 
-  등급 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
+  grade totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
 ```
 
 같은 관측을 토폴로지로도 낸다.

@@ -93,7 +93,7 @@ docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # the inventory 
 Run it and it says so:
 
 ```console
-▶ 3/6 리포 빌드 — **ctl 머신(pqcota-ctl)에서** 소스를 컴파일합니다
+▶ 3/6 building the repo — the source is compiled **on the ctl machine (pqcota-ctl)**
      [ctl] Ubuntu 24.04.4 LTS · x86_64 · go1.26.4
      [ctl] make generate …  go build -o /usr/local/bin/ …  GOARCH=amd64 go build -o dist/linux-amd64/ …
 ```

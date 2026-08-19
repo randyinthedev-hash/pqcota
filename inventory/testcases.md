@@ -59,7 +59,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-HISTORY-2](../pkg/inventory/history_view_test.go) | `TestByID` · `TestRenderDetailShowsEdges` — 스냅샷 단건 조회(`-snapshot`) | 자산 표 + **그 스냅샷의 관측 엣지**. 없는 id는 `(nil, nil)` | 그 시점의 자산과 엣지를 함께 편다. 누적 뷰는 합계만 내므로 여기서만 볼 수 있다 |
 | [TV-HISTORY-3](../pkg/inventory/history_view_test.go) | `TestRenderDiff` — 버전이 바뀐 자산으로 두 스냅샷 diff | finding id가 (node, name, runtime, fork) 해시라 유지 → **"변경"** 한 줄. 판정 어휘 없음 | 버전만 바뀐 자산이 추가+삭제로 흩어지면 무엇이 달라졌는지 읽을 수 없다. 그리고 관측 사실만 서술한다(§2.1) |
 | [TV-HISTORY-4](../pkg/inventory/history_view_test.go) | `TestRenderDiffNoChange` — 같은 스냅샷끼리 diff | "변화 없음"을 **명시**(빈 출력 아님) | 변화가 없을 때 없다고 말한다. 빈 출력은 "안 봤다"와 구분되지 않는다 |
-| [TV-HISTORY-5](../pkg/inventory/render_test.go) | `TestRenderDiffDirection` — 인자를 **시간 역순**으로 준 diff | 추가·사라짐이 뒤집혀 읽히므로 **역순 경고**를 낸다 | 인자 순서를 잘못 주면 결과가 정반대로 읽힌다 — 조용히 뒤집히지 않게 한다 |
+| [TV-HISTORY-5](../pkg/inventory/render_test.go) | `TestRenderDiffDirection` — 인자를 **시간 역순**으로 준 diff | `added`·`removed`가 뒤집혀 읽히므로 **역순 경고**를 낸다 | 인자 순서를 잘못 주면 결과가 정반대로 읽힌다 — 조용히 뒤집히지 않게 한다 |
 | [TV-HISTORY-6](../pkg/inventory/render_test.go) | `TestRenderDiffWarnsOnRulesetChange` — `ruleset`이 다른/같은 두 스냅샷 diff | 다르면 재계산 경고, 같으면 안 뜸(§1.2) | 파생값 차이를 실제 변화로 읽으면 없던 변경을 쫓게 된다. 매번 뜨는 경고는 읽히지 않는다 |
 
 ### TV-RETENTION. 보존 정책 (설계 §7.2·§7.4)
