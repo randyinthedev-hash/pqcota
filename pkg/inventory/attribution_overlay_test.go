@@ -37,7 +37,7 @@ func observed(t *testing.T) *history.Snapshot {
 	t.Helper()
 	return &history.Snapshot{
 		ID: "s1", NodeID: "web-01",
-		Completeness: &commonv1.Completeness{Note: "엣지 2개 중 1개는 어느 앱인지 밝히지 못했다"},
+		Completeness: &commonv1.Completeness{Note: "1 of 2 edges could not be attributed to an app"},
 		Edges: []*discoveryv1.ObservedEdge{
 			// 관측이 이미 잡은 것
 			{SrcNodeId: "web-01", DstAddr: "10.0.0.5", Port: 443, AppKey: "payment.service", AppKeyKind: "systemd-unit"},

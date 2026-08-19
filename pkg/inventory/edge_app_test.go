@@ -17,7 +17,7 @@ import (
 func TestUnattributedEdgeIsMarkedNotBlank(t *testing.T) {
 	snap := &history.Snapshot{
 		ID: "s1", NodeID: "web-01", RulesetVersion: "r1",
-		Completeness: &commonv1.Completeness{Note: "엣지 3개 중 1개는 어느 앱인지 밝히지 못했다"},
+		Completeness: &commonv1.Completeness{Note: "1 of 3 edges could not be attributed to an app"},
 		Edges: []*discoveryv1.ObservedEdge{
 			{SrcNodeId: "web-01", DstAddr: "10.0.0.5:443", Port: 443, AppKey: "payment.service", AppKeyKind: "systemd-unit"},
 			{SrcNodeId: "web-01", DstAddr: "10.0.0.6:443", Port: 443, AppKey: "/opt/app/bin/svc", AppKeyKind: "exe-path"},
