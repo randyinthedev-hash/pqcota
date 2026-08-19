@@ -100,13 +100,13 @@ func TestDeriveFindings_JCA(t *testing.T) {
 	if len(f.GetJca().GetProviderSet()) != 2 {
 		t.Errorf("provider_set = %v", f.GetJca().GetProviderSet())
 	}
-	if f.GetPqcReadiness() != "provider-보강(전 표준 알고리즘)" {
+	if f.GetPqcReadiness() != "provider-augmented (all standard algorithms)" {
 		t.Errorf("pqc_readiness = %q (BC는 SLH-DSA 커버)", f.GetPqcReadiness())
 	}
 
 	// JDK 네이티브만(SunJCE) → SLH-DSA 갭.
 	fs2, _ := normalize.DeriveFindings(jcaResult("cmdb://j2", "SUN,SunJCE"), "s", "r")
-	if got := fs2[0].GetPqcReadiness(); got != "provider-보강(SLH-DSA 갭)" {
+	if got := fs2[0].GetPqcReadiness(); got != "provider-augmented (SLH-DSA gap)" {
 		t.Errorf("pqc_readiness = %q, want SLH-DSA 갭 (수용 원칙 §2.3)", got)
 	}
 }
@@ -199,7 +199,7 @@ func TestDeriveFindings_CNG(t *testing.T) {
 		}
 	}
 	// readiness는 판정이 아니라 관측의 요약이다. 서명만 있고 KEM은 없는 것이 이 노드의 사실이다.
-	if got := f.GetPqcReadiness(); got != "네이티브(서명만 — KEM 미관측)" {
+	if got := f.GetPqcReadiness(); got != "native (signature only — no KEM observed)" {
 		t.Errorf("pqc_readiness = %q — 실측은 ML-DSA 있음·ML-KEM 없음이다", got)
 	}
 	// CNG의 FIPS 모드는 알고리즘 열거로 알 수 없다 — 모른다고 적어야 한다(§2.5).

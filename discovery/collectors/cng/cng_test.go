@@ -31,7 +31,7 @@ func TestUnobservedIsNotAbsence(t *testing.T) {
 	if len(failed.GetCompleteness().GetLayersCovered()) != 0 {
 		t.Error("관측하지 못했는데 계층을 커버로 셌다 — 인벤토리에서 부재로 읽힌다")
 	}
-	if !strings.Contains(failed.GetCompleteness().GetNote(), "관측하지 못한 것이다") {
+	if !strings.Contains(failed.GetCompleteness().GetNote(), "not absent, just unobserved") {
 		t.Errorf("못 봤다는 사실이 노트에 없다: %q", failed.GetCompleteness().GetNote())
 	}
 	if len(failed.GetCbomCyclonedx()) != 0 || len(failed.GetRawCapture()) != 0 {

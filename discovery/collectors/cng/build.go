@@ -36,11 +36,11 @@ func BuildResult(node string, obs Observation, obsErr error) *discoveryv1.Collec
 	switch {
 	case obsErr != nil:
 		// 관측을 시도했는데 못 했다. 사유를 그대로 싣는다 — 사유가 다르면 대응이 다르다.
-		note = "CNG를 관측하지 못했다 — 없는 것이 아니라 관측하지 못한 것이다: " + obsErr.Error()
+		note = "CNG was not observed — not absent, just unobserved: " + obsErr.Error()
 	case obs.Empty():
 		// 봤는데 아무것도 없었다. 이것도 관측 결과이므로 계층은 커버된 것이다.
 		covered = declared
-		note = "CNG를 관측했으나 등록된 provider가 없다"
+		note = "CNG observed; no registered provider"
 	default:
 		covered = declared
 		cyclone = buildCycloneDX(obs)

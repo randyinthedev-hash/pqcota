@@ -26,15 +26,15 @@ type Attribution struct {
 const (
 	// ReasonSocketGone — /proc을 읽는 시점에 그 소켓이 이미 없다. 짧게 붙었다 끊긴 연결이다.
 	// 구현으로 틈을 좁힐 수는 있어도 없앨 수 없다.
-	ReasonSocketGone = "캡처와 조회 사이에 소켓이 닫혔다 — 짧은 연결은 놓친다"
+	ReasonSocketGone = "socket closed between capture and lookup — short-lived connections are missed"
 	// ReasonNoPermission — 소켓은 찾았는데 그것을 쥔 프로세스의 fd를 읽을 권한이 없다.
 	// CAP_NET_RAW로는 부족하다.
-	ReasonNoPermission = "소켓을 쥔 프로세스를 읽을 권한이 없다 — 남의 /proc/PID/fd는 못 읽는다"
+	ReasonNoPermission = "no permission to read the process holding the socket — another user's /proc/PID/fd is unreadable"
 	// ReasonAmbiguous — 같은 상대와 통신하는 소켓이 여럿이고 서로 다른 앱이다.
 	// **기계가 하나를 고르지 않는다** — 앱을 잘못 짚으면 조치 대상이 바뀐다.
-	ReasonAmbiguous = "같은 상대로 여러 앱이 통신 중이다 — 기계가 하나를 고르지 않는다"
+	ReasonAmbiguous = "several apps talk to the same peer — the machine does not pick one"
 	// ReasonNoAppKey — 프로세스는 찾았는데 안정 키를 뽑지 못했다(cgroup·exe 둘 다 실패).
-	ReasonNoAppKey = "프로세스는 찾았으나 안정 키를 뽑지 못했다"
+	ReasonNoAppKey = "process found but no stable key could be derived"
 )
 
 // AttributeRemote — 이 호스트에서 remote(ip:port)로 나간 연결을 연 앱을 찾는다.
