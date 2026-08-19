@@ -117,7 +117,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
 | `pqcota:jca.provider_set` | 등록 순서 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
-| `pqcota:cng.provider_set` | 등록 순서 CSV | `cng.provider_set` — Windows CNG. JCA와 같이 **순서 유의미**(우선순위) |
+| `pqcota:cng.provider_set` | 등록 순서 CSV | `cng.provider_set` — Windows CNG. **관측 순서 그대로**(정렬하지 않는다). 그 순서가 우선순위인지는 CNG에서 미확인 |
 | `pqcota:cng.algorithms` | `이름:종류[:provider\|provider]`의 CSV(예: `ML-DSA:signature:Microsoft Primitive Provider`) | `cng.algorithms` — 종류를 모르면 **빈 값**, provider를 못 물었으면 **셋째 칸을 두지 않는다**(§2.5·§2.6). CNG 이름에는 쉼표·콜론·`\|`가 없다(실측) |
 | `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산이 어느 앱 것인지(§1.5) |
 

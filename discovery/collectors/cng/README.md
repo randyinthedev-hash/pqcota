@@ -12,7 +12,7 @@ Windows에 **등록된 CNG provider(KSP/SSP)** 와 그 머신이 열거하는 �
 
 | 축 | 어떻게 | 왜 |
 |---|---|---|
-| **등록 provider** | `BCryptEnumRegisteredProviders` | 능력의 경계가 여기서 정해진다. **순서가 곧 우선순위**라 정렬하지 않는다 |
+| **등록 provider** | `BCryptEnumRegisteredProviders` | 능력의 경계가 여기서 정해진다. **관측된 순서 그대로** 담는다 — 정렬하면 관측을 고치는 것이 된다 |
 | **알고리즘** | `BCryptEnumAlgorithms`(전 종류) | 그 머신이 실제로 서비스하는 알고리즘. ML-KEM·ML-DSA가 보이면 PQC 능력의 직접 증거다 |
 | **알고리즘→provider** | `BCryptEnumProviders`(알고리즘마다) | 등록 목록은 "무엇이 있나"만 답한다. **누가 ML-DSA를 하나**는 여기에만 있다 — 조치 대상을 고르는 근거 |
 
@@ -81,6 +81,12 @@ Windows Client Key Protection Provider
 보고 있었다. Windows는 레지스트리 `MachineGuid`를 읽게 고쳤고, 재측정에서 `machine-id`로
 바뀌었다. 그 결과 **같은 머신의 node_id도 바뀌었다**(호스트명 기반 → 설치 기반). Windows 노드를
 적재한 적이 없어 이행할 것은 없지만, 이름에 매달린 앵커가 어떤 모양으로 새는지가 여기 남는다.
+
+**JCA에서 물려받은 전제 하나가 CNG에서는 서지 않는다.** 알고리즘 50개가 **전부 provider 하나씩**
+이었다 — 같은 알고리즘을 둘이 서비스하는 경우가 없으니 **우선순위 다툼 자체가 일어나지 않는다.**
+그래서 `provider_set`의 순서를 우선순위로 읽지 않는다. 순서를 보존하는 이유는 따로다: 관측한 대로
+적기 때문이다. 서드파티 provider(스마트카드 벤더 등)가 깔린 머신에서 둘이 겹치면 그때 순서가
+무엇을 뜻하는지 다시 재야 한다 — **지금은 확인되지 않았다고 적는다.**
 
 **provider 매핑과 하드웨어 UUID도 실측으로 닫았다.** 알고리즘마다 `BCryptEnumProviders`를 물으면
 `ML-DSA`·`ECDH_P256`·`SHA256`이 모두 **`Microsoft Primitive Provider`** 하나를 가리킨다 — 등록 목록의

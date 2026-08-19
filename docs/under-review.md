@@ -81,6 +81,12 @@ substrate 일반화를 **선행 요구**한다. 그 일반화는 **Windows를 �
 **정하지 않은 것** — substrate 추상 인터페이스의 seam(File-Stage vs Registry/GPO vs Config-Only)을
 어디에 그을지. Windows 구현이 손에 오기 전에는 정하지 않는다.
 
+**v0.6.0 실측이 준 재료** — 디스커버리 절반이 실물로 돌고 나서 세 가지가 정해졌다:
+알고리즘을 실제로 서비스하는 것은 등록된 아홉 중 **`Microsoft Primitive Provider` 하나**이고,
+알고리즘 50개가 **전부 provider 하나씩**이라 **우선순위 다툼이 없다**(JCA에서 물려받은 전제가
+CNG에서는 서지 않는다). 그리고 이 빌드에는 `ML-DSA`는 있고 `ML-KEM`은 없다 — 즉 조치가 필요한
+자리가 **서명이 아니라 키 교환**이다. 프로비저닝 seam을 그을 때 이 셋이 입력이 된다.
+
 ### 2.3 HSM / PKCS#11 — 어느 조건도 건드리지 않는다
 
 remediation이 대개 **openssl(`pkcs11-provider`)이나 jca(`SunPKCS11`)를 HSM으로 *가리키는*** 것이다.
