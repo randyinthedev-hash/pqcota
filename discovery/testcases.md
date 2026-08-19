@@ -124,8 +124,9 @@
 
 ### TD-CNG. cng-collector — Windows CNG provider 관측 (검토 중인 설계 §2.2)
 
-> **실물 확인은 아직이다.** 아래는 Windows 없이 도는 순수 케이스이고, `bcrypt.dll` 열거는 교차
-> 컴파일까지만 확인됐다. 실제 장비에서 무엇이 보이는지는 재고 나서 여기에 붙인다.
+> **실물로 확인했다** — Windows 11 Pro 25H2(빌드 26200)에서 provider 9개·알고리즘 50개.
+> `ML-DSA`는 있고 `ML-KEM`은 **없다**. 그 실행이 dwClass 매핑 결함도 함께 잡았다(TD-CNG-6).
+> 관측된 목록은 [collector README](collectors/cng/README.md)에 있다.
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
@@ -133,7 +134,9 @@
 | [TD-CNG-2](collectors/cng/cng_test.go) | unit | `TestUnobservedIsNotAbsence` — 열거 실패 / 봤는데 0건 | 앞은 계층 미커버 + 사유 노트, 뒤는 **커버**로 센다 | 못 본 것과 없는 것을 같은 얼굴로 내보내면 "이 노드엔 CNG가 없다"로 읽힌다(§2.6) |
 | [TD-CNG-3](collectors/cng/cng_test.go) | unit | `TestRawFormatEmptyWithoutRaw` — 원본이 없는 결과 | 형식 이름도 빈다 | 재정규화할 것이 없는데 있다고 적으면 §1.2의 약속이 거짓이 된다 |
 | [TD-CNG-4](collectors/cng/cng_test.go) | unit | `TestAlgorithmsRideOnRawOnly` — 알고리즘까지 관측한 결과 | CycloneDX엔 안 실리고 **원본에는 남는다** | 계약(`CngAxes`)에 자리 없는 축을 파생 뷰에 지어내지 않으면서, 관측한 것을 버리지도 않는다 |
-| TD-CNG-5 | **실물** — 미확인 | Windows 11(26200)에서 `pqcota-cngscan` 실행 | 등록 provider가 나오고, ML-KEM·ML-DSA가 있으면 알고리즘 목록에 잡힌다 | 스키마만 있고 채우는 코드가 없던 자리를 실측으로 닫는다 |
+| TD-CNG-5 | **실물** — 확인 | Windows 11 Pro 25H2(26200)에서 `pqcota-cngscan --output json` | provider 9개가 **순서대로**, 알고리즘 50개. `CNG_INTROSPECTION` 커버, 노트 없음 | 스키마만 있고 채우는 코드가 없던 자리를 실측으로 닫는다 |
+| [TD-CNG-6](collectors/cng/cng_test.go) | unit | `TestAlgorithmClassFollowsTheInterfaceConstants` — dwClass 1–7과 모르는 값들 | 1–7이 각 종류로, 그 밖은 **빈 값** | 실측에서 나온 결함이다: 열거 요청의 연산 비트마스크와 반환값의 인터페이스 상수는 다른 어휘인데 값이 겹쳐 조용히 틀렸다 |
+| TD-CNG-7 | **실물** — 미확인 | Windows 노드의 머신 지문 | `machine_id`·`hardware_uuid`가 채워진다 | 지금은 리눅스 경로뿐이라 `fqdn`으로 떨어진다 — 호스트명을 바꾸면 같은 머신이 다른 노드가 된다 |
 
 ### TD-NETWORK. network-collector — 통신 엣지 관측 (설계 §2.3, Phase 1)
 > 다른 collector가 노드의 **능력**(로드된 lib)을 본다면, network-collector는 **실제 등급**(그 연결이 실제로 PQC로 협상됐나)를 본다. **책임은 협상 그룹 "관측"까지** — 등급 분류는 코어 파생(§1.2, `pkg/kernel/posture`). Finding이 아니라 **`ObservedEdge`**(인벤토리 인벤토리 설계 §6)를 채운다. 복호화 없이 핸드셰이크 평문만 관측. **구현**: `collectors/network/`(tls.go·ssh.go·dissect.go·edge.go·service.go·capture_linux.go). 라이브 캡처는 libpcap 없이 순수 Go AF_PACKET(`x/sys/unix`). 실측: TD-NETWORK-11=실 crypto/tls로 X25519MLKEM768 협상 관측, TD-NETWORK-12=로컬 OpenSSH 9.6 KEXINIT에서 sntrup761x25519 관측.
