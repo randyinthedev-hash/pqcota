@@ -236,7 +236,11 @@ type CngAlgorithm struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// class: cipher · hash · asymmetric-encryption · secret-agreement · signature · rng ·
 	// key-derivation. **모르면 빈 값**이다(§2.5 unknown은 1급) — 모르는 종류를 아는 것으로 적지 않는다.
-	Class         string `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
+	Class string `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
+	// providers: 이 알고리즘을 **실제로 구현하는** provider들(`BCryptEnumProviders`). 등록 목록
+	// (CngAxes.provider_set)은 머신에 무엇이 있는지만 말하고, 어느 provider가 무엇을 서비스하는지는
+	// 말하지 않는다 — 조치 대상을 고르려면 이쪽이 필요하다. 못 물었으면 **빈 목록**이다(§2.6).
+	Providers     []string `protobuf:"bytes,3,rep,name=providers,proto3" json:"providers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,6 +287,13 @@ func (x *CngAlgorithm) GetClass() string {
 		return x.Class
 	}
 	return ""
+}
+
+func (x *CngAlgorithm) GetProviders() []string {
+	if x != nil {
+		return x.Providers
+	}
+	return nil
 }
 
 type Finding struct {
@@ -511,10 +522,11 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\fprovider_set\x18\x01 \x03(\tR\vproviderSet\x12A\n" +
 	"\n" +
 	"algorithms\x18\x02 \x03(\v2!.pqcota.discovery.v1.CngAlgorithmR\n" +
-	"algorithms\"8\n" +
+	"algorithms\"V\n" +
 	"\fCngAlgorithm\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05class\x18\x02 \x01(\tR\x05class\"\x8d\x06\n" +
+	"\x05class\x18\x02 \x01(\tR\x05class\x12\x1c\n" +
+	"\tproviders\x18\x03 \x03(\tR\tproviders\"\x8d\x06\n" +
 	"\aFinding\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12F\n" +
 	"\x0ecrypto_runtime\x18\x02 \x01(\x0e2\x1f.pqcota.common.v1.CryptoRuntimeR\rcryptoRuntime\x12C\n" +
