@@ -174,7 +174,12 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 type CngAxes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// provider_set: 등록된 CNG provider(KSP/SSP) 목록. JcaAxes와 같이 **순서 유의미**(우선순위).
-	ProviderSet   []string `protobuf:"bytes,1,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"`
+	ProviderSet []string `protobuf:"bytes,1,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"`
+	// algorithms: 그 머신의 CNG가 열거한 알고리즘. **v0.6.0 실측 뒤에 번호를 부여해 더했다** —
+	// provider 이름만으로는 "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없기 때문이다(Windows 11
+	// 26200 실측: provider 9개는 전부 Microsoft 이름이고, PQC 여부는 알고리즘 목록에만 나온다).
+	// 순수 additive라 기존 필드 번호·타입은 그대로다.
+	Algorithms    []*CngAlgorithm `protobuf:"bytes,2,rep,name=algorithms,proto3" json:"algorithms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -216,6 +221,70 @@ func (x *CngAxes) GetProviderSet() []string {
 	return nil
 }
 
+func (x *CngAxes) GetAlgorithms() []*CngAlgorithm {
+	if x != nil {
+		return x.Algorithms
+	}
+	return nil
+}
+
+// CngAlgorithm — CNG가 열거한 알고리즘 하나.
+type CngAlgorithm struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name: CNG가 부르는 이름 그대로(예 "ML-DSA"·"ECDH_P256"). 도구가 고쳐 부르지 않는다 —
+	// 관측한 문자열이 그대로 남아야 재정규화가 재현된다(§1.2).
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// class: cipher · hash · asymmetric-encryption · secret-agreement · signature · rng ·
+	// key-derivation. **모르면 빈 값**이다(§2.5 unknown은 1급) — 모르는 종류를 아는 것으로 적지 않는다.
+	Class         string `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CngAlgorithm) Reset() {
+	*x = CngAlgorithm{}
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CngAlgorithm) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CngAlgorithm) ProtoMessage() {}
+
+func (x *CngAlgorithm) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CngAlgorithm.ProtoReflect.Descriptor instead.
+func (*CngAlgorithm) Descriptor() ([]byte, []int) {
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CngAlgorithm) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CngAlgorithm) GetClass() string {
+	if x != nil {
+		return x.Class
+	}
+	return ""
+}
+
 type Finding struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                 // 정규화 해시 — finding 동일성/dedup 앵커 (§2.4)
@@ -251,7 +320,7 @@ type Finding struct {
 
 func (x *Finding) Reset() {
 	*x = Finding{}
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -263,7 +332,7 @@ func (x *Finding) String() string {
 func (*Finding) ProtoMessage() {}
 
 func (x *Finding) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -276,7 +345,7 @@ func (x *Finding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Finding.ProtoReflect.Descriptor instead.
 func (*Finding) Descriptor() ([]byte, []int) {
-	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{3}
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Finding) GetId() string {
@@ -437,9 +506,15 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\vjdk_version\x18\x02 \x01(\tR\n" +
 	"jdkVersion\x12!\n" +
 	"\fprovider_set\x18\x03 \x03(\tR\vproviderSet\x12R\n" +
-	"\x11registration_mode\x18\x04 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\",\n" +
+	"\x11registration_mode\x18\x04 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\"o\n" +
 	"\aCngAxes\x12!\n" +
-	"\fprovider_set\x18\x01 \x03(\tR\vproviderSet\"\x8d\x06\n" +
+	"\fprovider_set\x18\x01 \x03(\tR\vproviderSet\x12A\n" +
+	"\n" +
+	"algorithms\x18\x02 \x03(\v2!.pqcota.discovery.v1.CngAlgorithmR\n" +
+	"algorithms\"8\n" +
+	"\fCngAlgorithm\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05class\x18\x02 \x01(\tR\x05class\"\x8d\x06\n" +
 	"\aFinding\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12F\n" +
 	"\x0ecrypto_runtime\x18\x02 \x01(\x0e2\x1f.pqcota.common.v1.CryptoRuntimeR\rcryptoRuntime\x12C\n" +
@@ -471,34 +546,36 @@ func file_pqcota_discovery_v1_cbom_proto_rawDescGZIP() []byte {
 	return file_pqcota_discovery_v1_cbom_proto_rawDescData
 }
 
-var file_pqcota_discovery_v1_cbom_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_pqcota_discovery_v1_cbom_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_pqcota_discovery_v1_cbom_proto_goTypes = []any{
 	(*OpensslAxes)(nil),         // 0: pqcota.discovery.v1.OpensslAxes
 	(*JcaAxes)(nil),             // 1: pqcota.discovery.v1.JcaAxes
 	(*CngAxes)(nil),             // 2: pqcota.discovery.v1.CngAxes
-	(*Finding)(nil),             // 3: pqcota.discovery.v1.Finding
-	(v1.OpensslBindingMode)(0),  // 4: pqcota.common.v1.OpensslBindingMode
-	(v1.JcaRegistrationMode)(0), // 5: pqcota.common.v1.JcaRegistrationMode
-	(v1.CryptoRuntime)(0),       // 6: pqcota.common.v1.CryptoRuntime
-	(v1.UsageContext)(0),        // 7: pqcota.common.v1.UsageContext
-	(v1.DetectionMethod)(0),     // 8: pqcota.common.v1.DetectionMethod
-	(v1.EvidenceStrength)(0),    // 9: pqcota.common.v1.EvidenceStrength
+	(*CngAlgorithm)(nil),        // 3: pqcota.discovery.v1.CngAlgorithm
+	(*Finding)(nil),             // 4: pqcota.discovery.v1.Finding
+	(v1.OpensslBindingMode)(0),  // 5: pqcota.common.v1.OpensslBindingMode
+	(v1.JcaRegistrationMode)(0), // 6: pqcota.common.v1.JcaRegistrationMode
+	(v1.CryptoRuntime)(0),       // 7: pqcota.common.v1.CryptoRuntime
+	(v1.UsageContext)(0),        // 8: pqcota.common.v1.UsageContext
+	(v1.DetectionMethod)(0),     // 9: pqcota.common.v1.DetectionMethod
+	(v1.EvidenceStrength)(0),    // 10: pqcota.common.v1.EvidenceStrength
 }
 var file_pqcota_discovery_v1_cbom_proto_depIdxs = []int32{
-	4, // 0: pqcota.discovery.v1.OpensslAxes.binding_mode:type_name -> pqcota.common.v1.OpensslBindingMode
-	5, // 1: pqcota.discovery.v1.JcaAxes.registration_mode:type_name -> pqcota.common.v1.JcaRegistrationMode
-	6, // 2: pqcota.discovery.v1.Finding.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
-	7, // 3: pqcota.discovery.v1.Finding.usage_context:type_name -> pqcota.common.v1.UsageContext
-	8, // 4: pqcota.discovery.v1.Finding.detection_method:type_name -> pqcota.common.v1.DetectionMethod
-	9, // 5: pqcota.discovery.v1.Finding.evidence_strength:type_name -> pqcota.common.v1.EvidenceStrength
-	0, // 6: pqcota.discovery.v1.Finding.openssl:type_name -> pqcota.discovery.v1.OpensslAxes
-	1, // 7: pqcota.discovery.v1.Finding.jca:type_name -> pqcota.discovery.v1.JcaAxes
-	2, // 8: pqcota.discovery.v1.Finding.cng:type_name -> pqcota.discovery.v1.CngAxes
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	5,  // 0: pqcota.discovery.v1.OpensslAxes.binding_mode:type_name -> pqcota.common.v1.OpensslBindingMode
+	6,  // 1: pqcota.discovery.v1.JcaAxes.registration_mode:type_name -> pqcota.common.v1.JcaRegistrationMode
+	3,  // 2: pqcota.discovery.v1.CngAxes.algorithms:type_name -> pqcota.discovery.v1.CngAlgorithm
+	7,  // 3: pqcota.discovery.v1.Finding.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
+	8,  // 4: pqcota.discovery.v1.Finding.usage_context:type_name -> pqcota.common.v1.UsageContext
+	9,  // 5: pqcota.discovery.v1.Finding.detection_method:type_name -> pqcota.common.v1.DetectionMethod
+	10, // 6: pqcota.discovery.v1.Finding.evidence_strength:type_name -> pqcota.common.v1.EvidenceStrength
+	0,  // 7: pqcota.discovery.v1.Finding.openssl:type_name -> pqcota.discovery.v1.OpensslAxes
+	1,  // 8: pqcota.discovery.v1.Finding.jca:type_name -> pqcota.discovery.v1.JcaAxes
+	2,  // 9: pqcota.discovery.v1.Finding.cng:type_name -> pqcota.discovery.v1.CngAxes
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_discovery_v1_cbom_proto_init() }
@@ -506,7 +583,7 @@ func file_pqcota_discovery_v1_cbom_proto_init() {
 	if File_pqcota_discovery_v1_cbom_proto != nil {
 		return
 	}
-	file_pqcota_discovery_v1_cbom_proto_msgTypes[3].OneofWrappers = []any{
+	file_pqcota_discovery_v1_cbom_proto_msgTypes[4].OneofWrappers = []any{
 		(*Finding_Openssl)(nil),
 		(*Finding_Jca)(nil),
 		(*Finding_Cng)(nil),
@@ -517,7 +594,7 @@ func file_pqcota_discovery_v1_cbom_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_discovery_v1_cbom_proto_rawDesc), len(file_pqcota_discovery_v1_cbom_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
