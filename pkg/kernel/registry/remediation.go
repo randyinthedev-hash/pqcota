@@ -33,15 +33,15 @@ func (a PQCAlgorithm) Remediate(regulated bool) Remediation {
 	switch a.Maturity {
 	case MaturityFIPS:
 		if regulated {
-			return Remediation{ActionNone, 1, target, "표준 PQC — 규제 자산: FIPS 검증 provider 사용 확인"}
+			return Remediation{ActionNone, 1, target, "standard PQC — regulated asset: confirm a FIPS-validated provider is in use"}
 		}
-		return Remediation{ActionNone, 0, target, "표준 PQC — 조치 불요"}
+		return Remediation{ActionNone, 0, target, "standard PQC — no action needed"}
 	case MaturityDraft:
-		return Remediation{ActionUpgrade, 2, target, a.Family + "은(는) 표준 전신(초안) — 최종 표준으로 상향"}
+		return Remediation{ActionUpgrade, 2, target, a.Family + " is a draft predecessor of the standard — upgrade to the final standard"}
 	case MaturityExperimental:
-		return Remediation{ActionReplace, 3, target, a.Family + "은(는) 비표준 실험 알고리즘 — 표준으로 교체"}
+		return Remediation{ActionReplace, 3, target, a.Family + " is a non-standard experimental algorithm — replace it with the standard"}
 	case MaturityBroken:
-		return Remediation{ActionReplace, 4, target, a.Family + "은(는) 파훼됨 — 즉시 교체"}
+		return Remediation{ActionReplace, 4, target, a.Family + " is broken — replace it immediately"}
 	default:
 		return Remediation{ActionNone, 0, target, ""}
 	}

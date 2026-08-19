@@ -60,17 +60,17 @@ func Grade(negotiatedGroup string) registry.PQCMaturity {
 	return ""
 }
 
-// GradeLabel — 성숙도 한글 라벨(표시용). 빈 성숙도는 "".
+// GradeLabel — 성숙도 라벨(표시용). 빈 성숙도는 "".
 func GradeLabel(m registry.PQCMaturity) string {
 	switch m {
 	case registry.MaturityFIPS:
-		return "표준"
+		return "standard"
 	case registry.MaturityDraft:
-		return "초안"
+		return "draft"
 	case registry.MaturityExperimental:
-		return "실험"
+		return "experimental"
 	case registry.MaturityBroken:
-		return "취약"
+		return "broken"
 	default:
 		return ""
 	}
@@ -94,11 +94,11 @@ func Recommend(negotiatedGroup, cipher string, regulated bool) registry.Remediat
 		return registry.Remediation{
 			Action:    registry.ActionMigrate,
 			Priority:  prio,
-			Target:    "ML-KEM 하이브리드 (FIPS 203)",
-			Rationale: "고전 키교환 — 양자취약(HNDL), PQC 하이브리드로 마이그레이션",
+			Target:    "ML-KEM hybrid (FIPS 203)",
+			Rationale: "classical key exchange — quantum-vulnerable (HNDL); migrate to a PQC hybrid",
 		}
 	default:
-		return registry.Remediation{Action: registry.ActionNone, Priority: 0, Rationale: "협상 미관측 — 판단 보류"}
+		return registry.Remediation{Action: registry.ActionNone, Priority: 0, Rationale: "negotiation not observed — no judgment"}
 	}
 }
 

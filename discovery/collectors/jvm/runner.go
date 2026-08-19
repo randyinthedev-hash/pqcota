@@ -19,7 +19,7 @@ func SubprocessRunner(javaBin, collectorJar string) func(node string, opts map[s
 	return func(node string, opts map[string]string) (Collected, error) {
 		pid := opts["pid"]
 		if pid == "" {
-			return Collected{}, fmt.Errorf("jvm runner: opts[\"pid\"] 필요")
+			return Collected{}, fmt.Errorf("jvm runner: opts[\"pid\"] is required")
 		}
 		out, err := os.CreateTemp("", "pqcota-prov-*.txt")
 		if err != nil {
@@ -33,7 +33,7 @@ func SubprocessRunner(javaBin, collectorJar string) func(node string, opts map[s
 		cmd := exec.Command(javaBin, "--add-modules", "jdk.attach", "-cp", collectorJar,
 			"pqcota.jvm.Attacher", pid, collectorJar, outPath)
 		if b, err := cmd.CombinedOutput(); err != nil {
-			return Collected{}, fmt.Errorf("attach 서브프로세스 실패: %v: %s", err, string(b))
+			return Collected{}, fmt.Errorf("attach subprocess failed: %v: %s", err, string(b))
 		}
 		data, err := os.ReadFile(outPath)
 		if err != nil {

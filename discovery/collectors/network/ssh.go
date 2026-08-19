@@ -20,7 +20,7 @@ func ParseSSHKexInit(b []byte) (*Handshake, error) {
 	c := &cursor{b: b}
 	pktLen, ok := c.u32()
 	if !ok {
-		return nil, errors.New("ssh: packet_length 없음")
+		return nil, errors.New("ssh: no packet_length")
 	}
 	padLen, ok := c.u8()
 	if !ok {
@@ -31,7 +31,7 @@ func ParseSSHKexInit(b []byte) (*Handshake, error) {
 		return nil, errTruncated
 	}
 	if msgCode != sshMsgKexInit {
-		return nil, errors.New("ssh: KEXINIT(20) 아님")
+		return nil, errors.New("ssh: not a KEXINIT(20)")
 	}
 	if _, ok := c.take(16); !ok { // cookie
 		return nil, errTruncated

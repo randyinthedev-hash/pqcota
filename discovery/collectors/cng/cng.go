@@ -14,7 +14,7 @@ import (
 )
 
 // ErrNotWindows — Windows가 아닌 곳에서 관측을 요청했다. **"CNG 없음"이 아니라 "관측 불가"다**(§2.6).
-var ErrNotWindows = errors.New("CNG는 Windows에서만 관측할 수 있다 — 없는 것이 아니라 여기서 못 보는 것이다")
+var ErrNotWindows = errors.New("CNG can only be observed on Windows — this is not an absence, it is what cannot be seen from here")
 
 // Observation — 한 노드의 CNG 관측 결과.
 //

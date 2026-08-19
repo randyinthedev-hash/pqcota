@@ -34,19 +34,19 @@ func loadAgentRequest(agentJar, agentArgs string) string {
 func parseAttachResponse(resp string) error {
 	s := strings.TrimLeft(resp, "\n")
 	if strings.TrimSpace(s) == "" {
-		return fmt.Errorf("attach 응답 없음 — 에이전트 로드 여부 미상")
+		return fmt.Errorf("no attach response — whether the agent loaded is unknown")
 	}
 	line, rest, _ := strings.Cut(s, "\n")
 	code, err := strconv.Atoi(strings.TrimSpace(line))
 	if err != nil {
-		return fmt.Errorf("attach 응답의 리턴 코드를 못 읽음: %q", strings.TrimSpace(line))
+		return fmt.Errorf("could not read the return code of the attach response: %q", strings.TrimSpace(line))
 	}
 	if code != 0 {
 		msg := strings.TrimSpace(rest)
 		if msg == "" {
-			msg = "(대상이 사유를 주지 않음)"
+			msg = "(the target gave no reason)"
 		}
-		return fmt.Errorf("attach 거부(코드 %d): %s", code, msg)
+		return fmt.Errorf("attach refused (code %d): %s", code, msg)
 	}
 	return nil
 }

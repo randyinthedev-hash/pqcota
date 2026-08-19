@@ -28,7 +28,7 @@ type Policy struct {
 }
 
 // ErrNoPolicy — 축을 하나도 안 주면 "최신만 남기고 전부 삭제"가 되어 위험하므로 거부한다.
-var ErrNoPolicy = errors.New("보존 정책을 하나 이상 지정해야 한다 (older-than 또는 keep-last)")
+var ErrNoPolicy = errors.New("at least one retention policy must be given (older-than or keep-last)")
 
 func (p Policy) validate() error {
 	if p.OlderThan <= 0 && p.KeepLast <= 0 {
@@ -46,7 +46,7 @@ func (p Policy) String() string {
 		parts = append(parts, fmt.Sprintf("keep-last=%d", p.KeepLast))
 	}
 	if len(parts) == 0 {
-		return "(없음)"
+		return "(none)"
 	}
 	return parts[0] + func() string {
 		if len(parts) > 1 {

@@ -30,7 +30,7 @@ var javaSecurityRel = []string{
 // 파일을 못 찾아도 오류가 아니라 **빈 목록 + Degraded**로 돌려준다 — 그 자체가 정직한 관측이다.
 func StaticFallbackGo(pid int, javaHome string) (Collected, error) {
 	if javaHome == "" {
-		return Collected{Degraded: true}, fmt.Errorf("JAVA_HOME 미상 — java.security 위치를 모른다")
+		return Collected{Degraded: true}, fmt.Errorf("JAVA_HOME unknown — the location of java.security is not known")
 	}
 	for _, rel := range javaSecurityRel {
 		p := hostPath(pid, filepath.Join(javaHome, rel))
@@ -42,7 +42,7 @@ func StaticFallbackGo(pid int, javaHome string) (Collected, error) {
 		c.Degraded = true // 정적 경로 = 항상 강등(동적 등록 사각)
 		return c, nil
 	}
-	return Collected{Degraded: true}, fmt.Errorf("java.security를 못 찾음(%s)", javaHome)
+	return Collected{Degraded: true}, fmt.Errorf("java.security not found (%s)", javaHome)
 }
 
 // hostPath — 컨테이너 대상의 경로를 호스트에서 읽을 수 있게 /proc/<pid>/root를 앞에 붙인다.
