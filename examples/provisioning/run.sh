@@ -26,7 +26,7 @@ custom-openssl-provider|custom OpenSSL provider: absolute path, per-provider sou
 custom-jca-provider|custom JCA provider: the FQCN is named in providerClass → the plan alone is enough
 custom-jca-missing-class|the same, with providerClass removed — a placeholder plus guidance
 signature-algorithm|signature algorithm (ML-DSA): not a KEM group, so the group line is commented out
-l3-activation-hooks|L3: the plan's hooks in meaningful order — pre → stage → activate → restart (rollback reverses it)|l3
+l3-activation-hooks|L3: the plan hooks in meaningful order — pre → stage → activate → restart (rollback reverses it)|l3
 l3-hooks-missing|L3 without hooks: no command is invented; it reports what will not happen|l3'
 
 list() {
