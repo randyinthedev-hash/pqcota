@@ -19,7 +19,7 @@ import (
 func TestPgRecordStore(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
-		t.Skip("PQCOTA_TEST_DSN 미설정 — Postgres 통합 테스트 스킵")
+		t.Skip("PQCOTA_TEST_DSN is not set — skipping the Postgres integration test")
 	}
 	ctx := context.Background()
 	st, err := provisioning.NewPgRecordStore(ctx, dsn)
@@ -57,20 +57,20 @@ func TestPgRecordStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(got) != 2 {
-		t.Fatalf("%s 레코드 %d개(2 기대) — 노드 간 격리 실패", node, len(got))
+		t.Fatalf("%d records for %s (want 2) — node isolation failed", node, len(got))
 	}
 	if got[0].GetId() != "r1-"+suffix || got[1].GetId() != "r2-"+suffix {
-		t.Errorf("append 순서 보존 실패: %s, %s", got[0].GetId(), got[1].GetId())
+		t.Errorf("the append order was not preserved: %s, %s", got[0].GetId(), got[1].GetId())
 	}
 	// before 상태가 왕복해야 한다 — 되돌림의 근거는 이 값뿐이다.
 	if b := got[0].GetBefore(); b == nil || len(b.GetModules()) != 1 ||
 		b.GetModules()[0] != "libcrypto.so.3@3.0.13" {
-		t.Errorf("before 상태가 왕복하지 않았다: %+v", got[0].GetBefore())
+		t.Errorf("the before state did not round-trip: %+v", got[0].GetBefore())
 	}
 	if got[0].GetStatus() != provisioningv1.ProvisioningStatus_PROVISIONING_STATUS_STAGED {
-		t.Errorf("초기 상태는 STAGED여야: %v", got[0].GetStatus())
+		t.Errorf("the initial state must be STAGED: %v", got[0].GetStatus())
 	}
 	if len(got[0].GetAppKeys()) != 1 || got[0].GetAppKeys()[0] != "pay.service" {
-		t.Errorf("app_keys 여러 앱에 걸침이 보존되지 않았다: %v", got[0].GetAppKeys())
+		t.Errorf("app_keys spanning several apps was not preserved: %v", got[0].GetAppKeys())
 	}
 }

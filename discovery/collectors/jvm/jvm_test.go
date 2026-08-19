@@ -28,13 +28,13 @@ PQCOTA_STATIC_FALLBACK_END`
 func TestParseProviders(t *testing.T) {
 	c := jvm.ParseProviders(attachOutput)
 	if c.Degraded {
-		t.Error("attach 성공 출력인데 Degraded=true")
+		t.Error("attach succeeded yet Degraded=true")
 	}
 	if len(c.Providers) != 2 || c.Providers[1].Name != "BC" {
 		t.Fatalf("providers = %+v, want [SUN BC]", c.Providers)
 	}
 	if d := jvm.ParseProviders(fallbackOutput); !d.Degraded {
-		t.Error("정적 폴백 출력인데 Degraded=false")
+		t.Error("a static fallback result yet Degraded=false")
 	}
 }
 
@@ -42,15 +42,15 @@ func TestBuildResult(t *testing.T) {
 	res := jvm.BuildResult("cmdb://n1", jvm.ParseProviders(attachOutput))
 	cbom := string(res.GetCbomCyclonedx())
 	if !strings.Contains(cbom, `"pqcota:crypto_runtime"`) || !strings.Contains(cbom, "SUN,BC") {
-		t.Errorf("CycloneDX에 jca provider_set 없음: %s", cbom)
+		t.Errorf("the CycloneDX body has no jca provider_set: %s", cbom)
 	}
 	if len(res.GetCompleteness().GetLayersMissing()) != 0 {
-		t.Error("attach 성공인데 갭 존재")
+		t.Error("attach succeeded yet a gap is present")
 	}
 	// 정적 폴백 → JVM_INTROSPECTION 갭
 	deg := jvm.BuildResult("cmdb://n1", jvm.ParseProviders(fallbackOutput))
 	if len(deg.GetCompleteness().GetLayersMissing()) == 0 {
-		t.Error("정적 폴백인데 갭 없음")
+		t.Error("a static fallback with no gap")
 	}
 }
 
@@ -92,6 +92,6 @@ func TestJvmServiceContract(t *testing.T) {
 		t.Errorf("collector_id = %q", res.GetEnvelope().GetCollectorId())
 	}
 	if !strings.Contains(string(res.GetCbomCyclonedx()), "SUN,BC") {
-		t.Error("Collect 결과에 provider_set 없음")
+		t.Error("the Collect result has no provider_set")
 	}
 }

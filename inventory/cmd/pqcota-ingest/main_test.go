@@ -21,7 +21,7 @@ const jsonl = `{"envelope":{"targetNodeId":"jvm-a"},"rawFormat":"x"}
 func TestParseSingleCompact(t *testing.T) {
 	got := parseResultDocs([]byte(oneCompact))
 	if len(got) != 1 || got[0].GetEnvelope().GetTargetNodeId() != "n1" {
-		t.Fatalf("단일 compact 파싱 실패: %+v", got)
+		t.Fatalf("parsing a single compact object failed: %+v", got)
 	}
 }
 
@@ -29,17 +29,17 @@ func TestParseSingleCompact(t *testing.T) {
 func TestParseSingleMultiline(t *testing.T) {
 	got := parseResultDocs([]byte(oneMultiline))
 	if len(got) != 1 || got[0].GetEnvelope().GetTargetNodeId() != "n1" {
-		t.Fatalf("단일 multiline 파싱 실패(줄별로 깨졌을 수 있음): %+v", got)
+		t.Fatalf("parsing a single multiline object failed (it may have been split per line): %+v", got)
 	}
 }
 
 func TestParseJSONL(t *testing.T) {
 	got := parseResultDocs([]byte(jsonl))
 	if len(got) != 2 {
-		t.Fatalf("JSONL은 2건이어야 함(빈 줄 제외): %d", len(got))
+		t.Fatalf("JSONL must give 2 (blank lines excluded): %d", len(got))
 	}
 	if got[0].GetEnvelope().GetTargetNodeId() != "jvm-a" || got[1].GetEnvelope().GetTargetNodeId() != "jvm-b" {
-		t.Errorf("JSONL 순서·내용 불일치: %+v", got)
+		t.Errorf("JSONL order or content mismatch: %+v", got)
 	}
 }
 
@@ -59,6 +59,6 @@ plain garbage
 		}
 	}
 	if !sawOK {
-		t.Errorf("유효한 첫 줄이 유실됨: %+v", got)
+		t.Errorf("the valid first line was lost: %+v", got)
 	}
 }

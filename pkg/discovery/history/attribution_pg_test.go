@@ -20,7 +20,7 @@ import (
 func TestPgAttributionsShareATableAndStillDoNotSeeEachOther(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
-		t.Skip("PQCOTA_TEST_DSN 미설정 — Postgres 통합 테스트 스킵")
+		t.Skip("PQCOTA_TEST_DSN is not set — skipping the Postgres integration test")
 	}
 	ctx := context.Background()
 	stamp := strconv.FormatInt(time.Now().UnixNano(), 36)
@@ -57,10 +57,10 @@ func TestPgAttributionsShareATableAndStillDoNotSeeEachOther(t *testing.T) {
 			t.Fatal(err)
 		}
 		if len(got) != 1 {
-			t.Fatalf("조직 %s가 %d건을 본다 — 남의 선언이 섞였다: %+v", tc.store, len(got), got)
+			t.Fatalf("organization %s sees %d — someone else's declarations got mixed in: %+v", tc.store, len(got), got)
 		}
 		if got[0].AppKey != tc.want {
-			t.Fatalf("조직 %s가 %q를 본다 — %q여야 한다", tc.store, got[0].AppKey, tc.want)
+			t.Fatalf("organization %s sees %q — it must be %q", tc.store, got[0].AppKey, tc.want)
 		}
 	}
 }
@@ -72,7 +72,7 @@ func TestPgAttributionsShareATableAndStillDoNotSeeEachOther(t *testing.T) {
 func TestPgRedeclaringOverwrites(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
-		t.Skip("PQCOTA_TEST_DSN 미설정 — Postgres 통합 테스트 스킵")
+		t.Skip("PQCOTA_TEST_DSN is not set — skipping the Postgres integration test")
 	}
 	ctx := context.Background()
 	st, err := history.NewPgStoreIn(ctx, dsn, "attr-ovw-"+strconv.FormatInt(time.Now().UnixNano(), 36))
@@ -92,12 +92,12 @@ func TestPgRedeclaringOverwrites(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(got) != 1 {
-		t.Fatalf("같은 엣지를 두 번 선언했는데 %d건이 쌓였다 — 덮어써야 한다", len(got))
+		t.Fatalf("the same edge was declared twice and %d rows piled up — it must overwrite", len(got))
 	}
 	if got[0].AppKey != "second.service" {
-		t.Fatalf("나중 선언이 이기지 않았다: %q", got[0].AppKey)
+		t.Fatalf("the later declaration did not win: %q", got[0].AppKey)
 	}
 	if got[0].DeclaredAt.IsZero() {
-		t.Error("선언 시각이 비었다 — 언제 고쳤는지 남아야 한다")
+		t.Error("the declaration timestamp is empty — when it was corrected must be recorded")
 	}
 }

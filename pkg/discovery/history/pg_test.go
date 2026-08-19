@@ -16,7 +16,7 @@ import (
 func TestPgStore(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
-		t.Skip("PQCOTA_TEST_DSN 미설정 — Postgres 통합 테스트 스킵")
+		t.Skip("PQCOTA_TEST_DSN is not set — skipping the Postgres integration test")
 	}
 	ctx := context.Background()
 	st, err := history.NewPgStore(ctx, dsn)
@@ -69,21 +69,21 @@ func TestPgStore(t *testing.T) {
 	}
 	got := all[0].Findings[0]
 	if got.GetId() != "f1" || got.GetOpenssl().GetVersion() != "3.5.4" {
-		t.Errorf("Finding 보존 실패(protojson 라운드트립): %+v", got)
+		t.Errorf("Finding was not preserved (protojson round-trip): %+v", got)
 	}
 	if len(all[0].Completeness.GetLayersMissing()) != 1 {
-		t.Errorf("완전성 맵 보존 실패: %+v", all[0].Completeness)
+		t.Errorf("the completeness map was not preserved: %+v", all[0].Completeness)
 	}
 	// 엣지 레인 라운드트립.
 	if len(all[0].Edges) != 1 || all[0].Edges[0].GetNegotiatedGroup() != "X25519MLKEM768" {
-		t.Errorf("통신 엣지 보존 실패(인벤토리 설계 §6): %+v", all[0].Edges)
+		t.Errorf("the observed edges were not preserved (inventory design §6): %+v", all[0].Edges)
 	}
 	if len(all[1].Edges) != 0 {
-		t.Errorf("엣지 없는 스냅샷은 빈 엣지여야: %+v", all[1].Edges)
+		t.Errorf("a snapshot with no edges must have empty edges: %+v", all[1].Edges)
 	}
 
 	// 미등록 노드 → nil.
 	if n, _ := st.Latest("host://none-" + node); n != nil {
-		t.Error("미등록 노드는 nil이어야")
+		t.Error("an unregistered node must be nil")
 	}
 }

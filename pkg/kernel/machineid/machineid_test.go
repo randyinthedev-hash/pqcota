@@ -13,32 +13,32 @@ func TestSelfAssign(t *testing.T) {
 	id1, src1 := machineid.SelfAssign(fp)
 	id2, _ := machineid.SelfAssign(fp)
 	if id1 == "" || id1 != id2 {
-		t.Fatalf("결정론 실패: %q vs %q", id1, id2)
+		t.Fatalf("not deterministic: %q vs %q", id1, id2)
 	}
 	if src1 != "machine-id" { // fqdn보다 우선
-		t.Errorf("우선순위 오류: %s (machine-id여야)", src1)
+		t.Errorf("wrong priority: %s (must be machine-id)", src1)
 	}
 
 	// cloud-instance-id가 최우선
 	fp.CloudInstanceId = "i-0999"
 	if _, src := machineid.SelfAssign(fp); src != "cloud-instance-id" {
-		t.Errorf("cloud 우선 실패: %s", src)
+		t.Errorf("cloud did not take priority: %s", src)
 	}
 
 	// 다른 머신 → 다른 id
 	other, _ := machineid.SelfAssign(&commonv1.MachineIdentity{MachineId: "xyz-789"})
 	base, _ := machineid.SelfAssign(&commonv1.MachineIdentity{MachineId: "abc-123"})
 	if other == base {
-		t.Error("다른 machine-id가 같은 id로")
+		t.Error("different machine-ids produced the same id")
 	}
 
 	// 지문 없음 → 빈 값
 	if id, _ := machineid.SelfAssign(&commonv1.MachineIdentity{}); id != "" {
-		t.Errorf("지문 없으면 빈 id여야: %q", id)
+		t.Errorf("with no fingerprint the id must be empty: %q", id)
 	}
 
 	// 네임스페이스 접두
 	if len(id1) < 6 || id1[:5] != "node:" {
-		t.Errorf("node: 접두 없음: %q", id1)
+		t.Errorf("the node: prefix is missing: %q", id1)
 	}
 }
