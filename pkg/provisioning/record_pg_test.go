@@ -57,7 +57,7 @@ func TestPgRecordStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(got) != 2 {
-		t.Fatalf("%d records for %s (want 2) — node isolation failed", node, len(got))
+		t.Fatalf("%[2]d records for %[1]s (want 2) — node isolation failed", node, len(got))
 	}
 	if got[0].GetId() != "r1-"+suffix || got[1].GetId() != "r2-"+suffix {
 		t.Errorf("the append order was not preserved: %s, %s", got[0].GetId(), got[1].GetId())
