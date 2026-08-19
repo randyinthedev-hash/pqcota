@@ -65,11 +65,11 @@ func BuildResult(node string, obs Observation, obsErr error) *discoveryv1.Collec
 	}
 }
 
-// buildCycloneDX — provider 목록을 CycloneDX 본문 + pqcota properties(§3.2)로.
+// buildCycloneDX — 관측을 CycloneDX 본문 + pqcota properties(§3.2)로.
 //
 // JCA와 같은 모양을 쓴다 — `provider_set`은 **등록 순서 CSV**이고 그 순서가 우선순위 판정의
-// 근거다(수용 원칙 §2.2). 알고리즘 목록은 계약의 CngAxes에 아직 자리가 없어 여기 싣지 않는다;
-// 원본으로만 나른다(실물을 재고 나서 번호를 부여해 계약에 더한다 — 투기적 추상화 금지).
+// 근거다(수용 원칙 §2.2). 알고리즘은 v0.6.0 실측 뒤에 계약에 자리가 생겨 함께 싣는다 —
+// provider 이름만으로는 "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없다.
 func buildCycloneDX(obs Observation) []byte {
 	type prop struct {
 		Name  string `json:"name"`
@@ -92,6 +92,7 @@ func buildCycloneDX(obs Observation) []byte {
 			{"pqcota:crypto_runtime", "cng"},
 			{"pqcota:detection_method", "runtime-introspection"},
 			{"pqcota:cng.provider_set", strings.Join(obs.Providers, ",")},
+			{"pqcota:cng.algorithms", EncodeAlgorithms(obs.Algorithms)},
 		},
 	}
 	b, _ := json.Marshal(doc{BomFormat: "CycloneDX", SpecVersion: "1.6", Components: []comp{c}})

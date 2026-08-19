@@ -8,7 +8,10 @@
 // **관측까지만 한다.** evidence_strength·pqc_readiness 같은 파생은 코어가 만든다(§1.2).
 package cng
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // ErrNotWindows — Windows가 아닌 곳에서 관측을 요청했다. **"CNG 없음"이 아니라 "관측 불가"다**(§2.6).
 var ErrNotWindows = errors.New("CNG는 Windows에서만 관측할 수 있다 — 없는 것이 아니라 여기서 못 보는 것이다")
@@ -73,4 +76,47 @@ func AlgorithmClass(dwClass uint32) string {
 	default:
 		return ""
 	}
+}
+
+// 알고리즘 목록을 properties 한 줄로 나르는 표기. CycloneDX property는 이름·값 두 문자열뿐이라
+// 목록을 실으려면 인코딩이 필요하다. `이름:종류`를 쉼표로 잇는다 — 관측된 CNG 이름에는 쉼표도
+// 콜론도 없다(실측 50개 확인: `SHA3-256`·`CHACHA20_POLY1305`·`XTS-AES` 같은 모양뿐).
+const (
+	algorithmSep      = ","
+	algorithmClassSep = ":"
+)
+
+// EncodeAlgorithms — 알고리즘 목록을 property 값으로. 종류를 모르면 빈 값으로 남긴다(§2.5).
+func EncodeAlgorithms(algs []Algorithm) string {
+	if len(algs) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(algs))
+	for _, a := range algs {
+		if a.Name == "" {
+			continue // 이름 없는 항목은 나를 것이 없다
+		}
+		parts = append(parts, a.Name+algorithmClassSep+a.Class)
+	}
+	return strings.Join(parts, algorithmSep)
+}
+
+// DecodeAlgorithms — [EncodeAlgorithms]의 역. 코어 정규화가 파생 뷰를 만들 때 쓴다.
+//
+// 모양이 깨진 항목은 **버리지 않고 이름만 살린다** — 종류를 못 읽은 것이 알고리즘을 못 본 것이
+// 되면 안 된다(§2.6 갭 ≠ 부재).
+func DecodeAlgorithms(s string) []Algorithm {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	var out []Algorithm
+	for _, part := range strings.Split(s, algorithmSep) {
+		name, class, _ := strings.Cut(part, algorithmClassSep)
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		out = append(out, Algorithm{Name: name, Class: strings.TrimSpace(class)})
+	}
+	return out
 }

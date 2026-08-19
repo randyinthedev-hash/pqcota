@@ -30,15 +30,17 @@ Windows에 **등록된 CNG provider(KSP/SSP)** 와 그 머신이 열거하는 �
 
 ## 계약에 싣는 것
 
-파생 뷰(`CngAxes`)가 지금 담는 것은 **`provider_set` 하나**다. 관측한 알고리즘 목록은 계약에
-자리가 없어 파생으로 가지 않고 **원본(`raw_capture`)에만** 실린다 — 관측한 것을 버리지 않으면서,
-실물을 재기 전에 계약을 넓히지 않는다. 무엇을 더할지는 실측 뒤에 번호를 부여해 정한다.
+파생 뷰(`CngAxes`)는 **provider 목록과 알고리즘 목록**을 담는다. 알고리즘은 처음엔 계약에 자리가
+없어 원본에만 실었는데, 실측에서 **provider 이름 9개가 전부 Microsoft**라 그것만으로는 "이 노드가
+ML-DSA를 할 수 있나"에 답할 수 없다는 것이 드러나 계약에 더했다(순수 additive). 실물을 재고 나서
+번호를 부여한다는 규칙을 그대로 따른 것이다.
 
 | 속성 | 값 |
 |---|---|
 | `pqcota:crypto_runtime` | `cng` |
 | `pqcota:detection_method` | `runtime-introspection` |
 | `pqcota:cng.provider_set` | 등록 순서 CSV |
+| `pqcota:cng.algorithms` | `이름:종류` 쌍의 CSV. 종류를 모르면 빈 값 |
 
 ## 실측 — Windows 11 Pro 25H2 (빌드 26200, x64)
 
@@ -86,5 +88,5 @@ Windows Client Key Protection Provider
 | 순수 조립·완전성 규칙 + 단위 테스트 | **된다** — Windows 없이 돈다 |
 | `bcrypt.dll` 열거 | **된다** — Windows 11 26200에서 실측(위) |
 | 노드 식별 | **된다** — 레지스트리 `MachineGuid`로 실측 확인(`derived_from=machine-id`). `hardware_uuid`는 아직 빈다: SMBIOS는 펌웨어 테이블을 떠야 나와서, 지어내지 않고 비워 둔다 |
-| 정규화 → 인벤토리 수렴 | 레인은 붙었다(`pqcota:cng.provider_set` → `CngAxes`). 종단 확인은 아직 |
+| 정규화 → 파생 뷰 | **된다** — provider·알고리즘이 `CngAxes`까지 온다(실측 값으로 못 박음). 중앙 적재·조회 종단은 아직 |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다** — 이 collector는 관측까지다 |
