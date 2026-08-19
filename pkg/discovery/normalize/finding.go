@@ -205,7 +205,8 @@ func jcaEnrichment(providers []string) (fips, readiness string) {
 
 // cngAlgorithms — collector가 property 한 줄로 나른 알고리즘 목록을 계약 타입으로.
 //
-// 표기는 `이름:종류`를 쉼표로 이은 것이다(cng collector의 EncodeAlgorithms). 종류를 못 읽으면
+// 표기는 `이름:종류[:provider|provider]`를 쉼표로 이은 것이다(cng collector의 EncodeAlgorithms).
+// 종류를 못 읽으면
 // **이름만 살린다** — 종류를 모르는 것이 알고리즘을 못 본 것이 되면 안 된다(§2.6).
 func cngAlgorithms(s string) []*discoveryv1.CngAlgorithm {
 	if strings.TrimSpace(s) == "" {
@@ -213,12 +214,19 @@ func cngAlgorithms(s string) []*discoveryv1.CngAlgorithm {
 	}
 	var out []*discoveryv1.CngAlgorithm
 	for _, part := range strings.Split(s, ",") {
-		name, class, _ := strings.Cut(part, ":")
+		name, rest, _ := strings.Cut(part, ":")
 		name = strings.TrimSpace(name)
 		if name == "" {
 			continue
 		}
-		out = append(out, &discoveryv1.CngAlgorithm{Name: name, Class: strings.TrimSpace(class)})
+		class, provs, _ := strings.Cut(rest, ":")
+		a := &discoveryv1.CngAlgorithm{Name: name, Class: strings.TrimSpace(class)}
+		for _, p := range strings.Split(provs, "|") {
+			if p = strings.TrimSpace(p); p != "" {
+				a.Providers = append(a.Providers, p)
+			}
+		}
+		out = append(out, a)
 	}
 	return out
 }

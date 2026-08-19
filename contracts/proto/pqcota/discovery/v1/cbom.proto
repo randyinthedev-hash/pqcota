@@ -56,6 +56,11 @@ message CngAlgorithm {
   // class: cipher · hash · asymmetric-encryption · secret-agreement · signature · rng ·
   // key-derivation. **모르면 빈 값**이다(§2.5 unknown은 1급) — 모르는 종류를 아는 것으로 적지 않는다.
   string class = 2;
+
+  // providers: 이 알고리즘을 **실제로 구현하는** provider들(`BCryptEnumProviders`). 등록 목록
+  // (CngAxes.provider_set)은 머신에 무엇이 있는지만 말하고, 어느 provider가 무엇을 서비스하는지는
+  // 말하지 않는다 — 조치 대상을 고르려면 이쪽이 필요하다. 못 물었으면 **빈 목록**이다(§2.6).
+  repeated string providers = 3;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

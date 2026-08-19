@@ -14,6 +14,7 @@ Windows에 **등록된 CNG provider(KSP/SSP)** 와 그 머신이 열거하는 �
 |---|---|---|
 | **등록 provider** | `BCryptEnumRegisteredProviders` | 능력의 경계가 여기서 정해진다. **순서가 곧 우선순위**라 정렬하지 않는다 |
 | **알고리즘** | `BCryptEnumAlgorithms`(전 종류) | 그 머신이 실제로 서비스하는 알고리즘. ML-KEM·ML-DSA가 보이면 PQC 능력의 직접 증거다 |
+| **알고리즘→provider** | `BCryptEnumProviders`(알고리즘마다) | 등록 목록은 "무엇이 있나"만 답한다. **누가 ML-DSA를 하나**는 여기에만 있다 — 조치 대상을 고르는 근거 |
 
 ## 외부 도구에 의존하지 않는다
 
@@ -40,7 +41,7 @@ ML-DSA를 할 수 있나"에 답할 수 없다는 것이 드러나 계약에 더
 | `pqcota:crypto_runtime` | `cng` |
 | `pqcota:detection_method` | `runtime-introspection` |
 | `pqcota:cng.provider_set` | 등록 순서 CSV |
-| `pqcota:cng.algorithms` | `이름:종류` 쌍의 CSV. 종류를 모르면 빈 값 |
+| `pqcota:cng.algorithms` | `이름:종류[:provider\|provider]`의 CSV. 종류를 모르면 빈 값, provider를 못 물었으면 셋째 칸이 없다 |
 
 ## 실측 — Windows 11 Pro 25H2 (빌드 26200, x64)
 
@@ -87,7 +88,7 @@ Windows Client Key Protection Provider
 |---|---|
 | 순수 조립·완전성 규칙 + 단위 테스트 | **된다** — Windows 없이 돈다 |
 | `bcrypt.dll` 열거 | **된다** — Windows 11 26200에서 실측(위) |
-| 노드 식별 | **된다** — 레지스트리 `MachineGuid`로 실측 확인(`derived_from=machine-id`). `hardware_uuid`는 아직 빈다: SMBIOS는 펌웨어 테이블을 떠야 나와서, 지어내지 않고 비워 둔다 |
+| 노드 식별 | **된다** — `MachineGuid`(설치 단위)로 실측 확인. `hardware_uuid`는 SMBIOS Type 1을 펌웨어 테이블에서 읽는다(하드웨어 단위, 리눅스 `product_uuid`와 같은 표기) — 실측 확인 대기 |
 | 정규화 → 파생 뷰 | **된다** — provider·알고리즘이 `CngAxes`까지 온다(실측 값으로 못 박음) |
 | 적재 → 인벤토리 조회 | **된다** — 실기 결과를 Postgres에 적재해 뷰까지 확인(TD-CNG-9). 화면에 이렇게 나온다:<br>`win_cng  confirmed  runtime_introspection  providers=9 algorithms=50 네이티브(서명만 — KEM 미관측)` |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다** — 이 collector는 관측까지다 |

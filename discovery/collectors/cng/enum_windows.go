@@ -17,6 +17,7 @@ var (
 	bcrypt = windows.NewLazySystemDLL("bcrypt.dll")
 
 	procEnumRegisteredProviders = bcrypt.NewProc("BCryptEnumRegisteredProviders")
+	procEnumProviders           = bcrypt.NewProc("BCryptEnumProviders")
 	procEnumAlgorithms          = bcrypt.NewProc("BCryptEnumAlgorithms")
 	procFreeBuffer              = bcrypt.NewProc("BCryptFreeBuffer")
 )
@@ -101,7 +102,15 @@ func algorithms() ([]Algorithm, error) {
 	items := unsafe.Slice(list, count)
 	out := make([]Algorithm, 0, count)
 	for _, a := range items {
-		out = append(out, Algorithm{Name: windows.UTF16PtrToString(a.name), Class: AlgorithmClass(a.class)})
+		name := windows.UTF16PtrToString(a.name)
+		out = append(out, Algorithm{
+			Name:  name,
+			Class: AlgorithmClass(a.class),
+			// 등록 목록은 "머신에 무엇이 있나"만 답한다. 어느 provider가 이 알고리즘을 실제로
+			// 서비스하는지는 **알고리즘마다 따로 물어야** 나온다 — 조치 대상을 고르려면 그쪽이다.
+			// 못 물었으면 빈 목록으로 둔다(§2.6 — 빈 것과 "없더라"를 같게 적지 않는다).
+			Providers: providersFor(name),
+		})
 	}
 	// 알고리즘은 우선순위가 아니라 집합이다. 열거 순서가 실행마다 흔들리면 같은 관측이 다른
 	// 내용 지문이 되어 변화가 없는데 스냅샷이 늘어나므로 정렬해 결정론을 준다(§1.2).
@@ -118,4 +127,40 @@ func algorithms() ([]Algorithm, error) {
 // 돌려주므로 `windows.Errno`로 감싸면 엉뚱한 문구가 붙는다 — 코드를 그대로 적는다.
 func ntStatus(call string, st uintptr) error {
 	return fmt.Errorf("%s가 NTSTATUS 0x%08X를 돌려줬다", call, uint32(st))
+}
+
+// providerName — BCRYPT_PROVIDER_NAME(bcrypt.h). 이름 하나짜리 구조체다.
+type providerName struct {
+	name *uint16
+}
+
+// providersFor — 그 알고리즘을 구현하는 provider들. 못 물으면 nil이다(에러로 올리지 않는다:
+// 알고리즘 자체는 관측됐고, provider 축만 비는 것이 정직하다).
+func providersFor(alg string) []string {
+	if alg == "" {
+		return nil
+	}
+	p, err := windows.UTF16PtrFromString(alg)
+	if err != nil {
+		return nil
+	}
+	var count uint32
+	var list *providerName
+	st, _, _ := procEnumProviders.Call(
+		uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&count)), uintptr(unsafe.Pointer(&list)), 0)
+	if st != statusSuccess || list == nil || count == 0 {
+		return nil
+	}
+	defer procFreeBuffer.Call(uintptr(unsafe.Pointer(list)))
+	items := unsafe.Slice(list, count)
+	out := make([]string, 0, count)
+	for _, it := range items {
+		if n := windows.UTF16PtrToString(it.name); n != "" {
+			out = append(out, n)
+		}
+	}
+	// 여기 순서는 우선순위가 아니라 열거 순서다 — 등록 목록(provider_set)이 우선순위를 들고 있다.
+	// 실행마다 흔들리면 같은 관측이 다른 지문이 되므로 정렬해 결정론을 준다(§1.2).
+	sort.Strings(out)
+	return out
 }
