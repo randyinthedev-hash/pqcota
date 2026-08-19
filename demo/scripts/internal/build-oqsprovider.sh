@@ -11,12 +11,12 @@
 # 공유 liboqs에 링크하면 노드에서 `liboqs.so.9 => not found`로 조용히 안 뜬다(실제로 그랬다).
 set -euo pipefail
 
-OUT="${1:?사용법: build-oqsprovider.sh <출력 .so 경로>}"
+OUT="${1:?usage: build-oqsprovider.sh <output .so path>}"
 BASE="${OQS_BUILD_BASE:-ubuntu:24.04}"
 IMG="pqcota-demo/oqsprovider-build"
 
 if ! docker image inspect "$IMG" >/dev/null 2>&1; then
-	echo "   oqsprovider 빌드 중(liboqs + oqs-provider · 첫 실행은 수 분)…"
+	echo "   building oqsprovider (liboqs + oqs-provider · the first run takes minutes)…"
 	# 빈 컨텍스트로 빌드한다 — COPY가 없는데 리포를 통째로 보낼 이유가 없다.
 	CTX=$(mktemp -d)
 	trap 'rm -rf "$CTX"' EXIT
@@ -35,11 +35,11 @@ RUN git clone -q --depth 1 https://github.com/open-quantum-safe/oqs-provider.git
     find oqs-provider/build -name oqsprovider.so -exec cp {} /oqsprovider.so \;
 # 미해결 의존이 남은 모듈은 여기서 끊는다 — 노드에 가서야 조용히 안 뜨면 원인을 찾기 어렵다.
 RUN ldd /oqsprovider.so | grep -q 'not found' \
-      && { echo "✗ 미해결 의존이 남았다:"; ldd /oqsprovider.so | grep 'not found'; exit 1; } || true
+      && { echo "✗ unresolved dependencies remain:"; ldd /oqsprovider.so | grep 'not found'; exit 1; } || true
 EOF
 fi
 
 cid=$(docker create "$IMG" true)
 docker cp "$cid:/oqsprovider.so" "$OUT" >/dev/null
 docker rm -f "$cid" >/dev/null
-echo "   실물 모듈: $OUT ($(stat -c%s "$OUT" 2>/dev/null || stat -f%z "$OUT") 바이트)"
+echo "   real module: $OUT ($(stat -c%s "$OUT" 2>/dev/null || stat -f%z "$OUT") bytes)"

@@ -28,4 +28,4 @@ for ((r = 0; r < ROUNDS; r++)); do
   done
   sleep 1
 done
-echo "[traffic] 완료 (rounds=$ROUNDS, targets=$*)"
+echo "[traffic] done (rounds=$ROUNDS, targets=$*)"

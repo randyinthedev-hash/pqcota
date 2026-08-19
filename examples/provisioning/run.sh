@@ -14,23 +14,23 @@ cd "$ROOT"
 
 # 케이스 = plans/<이름>.json | 무엇을 보여주는가 | (선택)배포 수준. 수준은 케이스의 성질이라
 # 읽는 사람이 플래그를 맞혀야 하지 않게 여기 적는다(기본 l2).
-CASES='00-basic-two-actions|한 계획에 노드 둘(OpenSSL + JCA) — 노드별 play로 갈린다
-openssl-3.5-config-only|OpenSSL 3.5+ 네이티브: config만, provider 모듈 없음
-openssl-3.0-provider-inject|OpenSSL 3.0–3.4: 버전 유지 + provider 모듈 주입
-openssl-1.1.1-fork-replace|OpenSSL 1.1.1: provider API 없음 → 생성 불가, 수동 단계로 표기
-jca-native-config-only|JDK 네이티브 PQC: namedGroups만, provider 무등록
-jca-provider-inject-bc|JCA: BouncyCastle 주입 — 클래스명 자동 확정
-jca-fips-bcfips|규제 자산: BC-FJA(FIPS) 라우팅 — 등록 클래스가 달라진다
-jca-eol-jdk-upgrade|EOL JDK: config로 불가 → 수동 단계로 표기
-custom-openssl-provider|커스텀 OpenSSL provider: 절대 경로·provider별 소스 변수·sha256
-custom-jca-provider|커스텀 JCA provider: providerClass로 FQCN 명시 → 계획만으로 완결
-custom-jca-missing-class|같은 것에서 providerClass만 뺐을 때 — placeholder + 안내
-signature-algorithm|서명 알고리즘(ML-DSA): KEM 그룹이 아니라 그룹 줄이 주석으로
-l3-activation-hooks|L3: 계획의 훅을 의미 순서로 — pre → 배치 → activate → restart (롤백은 역순)|l3
-l3-hooks-missing|L3인데 훅이 없을 때: 명령을 지어내지 않고 무엇이 안 일어나는지 고지|l3'
+CASES='00-basic-two-actions|two nodes in one plan (OpenSSL + JCA) — split into a play per node
+openssl-3.5-config-only|OpenSSL 3.5+ native: config only, no provider module
+openssl-3.0-provider-inject|OpenSSL 3.0-3.4: keep the version, inject a provider module
+openssl-1.1.1-fork-replace|OpenSSL 1.1.1: no provider API → nothing is generated, recorded as a manual step
+jca-native-config-only|JDK-native PQC: namedGroups only, no provider registered
+jca-provider-inject-bc|JCA: BouncyCastle injection — the class name is resolved automatically
+jca-fips-bcfips|regulated asset: routed to BC-FJA (FIPS) — a different registration class
+jca-eol-jdk-upgrade|end-of-life JDK: impossible through config → recorded as a manual step
+custom-openssl-provider|custom OpenSSL provider: absolute path, per-provider source variable, sha256
+custom-jca-provider|custom JCA provider: the FQCN is named in providerClass → the plan alone is enough
+custom-jca-missing-class|the same, with providerClass removed — a placeholder plus guidance
+signature-algorithm|signature algorithm (ML-DSA): not a KEM group, so the group line is commented out
+l3-activation-hooks|L3: the plan's hooks in meaningful order — pre → stage → activate → restart (rollback reverses it)|l3
+l3-hooks-missing|L3 without hooks: no command is invented; it reports what will not happen|l3'
 
 list() {
-  echo "케이스 (plans/<이름>.json):"
+  echo "cases (plans/<name>.json):"
   printf '%s\n' "$CASES" | while IFS='|' read -r name desc lvl; do
     printf "  %-28s %s%s\n" "$name" "$desc" "${lvl:+  [--level $lvl]}"
   done
@@ -44,7 +44,7 @@ run_case() {
   local name="$1"; shift
   local file="$HERE/plans/$name.json"
   if [ ! -f "$file" ]; then
-    echo "그런 케이스 없음: $name" >&2
+    echo "no such case: $name" >&2
     list >&2
     exit 2
   fi
@@ -63,12 +63,12 @@ case "${1:-}" in
   "")
     list
     echo
-    echo "기본 케이스를 돌려본다 — 다른 케이스는 ./run.sh <이름>"
+    echo "running the default case — for others: ./run.sh <name>"
     echo
     run_case 00-basic-two-actions
-    echo "✅ 전 케이스: ./run.sh --all · 역방향: ./run.sh <케이스> --rollback"
-    echo "   • before 캡처 + 롤백 레코드 영속: --dsn <postgres> 추가(디스커버리가 먼저 적재돼 있어야 함 — demo/ 참고)"
-    echo "   • status를 PLAN_STATUS_DRAFT로 바꾸면 §3.7 게이트가 거부한다."
+    echo "✅ all cases: ./run.sh --all · reverse: ./run.sh <case> --rollback"
+    echo "   • before capture + persisted rollback record: add --dsn <postgres> (discovery must have ingested first — see demo/)"
+    echo "   • change status to PLAN_STATUS_DRAFT and the §3.7 gate refuses it."
     ;;
   *)
     run_case "$@"

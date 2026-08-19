@@ -7,18 +7,18 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 cd "$ROOT"
 
-echo "▶ 1) pqcota-hosts — 사용자 hosts.csv → 런타임 Ansible 인벤토리(비밀 포함) + 안전 엔드포인트(비밀 제외)"
+echo "▶ 1) pqcota-hosts — your hosts.csv → runtime Ansible inventory (with secrets) + safe endpoints (without)"
 go run ./discovery/cmd/pqcota-hosts --ansible-out "$TMP/targets.ini" "$HERE/hosts.csv"
 echo
-echo "   생성된 Ansible 인벤토리(런타임 전용·0600 — 접속 키가 실림, pqcota 인벤토리엔 미영속):"
+echo "   the generated Ansible inventory (runtime-only, 0600 — it carries the access key; never persisted in the pqcota inventory):"
 sed 's/^/     /' "$TMP/targets.ini"
 
 echo
-echo "▶ 2) pqcota-ingest — [① 직접 관측] 회수된 CollectionResult(../data/results)를 스코프 게이트→정규화→적재"
-echo "   (PQCOTA_DSN 없으면 인메모리 요약. 영속하려면 Postgres DSN을 export)"
+echo "▶ 2) pqcota-ingest — [① direct observation] fetched CollectionResults (../data/results) through the scope gate → normalize → ingest"
+echo "   (without PQCOTA_DSN it is an in-memory summary; export a Postgres DSN to persist)"
 go run ./inventory/cmd/pqcota-ingest "$ROOT/examples/data/results"
 
 echo
-echo "✅ 접근 준비 + collector 결과 적재를 돌려봤다."
-echo "   • 실제 노드 스캔(리눅스): go run ./discovery/cmd/pqcota-nodescan <node-id>  (/proc의 OpenSSL 관측)"
-echo "   • 외부 CBOM 수신·조회: examples/inventory"
+echo "✅ ran access prep and the ingest of collector results."
+echo "   • scan a real node (Linux): go run ./discovery/cmd/pqcota-nodescan <node-id>  (observes OpenSSL through /proc)"
+echo "   • external CBOM intake and query: examples/inventory"

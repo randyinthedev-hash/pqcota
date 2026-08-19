@@ -10,61 +10,62 @@ DSN="postgres://postgres:pqcota@pqcota-demo-pg:5432/pqcota"
 # up.sh 확인보다 먼저 온다: 아직 안 세운 사람도 무엇이 있는지는 볼 수 있어야 한다.
 usage() {
 	cat <<'HELP'
-사용법: demo.sh            접근준비 → 디스커버리 → 인벤토리 → 프로비저닝(6단계)
+usage: demo.sh            access prep → discovery → inventory → provisioning (6 stages)
 
-인자는 받지 않는다. 조정은 환경변수로 한다:
+It takes no arguments; tune it with environment variables:
 
-  DEMO_REAL_PROVIDER=1   선택 단계를 켠다 — 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에
-                         배치·활성화하고, 조치가 **실제 암호 알고리즘으로 반영되는지**까지 확인한다.
-                         기본 데모는 빈 파일로 배포 경로만 보인다. 첫 실행은 빌드로 수 분 더 걸린다.
-  OQS_BUILD_BASE=<이미지> 그 provider를 빌드할 베이스. 노드 이미지와 같아야 ABI가 맞는다
-                         (기본 ubuntu:24.04 — 기본 토폴로지의 OpenSSL 3 노드와 같다).
+  DEMO_REAL_PROVIDER=1   enable the optional stage — build a real oqsprovider, stage and activate it on an
+                         OpenSSL 3.0-3.4 node, and check the remediation **lands as real algorithms**.
+                         The default demo ships an empty file and shows the delivery path only. The first
+                         run takes a few minutes longer because of that build.
+#   OQS_BUILD_BASE=<image> base image to build that provider on. It must match the node image for ABI
+                         compatibility (default ubuntu:24.04 — same as the OpenSSL 3 node in the default topology).
 
-  DEMO_TARGET_EDGES=<n>  이만큼 관측될 때까지 디스커버리를 다시 돈다 (기본: 토폴로지의 엣지 수)
-  DEMO_MAX_ATTEMPTS=<n>  그 재수집의 상한 (기본 4)
+  DEMO_TARGET_EDGES=<n>  re-run discovery until this many edges are observed (default: edges in the topology)
+  DEMO_MAX_ATTEMPTS=<n>  cap on those retries (default 4)
 
-예:
+examples:
   ./demo/scripts/demo.sh
   DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 
-먼저 ./demo/scripts/up.sh 로 환경을 세우고, 끝나면 ./demo/scripts/down.sh 로 지운다.
+Bring the environment up with ./demo/scripts/up.sh first, and tear it down with ./demo/scripts/down.sh.
 HELP
 }
 case "${1:-}" in
 -h | --help) usage; exit 0 ;;
 "") ;;
-*) echo "demo.sh: 모르는 인자 '$1' — 이 스크립트는 인자를 받지 않는다." >&2; usage >&2; exit 2 ;;
+*) echo "demo.sh: unknown argument '$1' — this script takes none." >&2; usage >&2; exit 2 ;;
 esac
 
 # 데모 구성은 up.sh가 topology.yaml에서 생성한 산출물(compose·groups·profiles·manifest)이 정의한다.
 GEN="$DEMO_DIR/.generated"
-[ -f "$GEN/manifest.env" ] || { echo "먼저 ./demo/scripts/up.sh 를 실행하세요(생성물이 없습니다)." >&2; exit 1; }
+[ -f "$GEN/manifest.env" ] || { echo "run ./demo/scripts/up.sh first (nothing has been generated yet)." >&2; exit 1; }
 source "$GEN/manifest.env"  # NODES · EDGE_COUNT · HUMAN
 ANS="cd /work/ansible && ansible"       # ansible.cfg 적용 위해 그 디렉토리에서 실행
 INV="-i /work/ansible/targets.ini -i /work/ansible/groups.ini"
 pg() { docker exec pqcota-demo-pg psql -U postgres -d pqcota "$@"; }
 
-echo "▶ 0/6 접근 준비 — 사용자 hosts 파일 → Ansible 인벤토리(비밀 미영속) + 엔드포인트 인벤토리 upsert…"
+echo "▶ 0/6 access prep — your hosts file → Ansible inventory (secrets not persisted) + endpoint upsert…"
 for i in $(seq 1 20); do docker exec pqcota-demo-pg pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
 # pqcota-hosts: (a) targets.ini에 접속 비밀(키) — 런타임 전용·0600, (b) 엔드포인트(비밀 제외) Postgres upsert.
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
   "pqcota-hosts --ansible-out /work/ansible/targets.ini --dsn '$DSN' /work/hosts.csv" | sed 's/^/   /'
-echo "   ── 생성된 targets.ini: 접속 키가 실림(런타임 전용·미영속) ──"
+echo "   ── generated targets.ini: carries the access key (runtime-only, not persisted) ──"
 docker exec pqcota-ctl bash -lc 'grep -m1 ansible_ssh_private_key_file /work/ansible/targets.ini' | sed 's/^/   /'
-echo "   ── 인벤토리(Postgres) 엔드포인트: 비밀 없음(node_id·이름·ip·port만) ──"
+echo "   ── inventory (Postgres) endpoints: no secrets (node_id, name, ip, port only) ──"
 pg -tAc "select '   '||node_id||'  '||(endpoint->>'name')||'  '||(endpoint->>'ip')||':'||(endpoint->>'port') from pqcota_endpoint order by node_id"
 secret_ct=$(pg -tAc "select count(*) from pqcota_endpoint where endpoint::text ~* 'ssh|key|root|id_demo'")
-echo "   → 엔드포인트에 접근 비밀 흔적: ${secret_ct}건 (0이어야 정상)"
+echo "   → traces of access secrets in the endpoints: ${secret_ct} (0 is correct)"
 # CMDB 프로필 선언 임포트(pqcota-profile — CMDB/리뷰어 레인, 관측 아님). 인벤토리 뷰 시각 구분.
 # 프로필·그룹은 토폴로지에서 생성된 것을 쓴다(노드가 가변이므로).
 docker cp "$GEN/profiles.csv" pqcota-ctl:/work/profiles.csv
 docker cp "$GEN/groups.ini"   pqcota-ctl:/work/ansible/groups.ini
 docker exec pqcota-ctl bash -lc "pqcota-profile --dsn '$DSN' /work/profiles.csv" >/dev/null 2>&1
 
-echo "▶ 1/6 컨트롤러 → 타깃 SSH 연결 확인 (Ansible ping, pqcota-hosts 생성 인벤토리로)…"
+echo "▶ 1/6 controller → target SSH check (Ansible ping, using the inventory pqcota-hosts generated)…"
 docker exec pqcota-ctl bash -lc "$ANS $INV -m ping targets"
 
-echo "▶ 2/6 디스커버리 실행 (OpenSSL /proc · JCA provider · 네트워크 핸드셰이크)…"
+echo "▶ 2/6 running discovery (OpenSSL /proc · JCA providers · network handshakes)…"
 # 목표 엣지 수에 못 미치면 재수집한다. 관측 구간 안에 트래픽이 안 흐를 수 있는 것은 실환경에서도
 # 참이라(유휴 링크) 이 backstop은 남긴다. 다만 예전에 이 루프가 자주 돌던 진짜 이유는 타이밍이
 # 아니라 **collector 결함**이었다 — 원시 syscall의 EINTR을 치명적으로 다뤄 관측 구간이 무작위로
@@ -77,15 +78,15 @@ edge_count() {
 for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
   docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
   cnt="$(edge_count)"; cnt="${cnt:-0}"
-  echo "   시도 $attempt/$MAX_ATTEMPTS — 관측 엣지 ${cnt}개 (목표 ${TARGET_EDGES}+)"
+  echo "   attempt $attempt/$MAX_ATTEMPTS — ${cnt} observed edges (target ${TARGET_EDGES}+)"
   if [ "$cnt" -ge "$TARGET_EDGES" ]; then break; fi
-  if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then echo "   엣지 부족 → 재수집(컨테이너 warm)…"; fi
+  if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then echo "   not enough edges → collecting again (containers are warm)…"; fi
 done
 
-echo "▶ 3/6 읽기전용 디스커버리 뷰 (자산 + 등급)…"
+echo "▶ 3/6 read-only discovery view (assets + grade)…"
 docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results /work/nodes.json /work/topology.dot'
 
-echo "▶ 4/6 관측 토폴로지 SVG 렌더 + 회수…"
+echo "▶ 4/6 rendering the observed topology as SVG and fetching it…"
 # 리포로 꺼내는 결과물은 전부 demo/.generated/ 아래로(일관성 — down.sh가 통째로 지운다).
 mkdir -p "$GEN"
 if docker exec pqcota-ctl bash -lc 'command -v dot >/dev/null && dot -Tsvg /work/topology.dot -o /work/topology.svg'; then
@@ -94,9 +95,9 @@ if docker exec pqcota-ctl bash -lc 'command -v dot >/dev/null && dot -Tsvg /work
 fi
 docker cp pqcota-ctl:/work/topology.dot "$GEN/topology.dot" 2>/dev/null || true
 
-echo "▶ 5/6 중앙 인벤토리 적재·조회 (Postgres append-only · 엔드포인트·프로필·앱 표시 · 이력·변화)…"
+echo "▶ 5/6 central inventory ingest and query (append-only Postgres · endpoints, profiles, app labels · history and changes)…"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
-echo "   ── 조회(pqcota-inventory) — ▸머신 헤더(엔드포인트·프로필) · @앱 표시(공유 .so는 다중) ──"
+echo "   ── query (pqcota-inventory) — ▸machine header (endpoint, profile) · @app label (a shared .so has several) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
   | grep -E 'central inventory|▸|@|totals' | sed 's/^/   /'
 
@@ -107,10 +108,10 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/result
 HNODE=$(pg -tAc "select node_id from pqcota_snapshots
   order by jsonb_array_length(coalesce(edges,'[]'::jsonb)) desc, node_id limit 1" | tr -d '[:space:]')
 [ -z "$HNODE" ] && HNODE=$(pg -tAc "select node_id from pqcota_endpoint order by node_id limit 1" | tr -d '[:space:]')
-echo "   ── 이력(pqcota-inventory -history $HNODE): 스냅샷은 변화가 있을 때만, obs는 재확인 횟수 ──"
+echo "   ── history (pqcota-inventory -history $HNODE): a snapshot only on change; obs counts re-confirmations ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -history '$HNODE'" | sed 's/^/   /'
 PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
-echo "   ── 스냅샷 상세(-snapshot): 자산 + 그 스냅샷의 관측 엣지(누적 뷰는 합계만 낸다) ──"
+echo "   ── snapshot detail (-snapshot): assets + that snapshot's observed edges (the cumulative view shows totals only) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
 # 엣지의 앱 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
@@ -121,8 +122,8 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot
 UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_elements(s.edges) e
   where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
 if [ -n "$UNATTR_DST" ]; then
-  echo "   ── 앱 선언(pqcota-declare-attribution): 관측이 못 잡은 엣지를 사람이 지정한다 ──"
-  echo "      대상 $UNATTR_DST — 짧은 연결이라 수집 구간에서 소켓이 이미 닫혀 있었다"
+  echo "   ── app declaration (pqcota-declare-attribution): a person names the app for edges observation missed ──"
+  echo "      target $UNATTR_DST — a short-lived connection; the socket was already closed during the window"
   docker exec -i pqcota-ctl bash -lc "cat > /work/attribution.csv" <<CSV
 node_id,dst,app_key
 $HNODE,$UNATTR_DST,batch-runner.service
@@ -130,11 +131,11 @@ CSV
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
     'pqcota-declare-attribution --out /work/declared-attr /work/attribution.csv && pqcota-ingest /work/declared-attr >/dev/null' \
     | sed 's/^/      /'
-  echo "   ── 다시 조회: 관측 엣지는 그대로고, 빈 자리만 메워진다 ──"
+  echo "   ── query again: the observed edges are untouched; only the blanks are filled ──"
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" \
     | grep -E 'observed edges|→|declared by a person' | sed 's/^/   /'
 else
-  echo "   (이번 구간에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
+  echo "   (every edge got an app this time — with no blanks there is nothing to declare)"
 fi
 
 # 자산 스코프 — 노드는 등재됐어도(§1.4) 그 안에서 계속 관리할 자산만 남긴다. 시스템 기본
@@ -142,36 +143,36 @@ fi
 # 내용이 바뀌므로 새 스냅샷이 생긴다 → 바로 이게 -diff로 보일 "실제 변화"다.
 docker exec -i pqcota-ctl bash -lc "cat > /work/scope-assets.csv" <<'CSV'
 action,runtime,lib,app_key,note
-exclude,*,*,/usr/sbin/sshd*,sshd는 OS 패치로 관리 — 지속 관측 불필요
-exclude,*,*,/usr/bin/python*,패키지가 딸려 넣은 python 런타임
+exclude,*,*,/usr/sbin/sshd*,sshd is managed by OS patching — no need to keep observing it
+exclude,*,*,/usr/bin/python*,a python runtime pulled in by a package
 CSV
-echo "   ── 자산 스코프(-scope-assets): 잡음(sshd·python 런타임)을 관리 대상에서 뺀다 ──"
+echo "   ── asset scope (-scope-assets): drop the noise (sshd, python runtime) out of management ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
   'pqcota-ingest -scope-assets /work/scope-assets.csv /work/results' | grep -E 'asset scope|•' | sed 's/^/   /'
-echo "   ── 제외 후 인벤토리: 앱이 실제로 쓰는 자산만 남는다 (제외 ≠ 부재 — 건수를 고지한다) ──"
+echo "   ── inventory after exclusion: only what the apps actually use (excluded != absent — the count is reported) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
   | grep -E '▸|openssl|jca|excluded by asset scope|totals' | sed 's/^/   /'
 
 POST_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
-echo "   ── 변화(-diff): 스코프 적용 전후. '사라짐'은 자산이 없어진 게 아니라 관리 대상에서 뺐다는 뜻 ──"
+echo "   ── changes (-diff): before and after the scope. 'removed' means dropped from management, not gone ──"
 if [ -n "$PRE_SNAP" ] && [ -n "$POST_SNAP" ] && [ "$PRE_SNAP" != "$POST_SNAP" ]; then
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -diff '$PRE_SNAP','$POST_SNAP'" \
     | grep -vE '^\s*$' | sed 's/^/   /'
 else
-  echo "   (이 노드는 스코프 적용 후에도 내용이 같아 새 스냅샷이 없다 — 비교할 두 지점이 없으면 diff도 없다)"
+  echo "   (this node's content is unchanged after the scope, so there is no new snapshot — without two points there is no diff)"
 fi
 
 # 보존 정책 — 파괴적 동작이라 조회 커맨드와 분리했고 기본이 dry-run이다.
-echo "   ── 보존 정책(pqcota-prune, 기본 dry-run): 최신은 남기고 그 이전만 — 실제 삭제는 -apply로만 ──"
+echo "   ── retention (pqcota-prune, dry-run by default): keeps the newest, prunes before it — deletion only with -apply ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-prune -keep-last 1' | sed 's/^/   /'
 
-echo "▶ 6/6 프로비저닝 — 확정 계획 → L2/L3 플레이북 생성 → 적용 → 되돌림…"
+echo "▶ 6/6 provisioning — finalized plan → generate L2/L3 playbooks → apply → roll back…"
 # 프로비저닝 대상 노드(PNODE) — openssl finding이 있는 노드를 인벤토리에서 고른다(공유 .so로 다중
 # 앱이 붙은 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.5).
 PNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where f ? 'openssl' order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, s.node_id limit 1" | tr -d '[:space:]')
 if [ -z "$PNODE" ]; then
-  echo "   (openssl finding을 가진 노드가 없어 프로비저닝 시연은 생략 — 토폴로지에 openssl 서버를 두면 보인다)"
+  echo "   (no node has an openssl finding, so the provisioning walk-through is skipped — add an openssl server to the topology to see it)"
 else
 # 인벤토리에서 실제 finding을 골라 확정 계획을 만든다. 공유 libssl(여러 앱에 걸침) 우선, 없으면 아무 finding.
 pick() { pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
@@ -180,36 +181,36 @@ pick() { pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(
 FID=$(pick "f->'openssl'->>'lib'='libssl.so.3' and jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
 [ -z "$FID" ] && FID=$(pick "jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
 [ -z "$FID" ] && FID=$(pick "f ? 'openssl'")
-echo "   대상 finding: $FID ($PNODE)"
+echo "   target finding: $FID ($PNODE)"
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
 {"id":"plan-demo","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
  "approvalSignatures":["reviewer:demo"],
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
-   "providerChoice":"oqsprovider","rollbackNote":"cnf 한 줄 + 모듈 제거"}]}
+   "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module"}]}
 JSON
-echo "   ── pqcota-provision: 확정 계획(§3.7 게이트) → L2 플레이북 생성 + before 캡처·레코드 영속 ──"
+echo "   ── pqcota-provision: finalized plan (§3.7 gate) → generate the L2 playbook + capture before, persist a record ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan.json > /work/ansible/provision.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc 'grep -E "module = |dest:" /work/ansible/provision.yml' | sed 's/^/   │ /'
-echo "   ── 영속된 롤백 레코드 조회(pqcota-records): 영향 앱(공유 .so면 다중) + before 상태 ──"
+echo "   ── read back the persisted rollback record (pqcota-records): affected apps (several for a shared .so) + the before state ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-records $PNODE" | sed 's/^/   /'
 
 # ── 생성물이 실제로 도는지까지 봐야 "생성했다"가 말이 된다. 생성만 하고 안 돌리면
 # 깨끗한 노드에서 깨지는 플레이북도 통과해 버린다(실제로 그런 결함이 여럿 있었다).
 echo
-echo "   ══ 생성된 플레이북을 실제로 적용한다(ansible-playbook) ══"
+echo "   ══ actually apply the generated playbook (ansible-playbook) ══"
 # provider 모듈은 도구가 주지 않는다. 데모는 배포 경로만 보이려 빈 파일을 쓴다(암호 기능 없음).
 docker exec pqcota-ctl bash -lc 'mkdir -p /work/ansible/files && : > /work/ansible/files/oqsprovider.so'
 MOD_SHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
-echo "   ── 적용(ansible-playbook) — 모듈 sha256 게이트도 함께 ──"
+echo "   ── apply (ansible-playbook) — with the module sha256 gate ──"
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$MOD_SHA provision.yml" \
   | grep -E "TASK|ok=|changed=|failed=" | sed 's/^/   /'
-echo "   ── 타깃 노드에 실제로 놓였나 ──"
+echo "   ── did it actually land on the target node ──"
 docker exec "$PNODE" sh -lc 'ls -l /opt/pqcota/oqsprovider.so /etc/pqcota/openssl-pqc.cnf' | sed 's/^/   /'
-docker exec "$PNODE" sh -lc 'grep "^module" /etc/pqcota/openssl-pqc.cnf' | sed 's/^/   config가 참조하는 경로: /'
+docker exec "$PNODE" sh -lc 'grep "^module" /etc/pqcota/openssl-pqc.cnf' | sed 's/^/   path referenced by the config: /'
 
-echo "   ── 되돌리기(--rollback) — 원본을 덮은 적이 없으니 제거로 끝난다 ──"
+echo "   ── roll back (--rollback) — nothing was overwritten, so removal is enough ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --rollback /work/plan.json > /work/ansible/provision-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec "$PNODE" sh -lc 'ls /opt/pqcota/oqsprovider.so /etc/pqcota/openssl-pqc.cnf 2>&1 || true' | sed 's/^/   /'
@@ -219,7 +220,7 @@ docker exec "$PNODE" sh -lc 'ls /opt/pqcota/oqsprovider.so /etc/pqcota/openssl-p
 # **사용자가 적은 명령**을 도구가 의미 순서로 배치할 뿐이다. 이 노드는 ssl-apps.sh로 서비스를
 # 관리하므로 훅이 그것을 가리킨다 — 현실의 systemd unit·사내 기동 스크립트에 해당한다.
 echo
-echo "   ══ L3(활성화·재시작) — 계획의 훅을 의미 순서로: pre → 배치 → activate → restart ══"
+echo "   ══ L3 (activate and restart) — the plan's hooks in meaningful order: pre → stage → activate → restart ══"
 docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   before │ /'
 PID_BEFORE=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
@@ -228,7 +229,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_CONFIG_ONLY","targetAlgorithm":"ML-KEM (FIPS 203)",
-   "rollbackNote":"활성화 지점 제거 + 재시작",
+   "rollbackNote":"remove the activation point + restart",
    "activation":{
      "pre":"/usr/local/bin/ssl-apps.sh stop",
      "activate":"printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/openssl-pqc.cnf > /etc/pqcota/service.env",
@@ -236,17 +237,17 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
      "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
 JSON
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 /work/plan-l3.json > /work/ansible/provision-l3.yml" 2>&1 | sed 's/^/   /'
-echo "   ── 생성된 훅 태스크(순서가 곧 안전성: 내리고 → 바꾸고 → 켜고 → 재시작) ──"
+echo "   ── the generated hook tasks (the order is the safety: stop → change → enable → restart) ──"
 docker exec pqcota-ctl bash -lc 'grep -A2 -E "name: \"[①②③]" /work/ansible/provision-l3.yml | grep -vE "^--$"' | sed 's/^/   │ /'
-echo "   ── 적용 ──"
+echo "   ── apply ──"
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-l3.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   after  │ /'
 PID_AFTER=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" | tr -d '[:space:]')
-echo "   재시작 확인: 서비스 pid $PID_BEFORE → $PID_AFTER $([ "$PID_BEFORE" != "$PID_AFTER" ] && echo '(새 프로세스 = 새 설정으로 로드됨)' || echo '(pid 동일 — 재시작되지 않았다)')"
-echo "   ※ 이 노드의 OpenSSL은 이 조각의 PQC 그룹을 모른다 — 그래서 **능력이 바뀌었다고 말하지 않는다**."
-echo "     L3가 보이는 것은 활성화 지점 연결·재시작·가역성이다. 이 노드의 실제 조치는 fork 교체이며,"
-echo "     그건 config로 배포되지 않는다고 L2 플레이북이 이미 주석으로 말한다(프로비저닝 설계 §4.1)."
-echo "   ── L3 되돌림(--rollback): 대칭 역순 — pre → 활성화 되돌림 → 파일 제거 → 재시작 ──"
+echo "   restart check: service pid $PID_BEFORE → $PID_AFTER $([ "$PID_BEFORE" != "$PID_AFTER" ] && echo '(new process = loaded with the new config)' || echo '(same pid — it did not restart)')"
+echo "   ※ this node's OpenSSL does not know the PQC group in this fragment — so **we do not claim its capability changed**."
+echo "     what L3 shows is the activation wiring, the restart and the reversibility. The real remediation here is a fork"
+echo "     replacement, and the L2 playbook already says in a comment that this is not delivered through config (provisioning design §4.1)."
+echo "   ── L3 rollback (--rollback): the symmetric reverse — pre → undo activation → remove files → restart ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-l3.json > /work/ansible/provision-l3-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   rolled │ /'
@@ -264,22 +265,22 @@ fi  # PNODE 가드 끝
 BAND="f->'openssl'->>'version' ~ '^3\.[0-4]([.]|$)'"
 if [ "${DEMO_REAL_PROVIDER:-0}" = "1" ]; then
 echo
-echo "▶ (선택) 실물 provider 검증 — 조치 → 재관측 → 인벤토리 변화 (DEMO_REAL_PROVIDER=1)"
+echo "▶ (optional) real provider check — remediate → re-observe → inventory change (DEMO_REAL_PROVIDER=1)"
 RNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where $BAND order by s.seq desc limit 1" | tr -d '[:space:]')
 if [ -z "$RNODE" ]; then
-  echo "   (OpenSSL 3.0–3.4를 관측한 노드가 없어 생략 — provider 주입이 갈 자리가 그 대역이다)"
+  echo "   (no node observed with OpenSSL 3.0-3.4, so this is skipped — that band is where provider injection belongs)"
 else
 RFID=$(pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
   where s.node_id='$RNODE' and $BAND order by s.seq desc, f->>'id' limit 1" | tr -d '[:space:]')
 RVER=$(pg -tAc "select distinct (f->'openssl'->>'lib')||' '||(f->'openssl'->>'version') from pqcota_snapshots s, jsonb_array_elements(s.findings) f where f->>'id'='$RFID'" | head -1 | sed 's/^ *//;s/ *$//')
-echo "   대상: $RNODE ($RVER) · finding $RFID"
+echo "   target: $RNODE ($RVER) · finding $RFID"
 # 기본 토폴로지에서 이 finding은 5단계 스코프가 잡음으로 뺀 것이다(sshd·python이 로드한 libcrypto).
 # 여기서 보려는 것은 "관리할 자산인가"가 아니라 "3.0 런타임에서 도구가 낸 조각이 먹는가"라서 그대로 쓴다.
 
 # 능력 측정은 `list -kem-algorithms`로 한다. `-tls-groups`는 3.2+에만 있어서 이 대역(3.0–3.4)의
 # 아래쪽 노드에서는 옵션 자체가 없다 — 없는 옵션의 빈 출력을 "능력 없음"으로 읽으면 오답이 된다.
-echo "   ── 조치 전 능력: 이 노드의 OpenSSL이 아는 ML-KEM 계열 KEM ──"
+echo "   ── capability before: the ML-KEM family KEMs this node's OpenSSL knows ──"
 KEMQ='openssl list -kem-algorithms 2>/dev/null | grep -ci mlkem || true'
 BEFORE_G=$(docker exec "$RNODE" sh -lc "$KEMQ" | tr -d '[:space:]')
 echo "   openssl list -kem-algorithms | grep -ci mlkem  →  ${BEFORE_G:-0}"
@@ -296,33 +297,33 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
  "actions":[{"id":"a1","targetNodeId":"$RNODE","findingId":"$RFID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
-   "providerChoice":"oqsprovider","rollbackNote":"cnf 한 줄 + 모듈 제거",
+   "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module",
    "activation":{
      "pre":"/usr/local/bin/ssl-apps.sh stop",
      "activate":"printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/openssl-pqc.cnf > /etc/pqcota/service.env",
      "deactivate":"rm -f /etc/pqcota/service.env",
      "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
 JSON
-echo "   ── L2 배치(실물 .so · sha256 게이트) + L3 활성화 ──"
+echo "   ── L2 staging (a real .so, sha256 gate) + L3 activation ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$RSHA provision-real.yml" \
   | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 /work/plan-real.json > /work/ansible/provision-real-l3.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 
-echo "   ── 조치 후 능력: 활성화된 그 설정으로 다시 묻는다 ──"
+echo "   ── capability after: ask again, with that configuration active ──"
 ACT='. /etc/pqcota/service.env 2>/dev/null; export OPENSSL_CONF;'
 docker exec "$RNODE" sh -lc "$ACT openssl list -providers 2>/dev/null | grep -A2 -i oqs | head -4" | sed 's/^/   /'
 docker exec "$RNODE" sh -lc "$ACT openssl list -kem-algorithms 2>/dev/null | grep -i mlkem | head -3" | sed 's/^/   /'
 AFTER_G=$(docker exec "$RNODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 if [ "${AFTER_G:-0}" -gt "${BEFORE_G:-0}" ]; then
-  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개. 도구가 낸 config + 배치가 **실제 암호 알고리즘으로 반영**됐다."
+  echo "   → ML-KEM KEMs ${BEFORE_G:-0} → ${AFTER_G:-0}. The config and staging this tool produced **landed as real algorithms**."
 else
-  echo "   → ML-KEM KEM ${BEFORE_G:-0}개 → ${AFTER_G:-0}개 — 늘지 않았다. 모듈이 로드되지 않은 것이다."
-  echo "     확인할 곳: 모듈의 미해결 의존(\`ldd\`)과 cnf의 module 경로. 안 된 것을 됐다고 적지 않는다."
+  echo "   → ML-KEM KEMs ${BEFORE_G:-0} → ${AFTER_G:-0} — no increase. The module was not loaded."
+  echo "     where to look: unresolved dependencies of the module (\`ldd\`) and the module path in the cnf. We do not record a failure as a success."
 fi
 
-echo "   ── 재관측(디스커버리 재실행 → 적재) 후 인벤토리가 이 변화를 보는가 ──"
+echo "   ── after re-observing (discovery again → ingest), does the inventory see this change ──"
 RPRE=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
@@ -330,27 +331,27 @@ RPOST=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by
 if [ -n "$RPRE" ] && [ -n "$RPOST" ] && [ "$RPRE" != "$RPOST" ]; then
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -diff '$RPRE','$RPOST'" | sed 's/^/   /'
 else
-  echo "   변화 없음 — 새 스냅샷이 생기지 않았다(내용이 같으면 스냅샷을 만들지 않는다)."
+  echo "   no change — no new snapshot was created (identical content creates none)."
 fi
-echo "   ※ 능력은 분명히 늘었는데 인벤토리는 그대로다. 지어낸 결과가 아니라 **관측 범위의 사실**이다:"
-echo "     · OpenSSL은 provider 층을 관측하는 경로가 아직 없다 — /proc/maps의 libssl·libcrypto와"
-echo "       ELF 문자열(fork·버전)까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못한다."
-echo "     · 핸드셰이크도 안 바뀐다 — 협상은 양쪽이 알아야 하고, 이 토폴로지의 상대는 1.1.1이다."
-echo "     근거는 discovery/design.md §2.1. 없는 것을 있는 척하지 않는 것이 이 도구의 전제다(§2.5)."
+echo "   ※ the capability clearly grew, yet the inventory did not move. That is not a fabricated result but **a fact about what is observed**:"
+echo "     · there is still no path that observes the OpenSSL provider layer — it goes as far as libssl/libcrypto in"
+echo "       /proc/maps and ELF strings (fork, version). JCA sees its provider chain via attach; OpenSSL cannot be seen that way."
+echo "     · the handshake does not change either — negotiation needs both ends, and the peer in this topology is 1.1.1."
+echo "     the reasoning is in discovery/design.md §2.1. Not pretending to have what it does not is this tool's premise (§2.5)."
 
-echo "   ── 되돌림(L3 → L2) — 노드를 원래대로 ──"
+echo "   ── roll back (L3 → L2) — return the node to its original state ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --rollback /work/plan-real.json > /work/ansible/provision-real-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
-docker exec "$RNODE" sh -lc "$KEMQ" | sed 's/^/   되돌린 뒤 ML-KEM KEM: /'
+docker exec "$RNODE" sh -lc "$KEMQ" | sed 's/^/   ML-KEM KEMs after rollback: /'
 fi  # RNODE 가드 끝
 fi  # DEMO_REAL_PROVIDER 끝
 
 echo
-echo "✅ 데모 완료 (전 범위): 접근준비→디스커버리→인벤토리(엔드포인트·프로필·앱 표시·이력·스코프)→프로비저닝(L2 배치·L3 활성화·되돌림)."
-echo "   산출물: demo/.generated/topology.svg (색=등급) · 컨트롤러 /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
-echo "   ※ 생성물을 실제로 적용·활성화·되돌림까지 실행해 확인한 것 — 생성만 보면 깨끗한 노드에서 깨지는 플레이북도 통과한다."
-echo "   접근 비밀은 targets.ini(런타임 전용)에만 — 인벤토리엔 미영속(§1.5)."
-echo "   (선언 대비 3-상태 대조·거버넌스는 이 리포가 하지 않는다)"
-echo "   정리: ./demo/scripts/down.sh"
+echo "✅ demo complete (full scope): access prep → discovery → inventory (endpoints, profiles, app labels, history, scope) → provisioning (L2 staging, L3 activation, rollback)."
+echo "   artifacts: demo/.generated/topology.svg (colour = grade) · on the controller /work/{plan.json,plan-l3.json,ansible/playbook{,-l3}.yml,ansible/rollback{,-l3}.yml}."
+echo "   ※ the artifacts were actually applied, activated and rolled back — checking generation alone lets a playbook pass that breaks on a clean node."
+echo "   access secrets live only in targets.ini (runtime-only) — never persisted in the inventory (§1.5)."
+echo "   (three-state reconciliation against declarations, and governance, are not done by this repo)"
+echo "   tear down: ./demo/scripts/down.sh"

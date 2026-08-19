@@ -12,15 +12,15 @@ echo "[test] target JVM pid=$APP_PID"
 java --add-modules jdk.attach -cp . Attacher "$APP_PID" /poc/agent.jar /tmp/pqcota-providers.txt
 sleep 1
 
-echo "=== 포착된 provider 체인 (실체) ==="
+echo "=== captured provider chain (the real one) ==="
 cat /tmp/pqcota-providers.txt
 
-echo "=== assertion (SD-2 핵심) ==="
+echo "=== assertion (SD-2, the core) ==="
 if grep -q '|BC|' /tmp/pqcota-providers.txt; then
-  echo "PASS: 런타임 동적 등록된 BouncyCastle(BC)을 attach로 포착 — 정적 스캔으론 불가한 실체 확인"
+  echo "PASS: attach captured a BouncyCastle (BC) registered at runtime — something a static scan cannot see"
   RC=0
 else
-  echo "FAIL: BC 미포착"
+  echo "FAIL: BC not captured"
   RC=1
 fi
 kill "$APP_PID" 2>/dev/null || true

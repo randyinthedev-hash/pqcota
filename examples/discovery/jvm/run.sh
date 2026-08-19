@@ -11,11 +11,11 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 cd "$ROOT"
 
-echo "▶ 1) Go 바이너리 빌드 — pqcota-jvmscan, pqcota-ingest"
+echo "▶ 1) building the Go binaries — pqcota-jvmscan, pqcota-ingest"
 GOOS=linux go build -o "$TMP/pqcota-jvmscan" ./discovery/cmd/pqcota-jvmscan
 GOOS=linux go build -o "$TMP/pqcota-ingest"  ./inventory/cmd/pqcota-ingest
 
-echo "▶ 2) JDK 컨테이너: 순수 Java collector.jar 빌드 + 동적 BC JVM 기동 + 정찰→attach"
+echo "▶ 2) JDK container: build the pure-Java collector.jar, start a JVM with BC registered dynamically, then recon → attach"
 docker run --rm -i \
   -v "$TMP":/x:ro \
   -v "$ROOT/discovery/collectors/jvm/collector":/c:ro \
@@ -39,7 +39,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 public class App {
   public static void main(String[] a) throws Exception {
     Security.addProvider(new BouncyCastleProvider());     // ← 런타임 동적 등록
-    System.out.println("[app] BC 동적 등록, providers=" + Security.getProviders().length);
+    System.out.println("[app] BC registered dynamically, providers=" + Security.getProviders().length);
     while (true) Thread.sleep(5000);
   }
 }
@@ -47,23 +47,23 @@ JAVA
 java -cp "$BC" /tmp/App.java & sleep 3
 
 echo
-echo "── 정찰(ScanJVMs) + attach → CollectionResult(JSON Lines) ──"
+echo "── recon (ScanJVMs) + attach → CollectionResult (JSON Lines) ──"
 PQCOTA_JVM_AGENT=/tmp/collector.jar /x/pqcota-jvmscan host://demo-jvm > /tmp/jca.jsonl 2>/tmp/err
 grep -E 'found JVM|attach:' /tmp/err | sed 's/^/   /'
 
-echo "── 적재(pqcota-ingest, JSONL) — 동적 BC가 관측됐나 ──"
+echo "── ingest (pqcota-ingest, JSONL) — was the dynamic BC observed ──"
 mkdir -p /tmp/res && cp /tmp/jca.jsonl /tmp/res/
 /x/pqcota-ingest /tmp/res 2>&1 | grep -E 'ingest result|•' | sed 's/^/   /'
 # CBOM은 base64로 실려 있다. 이 이미지엔 python도 jq도 없으므로 **있는 것**으로 꺼낸다 —
 # 없는 도구로 확인하면 검사가 조용히 죽는다(실제로 죽어 있었다: python3가 없어 이 줄이 늘 실패했다).
 if grep -oE '"cbomCyclonedx": *"[^"]*"' /tmp/jca.jsonl | head -1 | cut -d'"' -f4 \
      | base64 -d 2>/dev/null | grep -q '"BC"\|,BC'; then
-  echo "   ✅ 정적 java.security엔 없는 동적 BC를 attach로 포착 — 정찰→attach의 가치"
+  echo "   ✅ attach caught a dynamic BC that is nowhere in the static java.security — the value of recon → attach"
 else
-  echo "   ⚠ 동적 BC를 CBOM에서 확인하지 못했다 — attach가 실패했거나 출력 형식이 바뀌었다"
+  echo "   ⚠ the dynamic BC was not found in the CBOM — either attach failed or the output format changed"
 fi
 INNER
 
 echo
-echo "✅ 정찰→attach 예제 완료. 프로브(정적)로는 이 동적 BC를 관측하지 못한다 — attach만 잡는다."
-echo "   전체 종단(Ansible/SSH·다중 노드)은 demo/ 6단계가 보인다."
+echo "✅ recon → attach example done. The static probe cannot observe this dynamic BC — only attach catches it."
+echo "   the full end-to-end (Ansible/SSH, many nodes) is what the six demo/ stages show."

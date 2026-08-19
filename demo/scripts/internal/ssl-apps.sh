@@ -19,7 +19,7 @@ stop() {
 }
 
 start() {
-	[ -f "$MAP" ] || { echo "ssl-apps: $MAP 없음 — 이 노드엔 고전 TLS 앱이 없다"; return 0; }
+	[ -f "$MAP" ] || { echo "ssl-apps: no $MAP — this node has no classical TLS app"; return 0; }
 	# 활성화 지점이 있으면 그 설정으로 띄운다. 프로비저닝이 켠 것이 실제로 서비스에 닿는 경로다.
 	if [ -f "$ENVF" ]; then
 		set -a
@@ -31,14 +31,14 @@ start() {
 		[ -n "${app:-}" ] || continue
 		"/opt/apps/$app" s_server -accept "$port" -cert /tmp/c.pem -key /tmp/k.pem -www -quiet \
 			>/dev/null 2>&1 &
-		echo "ssl-apps: $app :$port 기동 pid=$!${OPENSSL_CONF:+ (OPENSSL_CONF=$OPENSSL_CONF)}"
+		echo "ssl-apps: started $app :$port pid=$!${OPENSSL_CONF:+ (OPENSSL_CONF=$OPENSSL_CONF)}"
 	done <"$MAP"
 }
 
 status() {
-	printf 'ssl-apps: 활성화 지점 %s' "$ENVF"
-	[ -f "$ENVF" ] && printf ' = %s\n' "$(tr '\n' ' ' <"$ENVF")" || printf ' (없음 — 기본 설정)\n'
-	pgrep -af 's_server -accept' 2>/dev/null | sed 's/^/  실행중: /' || echo "  실행중: (없음)"
+	printf 'ssl-apps: activation point %s' "$ENVF"
+	[ -f "$ENVF" ] && printf ' = %s\n' "$(tr '\n' ' ' <"$ENVF")" || printf ' (absent — default configuration)\n'
+	pgrep -af 's_server -accept' 2>/dev/null | sed 's/^/  running: /' || echo "  running: (none)"
 }
 
 case "${1:-status}" in

@@ -8,7 +8,7 @@ RMI=""
 [ "${1:-}" = "--rmi" ] && RMI="--rmi local"
 GEN="$DEMO_DIR/.generated"
 
-echo "▶ 컨테이너·네트워크 제거…"
+echo "▶ removing containers and networks…"
 if [ -f "$GEN/docker-compose.yml" ]; then
   docker compose -f "$GEN/docker-compose.yml" down -v $RMI --remove-orphans
 else
@@ -16,10 +16,10 @@ else
   ids=$(docker ps -aq --filter label=pqcota-demo)
   [ -n "$ids" ] && docker rm -f $ids >/dev/null
   docker network ls -q --filter name=pqcota-topo- | xargs -r docker network rm >/dev/null 2>&1 || true
-  echo "   (생성물이 없어 라벨로 정리했습니다)"
+  echo "   (nothing was generated, so cleanup used labels)"
 fi
 
 # 리포 산출물 정리 — 전부 .generated/ 아래라 한 번에 지운다(그림·생성된 토폴로지).
 rm -rf "$GEN"
 
-echo "✅ 정리 완료. (이미지까지 지우려면: ./demo/scripts/down.sh --rmi)"
+echo "✅ cleaned up. (to remove images too: ./demo/scripts/down.sh --rmi)"

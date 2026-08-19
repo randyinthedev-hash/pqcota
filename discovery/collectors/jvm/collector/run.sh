@@ -4,7 +4,7 @@
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 IMG="pqcota-test/jvm-collector:latest"
-echo "[build] $IMG (javac — Kotlin·Gradle 없음)"
+echo "[build] $IMG (javac — no Kotlin, no Gradle)"
 docker build -t "$IMG" "$DIR"
 echo "[run]"
 docker run --rm --label pqcota-test "$IMG"
