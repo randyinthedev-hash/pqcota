@@ -30,19 +30,19 @@ func TestRenderDiffDirection(t *testing.T) {
 
 	// 시간순(과거,최신): 새 자산 B는 '추가'. 역순 경고 없음.
 	fwd := inventory.RenderDiff(older, newer)
-	if !strings.Contains(fwd, "추가") || !strings.Contains(fwd, "libcrypto.so.3") {
+	if !strings.Contains(fwd, "added") || !strings.Contains(fwd, "libcrypto.so.3") {
 		t.Errorf("과거→최신: 새 자산이 '추가'여야:\n%s", fwd)
 	}
-	if strings.Contains(fwd, "시간 역순") {
+	if strings.Contains(fwd, "reverse order") {
 		t.Errorf("정방향인데 역순 경고가 떴다:\n%s", fwd)
 	}
 
 	// 역순(최신,과거): 같은 B가 '사라짐'으로 뒤집히고 역순 경고가 떠야 한다.
 	rev := inventory.RenderDiff(newer, older)
-	if !strings.Contains(rev, "사라짐") {
+	if !strings.Contains(rev, "removed") {
 		t.Errorf("최신→과거: 같은 자산이 '사라짐'으로 뒤집혀야:\n%s", rev)
 	}
-	if !strings.Contains(rev, "시간 역순") {
+	if !strings.Contains(rev, "reverse order") {
 		t.Errorf("인자가 시간 역순이면 경고해야:\n%s", rev)
 	}
 }
@@ -68,7 +68,7 @@ func TestRenderEndToEnd(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := inventory.Render(snap)
-	for _, want := range []string{"cmdb://n1", "openssl", "confirmed", "libcrypto/OpenSSL 3.0.20", "갭"} {
+	for _, want := range []string{"cmdb://n1", "openssl", "confirmed", "libcrypto/OpenSSL 3.0.20", "gap"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("렌더 결과에 %q 없음:\n%s", want, out)
 		}
@@ -89,7 +89,7 @@ func TestRenderDiffWarnsOnRulesetChange(t *testing.T) {
 			}},
 		}
 	}
-	const warn = "ruleset이 다르다"
+	const warn = "the rulesets differ"
 	if out := inventory.RenderDiff(mk("r1", 1, 1), mk("r2", 2, 2)); !strings.Contains(out, warn) {
 		t.Errorf("ruleset이 바뀌었는데 재계산 경고가 없다:\n%s", out)
 	}
