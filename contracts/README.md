@@ -118,7 +118,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 | `pqcota:jca.provider_set` | 등록 순서 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
 | `pqcota:cng.provider_set` | 등록 순서 CSV | `cng.provider_set` — Windows CNG. JCA와 같이 **순서 유의미**(우선순위) |
-| `pqcota:cng.algorithms` | `이름:종류` 쌍의 CSV(예: `AES:cipher,ML-DSA:signature`) | `cng.algorithms` — 종류를 모르면 **빈 값**으로 둔다(§2.5). CNG 이름에는 쉼표·콜론이 없다(실측) |
+| `pqcota:cng.algorithms` | `이름:종류[:provider\|provider]`의 CSV(예: `ML-DSA:signature:Microsoft Primitive Provider`) | `cng.algorithms` — 종류를 모르면 **빈 값**, provider를 못 물었으면 **셋째 칸을 두지 않는다**(§2.5·§2.6). CNG 이름에는 쉼표·콜론·`\|`가 없다(실측) |
 | `pqcota:app_keys` | 앱 키 CSV(공유 .so는 다중) | `app_keys`(repeated) — 자산이 어느 앱 것인지(§1.5) |
 
 > `evidence_strength`·`pqc_readiness`는 **여기 넣지 않는다** — 코어 파생 값이다(위 결정 1).

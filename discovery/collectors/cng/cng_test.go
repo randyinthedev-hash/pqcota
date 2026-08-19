@@ -156,3 +156,28 @@ func TestAlgorithmClassFollowsTheInterfaceConstants(t *testing.T) {
 		}
 	}
 }
+
+// TD-CNG-10 — provider 매핑을 나르는 자리. 등록 목록은 "머신에 무엇이 있나"만 답하므로,
+// "누가 ML-DSA를 하나"는 알고리즘마다 따로 물어 나른다.
+func TestAlgorithmProvidersRoundTrip(t *testing.T) {
+	algs := []Algorithm{
+		{Name: "ML-DSA", Class: "signature", Providers: []string{"Microsoft Primitive Provider", "Microsoft Software Key Storage Provider"}},
+		{Name: "SHA256", Class: "hash"}, // 못 물은 경우 — 셋째 칸이 아예 없다
+	}
+	enc := EncodeAlgorithms(algs)
+	const want = "ML-DSA:signature:Microsoft Primitive Provider|Microsoft Software Key Storage Provider,SHA256:hash"
+	if enc != want {
+		t.Fatalf("표기가 다르다:\n got %q\nwant %q", enc, want)
+	}
+	back := DecodeAlgorithms(enc)
+	if len(back) != 2 {
+		t.Fatalf("%d개로 되읽혔다", len(back))
+	}
+	if len(back[0].Providers) != 2 || back[0].Providers[0] != "Microsoft Primitive Provider" {
+		t.Errorf("provider가 순서대로 되읽히지 않았다: %v", back[0].Providers)
+	}
+	// **못 물은 것과 "없더라"를 같게 적지 않는다** — 셋째 칸이 없으면 빈 목록으로 남는다.
+	if back[1].Providers != nil {
+		t.Errorf("못 물은 자리에 provider가 생겼다: %v", back[1].Providers)
+	}
+}

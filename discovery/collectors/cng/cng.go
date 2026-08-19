@@ -28,10 +28,13 @@ type Observation struct {
 	Algorithms []Algorithm `json:"algorithms,omitempty"`
 }
 
-// Algorithm — CNG가 열거한 알고리즘 하나와 그 종류.
+// Algorithm — CNG가 열거한 알고리즘 하나와 그 종류, 그리고 그것을 구현하는 provider들.
 type Algorithm struct {
 	Name  string `json:"name"`
 	Class string `json:"class"` // cipher · hash · asymmetric-encryption · secret-agreement · signature · rng · key-derivation
+	// Providers — 이 알고리즘을 서비스하는 provider(`BCryptEnumProviders`). 등록 목록은
+	// "머신에 무엇이 있나"만 답한다 — "누가 ML-DSA를 하나"는 여기에만 있다. 못 물었으면 빈 목록.
+	Providers []string `json:"providers,omitempty"`
 }
 
 // Empty — 아무것도 관측하지 못했나. 빈 관측과 "provider가 없다"는 다르다 — 부르는 쪽이 갭으로
@@ -82,11 +85,15 @@ func AlgorithmClass(dwClass uint32) string {
 // 목록을 실으려면 인코딩이 필요하다. `이름:종류`를 쉼표로 잇는다 — 관측된 CNG 이름에는 쉼표도
 // 콜론도 없다(실측 50개 확인: `SHA3-256`·`CHACHA20_POLY1305`·`XTS-AES` 같은 모양뿐).
 const (
-	algorithmSep      = ","
-	algorithmClassSep = ":"
+	algorithmSep         = ","
+	algorithmClassSep    = ":"
+	algorithmProviderSep = "|" // provider 이름에는 `|`가 없다(실측 9개 확인)
 )
 
 // EncodeAlgorithms — 알고리즘 목록을 property 값으로. 종류를 모르면 빈 값으로 남긴다(§2.5).
+//
+// 모양은 `이름:종류` 또는 `이름:종류:provider|provider`다. provider를 못 물었으면 **셋째 칸을
+// 아예 두지 않는다** — 빈 칸과 "물어봤는데 없더라"를 같은 모양으로 적지 않기 위해서다.
 func EncodeAlgorithms(algs []Algorithm) string {
 	if len(algs) == 0 {
 		return ""
@@ -96,7 +103,11 @@ func EncodeAlgorithms(algs []Algorithm) string {
 		if a.Name == "" {
 			continue // 이름 없는 항목은 나를 것이 없다
 		}
-		parts = append(parts, a.Name+algorithmClassSep+a.Class)
+		part := a.Name + algorithmClassSep + a.Class
+		if len(a.Providers) > 0 {
+			part += algorithmClassSep + strings.Join(a.Providers, algorithmProviderSep)
+		}
+		parts = append(parts, part)
 	}
 	return strings.Join(parts, algorithmSep)
 }
@@ -111,12 +122,19 @@ func DecodeAlgorithms(s string) []Algorithm {
 	}
 	var out []Algorithm
 	for _, part := range strings.Split(s, algorithmSep) {
-		name, class, _ := strings.Cut(part, algorithmClassSep)
+		name, rest, _ := strings.Cut(part, algorithmClassSep)
 		name = strings.TrimSpace(name)
 		if name == "" {
 			continue
 		}
-		out = append(out, Algorithm{Name: name, Class: strings.TrimSpace(class)})
+		class, provs, _ := strings.Cut(rest, algorithmClassSep)
+		a := Algorithm{Name: name, Class: strings.TrimSpace(class)}
+		for _, p := range strings.Split(provs, algorithmProviderSep) {
+			if p = strings.TrimSpace(p); p != "" {
+				a.Providers = append(a.Providers, p)
+			}
+		}
+		out = append(out, a)
 	}
 	return out
 }
