@@ -49,7 +49,7 @@ func ProviderSlotWarnings(p *provisioningv1.FinalizedPlan) []string {
 			a.GetCryptoRuntime() != commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA {
 			continue
 		}
-		out = append(out, fmt.Sprintf("조치 %s(node=%s): `security.provider.2`는 그 자리를 **대체한다** — 원래 2번이던 provider(JDK 기본이면 대개 SunRsaSign)가 목록에서 빠지고 해당 서비스가 새 provider로 넘어간다. 밀어내지 않으려면 대상의 java.security에서 뒤 번호를 미룬 뒤 넣을 것.",
+		out = append(out, fmt.Sprintf("action %s (node=%s): `security.provider.2` **takes over slot 2** — whatever was provider 2 (usually SunRsaSign on JDK defaults) drops off the list and its services move to the new provider. To avoid displacing it, renumber the entries below in the target's java.security first, then add this.",
 			a.GetId(), a.GetTargetNodeId()))
 	}
 	return out
@@ -66,7 +66,7 @@ func ProviderClassWarnings(p *provisioningv1.FinalizedPlan) []string {
 		}
 		if _, exact := providerClass(a.GetProviderChoice(), a.GetProviderClass()); !exact {
 			out = append(out, fmt.Sprintf(
-				"조치 %s(node=%s, provider=%q): provider_class 미확정 — java.security 조각에 placeholder가 들어간다. 계획의 provider_class에 FQCN을 넣거나 배포 전 조각의 클래스명을 교체할 것.",
+				"action %s (node=%s, provider=%q): provider_class is unset — the java.security fragment will contain a placeholder. Put the FQCN in the plan's provider_class, or replace the class name in the fragment before deploying.",
 				a.GetId(), a.GetTargetNodeId(), a.GetProviderChoice()))
 		}
 	}

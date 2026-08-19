@@ -17,13 +17,13 @@ func TestRollbackPlaybookL2(t *testing.T) {
 		"/opt/pqcota/BC.jar",   // a2 주입 모듈 제거
 		"java.security.pqcota", // a2 JCA config 조각 제거
 		"openssl-pqc.cnf",      // a1 OpenSSL config 조각 제거
-		"a3(REMEDIATION_KIND_FORK_REPLACE): config로 배포하지 않았으므로 롤백도 수동", // 비-config는 수동
+		"a3 (REMEDIATION_KIND_FORK_REPLACE): it was never delivered through config", // 비-config는 수동
 	} {
 		if !strings.Contains(pb, want) {
 			t.Errorf("L2 롤백 플레이북에 %q 없음:\n%s", want, pb)
 		}
 	}
-	if strings.Contains(pb, "restart") || strings.Contains(pb, "재시작:") {
+	if strings.Contains(pb, "restart") || strings.Contains(pb, "restart:") {
 		t.Errorf("롤백에 재시작이 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
 	}
 	if strings.Contains(pb, "ansible.builtin.copy") {
@@ -37,7 +37,7 @@ func TestRollbackPlaybookL1(t *testing.T) {
 	if !strings.Contains(pb, "/opt/pqcota/BC.jar") {
 		t.Error("L1 롤백도 스테이지한 모듈은 제거해야")
 	}
-	if strings.Contains(pb, "config 조각 제거") {
+	if strings.Contains(pb, "remove the config fragment") {
 		t.Errorf("L1(stage-only)은 config를 배치 안 했으니 config 제거도 없어야:\n%s", pb)
 	}
 }

@@ -219,7 +219,7 @@ func TestProviderSlotReplacementIsStated(t *testing.T) {
 	if !strings.Contains(out, "security.provider.2=") {
 		t.Fatalf("등록 줄이 없다:\n%s", out)
 	}
-	for _, want := range []string{"대체한다", "SunRsaSign", "뒤 번호"} {
+	for _, want := range []string{"takes over slot 2", "SunRsaSign", "renumber the entries"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("자리 대체 사실(%q)이 조각에 없다:\n%s", want, out)
 		}
@@ -227,7 +227,7 @@ func TestProviderSlotReplacementIsStated(t *testing.T) {
 
 	// 조각 안 주석은 열어봐야 보이므로 stderr 경고로도 나가야 한다.
 	plan := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{bc}}
-	if w := provisioning.ProviderSlotWarnings(plan); len(w) != 1 || !strings.Contains(w[0], "대체한다") {
+	if w := provisioning.ProviderSlotWarnings(plan); len(w) != 1 || !strings.Contains(w[0], "takes over") {
 		t.Errorf("주입 조치에 자리 대체 경고가 있어야: %v", w)
 	}
 	// config-only는 provider를 등록하지 않으므로 경고 대상이 아니다.
