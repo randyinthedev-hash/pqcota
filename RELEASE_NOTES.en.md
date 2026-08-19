@@ -66,7 +66,7 @@ an issue; there, Korean narrows who can read it.
   `Completeness.Note`, `Attribution.Reason`, the `Remediation` rationale, and the maturity labels
   (`standard`/`draft`/`experimental`/`broken`).
 - **Regenerated samples** — the demo was actually run again and
-  [expected-output](demo/expected-output/README.md) was captured fresh. The console blocks in the
+  [expected-output](demo/expected-output/README.md) (Korean) was captured fresh. The console blocks in the
   READMEs and examples now match, as do output strings the documents had only named — `added`,
   `removed` and `changed` for `-diff`. Display names in the demo and examples are English as well,
   because they appear on screen verbatim.
