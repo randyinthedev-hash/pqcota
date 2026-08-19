@@ -7,16 +7,16 @@ PID=$!
 sleep 2
 echo "[test] target pid=$PID (python3 + libssl)"
 
-echo "=== openssl-collector 출력 ==="
+echo "=== openssl-collector output ==="
 OUT=$(/usr/local/bin/openssl-collector "$PID")
 echo "$OUT"
 
-echo "=== assertion (SD-1+SD-3 실물) ==="
+echo "=== assertion (SD-1 + SD-3, on real software) ==="
 if echo "$OUT" | grep -q "lib=libssl" && echo "$OUT" | grep -q "fork=OpenSSL"; then
-  echo "PASS: 실행 중 프로세스의 libssl 로드 탐지 + ELF 문자열로 fork=OpenSSL 판별"
+  echo "PASS: detected libssl loaded by a running process, and identified fork=OpenSSL from ELF strings"
   RC=0
 else
-  echo "FAIL: 탐지/판별 실패"
+  echo "FAIL: detection or identification failed"
   RC=1
 fi
 kill "$PID" 2>/dev/null || true

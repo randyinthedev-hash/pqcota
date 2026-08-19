@@ -20,19 +20,19 @@ TYPE="${TAKE_TYPE_DELAY:-0.05}" # 타이핑 한 글자 간격(초). 0이면 즉�
 
 usage() {
 	cat <<'HELP'
-사용법: record-take.sh [컷] [노드]
+usage: record-take.sh [cut] [node]
 
-  컷    observe    정적(java.security) vs 런타임(attach) 대조 + 자산·엣지 표
-        provision  ML-KEM 0개 → 14개 → 0개 (기본)
-        gap        권한이 없어 관측하지 못한 계층을 따로 낸다
+  cut   observe    static (java.security) vs runtime (attach), plus the asset and edge tables
+        provision  ML-KEM 0 → 14 → 0 (default)
+        gap        shows a layer that could not be observed for lack of permission
 
-  노드  provision 컷의 대상 (기본: 인벤토리에서 OpenSSL 3.0–3.4 노드를 자동 선택)
+  node  target of the provision cut (default: an OpenSSL 3.0-3.4 node picked from the inventory)
 
-환경변수:
-  TAKE_PAUSE=<초>        컷 사이 정지 (기본 2)
-  TAKE_TYPE_DELAY=<초>   타이핑 한 글자 간격 (기본 0.05, 0이면 타이핑 연출 없음)
+environment:
+  TAKE_PAUSE=<sec>       pause between cuts (default 2)
+  TAKE_TYPE_DELAY=<sec>  delay per typed character (default 0.05; 0 disables the typing effect)
 
-먼저 ./demo/scripts/up.sh → DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh 를 한 번 돌려 둔다.
+Run ./demo/scripts/up.sh and then DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh once first.
 HELP
 }
 
@@ -60,7 +60,7 @@ cut_mark() { printf '\n\033[2m%s\033[0m\n\n' "───────────�
 big() { printf '\n\033[1;33m%s\033[0m\n' "$1"; sleep "$PAUSE"; }
 
 need_ctl() {
-	docker inspect pqcota-ctl >/dev/null 2>&1 || { echo "pqcota-ctl이 없다 — up.sh를 먼저 돌린다." >&2; exit 1; }
+	docker inspect pqcota-ctl >/dev/null 2>&1 || { echo "pqcota-ctl is not running — run up.sh first." >&2; exit 1; }
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -74,35 +74,35 @@ take_observe() {
 	local jnode jsec
 	jnode=$(docker exec pqcota-ctl bash -lc 'ls -1 /work/results/*-jca.json 2>/dev/null | head -1' |
 		xargs -r basename | sed 's/-jca\.json$//' | tr -d '[:space:]')
-	[ -n "$jnode" ] || { echo "JCA 관측 결과가 없다 — demo.sh를 먼저 돌린다." >&2; exit 1; }
+	[ -n "$jnode" ] || { echo "no JCA observation yet — run demo.sh first." >&2; exit 1; }
 	jsec=$(docker exec "$jnode" sh -lc 'ls /opt/java/*/conf/security/java.security /usr/lib/jvm/*/conf/security/java.security 2>/dev/null | head -1' | tr -d '[:space:]')
 
 	clear 2>/dev/null || printf '\033[2J\033[H'
-	printf '\033[1m관측 대상: %s (JVM이 도는 노드)\033[0m\n' "$jnode"
+	printf '\033[1mobserving: %s (a node running a JVM)\033[0m\n' "$jnode"
 	sleep "$PAUSE"
 
-	say "정적으로 보면 — java.security에 등록된 provider 목록"
+	say "statically — the provider list registered in java.security"
 	type_cmd "grep '^security.provider' $jsec"
 	docker exec "$jnode" sh -lc "grep '^security.provider' $jsec | head -12"
 	printf '\n'
 	type_cmd "grep -ci bouncycastle $jsec"
 	docker exec "$jnode" sh -lc "grep -ci bouncycastle $jsec || true"
-	note "   BouncyCastle은 이 파일 어디에도 없다."
+	note "   BouncyCastle appears nowhere in this file."
 	cut_mark
 
-	say "실행 중인 JVM에 attach해서 물으면 — 같은 노드, 같은 시각"
+	say "asking the running JVM through attach — same node, same moment"
 	type_cmd "pqcota-discover-view /work/results"
 	# 범위의 끝줄(다음 절 제목)은 빼고 낸다 — 남기면 엣지 절 제목이 두 번 나온다.
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
 		sed -n '/discovered assets/,/observed edges/p' | sed '$d' | head -14
-	note "   체인 마지막의 BC — 앱이 실행 중에 addProvider()로 등록한 것이다."
-	note "   파일을 아무리 읽어도 안 나온다. 이것이 런타임 관측의 이유다."
+	note "   the BC at the end of the chain — the app registered it at runtime with addProvider()."
+	note "   no amount of file reading finds it. That is what runtime observation is for."
 	cut_mark
 
-	say "회선에서 실제로 협상된 것 — 복호화 없이 핸드셰이크만 본다"
+	say "what was actually negotiated on the wire — the handshake only, no decryption"
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
 		sed -n '/observed edges/,/grade totals/p' | head -10
-	note "   같은 게이트웨이인데 상대에 따라 갈린다 — 능력이 아니라 협상 결과다."
+	note "   the same gateway splits by peer — this is the negotiated result, not a capability."
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ take_observe() {
 take_provision() {
 	need_ctl
 	docker exec pqcota-ctl test -f /work/ansible/provision-real.yml 2>/dev/null ||
-		{ echo "생성물이 없다 — DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh 를 한 번 돌린다." >&2; exit 1; }
+		{ echo "nothing has been generated — run DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh once." >&2; exit 1; }
 
 	local NODE="${1:-}"
 	if [ -z "$NODE" ]; then
@@ -119,8 +119,8 @@ take_provision() {
 			"select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
 			 where f->'openssl'->>'version' ~ '^3\.[0-4]([.]|\$)' order by s.seq desc limit 1" 2>/dev/null | tr -d '[:space:]')
 	fi
-	[ -n "$NODE" ] || { echo "OpenSSL 3.0–3.4 노드를 찾지 못했다." >&2; exit 1; }
-	docker inspect "$NODE" >/dev/null 2>&1 || { echo "컨테이너 '$NODE'가 없다." >&2; exit 1; }
+	[ -n "$NODE" ] || { echo "no OpenSSL 3.0-3.4 node was found." >&2; exit 1; }
+	docker inspect "$NODE" >/dev/null 2>&1 || { echo "there is no container '$NODE'." >&2; exit 1; }
 
 	local SHA VER BEFORE AFTER BACK APPLY
 	SHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
@@ -132,10 +132,10 @@ take_provision() {
 	VER=$(docker exec "$NODE" sh -lc 'openssl version' 2>/dev/null)
 
 	clear 2>/dev/null || printf '\033[2J\033[H'
-	printf '\033[1m대상 노드: %s  (%s)\033[0m\n' "$NODE" "$VER"
+	printf '\033[1mtarget node: %s  (%s)\033[0m\n' "$NODE" "$VER"
 	sleep "$PAUSE"
 
-	say "조치 전 — 이 노드의 OpenSSL이 아는 ML-KEM 알고리즘"
+	say "before — the ML-KEM algorithms this node's OpenSSL knows"
 	type_cmd "openssl list -kem-algorithms | grep -ci mlkem"
 	BEFORE=$(docker exec "$NODE" sh -lc "$KEMQ" | tr -d '[:space:]')
 	big "$BEFORE"
@@ -143,33 +143,33 @@ take_provision() {
 
 	# ★ 이 세 컷이 "우리가 만든다"를 보인다. 없으면 영상이 앤서블 사용법으로 읽힌다 —
 	#   플레이북만 돌리는 화면은 이 도구가 무엇을 했는지 말해 주지 않는다.
-	say "사람이 쓰는 것은 계획 파일 하나뿐이다 — 어느 노드에 어떤 provider를 넣을지 적는다"
+	say "a person writes one thing: the plan — which provider goes on which node"
 	type_cmd "cat plan-real.json"
 	docker exec pqcota-ctl bash -lc "python3 -m json.tool --no-ensure-ascii /work/plan-real.json | head -18"
 	cut_mark
 
 	# 사람이 준비하는 것은 둘이다 — 계획과 **모듈 파일**. 이 컷이 없으면 .so가 어디선가
 	# 튀어나온 것처럼 보이고, "도구가 provider도 준다"는 오해가 남는다(§4.2 — 선택·조달은 사용자).
-	say "그리고 provider 모듈 — 도구가 주지 않는다. 사용자가 빌드하거나 벤더에서 받아 둔다"
+	say "and the provider module — the tool does not supply it; you build it or get it from a vendor"
 	type_cmd "ls -l ansible/files/oqsprovider.so"
 	docker exec pqcota-ctl bash -lc 'ls -l /work/ansible/files/oqsprovider.so | sed "s|/work/ansible/files/||"'
 	type_cmd "sha256sum ansible/files/oqsprovider.so"
 	docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -c1-24' | sed 's/$/…/'
-	note "   이 해시를 플레이북에 넘긴다 — 배치된 것이 그 파일이 아니면 멈춘다."
+	note "   this hash goes to the playbook — if what lands is not that file, it stops."
 	cut_mark
 
-	say "도구가 그 계획에서 배포물을 만든다 — 적용용과 되돌림용이 함께"
+	say "the tool generates the artifacts from that plan — one to apply, one to roll back"
 	type_cmd "pqcota-provision --level l2 plan-real.json > provision-real.yml"
 	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 	docker exec pqcota-ctl bash -lc 'ls -1 /work/ansible/provision-real*.yml'
 	cut_mark
 
-	say "만들어진 것 — 사람이 쓴 적 없는 config 조각과 무결성 게이트가 들어 있다"
-	type_cmd "grep -A3 'config 조각\|sha256' provision-real.yml"
+	say "what came out — a config fragment nobody wrote by hand, and an integrity gate"
+	type_cmd "grep -A3 'config fragment\|sha256' provision-real.yml"
 	docker exec pqcota-ctl bash -lc "grep -E 'name:|module|sha256|state:' /work/ansible/provision-real.yml | head -10"
 	cut_mark
 
-	say "적용 — 생성된 플레이북을 사용자의 Ansible로 (L2 배치 + L3 활성화)"
+	say "apply — the generated playbook through your own Ansible (L2 staging + L3 activation)"
 	type_cmd "ansible-playbook -i targets.ini provision-real.yml"
 	# 한 번만 돌리고 두 가지를 뽑는다 — 무엇을 했는지(TASK)와 결과 요약(recap).
 	# 두 번 돌리면 두 번째는 changed=0이라 "아무것도 안 바뀐 것"처럼 보인다(멱등).
@@ -180,41 +180,41 @@ take_provision() {
 	cut_mark
 
 	# L3까지 돌린 뒤라 활성화 지점(service.env)도 함께 놓인다 — "둘"이라고 적으면 화면과 어긋난다.
-	say "노드에 놓인 것 — provider 모듈(.so) · 설정 조각(.cnf) · 활성화 지점(service.env) 셋뿐이다"
+	say "what landed on the node — three things: the provider module (.so), the config fragment (.cnf), the activation point (service.env)"
 	type_cmd "ls /opt/pqcota /etc/pqcota"
 	docker exec "$NODE" sh -lc 'ls -1 /opt/pqcota /etc/pqcota'
-	note "   기존 /etc/ssl/openssl.cnf는 열지도 않았다 — 그래서 되돌림이 파일 제거로 끝난다."
+	note "   the existing /etc/ssl/openssl.cnf was never even opened — which is why rollback is just deletion."
 	cut_mark
 
 	# ★ 파일만 놓아서는 아무것도 안 바뀐다. 그 조각을 **읽게 만드는 것**이 L3 활성화이고,
 	#   그 방법은 환경마다 달라 계획의 activation 훅에 사용자가 적는다. 이 컷이 없으면
 	#   "파일을 떨구니 능력이 생겼다"로 읽혀 기전이 마술처럼 보인다.
-	say "그런데 파일만 놓으면 아무것도 안 바뀐다 — 그 조각을 읽게 만들어야 한다"
+	say "but staging files alone changes nothing — something has to read that fragment"
 	type_cmd "cat /etc/pqcota/service.env"
-	docker exec "$NODE" sh -lc 'cat /etc/pqcota/service.env 2>/dev/null || echo "(L2까지만 — 활성화 안 됨)"'
-	note "   L3 활성화가 이 한 줄을 쓰고 서비스를 재시작했다. 명령은 계획의 activation 훅에"
-	note "   사용자가 적은 것이다 — 활성화 지점은 환경마다 달라 도구가 추측하지 않는다."
+	docker exec "$NODE" sh -lc 'cat /etc/pqcota/service.env 2>/dev/null || echo "(L2 only — not activated)"'
+	note "   L3 activation wrote this one line and restarted the service. The commands come from the"
+	note "   plan's activation hooks, written by you — activation points differ per environment, so the tool does not guess."
 	cut_mark
 
-	say "조치 후 — 그 설정을 가리킨 채로, 같은 노드에 같은 질문"
+	say "after — the same question to the same node, now pointing at that configuration"
 	type_cmd "OPENSSL_CONF=/etc/pqcota/openssl-pqc.cnf openssl list -providers | grep -A2 oqs"
 	docker exec "$NODE" sh -lc "$ACT openssl list -providers 2>/dev/null | grep -A2 -i oqs | head -4"
 	sleep 1
 	type_cmd "OPENSSL_CONF=/etc/pqcota/openssl-pqc.cnf openssl list -kem-algorithms | grep -ci mlkem"
 	AFTER=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 	big "$AFTER"
-	note "   ${BEFORE}개 → ${AFTER}개.  바뀐 것은 도구가 만든 설정 조각 하나와, 그것을 가리킨 한 줄이다."
+	note "   ${BEFORE} → ${AFTER}.  What changed: one config fragment the tool wrote, and one line pointing at it."
 	cut_mark
 
-	say "되돌림 — 원본을 덮어쓴 적이 없으므로 파일을 지우는 것이 곧 복원이다"
+	say "rollback — nothing was overwritten, so deleting the files is the restore"
 	type_cmd "ansible-playbook -i targets.ini provision-real-l3-rollback.yml provision-real-rollback.yml"
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" | recap
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | recap
 	sleep 1
-	type_cmd "OPENSSL_CONF=… openssl list -kem-algorithms | grep -ci mlkem   # 조각이 사라졌다"
+	type_cmd "OPENSSL_CONF=… openssl list -kem-algorithms | grep -ci mlkem   # the fragment is gone"
 	BACK=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 	big "$BACK"
-	note "   ${BEFORE} → ${AFTER} → ${BACK}.  적용과 되돌림이 같은 계획에서 대칭으로 나온다."
+	note "   ${BEFORE} → ${AFTER} → ${BACK}.  Apply and roll back come out of the same plan, symmetrically."
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -227,10 +227,10 @@ take_provision() {
 take_gap() {
 	need_ctl
 	clear 2>/dev/null || printf '\033[2J\033[H'
-	printf '\033[1m관측 권한(CAP_NET_RAW)이 없는 상황에서\033[0m\n'
+	printf '\033[1mwith no observation privilege (CAP_NET_RAW)\033[0m\n'
 	sleep "$PAUSE"
 
-	say "핸드셰이크 관측을 시도한다 — 권한 없이"
+	say "attempting to observe handshakes — without the privilege"
 	type_cmd "pqcota-netcap demo-node eth0 2"
 	# stdout(결과 JSON)은 버리고 **stderr만** 보인다 — 둘을 섞으면 JSON 조각이 사람에게
 	# 하는 말 사이에 끼어 화면이 지저분해진다. 결과 본문은 다음 컷에서 따로 보인다.
@@ -238,7 +238,7 @@ take_gap() {
 		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null' 2>&1 | head -5
 	cut_mark
 
-	say "그런데 수집은 실패가 아니라 정상 종료로 끝난다 — 결과에는 이것이 담긴다"
+	say "yet the collection exits successfully rather than failing — and this is what the result carries"
 	type_cmd "echo \$?"
 	docker exec -u nobody pqcota-ctl bash -lc \
 		'/work/dist/linux-amd64/pqcota-netcap demo-node eth0 2 >/dev/null 2>&1; echo "$?"'
@@ -250,9 +250,9 @@ import json,sys
 d=json.load(sys.stdin)
 print(json.dumps(d.get(\"completeness\",{}), ensure_ascii=False, indent=1))"'
 	printf '\n'
-	note "   layersMissing = [NETWORK].  \"엣지 0개\"가 아니라 \"이 계층을 관측하지 못했다\"이다."
-	note "   실패가 아니라 정상 종료로 보고하는 이유 — 오류로 끝내면 이 기록이 중앙까지 가지"
-	note "   못하고, 인벤토리에는 '이 노드엔 링크가 없다'로 읽힌다. 없는 것과는 다른 사실이다."
+	note "   layersMissing = [NETWORK].  Not \"zero edges\" but \"this layer was not observed\"."
+	note "   why it reports success rather than failure — an error exit would keep this record from reaching"
+	note "   the centre, and the inventory would read it as 'this node has no links'. That is a different fact."
 }
 
 case "${1:-provision}" in
@@ -260,5 +260,5 @@ case "${1:-provision}" in
 observe) take_observe ;;
 provision) take_provision "${2:-}" ;;
 gap) take_gap ;;
-*) echo "record-take.sh: 모르는 컷 '$1' — observe · provision · gap 중 하나다." >&2; usage >&2; exit 2 ;;
+*) echo "record-take.sh: unknown cut '$1' — use observe, provision or gap." >&2; usage >&2; exit 2 ;;
 esac

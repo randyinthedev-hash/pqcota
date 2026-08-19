@@ -8,7 +8,7 @@ NODE_NAME="${NODE_NAME:-node}"
 echo "PermitRootLogin yes" >>/etc/ssh/sshd_config
 echo "PasswordAuthentication no" >>/etc/ssh/sshd_config
 /usr/sbin/sshd
-echo "[$NODE_NAME] sshd 시작"
+echo "[$NODE_NAME] starting sshd"
 
 # ── 🟢 PQC TLS 서버 (Go, X25519MLKEM768) ──
 if [ "${PQC_SERVER:-0}" = "1" ]; then
@@ -43,9 +43,9 @@ fi
 if [ "${JAVA_APP:-0}" = "1" ] && command -v java >/dev/null 2>&1; then
   if [ -f /opt/CryptoApp.java ]; then
     java --class-path "${JVMSCAN_CP:-/opt/bcprov.jar}" /opt/CryptoApp.java >/tmp/javaapp.log 2>&1 &
-    echo "[$NODE_NAME] Java 앱(BouncyCastle) 기동 pid=$!"
+    echo "[$NODE_NAME] started the Java app (BouncyCastle) pid=$!"
   fi
 fi
 
-echo "[$NODE_NAME] 준비 완료 — 대기"
+echo "[$NODE_NAME] ready — waiting"
 tail -f /dev/null

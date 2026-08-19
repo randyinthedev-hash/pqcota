@@ -16,7 +16,7 @@ CASE="${1:-jca-provider-inject-bc}"
 JAR="$HERE/BC.jar"
 
 [ -f "$JAR" ] || {
-	echo "✗ $JAR 없음 — 먼저 ./fetch-example-provider.sh" >&2
+	echo "✗ no $JAR — run ./fetch-example-provider.sh first" >&2
 	exit 1
 }
 
@@ -29,7 +29,7 @@ go run ./provisioning/cmd/pqcota-provision --level l2 \
 	"examples/provisioning/plans/$CASE.json" 2>/dev/null |
 	sed -n '/content: |/,/^    - name:/p' | sed -n 's/^          //p' >"$work/pqcota.security"
 [ -s "$work/pqcota.security" ] || {
-	echo "✗ $CASE 에서 java.security 조각을 얻지 못했다(이 케이스는 config를 배치하지 않는가?)" >&2
+	echo "✗ no java.security fragment came out of $CASE (does this case stage no config?)" >&2
 	exit 1
 }
 cp "$JAR" "$work/BC.jar"
@@ -41,18 +41,18 @@ cat >"$work/Show.java" <<'EOF'
 import java.security.*;
 public class Show {
   public static void main(String[] a) throws Exception {
-    System.out.println("── 등록된 provider 순서(조각 적용 후) ──");
+    System.out.println("── registered provider order (after the fragment) ──");
     int i = 1;
     for (Provider p : Security.getProviders()) System.out.printf("  %d. %s %s%n", i++, p.getName(), p.getVersionStr());
-    System.out.println("── 목표 알고리즘이 실제로 제공되는가 ──");
+    System.out.println("── is the target algorithm actually provided ──");
     for (String alg : new String[]{"ML-KEM", "ML-KEM-768", "ML-DSA"}) {
       String where = null;
       for (Provider p : Security.getProviders())
         for (Provider.Service s : p.getServices())
           if (s.getAlgorithm().equalsIgnoreCase(alg)) { where = p.getName() + " (" + s.getType() + ")"; break; }
-      System.out.printf("  %-12s %s%n", alg, where == null ? "없음" : "→ " + where);
+      System.out.printf("  %-12s %s%n", alg, where == null ? "none" : "→ " + where);
     }
-    System.out.println("── TLS 협상 그룹 ──");
+    System.out.println("── TLS negotiation groups ──");
     System.out.println("  jdk.tls.namedGroups = " + Security.getProperty("jdk.tls.namedGroups"));
   }
 }
@@ -65,29 +65,29 @@ if command -v java >/dev/null 2>&1; then
 	jvm() { java "$@"; }
 	FRAG="$work/pqcota.security"; NONE="$work/empty.security"; JARP="$work/BC.jar"; SRC="$work/Show.java"
 elif command -v docker >/dev/null 2>&1; then
-	echo "(로컬 JDK 없음 → Docker의 eclipse-temurin:21-jdk 사용)"
+	echo "(no local JDK → using eclipse-temurin:21-jdk in Docker)"
 	jvm() { docker run --rm -v "$work:/w" -w /w eclipse-temurin:21-jdk java "$@"; }
 	FRAG=/w/pqcota.security; NONE=/w/empty.security; JARP=/w/BC.jar; SRC=/w/Show.java
 else
-	echo "✗ java도 docker도 없다 — 둘 중 하나가 필요하다." >&2
+	echo "✗ neither java nor docker is available — one of them is required." >&2
 	exit 1
 fi
 
-echo "▶ 케이스 $CASE — 조각을 얹고 JVM에서 확인"
+echo "▶ case $CASE — apply the fragment and check it in a JVM"
 echo
 jvm -Djava.security.properties="$FRAG" -cp "$JARP" "$SRC" | tee "$work/after.txt"
 
 # ★ 자리 대체를 눈으로 — security.provider.N은 끼워 넣지 않고 그 자리를 차지한다.
 jvm -Djava.security.properties="$NONE" -cp "$JARP" "$SRC" >"$work/before.txt" 2>/dev/null || true
 echo
-echo "── 조각이 provider 목록에 한 일 (조각 없음 → 조각 적용) ──"
+echo "── what the fragment did to the provider list (without → with) ──"
 # diff는 차이가 있으면 1로 끝난다 — pipefail이 켜져 있어 그 값이 파이프라인 결과가 된다.
 # 그래서 결과를 먼저 담고 나서 판단한다(그러지 않으면 차이가 있는데도 "차이 없음"이 함께 찍힌다).
-changed=$(diff <(sed -n '/등록된 provider/,/목표 알고리즘/p' "$work/before.txt") \
-	<(sed -n '/등록된 provider/,/목표 알고리즘/p' "$work/after.txt") |
-	sed 's/^</  빠짐:/; s/^>/  들어옴:/' | grep -E '빠짐|들어옴' || true)
-[ -n "$changed" ] && echo "$changed" || echo "  (차이 없음)"
+changed=$(diff <(sed -n '/registered provider order/,/is the target algorithm/p' "$work/before.txt") \
+	<(sed -n '/registered provider order/,/is the target algorithm/p' "$work/after.txt") |
+	sed 's/^</  dropped:/; s/^>/  added:  /' | grep -E 'dropped|added' || true)
+[ -n "$changed" ] && echo "$changed" || echo "  (no difference)"
 echo
-echo '※ security.provider.2는 **끼워 넣지 않고 그 자리를 대체한다** — 위 대조에서 원래 2번이던'
-echo "   provider가 빠지는 것이 보인다. 그 provider가 담당하던 서비스(JDK 기본이면 RSA)는 새"
-echo "   provider 구현으로 넘어간다. 이것이 전역 변경의 영향 반경(프로비저닝 설계 §4.2)이다."
+echo '※ security.provider.2 **takes over slot 2 instead of inserting** — the comparison above shows the'
+echo "   provider that used to be number 2 dropping off. Its services (RSA on JDK defaults) move to the"
+echo "   new provider's implementation. That is the blast radius of a global change (provisioning design §4.2)."

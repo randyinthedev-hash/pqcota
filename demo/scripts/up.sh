@@ -11,11 +11,11 @@ cd "$DEMO_DIR"
 TOPO_FILE="$DEMO_DIR/topology/topology.yaml"
 if [ ! -f "$TOPO_FILE" ]; then
   cp "$DEMO_DIR/topology/topology.example.yaml" "$TOPO_FILE"
-  echo "ℹ 기본 구성으로 시작합니다 — 샘플을 demo/topology/topology.yaml 로 복사했습니다(git 무시)."
-  echo "   자기 환경에 맞추려면 그 파일을 고치고 다시 up.sh 하면 됩니다."
+  echo "ℹ starting with the default setup — the sample was copied to demo/topology/topology.yaml (gitignored)."
+  echo "   edit that file and run up.sh again to match your own environment."
 fi
 
-echo "▶ 0/6 토폴로지 생성 (topogen 컨테이너 — 호스트 의존성은 Docker뿐)…"
+echo "▶ 0/6 generating the topology (topogen container — Docker is the only host dependency)…"
 # 리포에 생기는 산출물은 전부 demo/.generated/ 아래로 모은다(down.sh가 통째로 지운다).
 GEN="$DEMO_DIR/.generated"; rm -rf "$GEN"; mkdir -p "$GEN"
 docker build -q --target topo-gen -t pqcota-demo/topo-gen -f "$DEMO_DIR/Dockerfile" "$ROOT" >/dev/null
@@ -23,16 +23,16 @@ docker run --rm -v "$TOPO_FILE:/in.yaml:ro" -v "$GEN:/out" pqcota-demo/topo-gen 
 DC=(docker compose -f "$GEN/docker-compose.yml")
 source "$GEN/manifest.env"   # NODES · EDGE_COUNT · HUMAN
 
-echo "▶ 1/6 이미지 빌드 (OS·툴체인·워크로드만 — pqcota는 여기서 빌드하지 않는다)…"
-echo "   최초 1회는 base 이미지 pull로 수 분."
+echo "▶ 1/6 building images (OS, toolchain and workloads only — pqcota is not built here)…"
+echo "   the first run takes a few minutes to pull base images."
 "${DC[@]}" build
 
-echo "▶ 2/6 컨테이너 기동…"
+echo "▶ 2/6 starting containers…"
 "${DC[@]}" up -d
 
 # ── 리포 빌드: **ctl 머신 안에서**. 사용자가 자기 빌드 머신에서 하는 것과 같은 명령·같은 순서다.
 # 이미지에 결과를 구워 넣지 않는 이유: 어디서 무엇을 어떤 옵션으로 빌드하는지 보이게 하려고.
-echo "▶ 3/6 리포 빌드 — **ctl 머신(pqcota-ctl)에서** 소스를 컴파일합니다"
+echo "▶ 3/6 building the repo — the source is compiled **on the ctl machine (pqcota-ctl)**"
 docker exec pqcota-ctl bash -lc '
   set -e
   cd /src
@@ -40,17 +40,17 @@ docker exec pqcota-ctl bash -lc '
   echo "   [ctl] $(. /etc/os-release; echo $PRETTY_NAME) · $(uname -m) · $(go version | cut -d" " -f3)"
   echo "   [ctl] make generate                       # contracts/*.proto → gen/"
   make generate >/dev/null
-  echo "   [ctl] go build -o /usr/local/bin/ …        # 이 머신에서 쓸 중앙 CLI"
+  echo "   [ctl] go build -o /usr/local/bin/ …        # the central CLIs used on this machine"
   CGO_ENABLED=0 go build -o /usr/local/bin/     ./inventory/cmd/pqcota-ingest ./discovery/cmd/pqcota-hosts     ./inventory/cmd/pqcota-inventory ./inventory/cmd/pqcota-discover-view     ./inventory/cmd/pqcota-profile ./inventory/cmd/pqcota-declare ./inventory/cmd/pqcota-prune \
     ./inventory/cmd/pqcota-declare-attribution     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records
-  echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # 노드에 반입할 collector"
+  echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # collectors to carry onto the nodes"
   CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/"     ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
-  echo "   [ctl] make build-jar                      # JVM attach 사이드카"
+  echo "   [ctl] make build-jar                      # JVM attach sidecar"
   make build-jar >/dev/null 2>&1 && cp build/collector.jar /work/dist/collector.jar
-  echo "   [ctl] 산출물: $(ls /work/dist/linux-$ARCH | tr "\n" " ")· collector.jar"
+  echo "   [ctl] artifacts: $(ls /work/dist/linux-$ARCH | tr "\n" " ")· collector.jar"
 ' 2>&1 | sed "s/^/  /"
 
-echo "▶ 4/6 sshd 대기…"
+echo "▶ 4/6 waiting for sshd…"
 for n in "${NODES[@]}"; do
   for i in $(seq 1 30); do
     if docker exec "$n" bash -lc 'ss -ltn 2>/dev/null | grep -q ":22 " || netstat -ltn 2>/dev/null | grep -q ":22 "'; then break; fi
@@ -61,7 +61,7 @@ done
 # 크립토 서버(pqc-echo·s_server)는 노드·포트가 토폴로지마다 달라 여기서 일일이 기다리지 않는다.
 # sshd 대기(위)면 디스커버리를 시작할 수 있고, 엣지가 덜 잡히면 demo.sh가 목표치까지 재수집한다.
 
-echo "▶ 5/6 SSH 키 배포 (컨트롤러 → 타깃)…"
+echo "▶ 5/6 distributing the SSH key (controller → targets)…"
 KEY="$(mktemp -d)/id_demo"
 ssh-keygen -t ed25519 -N '' -f "$KEY" -q
 for n in "${NODES[@]}"; do
@@ -78,7 +78,7 @@ rm -rf "$(dirname "$KEY")"
 # hosts.csv는 제품 모델에선 **사용자가 쓰는 파일**이다(자기 호스트의 IP·계정·키를 적는다).
 # 데모에선 컨테이너가 떠야 IP가 정해지므로 up.sh가 그 역할을 대신 수행해 만든다 —
 # 사용자가 편집하는 건 (커스텀이면) topology.yaml 하나뿐이고, 이 파일은 생성물이다.
-echo "▶ 6/6 노드 IP 맵 + hosts.csv 생성 (관측 IP→노드명 해소 · discovery 접근 정의)…"
+echo "▶ 6/6 building the node IP map and hosts.csv (resolves observed IPs to node names; defines discovery access)…"
 NODESJSON="$(mktemp)"
 HOSTSCSV="$(mktemp)"
 # HUMAN(사람이 읽는 이름)은 위에서 선언(기본) 또는 토폴로지 manifest에서 source됨 — pqcota-hosts가
@@ -107,4 +107,4 @@ docker cp "$HOSTSCSV" pqcota-ctl:/work/hosts.csv
 rm -f "$NODESJSON" "$HOSTSCSV"
 
 echo
-echo "✅ 설치 완료. 다음: ./demo/scripts/demo.sh (접근 준비→디스커버리→인벤토리→프로비저닝)"
+echo "✅ setup complete. Next: ./demo/scripts/demo.sh (access prep → discovery → inventory → provisioning)"

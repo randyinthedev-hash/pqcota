@@ -6,7 +6,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$DIR/../../../.." && pwd)"   # integration → openssl → collectors → discovery → repo 루트
 IMG="pqcota-test/openssl-collector-it:latest"
 
-echo "[build] 정적 바이너리 (CGO 없음)"
+echo "[build] static binary (no CGO)"
 ( cd "$ROOT" && CGO_ENABLED=0 go build -o "$DIR/openssl-collector" ./discovery/collectors/openssl/integration/probe )
 
 echo "[build] image $IMG"

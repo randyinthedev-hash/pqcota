@@ -32,23 +32,23 @@ if [ "${1:-}" = "--check" ]; then
 	exit 0
 fi
 
-echo "▶ BouncyCastle ${BC_VERSION} 내려받는 중…"
+echo "▶ downloading BouncyCastle ${BC_VERSION}…"
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 curl -fsSL -o "$tmp" "$BC_URL"
 
 got=$(sha256sum "$tmp" | cut -d' ' -f1)
 if [ "$got" != "$BC_SHA256" ]; then
-	echo "✗ sha256 불일치 — 받은 것이 기대한 아티팩트가 아니다. 배치하지 않는다." >&2
-	echo "   기대: $BC_SHA256" >&2
-	echo "   받음: $got" >&2
+	echo "✗ sha256 mismatch — what arrived is not the expected artifact. Not staging it." >&2
+	echo "   expected: $BC_SHA256" >&2
+	echo "   got:      $got" >&2
 	exit 1
 fi
 mv "$tmp" "$DEST"
 trap - EXIT
-echo "✓ $DEST ($(du -h "$DEST" | cut -f1)) — sha256 확인됨"
+echo "✓ $DEST ($(du -h "$DEST" | cut -f1)) — sha256 verified"
 echo
-echo "이 해시를 플레이북의 무결성 게이트에 그대로 넘긴다:"
+echo "pass this hash straight to the playbook's integrity gate:"
 echo "  -e pqcota_module_sha256_BC=$BC_SHA256"
 echo
-echo "조각이 이 JAR을 정말 등록하는지 확인: ./verify-registration.sh"
+echo "check that the fragment really registers this JAR: ./verify-registration.sh"
