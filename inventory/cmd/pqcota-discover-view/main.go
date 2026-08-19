@@ -65,10 +65,10 @@ func main() {
 	}
 
 	fmt.Println("╔══════════════════════════════════════════════════════════╗")
-	fmt.Println("║  pqcota 디스커버리 뷰 (OSS · 읽기전용)                     ║")
+	fmt.Println("║  pqcota discovery view (OSS · read-only)                  ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════╝")
 
-	fmt.Println("\n──────── ① 발견 자산 (노드별) ────────")
+	fmt.Println("\n──────── ① discovered assets (per node) ────────")
 	nodes := sortedKeys(nodeSet)
 	for _, n := range nodes {
 		if len(assets[n]) == 0 {
@@ -80,15 +80,15 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n──────── ② 관측 통신 엣지 + 양자내성 등급 ────────")
+	fmt.Println("\n──────── ② observed edges + quantum-resistance grade ────────")
 	pqc, classical, unknown := printEdges(edges, ip2node)
-	fmt.Printf("\n  등급 합계: 🟢 PQC %d · 🔴 고전 %d · ⚪ 불명 %d\n", pqc, classical, unknown)
+	fmt.Printf("\n  grade totals: 🟢 PQC %d · 🔴 classical %d · ⚪ unknown %d\n", pqc, classical, unknown)
 
 	dot := renderObservedDOT(edges, ip2node)
 	if err := os.WriteFile(dotOut, []byte(dot), 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "write dot:", err)
 	} else {
-		fmt.Printf("\n관측 토폴로지 DOT 저장: %s (색=등급, 실선=관측). 선언 대비 3-상태 대조는 하지 않는다.\n", dotOut)
+		fmt.Printf("\nobserved topology written as DOT: %s (colour = grade, solid = observed). No three-state reconciliation against declarations.\n", dotOut)
 	}
 }
 
@@ -98,7 +98,7 @@ func describeFinding(f *discoveryv1.Finding) string {
 		o := f.GetOpenssl()
 		v := o.GetVersion()
 		if v == "" {
-			v = "(버전 불명)"
+			v = "(version unknown)"
 		}
 		fork := o.GetFork()
 		if fork == "" {
@@ -112,10 +112,10 @@ func describeFinding(f *discoveryv1.Finding) string {
 		c := f.GetCng()
 		// provider 이름은 전부 Microsoft라(실측 9개) 목록만으로는 노드가 갈리지 않는다.
 		// 사람이 여기서 찾는 답은 **무엇을 할 수 있나**이므로 PQC 요약을 함께 낸다.
-		return fmt.Sprintf("CNG providers: %d · 알고리즘 %d개 · PQC %s [%s]",
+		return fmt.Sprintf("CNG providers: %d · %d algorithms · PQC %s [%s]",
 			len(c.GetProviderSet()), len(c.GetAlgorithms()), nz(f.GetPqcReadiness()), f.GetEvidenceStrength())
 	default:
-		return "(미상 런타임)"
+		return "(unknown runtime)"
 	}
 }
 
@@ -138,7 +138,7 @@ func printEdges(edges []*discoveryv1.ObservedEdge, ip2node map[string]string) (p
 		}
 		grp := e.GetNegotiatedGroup()
 		if grp == "" {
-			grp = "(불명)"
+			grp = "(unknown)"
 		}
 		rows = append(rows, row{e.GetSrcNodeId(), dst, protoName(e.GetProtocol()), grp, p})
 	}
@@ -162,7 +162,7 @@ func renderObservedDOT(edges []*discoveryv1.ObservedEdge, ip2node map[string]str
 	var b strings.Builder
 	// rankdir=TB(위→아래) 세로 배치 + 하단 캡션 범례(옆으로 안 퍼지게). 폭 축소.
 	b.WriteString("digraph crypto_observed {\n  rankdir=TB;\n  ranksep=0.5;\n  nodesep=0.3;\n")
-	b.WriteString(`  labelloc="b"; fontsize=11; label="등급:  🟢 PQC/하이브리드   🔴 고전=양자취약   ⚪ 불명";` + "\n")
+	b.WriteString(`  labelloc="b"; fontsize=11; label="grade:  🟢 PQC/hybrid   🔴 classical = quantum-vulnerable   ⚪ unknown";` + "\n")
 	b.WriteString(`  node [shape=box, style="rounded,filled", fillcolor="#eeeeff", fontname="sans"];` + "\n")
 	b.WriteString(`  edge [fontname="sans", fontsize=10];` + "\n\n")
 	seen := map[string]bool{}
@@ -209,7 +209,7 @@ func resolveDst(e *discoveryv1.ObservedEdge, ip2node map[string]string) string {
 // shortGroup — 라벨 폭을 줄이려고 협상 그룹의 긴 접미사(@openssh.com·-sha512)를 정리한다.
 func shortGroup(g string) string {
 	if g == "" {
-		return "불명"
+		return "unknown"
 	}
 	if i := strings.IndexByte(g, '@'); i > 0 {
 		g = g[:i]

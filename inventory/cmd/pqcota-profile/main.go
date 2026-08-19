@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	dsn := flag.String("dsn", "", "인벤토리 Postgres DSN(지정 시 프로필 upsert)")
+	dsn := flag.String("dsn", "", "inventory Postgres DSN; when given, upserts profiles")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-profile [--dsn <postgres>] <profiles.csv>")
@@ -37,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("프로필 %d개:\n", len(profs))
+	fmt.Printf("%d profiles:\n", len(profs))
 	for _, p := range profs {
 		fmt.Printf("  %-14s %-16s %s · %s · owner=%s\n", p.GetNodeId(), p.GetDisplayName(),
 			short(p.GetEnvironment().String(), "ENVIRONMENT_"), p.GetRole(), p.GetOwner())
@@ -46,7 +46,7 @@ func main() {
 	if *dsn != "" {
 		meta, err := inventory.NewPgMetaStore(context.Background(), *dsn)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "메타 저장소:", err)
+			fmt.Fprintln(os.Stderr, "metadata store:", err)
 			os.Exit(1)
 		}
 		defer meta.Close()
@@ -56,7 +56,7 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		fmt.Fprintf(os.Stderr, "[profile] %d개 인벤토리 upsert 완료\n", len(profs))
+		fmt.Fprintf(os.Stderr, "[profile] upserted %d profiles into the inventory\n", len(profs))
 	}
 }
 

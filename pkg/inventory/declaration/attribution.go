@@ -55,7 +55,7 @@ func ImportAttributionCSV(r io.Reader) ([]*discoveryv1.CollectionResult, error) 
 		// 셋 중 하나라도 비면 어느 엣지를 가리키는지 알 수 없다. 추측하지 않고 알린다 —
 		// 앱을 잘못 짚으면 조치 대상이 바뀐다.
 		if a.NodeID == "" || a.Dst == "" || a.AppKey == "" {
-			return nil, fmt.Errorf("%d행: node_id·dst·app_key는 셋 다 있어야 한다", i+1)
+			return nil, fmt.Errorf("row %d: node_id, dst and app_key are all required", i+1)
 		}
 		if _, ok := byNode[a.NodeID]; !ok {
 			order = append(order, a.NodeID)

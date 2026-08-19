@@ -55,9 +55,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	backing := "인메모리(요약만 — 프로세스 종료 시 소멸)"
+	backing := "in-memory (summary only — gone when the process exits)"
 	if persistent {
-		backing = "Postgres(append-only 영속)"
+		backing = "Postgres (append-only, persistent)"
 	}
 	switch disp {
 	case ingest.Accepted:
@@ -66,14 +66,14 @@ func main() {
 			n = len(snap.Findings)
 		}
 		fmt.Println("╔══════════════════════════════════════════════════╗")
-		fmt.Println("║  pqcota CBOM 수신 (위임 → 관측 레인 → 히스토리)     ║")
+		fmt.Println("║  pqcota CBOM intake (delegated → observed lane → history) ║")
 		fmt.Println("╚══════════════════════════════════════════════════╝")
-		fmt.Printf("✓ 수용: node=%s · detection_method=source/artifact · 자산 %d개 · 저장소 %s\n", nodeID, n, backing)
+		fmt.Printf("✓ accepted: node=%s · detection_method=source/artifact · %d assets · store %s\n", nodeID, n, backing)
 	case ingest.NeedsScopeBinding:
-		fmt.Fprintf(os.Stderr, "✗ 앵커 없음: <target-node-id>가 스코프 마스터에 필요(§1.4·SD-5)\n")
+		fmt.Fprintf(os.Stderr, "✗ no anchor: <target-node-id> must exist in the scope master (§1.4, SD-5)\n")
 		os.Exit(1)
 	default: // Rejected
-		fmt.Fprintf(os.Stderr, "✗ 거부: CBOM 검증 실패(서명·구조·스펙 부적합, TV-CBOM-2)\n")
+		fmt.Fprintf(os.Stderr, "✗ rejected: CBOM validation failed (signature, structure or spec version, TV-CBOM-2)\n")
 		os.Exit(1)
 	}
 }
@@ -83,7 +83,7 @@ func openStore() (history.Store, func(), bool) {
 	if dsn == "" {
 		mem, err := history.NewMemStoreIn(org.FromEnv())
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "조직:", err)
+			fmt.Fprintln(os.Stderr, "organization:", err)
 			os.Exit(2)
 		}
 		return mem, func() {}, false
@@ -93,7 +93,7 @@ func openStore() (history.Store, func(), bool) {
 		// **인메모리로 대체하지 않는다.** v0.1.x는 여기서 폴백했는데, 그러면 적재된 줄 알았던
 		// 것이 프로세스와 함께 사라지고 화면에는 성공이 찍힌다 — 성공처럼 보이는 실패다.
 		// DSN을 준 것은 영속을 요구한 것이고, 그 요구를 못 들어주면 멈추는 것이 맞다.
-		fmt.Fprintln(os.Stderr, "저장소를 열지 못했다:", err)
+		fmt.Fprintln(os.Stderr, "could not open the store:", err)
 		os.Exit(1)
 	}
 	return pg, pg.Close, true

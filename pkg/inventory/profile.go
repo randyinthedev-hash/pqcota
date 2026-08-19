@@ -25,14 +25,14 @@ func ParseProfiles(r io.Reader) ([]*inventoryv1.MachineProfile, error) {
 		return nil, err
 	}
 	if len(rows) < 1 {
-		return nil, fmt.Errorf("빈 파일")
+		return nil, fmt.Errorf("empty file")
 	}
 	col := map[string]int{}
 	for i, h := range rows[0] {
 		col[strings.TrimSpace(strings.ToLower(h))] = i
 	}
 	if _, ok := col["node_id"]; !ok {
-		return nil, fmt.Errorf("헤더에 node_id 필요")
+		return nil, fmt.Errorf("the header must contain node_id")
 	}
 	get := func(row []string, name string) string {
 		if i, ok := col[name]; ok && i < len(row) {

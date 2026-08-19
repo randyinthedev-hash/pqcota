@@ -16,7 +16,7 @@ import (
 // Render — 읽기전용 인벤토리 뷰. 갭은 "부재"가 아니라 "원리상 관측하지 못함"으로 명시(§2.6).
 func Render(snap *history.Snapshot) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "노드 %s  (스냅샷 %s · ruleset %s)\n", snap.NodeID, snap.ID, snap.RulesetVersion)
+	fmt.Fprintf(&b, "node %s  (snapshot %s · ruleset %s)\n", snap.NodeID, snap.ID, snap.RulesetVersion)
 	fmt.Fprintf(&b, "%-8s %-12s %-22s %-28s %s\n", "runtime", "evidence", "detection", "detail", "id")
 	for _, f := range snap.Findings {
 		detail := detailOf(f)
@@ -29,7 +29,7 @@ func Render(snap *history.Snapshot) string {
 	}
 	if snap.ExcludedByScope > 0 {
 		// 제외는 "없음"이 아니다 — 정책으로 뺀 걸 감추면 인벤토리가 거짓말한다(§2.6).
-		fmt.Fprintf(&b, "자산 스코프 제외: %d건 (관측됐으나 관리 대상 아님 — 부재가 아니다)\n", snap.ExcludedByScope)
+		fmt.Fprintf(&b, "excluded by asset scope: %d (observed but out of management scope — not absence)\n", snap.ExcludedByScope)
 	}
 	if c := snap.Completeness; c != nil {
 		if len(c.GetLayersMissing()) > 0 {
@@ -37,12 +37,12 @@ func Render(snap *history.Snapshot) string {
 			for _, l := range c.GetLayersMissing() {
 				g = append(g, short(l.String(), "COLLECTION_LAYER_"))
 			}
-			fmt.Fprintf(&b, "갭(원리상 관측하지 못함 ≠ 부재): %s  %s\n", strings.Join(g, ","), c.GetNote())
+			fmt.Fprintf(&b, "gap (unobservable by design != absent): %s  %s\n", strings.Join(g, ","), c.GetNote())
 		} else if n := c.GetNote(); n != "" {
 			// **계층 갭이 없어도 노트는 낸다.** 계층이 빈 노트를 흘려보내던 탓에, 구간이 중간에
 			// 끊겼다는 netcap의 경고와 앱을 못 짚은 것이 화면까지 오지 못했다 — 정직하게 적어 둔
 			// 것이 읽는 사람에게 도달하지 않으면 적지 않은 것과 같다(§2.6).
-			fmt.Fprintf(&b, "관측 한계: %s\n", n)
+			fmt.Fprintf(&b, "observation limit: %s\n", n)
 		}
 	}
 	return b.String()
@@ -95,16 +95,16 @@ func gapOf(snap *history.Snapshot) string {
 func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]history.ObsStat,
 	pruned []history.RetentionEvent) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "노드 %s — 변화 지점 %d건 (오래된 것부터)\n", nodeID, len(snaps))
+	fmt.Fprintf(&b, "node %s — %d change points (oldest first)\n", nodeID, len(snaps))
 	// 절단이 있었으면 먼저 고지한다 — 안 그러면 이력의 구멍이 "관측을 안 함"으로 읽힌다(§2.6 정신).
 	for _, e := range pruned {
-		fmt.Fprintf(&b, "⌫ %s 이전 %d건은 보존 정책으로 절단됨 (%s, 관측 기록 %d건 · %s 실행)\n",
+		fmt.Fprintf(&b, "⌫ %d change points before %s were pruned by the retention policy (%s, %d observations · run at %s)\n",
 			e.PrunedUpTo.Format("2006-01-02 15:04:05"), e.Snapshots, e.Policy, e.Observations,
 			e.ExecutedAt.Format("2006-01-02"))
 	}
 	b.WriteByte('\n')
 	if len(snaps) == 0 {
-		b.WriteString("(적재된 스냅샷 없음)\n")
+		b.WriteString("(no snapshot ingested)\n")
 		return b.String()
 	}
 	// 컬럼 헤더는 영문 — 한글은 터미널에서 2배 폭이라 고정폭 칸 정렬이 깨진다(Render와 같은 방식).
@@ -122,8 +122,8 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 			s.Seq, s.CreatedAt.Format("2006-01-02 15:04:05"), s.RulesetVersion,
 			len(s.Findings), len(s.Edges), obs, window, gapOf(s), s.ID)
 	}
-	b.WriteString("\n(스냅샷은 내용이 바뀔 때만 쌓인다 — obs·observed가 그 상태를 몇 번·언제까지 재확인했는지 보여준다.\n")
-	b.WriteString(" gap = 원리상 관측하지 못한 계층으로 \"부재\"가 아니다. snapshot 값을 -snapshot·-diff에 그대로 쓴다.)\n")
+	b.WriteString("\n(snapshots accumulate only when the content changes — obs/observed show how often and until when that state was re-confirmed.\n")
+	b.WriteString(" gap = a layer that cannot be observed by design, not \"absent\". Pass the snapshot value straight to -snapshot/-diff.)\n")
 	return b.String()
 }
 
@@ -142,7 +142,7 @@ func RenderDetailWith(snap *history.Snapshot, overlay *AttributionOverlay) strin
 	if len(snap.Edges) == 0 {
 		return b.String()
 	}
-	fmt.Fprintf(&b, "\n관측 엣지 %d (이 스냅샷)\n", len(snap.Edges))
+	fmt.Fprintf(&b, "\n%d observed edges (this snapshot)\n", len(snap.Edges))
 	declared := 0
 	for _, e := range snap.Edges {
 		key, kind := overlay.Apply(e)
@@ -155,7 +155,7 @@ func RenderDetailWith(snap *history.Snapshot, overlay *AttributionOverlay) strin
 	}
 	if declared > 0 {
 		// 몇 개가 선언으로 메워졌는지 밝힌다 — 화면만 보면 관측과 구별되지 않는다.
-		fmt.Fprintf(&b, "  (그중 %d개는 관측이 아니라 **사람이 선언한 앱**이다 — `(declared)` 표시)\n", declared)
+		fmt.Fprintf(&b, "  (%d of them are not observations but **apps declared by a person** — marked `(declared)`)\n", declared)
 	}
 	return b.String()
 }
@@ -182,18 +182,18 @@ func appMark(key, kind string) string {
 // finding id는 (node|name|runtime|fork) 해시라 버전이 바뀌어도 유지된다 → 같은 자산의 변경으로 잡힌다.
 func RenderDiff(a, b *history.Snapshot) string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "변화 (노드 %s)\n  %s\n  → %s\n", b.NodeID, a.ID, b.ID)
+	fmt.Fprintf(&sb, "changes (node %s)\n  %s\n  → %s\n", b.NodeID, a.ID, b.ID)
 	fmt.Fprintf(&sb, "  %s (seq %d, ruleset %s)  →  %s (seq %d, ruleset %s)\n\n",
 		a.CreatedAt.Format("2006-01-02 15:04:05"), a.Seq, a.RulesetVersion,
 		b.CreatedAt.Format("2006-01-02 15:04:05"), b.Seq, b.RulesetVersion)
 	if a.RulesetVersion != b.RulesetVersion {
-		sb.WriteString("⚠ ruleset이 다르다 — 파생값(evidence·pqc_readiness) 차이는 실제 변화가 아니라 재계산 결과일 수 있다(§1.2).\n\n")
+		sb.WriteString("⚠ the rulesets differ — a difference in derived values (evidence, pqc_readiness) may be a recomputation, not a real change (§1.2).\n\n")
 	}
 	// 방향 규약: 첫 인자=과거, 둘째=최신. '추가'=둘째에만·'사라짐'=첫째에만이라, 인자를 시간
 	// 역순으로 주면 방향이 뒤집혀 읽힌다 — 하드 에러는 아니다(되돌림 미리보기로 역순 비교가
 	// 유효하므로). 대신 뒤집혔음을 고지한다(§2.6 — 오독을 조용히 두지 않는다).
 	if a.CreatedAt.After(b.CreatedAt) {
-		sb.WriteString("⚠ 첫 스냅샷이 더 최신이다(시간 역순) — '추가'는 실은 사라진 것, '사라짐'은 생긴 것으로 뒤집혀 읽힌다. 시간순은 <과거id>,<최신id>.\n\n")
+		sb.WriteString("⚠ the first snapshot is the newer one (reverse order) — 'added' then reads as removed and 'removed' as added. In time order it is <older-id>,<newer-id>.\n\n")
 	}
 
 	am, bm := indexFindings(a.Findings), indexFindings(b.Findings)
@@ -217,17 +217,17 @@ func RenderDiff(a, b *history.Snapshot) string {
 		}
 	}
 
-	section(&sb, "추가", added)
-	section(&sb, "사라짐", removed)
-	section(&sb, "변경", changed)
+	section(&sb, "added", added)
+	section(&sb, "removed", removed)
+	section(&sb, "changed", changed)
 	if len(added)+len(removed)+len(changed) == 0 {
-		fmt.Fprintf(&sb, "자산 변화 없음 (양쪽 %d건 동일)\n", len(bm))
+		fmt.Fprintf(&sb, "no asset changes (%d identical on both sides)\n", len(bm))
 	}
 	if la, lb := len(a.Edges), len(b.Edges); la != lb {
-		fmt.Fprintf(&sb, "\n관측 엣지: %d → %d\n", la, lb)
+		fmt.Fprintf(&sb, "\nobserved edges: %d → %d\n", la, lb)
 	}
 	if ga, gb := gapOf(a), gapOf(b); ga != gb {
-		fmt.Fprintf(&sb, "갭(원리상 관측하지 못함): %s → %s\n", ga, gb)
+		fmt.Fprintf(&sb, "gap (unobservable by design): %s → %s\n", ga, gb)
 	}
 	return sb.String()
 }
@@ -291,11 +291,11 @@ func edgeAlgo(e *discoveryv1.ObservedEdge) string {
 func postureMark(e *discoveryv1.ObservedEdge) string {
 	switch posture.Classify(e.GetNegotiatedGroup(), e.GetCipher()) {
 	case discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID:
-		return "🟢 PQC/하이브리드"
+		return "🟢 PQC/hybrid"
 	case discoveryv1.QuantumPosture_QUANTUM_POSTURE_CLASSICAL:
-		return "🔴 고전"
+		return "🔴 classical"
 	default:
-		return "⚪ 불명"
+		return "⚪ unknown"
 	}
 }
 
