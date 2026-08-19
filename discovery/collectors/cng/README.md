@@ -56,20 +56,28 @@ Windows Client Key Protection Provider
 이 빌드의 CNG로는 서명은 양자내성으로 갈 수 있어도 TLS 키 교환은 갈 수 없다는 뜻이고,
 그것이 이 노드의 사실이다 — 다른 빌드로 일반화하지 않는다.
 
-| 종류 | 관측된 것 |
-|---|---|
-| cipher (9) | 3DES · 3DES_112 · AES · CHACHA20_POLY1305 · DES · DESX · RC2 · RC4 · XTS-AES |
-| hash (18) | SHA1 · SHA256/384/512 · SHA3-256/384/512 · SHAKE128/256 · CSHAKE128/256 · KMAC128/256 · MD2/4/5 · AES-CMAC · AES-GMAC |
-| signature | RSA_SIGN · DSA · ECDSA(P256/384/521) · **ML-DSA** |
-| secret-agreement | DH · ECDH(P256/384/521) |
-| asymmetric-encryption | RSA |
-| rng · key-derivation | RNG · DUALECRNG · FIPS186DSARNG · HKDF · PBKDF2 · TLS1_1/1_2_KDF · SP800_108_CTR_HMAC · SP800_56A_CONCAT · CAPI_KDF |
+| 종류 | 개수 | 관측된 것 |
+|---|---|---|
+| hash | 18 | SHA1 · SHA256/384/512 · SHA3-256/384/512 · SHAKE128/256 · CSHAKE128/256 · KMAC128/256 · MD2/4/5 · AES-CMAC · AES-GMAC |
+| cipher | 9 | 3DES · 3DES_112 · AES · CHACHA20_POLY1305 · DES · DESX · RC2 · RC4 · XTS-AES |
+| signature | 7 | RSA_SIGN · DSA · ECDSA(P256/384/521) · **ML-DSA** |
+| key-derivation | 7 | HKDF · PBKDF2 · TLS1_1/1_2_KDF · SP800_108_CTR_HMAC · SP800_56A_CONCAT · CAPI_KDF |
+| secret-agreement | 5 | DH · ECDH(P256/384/521) — **PQC 없음** |
+| rng | 3 | RNG · DUALECRNG · FIPS186DSARNG |
+| asymmetric-encryption | 1 | RSA |
 
-**이 실측이 결함을 하나 잡았다.** 처음엔 `BCRYPT_ALGORITHM_IDENTIFIER.dwClass`를 열거 요청의
+**이 실측이 결함을 둘 잡았다.** 처음엔 `BCRYPT_ALGORITHM_IDENTIFIER.dwClass`를 열거 요청의
 연산 비트마스크와 같은 어휘로 봤는데, 그것은 **인터페이스 상수**(1–7)다. 값이 겹쳐 50개 중 18개가
 빈 종류로 나오고 DH·ECDH는 `secret-agreement`가 아니라 `asymmetric-encryption`으로 **틀리게**
 붙었다 — 모르는 것을 비우는 규칙이 있어도, 겹치는 값은 조용히 틀린다. 매핑을 OS 호출에서 떼어
-순수 함수로 옮기고 실측을 근거로 못 박았다(TD-CNG-6).
+순수 함수로 옮기고 실측을 근거로 못 박았다(TD-CNG-6). 고친 뒤 재측정에서 **빈 종류가 0개**가 됐고
+23개가 바로잡혔다(18개는 비어 있었고 DH·ECDH 5개는 틀린 종류였다). 두 실행의 provider 목록은
+같았다 — 관측이 흔들려서 달라진 것이 아니라 매핑만 틀렸다는 뜻이다.
+
+둘째는 **노드 식별**이다. 첫 실행의 `derived_from`이 `fqdn`이었다 — 지문 수집이 리눅스 경로만
+보고 있었다. Windows는 레지스트리 `MachineGuid`를 읽게 고쳤고, 재측정에서 `machine-id`로
+바뀌었다. 그 결과 **같은 머신의 node_id도 바뀌었다**(호스트명 기반 → 설치 기반). Windows 노드를
+적재한 적이 없어 이행할 것은 없지만, 이름에 매달린 앵커가 어떤 모양으로 새는지가 여기 남는다.
 
 ## 지금 어디까지 됐나
 
@@ -77,6 +85,6 @@ Windows Client Key Protection Provider
 |---|---|
 | 순수 조립·완전성 규칙 + 단위 테스트 | **된다** — Windows 없이 돈다 |
 | `bcrypt.dll` 열거 | **된다** — Windows 11 26200에서 실측(위) |
-| 노드 식별 | **고쳤다** — Windows는 레지스트리 `MachineGuid`를 읽는다(`/etc/machine-id`의 대응물). `hardware_uuid`는 아직 빈다: SMBIOS는 펌웨어 테이블을 떠야 나와서, 지어내지 않고 비워 둔다 |
+| 노드 식별 | **된다** — 레지스트리 `MachineGuid`로 실측 확인(`derived_from=machine-id`). `hardware_uuid`는 아직 빈다: SMBIOS는 펌웨어 테이블을 떠야 나와서, 지어내지 않고 비워 둔다 |
 | 정규화 → 인벤토리 수렴 | 레인은 붙었다(`pqcota:cng.provider_set` → `CngAxes`). 종단 확인은 아직 |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다** — 이 collector는 관측까지다 |
