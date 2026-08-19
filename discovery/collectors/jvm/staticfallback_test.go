@@ -10,7 +10,7 @@ import (
 // 파일에 적힌 줄 순서가 아니라 숫자 순이 맞다.
 func TestParseJavaSecurity(t *testing.T) {
 	// 일부러 줄 순서를 뒤섞고, 주석·빈 줄·인자 붙은 값·무관한 키를 섞는다.
-	content := `# 표준 JDK의 java.security 발췌
+	content := `# excerpt from a standard JDK java.security
 security.provider.3=SunEC
 security.provider.1=SUN
 
@@ -22,15 +22,15 @@ security.provider.5=
 `
 	c := jvm.ParseJavaSecurity(content)
 	if !c.Degraded {
-		t.Error("정적 경로는 항상 강등이어야(동적 등록 사각)")
+		t.Error("the static path must always be degraded (dynamic registration is a blind spot)")
 	}
 	want := []string{"SUN", "SunRsaSign", "SunEC", "SunPKCS11"}
 	if len(c.Providers) != len(want) {
-		t.Fatalf("provider %d개, want %d: %+v", len(c.Providers), len(want), c.Providers)
+		t.Fatalf("%d providers, want %d: %+v", len(c.Providers), len(want), c.Providers)
 	}
 	for i, w := range want {
 		if c.Providers[i].Name != w {
-			t.Errorf("[%d] = %q, want %q (N 순서대로여야)", i, c.Providers[i].Name, w)
+			t.Errorf("[%d] = %q, want %q (must follow the N order)", i, c.Providers[i].Name, w)
 		}
 		if c.Providers[i].Order != i+1 {
 			t.Errorf("[%d] Order = %d, want %d", i, c.Providers[i].Order, i+1)
@@ -40,12 +40,12 @@ security.provider.5=
 
 // 빈 파일·provider 없음도 오류가 아니다 — 빈 목록 + 강등이 정직한 관측이다(§2.5).
 func TestParseJavaSecurityEmpty(t *testing.T) {
-	c := jvm.ParseJavaSecurity("# 주석뿐\nsecurerandom.source=file:/dev/random\n")
+	c := jvm.ParseJavaSecurity("# comments only\nsecurerandom.source=file:/dev/random\n")
 	if len(c.Providers) != 0 {
-		t.Errorf("provider가 없어야: %+v", c.Providers)
+		t.Errorf("there must be no providers: %+v", c.Providers)
 	}
 	if !c.Degraded {
-		t.Error("빈 결과여도 강등 표시는 남아야 — '없다'가 아니라 '이 경로에선 관측하지 못한다'")
+		t.Error("even an empty result must stay marked degraded — not 'there are none' but 'this path cannot observe them'")
 	}
 }
 
@@ -53,9 +53,9 @@ func TestParseJavaSecurityEmpty(t *testing.T) {
 func TestStaticFallbackNoJavaHome(t *testing.T) {
 	c, err := jvm.StaticFallbackGo(1, "")
 	if err == nil {
-		t.Error("JAVA_HOME 미상이면 오류여야")
+		t.Error("an unknown JAVA_HOME must be an error")
 	}
 	if !c.Degraded {
-		t.Error("실패해도 강등 표시는 있어야(조용한 0 금지)")
+		t.Error("even on failure the degraded mark must be there (no silent zero)")
 	}
 }

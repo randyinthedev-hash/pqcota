@@ -24,7 +24,7 @@ func javaBin(t *testing.T) (bin, home string) {
 	}
 	b, err := exec.LookPath("java")
 	if err != nil {
-		t.Skip("JDK 없음 — attach 차단 통합 테스트 스킵")
+		t.Skip("no JDK — skipping the attach-blocked integration test")
 	}
 	// java 실행 파일에서 JAVA_HOME을 되짚는다(.../bin/java → ...).
 	real, err := filepath.EvalSymlinks(b)
@@ -56,7 +56,7 @@ func TestDisabledAttachFallsBackToJavaSecurity(t *testing.T) {
 	// `.attach_pid<N>`을 **대상의 CWD**에 만들기 때문이다. 기본값이면 그게 리포 안에 떨어진다.
 	cmd.Dir = t.TempDir()
 	if err := cmd.Start(); err != nil {
-		t.Skipf("JVM 기동 실패(단일 파일 실행 미지원일 수 있음): %v", err)
+		t.Skipf("the JVM did not start (single-file execution may be unsupported): %v", err)
 	}
 	defer func() { _ = cmd.Process.Kill(); _, _ = cmd.Process.Wait() }()
 	pid := cmd.Process.Pid
@@ -76,28 +76,28 @@ func TestDisabledAttachFallsBackToJavaSecurity(t *testing.T) {
 		return jvm.NativeAttach(j.PID, "/nonexistent-agent.jar", filepath.Join(t.TempDir(), "out"))
 	})
 	if st.Discovered != 1 {
-		t.Fatalf("발견 %d, want 1", st.Discovered)
+		t.Fatalf("found %d, want 1", st.Discovered)
 	}
 	if st.Failed != 1 || st.Attached != 0 {
-		t.Fatalf("attach가 막혔는데 성공으로 셌다: %+v", st)
+		t.Fatalf("attach was blocked but it was counted as a success: %+v", st)
 	}
 	if results[0].Err == nil {
-		t.Error("실패가 오류로 남지 않았다 — 조용히 버리면 그 JVM이 깨끗해 보인다")
+		t.Error("the failure was not recorded as an error — dropping it silently makes that JVM look clean")
 	}
 
 	// ② 정적 폴백은 java.security에서 provider를 읽어야 한다.
 	col, err := jvm.StaticFallbackGo(pid, home)
 	if err != nil {
-		t.Fatalf("정적 폴백 실패(JAVA_HOME=%s): %v", home, err)
+		t.Fatalf("the static fallback failed (JAVA_HOME=%s): %v", home, err)
 	}
 	if len(col.Providers) == 0 {
-		t.Fatal("attach가 막혔다고 provider가 0건이 되면 안 된다 — 관측하지 못한 것과 없는 것이 뒤섞인다")
+		t.Fatal("a blocked attach must not turn into zero providers — that mixes up not-observed and not-there")
 	}
 	if !col.Degraded {
-		t.Error("정적 폴백 결과는 열화로 표시돼야 한다(runtime-introspection 아님)")
+		t.Error("a static fallback result must be marked degraded (it is not runtime introspection)")
 	}
 	if col.Raw == "" || !strings.Contains(col.Raw, "security.provider") {
-		t.Errorf("원본(java.security)이 보존되지 않았다: %q", firstLine(col.Raw))
+		t.Errorf("the raw capture (java.security) was not preserved: %q", firstLine(col.Raw))
 	}
 }
 

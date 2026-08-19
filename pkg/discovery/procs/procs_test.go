@@ -14,26 +14,26 @@ func TestMatch(t *testing.T) {
 
 	// systemd_unit — cgroup 포함
 	if !procs.Match(exe, cmd, cg, &discoveryv1.ProcessMatch{SystemdUnit: "payment.service"}) {
-		t.Error("systemd_unit 매칭 실패")
+		t.Error("systemd_unit did not match")
 	}
 	if procs.Match(exe, cmd, "0::/system.slice/other.service", &discoveryv1.ProcessMatch{SystemdUnit: "payment.service"}) {
-		t.Error("다른 유닛이 매칭됨")
+		t.Error("a different unit matched")
 	}
 	// exe_path 정확
 	if !procs.Match(exe, cmd, cg, &discoveryv1.ProcessMatch{ExePath: "/opt/java/bin/java"}) {
-		t.Error("exe_path 매칭 실패")
+		t.Error("exe_path did not match")
 	}
 	// cmdline_regex
 	if !procs.Match(exe, cmd, cg, &discoveryv1.ProcessMatch{CmdlineRegex: "payment/app\\.jar"}) {
-		t.Error("cmdline_regex 매칭 실패")
+		t.Error("cmdline_regex did not match")
 	}
 	// AND: 둘 다 만족해야
 	if procs.Match(exe, cmd, cg, &discoveryv1.ProcessMatch{ExePath: "/opt/java/bin/java", SystemdUnit: "other.service"}) {
-		t.Error("AND 위반(한 조건 불만족인데 매칭)")
+		t.Error("AND violated (matched with one condition unmet)")
 	}
 	// 규칙 없음 → false(전체 매칭 방지)
 	if procs.Match(exe, cmd, cg, &discoveryv1.ProcessMatch{}) || procs.Match(exe, cmd, cg, nil) {
-		t.Error("빈 규칙이 매칭됨")
+		t.Error("an empty rule matched")
 	}
 }
 
@@ -56,9 +56,9 @@ func TestResolve(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(got) != 1 || got[0].GetPid() != 101 {
-		t.Fatalf("해소 결과: %+v (want pid 101 하나)", got)
+		t.Fatalf("resolution result: %+v (want pid 101 alone)", got)
 	}
 	if got[0].GetCmdline() != "java -jar /opt/app.jar" {
-		t.Errorf("cmdline 정규화 오류: %q", got[0].GetCmdline())
+		t.Errorf("wrong cmdline normalization: %q", got[0].GetCmdline())
 	}
 }

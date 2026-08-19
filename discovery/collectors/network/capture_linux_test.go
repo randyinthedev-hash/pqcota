@@ -14,10 +14,10 @@ func TestLiveSource_noCapPerm(t *testing.T) {
 	ls := &LiveSource{Node: "web-01", Window: 100 * time.Millisecond}
 	_, err := ls.Observe(nil, nil)
 	if err == nil {
-		t.Skip("CAP_NET_RAW 있음(소켓 열림) — 이 환경에선 강등 경로 미적용")
+		t.Skip("CAP_NET_RAW present (socket opened) — the degraded path does not apply in this environment")
 	}
 	if !errors.Is(err, ErrCaptureUnavailable) {
-		t.Fatalf("권한 없음은 ErrCaptureUnavailable로 감싸야: %v", err)
+		t.Fatalf("a permission failure must be wrapped as ErrCaptureUnavailable: %v", err)
 	}
 }
 
@@ -28,17 +28,17 @@ func TestEdgeFor_clientOnly(t *testing.T) {
 	// 로컬(10.0.1.10)이 클라이언트(고포트)로 서버 8443에 연결 → 방출, dst=서버.
 	out := &Segment{SrcIP: "10.0.1.10", DstIP: "10.0.1.20", SrcPort: 40000, DstPort: 8443}
 	if c, ok := ls.edgeFor(out); !ok || c.DstAddr != "10.0.1.20:8443" || c.Port != 8443 || !c.SrcInitiated {
-		t.Errorf("아웃바운드 클라이언트 엣지: ok=%v %+v", ok, c)
+		t.Errorf("outbound client edge: ok=%v %+v", ok, c)
 	}
 	// 같은 연결의 반대 방향(서버→클라이언트 응답)도 서버=낮은포트로 판정 → 여전히 로컬=클라이언트 → 방출.
 	in := &Segment{SrcIP: "10.0.1.20", DstIP: "10.0.1.10", SrcPort: 8443, DstPort: 40000}
 	if c, ok := ls.edgeFor(in); !ok || c.DstAddr != "10.0.1.20:8443" {
-		t.Errorf("역방향에서도 동일 엣지: ok=%v %+v", ok, c)
+		t.Errorf("the same edge in the reverse direction: ok=%v %+v", ok, c)
 	}
 	// 로컬이 서버(8443 리슨)이고 상대가 클라이언트 → 방출 안 함(상대가 보고).
 	ls2 := &LiveSource{Node: "app-01", SelfIPs: map[string]bool{"10.0.1.20": true}}
 	if _, ok := ls2.edgeFor(out); ok {
-		t.Error("서버측은 방출하지 않아야(중복 방지)")
+		t.Error("the server side must not be emitted (avoids duplicates)")
 	}
 }
 
@@ -53,15 +53,15 @@ func TestObserveFillsTheWholeWindow(t *testing.T) {
 	ls := &LiveSource{Node: "web-01", Window: window}
 	start := time.Now()
 	if _, err := ls.Observe(nil, nil); err != nil {
-		t.Skip("CAP_NET_RAW 없음 — 캡처 루프 미실행")
+		t.Skip("no CAP_NET_RAW — the capture loop did not run")
 	}
 	elapsed := time.Since(start)
 	// 200ms 수신 타임아웃으로 폴링하므로 구간보다 한 틱 정도만 짧을 수 있다. 그보다 일찍 끝났다면
 	// 루프가 오류로 빠져나온 것이다.
 	if elapsed < window-300*time.Millisecond {
-		t.Errorf("구간(%v)을 다 채우지 못하고 %v에 끝났다 — EINTR 등을 치명적으로 다루면 관측이 조용히 잘린다", window, elapsed)
+		t.Errorf("the window (%v) ended early at %v — treating EINTR and friends as fatal silently cuts the observation short", window, elapsed)
 	}
 	if ls.Truncated {
-		t.Errorf("정상 종료인데 Truncated가 섰다: %v", ls.TruncErr)
+		t.Errorf("a clean finish still set Truncated: %v", ls.TruncErr)
 	}
 }
