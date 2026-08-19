@@ -108,6 +108,12 @@ func describeFinding(f *discoveryv1.Finding) string {
 	case commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA:
 		j := f.GetJca()
 		return fmt.Sprintf("JCA provider chain: %s [%s]", strings.Join(j.GetProviderSet(), ","), f.GetEvidenceStrength())
+	case commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG:
+		c := f.GetCng()
+		// provider 이름은 전부 Microsoft라(실측 9개) 목록만으로는 노드가 갈리지 않는다.
+		// 사람이 여기서 찾는 답은 **무엇을 할 수 있나**이므로 PQC 요약을 함께 낸다.
+		return fmt.Sprintf("CNG providers: %d · 알고리즘 %d개 · PQC %s [%s]",
+			len(c.GetProviderSet()), len(c.GetAlgorithms()), nz(f.GetPqcReadiness()), f.GetEvidenceStrength())
 	default:
 		return "(미상 런타임)"
 	}
@@ -289,5 +295,13 @@ func sortedKeys(m map[string]bool) []string {
 		s = append(s, k)
 	}
 	sort.Strings(s)
+	return s
+}
+
+// nz — 빈 값을 unknown으로. 파생이 비었는데 빈칸으로 두면 "PQC 없음"으로 읽힌다(§2.5).
+func nz(s string) string {
+	if s == "" {
+		return "unknown"
+	}
 	return s
 }
