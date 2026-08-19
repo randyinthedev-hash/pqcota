@@ -27,7 +27,7 @@ pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보
 
 리눅스 전용 코드(`/proc`·AF_PACKET·attach)는 `//go:build linux`로 갈라 두고 다른 OS에는 거부 스텁을
 둔다. 그래서 macOS·Windows에선 그 코드가 컴파일 대상에서 빠지고, 깨져도 호스트 빌드는 통과한다 —
-`make build`가 **호스트 + linux/amd64 교차**를 함께 확인하는 이유다.
+`make build`가 **호스트 + linux/amd64 + windows/amd64 교차**를 함께 확인하는 이유다 — CNG collector가 자랄 타깃이라 Windows도 함께 본다.
 
 ## 개발 루프
 
@@ -39,7 +39,7 @@ make            # 전체: generate + lint + fmt-check + check-boundary + check-d
 go test ./...   # 단위
 ```
 
-`make build`는 **산출물을 남기지 않는다** — 호스트와 linux/amd64 교차 컴파일이 되는지만 확인한다
+`make build`는 **산출물을 남기지 않는다** — 호스트·linux/amd64·windows/amd64 교차 컴파일이 되는지만 확인한다
 (리눅스 전용 파일까지). 쓸 바이너리는 루트 README처럼 `-o`로 위치를 정해 만든다.
 `make build-jar`는 JDK가 없으면 경고 후 건너뛰므로 Go만 만지는 기여자는 JDK 없이도 `make`가 돈다.
 테스트는 실 JVM 없이 돈다.
@@ -97,7 +97,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 이 리포는 **정직성·결정론**을 코드에서 강제한다. 아래는 그 관례다 — 일반 Go 스타일이 아니라 **여기서 유독 지키는 것**만 적는다.
 
-**포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 `buf lint`·`fmt-check`·`check-boundary`·`check-docs`·`go vet`·`build`(호스트+리눅스 교차)·`build-jar`·`go test`를 돌리니 PR 전 **전부 그린**이어야 한다. `check-docs`는 md를 검사한다: 끊어진 링크·앵커, 리포 바깥을 가리키는 위치 선언(안 하는 일은 "하지 않는다"로 적는다), 역할분담 산문(문서에는 **기능과 사용법**만), 개인 개발 환경 정보, 라이선스 표와 실제 의존성의 불일치. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
+**포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 `buf lint`·`fmt-check`·`check-boundary`·`check-docs`·`go vet`·`build`(호스트+리눅스+윈도우 교차)·`build-jar`·`go test`를 돌리니 PR 전 **전부 그린**이어야 한다. `check-docs`는 md를 검사한다: 끊어진 링크·앵커, 리포 바깥을 가리키는 위치 선언(안 하는 일은 "하지 않는다"로 적는다), 역할분담 산문(문서에는 **기능과 사용법**만), 개인 개발 환경 정보, 라이선스 표와 실제 의존성의 불일치. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
 
 **주석은 "왜"를 국문으로, §를 달아서.** 코드가 *무엇을* 하는지는 코드가 말한다 — 주석은 *왜 이렇게* 했고 어긴 대안이 왜 틀린지를 적고, 근거를 규정서 §로 건다. 이 리포의 주석이 유독 긴 이유다. 예: `// ★ 제외는 "없음"이 아니다 — 정책으로 뺀 걸 조용히 사라지게 하면 인벤토리가 거짓말한다(§2.6)`.
 
