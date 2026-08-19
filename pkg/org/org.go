@@ -32,17 +32,17 @@ const RequireEnv = "PQCOTA_REQUIRE_ORG"
 
 var (
 	// ErrEmpty — 빈 조직. 조직을 대려다 만 것이지 [Default]를 고른 것이 아니다.
-	ErrEmpty = errors.New("조직이 비었다")
+	ErrEmpty = errors.New("organization is empty")
 	// ErrShape — 모양이 규칙에 안 맞는다.
-	ErrShape = errors.New("조직 이름의 모양이 규칙에 안 맞는다")
+	ErrShape = errors.New("organization name does not match the required shape")
 	// ErrDefaultNotAllowed — 필수 모드인데 조직 없이 열려 했다.
-	ErrDefaultNotAllowed = fmt.Errorf("%s=1인데 조직을 대지 않았다 — 기본 조직으로 열 수 없다", RequireEnv)
+	ErrDefaultNotAllowed = fmt.Errorf("%s=1 but no organization was named — it cannot be opened with the default organization", RequireEnv)
 	// ErrReserved — 예약된 이름을 조직으로 쓰려 했다.
 	//
 	// [Default]는 모양 규칙을 통과한다. 그래서 막지 않으면 **고객 조직 ID로 배정될 수 있고**,
 	// 배정되는 순간 단일 조직 시절 데이터와 한 조직으로 합쳐진다. 되돌리려면 중복 정리부터
 	// 해야 하므로, 여러 조직을 담는 배포에서는 이름 단계에서 막는다.
-	ErrReserved = fmt.Errorf("%q는 예약된 조직 이름이다 — 조직을 대지 않고 연 저장소가 묶이는 자리다", Default)
+	ErrReserved = fmt.Errorf("%q is a reserved organization name — it is where stores opened without naming an organization are bound", Default)
 )
 
 // shape — 소문자·숫자·하이픈 2~64자, 하이픈으로 시작하지 않는다.
@@ -57,7 +57,7 @@ func Parse(s string) (ID, error) {
 		return "", ErrEmpty
 	}
 	if !shape.MatchString(s) {
-		return "", fmt.Errorf("%w: %q — 소문자·숫자·하이픈 2~64자여야 한다", ErrShape, s)
+		return "", fmt.Errorf("%w: %q — must be 2-64 characters of lowercase letters, digits and hyphens", ErrShape, s)
 	}
 	return ID(s), nil
 }

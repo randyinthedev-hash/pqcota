@@ -11,7 +11,7 @@ import (
 
 // ErrCaptureUnavailable — 캡처 자체가 불가함(예: CAP_NET_RAW 없음). RPC 실패가 아니라
 // 완전성 갭으로 강등한다(§2.6). 라이브 소스가 소켓을 못 열면 이 오류로 감싸 반환한다.
-var ErrCaptureUnavailable = errors.New("network: 캡처 불가(권한/인터페이스)")
+var ErrCaptureUnavailable = errors.New("network: capture unavailable (permission/interface)")
 
 // Observation — 관측 소스가 내놓는 한 핸드셰이크(연결 튜플 + 파싱 결과).
 type Observation struct {
@@ -66,7 +66,7 @@ func (s *Service) Collect(req *discoveryv1.CollectRequest, stream grpc.ServerStr
 		// 캡처 불가(권한 등)는 RPC 실패가 아니라 노드별 완전성 갭으로 강등한다(TD-NETWORK-13).
 		if errors.Is(err, ErrCaptureUnavailable) {
 			for _, n := range req.GetTargetNodeIds() {
-				if e := stream.Send(DegradedResult(n, "네트워크 캡처 불가(CAP_NET_RAW 등) — 미관측(부재 아님): "+err.Error())); e != nil {
+				if e := stream.Send(DegradedResult(n, "network capture unavailable (CAP_NET_RAW etc.) — not observed (not absent): "+err.Error())); e != nil {
 					return e
 				}
 			}

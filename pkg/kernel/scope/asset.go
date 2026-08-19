@@ -139,7 +139,7 @@ func LoadAssetPolicy(r io.Reader) (*AssetPolicy, error) {
 	cr.TrimLeadingSpace = true
 	rows, err := cr.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("자산 스코프 CSV: %w", err)
+		return nil, fmt.Errorf("asset scope CSV: %w", err)
 	}
 	p := &AssetPolicy{}
 	for i, row := range rows {
@@ -158,7 +158,7 @@ func LoadAssetPolicy(r io.Reader) (*AssetPolicy, error) {
 		case "":
 			continue
 		default:
-			return nil, fmt.Errorf("자산 스코프 %d행: action은 exclude|include여야 함 (받은 값 %q)", i+1, row[0])
+			return nil, fmt.Errorf("asset scope row %d: action must be exclude|include (got %q)", i+1, row[0])
 		}
 		get := func(n int) string {
 			if n < len(row) {

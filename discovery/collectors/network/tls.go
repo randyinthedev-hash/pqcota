@@ -21,11 +21,11 @@ func ParseTLSHandshake(b []byte) (*Handshake, error) {
 	c := &cursor{b: b}
 	msgType, ok := c.u8()
 	if !ok {
-		return nil, errors.New("tls: 핸드셰이크 메시지 타입 없음")
+		return nil, errors.New("tls: no handshake message type")
 	}
 	msgLen, ok := c.u24()
 	if !ok {
-		return nil, errors.New("tls: 핸드셰이크 길이 없음")
+		return nil, errors.New("tls: no handshake length")
 	}
 	body, ok := c.take(int(msgLen))
 	if !ok {
@@ -37,7 +37,7 @@ func ParseTLSHandshake(b []byte) (*Handshake, error) {
 	case 2:
 		return parseServerHello(body)
 	default:
-		return nil, errors.New("tls: ClientHello/ServerHello 아님")
+		return nil, errors.New("tls: not a ClientHello/ServerHello")
 	}
 }
 

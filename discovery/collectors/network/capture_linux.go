@@ -34,7 +34,7 @@ func (s *LiveSource) WindowTruncated() (bool, error) { return s.Truncated, s.Tru
 func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, error) {
 	fd, err := unix.Socket(unix.AF_PACKET, unix.SOCK_RAW, int(htons(unix.ETH_P_ALL)))
 	if err != nil {
-		return nil, fmt.Errorf("AF_PACKET 소켓 열기 실패(%v): %w", err, ErrCaptureUnavailable)
+		return nil, fmt.Errorf("AF_PACKET socket could not be opened (%v): %w", err, ErrCaptureUnavailable)
 	}
 	defer unix.Close(fd)
 

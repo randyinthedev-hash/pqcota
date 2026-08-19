@@ -41,23 +41,23 @@ func NativeAttach(pid int, agentJar, outPath string) (Collected, error) {
 		defer os.Remove(trigger)
 
 		if err := syscall.Kill(pid, syscall.SIGQUIT); err != nil {
-			return Collected{}, fmt.Errorf("SIGQUIT 전송(pid=%d): %w", pid, err)
+			return Collected{}, fmt.Errorf("sending SIGQUIT (pid=%d): %w", pid, err)
 		}
 		if err := waitForSocket(sock, 5*time.Second); err != nil {
-			return Collected{}, fmt.Errorf("attach 리스너 소켓이 안 열림(%s): %w", sock, err)
+			return Collected{}, fmt.Errorf("attach listener socket did not open (%s): %w", sock, err)
 		}
 	}
 
 	conn, err := net.Dial("unix", sock)
 	if err != nil {
-		return Collected{}, fmt.Errorf("attach 소켓 연결(%s): %w", sock, err)
+		return Collected{}, fmt.Errorf("connecting to the attach socket (%s): %w", sock, err)
 	}
 	defer conn.Close()
 
 	// 프로토콜: <ver>\0load\0instrument\0false\0<jar>=<agentArgs>\0
 	// 인자 슬롯은 정확히 3개다(모자라면 대상이 응답하지 않는다).
 	if _, err := conn.Write([]byte(loadAgentRequest(agentJar, outPath))); err != nil {
-		return Collected{}, fmt.Errorf("attach 요청 전송: %w", err)
+		return Collected{}, fmt.Errorf("sending the attach request: %w", err)
 	}
 	if err := readAttachResult(conn); err != nil {
 		return Collected{}, err
@@ -65,7 +65,7 @@ func NativeAttach(pid int, agentJar, outPath string) (Collected, error) {
 
 	data, err := os.ReadFile(agentOutHostPath(pid, outPath))
 	if err != nil {
-		return Collected{}, fmt.Errorf("에이전트 출력 읽기: %w", err)
+		return Collected{}, fmt.Errorf("reading the agent output: %w", err)
 	}
 	return ParseProviders(string(data)), nil
 }
@@ -93,7 +93,7 @@ func createTriggerFile(pid, nspid int) (string, error) {
 		}
 		lastErr = err
 	}
-	return "", fmt.Errorf("attach 트리거 파일 생성 실패(동일 UID·권한 확인): %w", lastErr)
+	return "", fmt.Errorf("could not create the attach trigger file (check for the same UID and permissions): %w", lastErr)
 }
 
 // socketPath — 대상이 여는 유닉스 소켓의 **호스트에서 본** 경로. 컨테이너 대상이면 대상의 /tmp는

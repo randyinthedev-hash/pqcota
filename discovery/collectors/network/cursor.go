@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-var errTruncated = errors.New("network: 핸드셰이크 바이트 절단")
+var errTruncated = errors.New("network: handshake bytes truncated")
 
 // cursor — 경계 안전한 순차 바이트 리더. 모든 read는 (값, ok)로 실패를 노출한다.
 type cursor struct {

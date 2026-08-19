@@ -126,7 +126,7 @@ func algorithms() ([]Algorithm, error) {
 // ntStatus — NTSTATUS를 읽을 수 있는 오류로. bcrypt는 Win32 오류코드가 아니라 NTSTATUS를
 // 돌려주므로 `windows.Errno`로 감싸면 엉뚱한 문구가 붙는다 — 코드를 그대로 적는다.
 func ntStatus(call string, st uintptr) error {
-	return fmt.Errorf("%s가 NTSTATUS 0x%08X를 돌려줬다", call, uint32(st))
+	return fmt.Errorf("%s returned NTSTATUS 0x%08X", call, uint32(st))
 }
 
 // providerName — BCRYPT_PROVIDER_NAME(bcrypt.h). 이름 하나짜리 구조체다.

@@ -20,7 +20,7 @@ import (
 const AutoDDLEnv = "PQCOTA_AUTO_DDL"
 
 // ErrSchemaMissing — 자동 DDL이 꺼져 있는데 테이블이 없다.
-var ErrSchemaMissing = errors.New("인벤토리 스키마가 없다")
+var ErrSchemaMissing = errors.New("inventory schema is missing")
 
 // autoDDL — 기본은 켬. 명시적으로 "0"일 때만 끈다.
 func autoDDL() bool { return os.Getenv(AutoDDLEnv) != "0" }
@@ -37,7 +37,7 @@ func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("%w: %s=0으로 자동 생성을 껐다 — 스키마를 먼저 올리거나 search_path를 확인할 것",
+		return fmt.Errorf("%w: %s=0 turned automatic creation off — apply the schema first, or check search_path",
 			ErrSchemaMissing, AutoDDLEnv)
 	}
 	return nil

@@ -174,7 +174,7 @@ func shallowest(procRoot string, pids []int) int {
 func parseIP(s string) ([]byte, error) {
 	ip := net.ParseIP(s)
 	if ip == nil {
-		return nil, fmt.Errorf("IP가 아니다: %q", s)
+		return nil, fmt.Errorf("not an IP: %q", s)
 	}
 	if v4 := ip.To4(); v4 != nil {
 		return v4, nil

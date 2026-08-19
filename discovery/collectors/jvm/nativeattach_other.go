@@ -12,5 +12,5 @@ import "errors"
 // 오류를 돌려주므로 호출부의 3계층 폴백(② JDK 클라이언트 → ③ 정적)이 그대로 이어진다 —
 // 조용히 성공한 척하지 않는다(§2.5).
 func NativeAttach(pid int, agentJar, outPath string) (Collected, error) {
-	return Collected{}, errors.New("네이티브 attach는 리눅스 전용(/proc·유닉스 소켓) — 이 플랫폼에선 불가")
+	return Collected{}, errors.New("native attach is Linux-only (/proc and unix sockets) — not possible on this platform")
 }
