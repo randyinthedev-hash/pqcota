@@ -34,7 +34,9 @@ type algorithmIdentifier struct {
 	flags uint32
 }
 
-// 알고리즘 종류 비트마스크(bcrypt.h). 한 번에 전부 열거하고 종류는 반환값에서 읽는다.
+// 열거를 **요청**할 때 쓰는 연산 비트마스크(bcrypt.h). 반환값의 dwClass와는 다른 어휘다 —
+// 그것은 인터페이스 상수이고 [AlgorithmClass]가 옮긴다. 둘을 같은 것으로 본 것이 첫 실측에서
+// 잡힌 결함이다(값이 겹쳐 절반은 빈 값, DH·ECDH는 틀린 종류로 붙었다).
 const (
 	opCipher                    = 0x00000001
 	opHash                      = 0x00000002
@@ -99,7 +101,7 @@ func algorithms() ([]Algorithm, error) {
 	items := unsafe.Slice(list, count)
 	out := make([]Algorithm, 0, count)
 	for _, a := range items {
-		out = append(out, Algorithm{Name: windows.UTF16PtrToString(a.name), Class: className(a.class)})
+		out = append(out, Algorithm{Name: windows.UTF16PtrToString(a.name), Class: AlgorithmClass(a.class)})
 	}
 	// 알고리즘은 우선순위가 아니라 집합이다. 열거 순서가 실행마다 흔들리면 같은 관측이 다른
 	// 내용 지문이 되어 변화가 없는데 스냅샷이 늘어나므로 정렬해 결정론을 준다(§1.2).
@@ -110,27 +112,6 @@ func algorithms() ([]Algorithm, error) {
 		return out[i].Class < out[j].Class
 	})
 	return out, nil
-}
-
-func className(c uint32) string {
-	switch c {
-	case opCipher:
-		return "cipher"
-	case opHash:
-		return "hash"
-	case opAsymmetricEncrypt:
-		return "asymmetric-encryption"
-	case opSecretAgreement:
-		return "secret-agreement"
-	case opSignature:
-		return "signature"
-	case opRNG:
-		return "rng"
-	case opKeyDerivation:
-		return "key-derivation"
-	default:
-		return "" // 모르는 종류를 아는 것으로 적지 않는다(§2.5 unknown은 1급)
-	}
 }
 
 // ntStatus — NTSTATUS를 읽을 수 있는 오류로. bcrypt는 Win32 오류코드가 아니라 NTSTATUS를

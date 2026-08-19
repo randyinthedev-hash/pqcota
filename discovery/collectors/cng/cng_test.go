@@ -100,3 +100,34 @@ func providerSetProp(t *testing.T, cyclone []byte) string {
 	t.Fatal("pqcota:cng.provider_set 속성이 없다")
 	return ""
 }
+
+// TD-CNG-6 — dwClass 매핑을 실측에 못 박는다.
+//
+// 첫 실측(Windows 11 26200)에서 50개 중 18개가 빈 종류로 나오고 DH·ECDH가 `secret-agreement`가
+// 아니라 `asymmetric-encryption`으로 **틀리게** 붙었다. 원인은 열거 **요청**의 연산 비트마스크와
+// 반환값의 **인터페이스 상수**를 같은 어휘로 본 것이다. 값이 겹쳐 조용히 틀리는 자리라 못 박는다.
+func TestAlgorithmClassFollowsTheInterfaceConstants(t *testing.T) {
+	for _, c := range []struct {
+		dwClass uint32
+		want    string
+		seenAs  string // 그 인터페이스로 실제 관측된 알고리즘(실측 근거)
+	}{
+		{1, "cipher", "AES"},
+		{2, "hash", "SHA256"},
+		{3, "asymmetric-encryption", "RSA"},
+		{4, "secret-agreement", "ECDH_P256"},
+		{5, "signature", "ML-DSA"},
+		{6, "rng", "RNG"},
+		{7, "key-derivation", "HKDF"},
+	} {
+		if got := AlgorithmClass(c.dwClass); got != c.want {
+			t.Errorf("dwClass=%d(%s): got %q, want %q", c.dwClass, c.seenAs, got, c.want)
+		}
+	}
+	// 모르는 값을 아는 것으로 적지 않는다(§2.5). 0과 미래 값 둘 다 빈 값이어야 한다.
+	for _, unknown := range []uint32{0, 8, 0x10, 0x40, 99} {
+		if got := AlgorithmClass(unknown); got != "" {
+			t.Errorf("모르는 dwClass=%d에 종류를 붙였다: %q", unknown, got)
+		}
+	}
+}

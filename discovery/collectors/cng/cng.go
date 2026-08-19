@@ -34,3 +34,43 @@ type Algorithm struct {
 // Empty — 아무것도 관측하지 못했나. 빈 관측과 "provider가 없다"는 다르다 — 부르는 쪽이 갭으로
 // 적을지 판단할 수 있게 관측 자체의 공백만 답한다.
 func (o Observation) Empty() bool { return len(o.Providers) == 0 && len(o.Algorithms) == 0 }
+
+// BCRYPT_*_INTERFACE — `BCRYPT_ALGORITHM_IDENTIFIER.dwClass`가 담는 값(bcrypt.h).
+//
+// ★ 열거를 **요청**할 때 쓰는 연산 비트마스크(1·2·4·8·0x10…)와 **다른 어휘**다. 처음엔 같은 것으로
+// 보고 비트마스크로 옮겼는데, 첫 실측에서 절반이 빈 값으로 나오고 DH·ECDH가 `secret-agreement`가
+// 아니라 `asymmetric-encryption`으로 **틀리게** 붙었다. 값이 겹쳐서 조용히 틀린 자리다.
+const (
+	ifaceCipher            = 1
+	ifaceHash              = 2
+	ifaceAsymmetricEncrypt = 3
+	ifaceSecretAgreement   = 4
+	ifaceSignature         = 5
+	ifaceRNG               = 6
+	ifaceKeyDerivation     = 7
+)
+
+// AlgorithmClass — dwClass를 사람이 읽는 종류로. 모르는 값은 **빈 값**으로 둔다 —
+// 모르는 것을 아는 것으로 적지 않는다(§2.5 unknown은 1급).
+//
+// OS 호출과 떼어 둔 순수 함수라 Windows 없이 테스트된다. 앞의 결함이 이 규칙을 어긴 대가였다.
+func AlgorithmClass(dwClass uint32) string {
+	switch dwClass {
+	case ifaceCipher:
+		return "cipher"
+	case ifaceHash:
+		return "hash"
+	case ifaceAsymmetricEncrypt:
+		return "asymmetric-encryption"
+	case ifaceSecretAgreement:
+		return "secret-agreement"
+	case ifaceSignature:
+		return "signature"
+	case ifaceRNG:
+		return "rng"
+	case ifaceKeyDerivation:
+		return "key-derivation"
+	default:
+		return ""
+	}
+}
