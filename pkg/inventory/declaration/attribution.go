@@ -97,7 +97,7 @@ func buildDeclaredAttribution(node string, as []EdgeAttribution) *discoveryv1.Co
 		ObservedEdges: edges,
 		// 관측한 계층이 없다 — 이 결과는 아무것도 관측하지 않았다.
 		Completeness: &commonv1.Completeness{
-			Note: "사람이 선언한 앱이다 — 관측이 아니다. 관측 엣지의 빈 app_key를 화면에서 메우는 데만 쓴다",
+			Note: "an app declared by a person — not an observation. Used only to fill an empty app_key on an observed edge, at view time",
 		},
 	}
 }

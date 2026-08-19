@@ -82,7 +82,7 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 		dmStr = "artifact"
 		covered = nil
 		missing = []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_JVM_INTROSPECTION}
-		note = "attach 불가 — java.security 정적 경로(runtime-introspection 갭, 동적 등록 사각지대)"
+		note = "attach unavailable — static java.security path (runtime-introspection gap; dynamic registrations are a blind spot)"
 	}
 
 	names := make([]string, 0, len(c.Providers))

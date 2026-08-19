@@ -92,7 +92,7 @@ func (s *Service) Collect(req *discoveryv1.CollectRequest, stream grpc.ServerStr
 		if cut, cause := ts.WindowTruncated(); cut {
 			// 구간이 중단됐으면 관측 결과가 구간 전체를 대표하지 않는다 — 엣지가 없더라도
 			// "핸드셰이크 없음"이 아니라 "끝까지 관측하지 못했음"이다.
-			note = "관측 구간이 중단됐다 — 이 결과는 구간 전체를 대표하지 않는다(미관측 ≠ 부재)"
+			note = "the observation window was cut short — this result does not represent the whole window (unobserved != absent)"
 			if cause != nil {
 				note += ": " + cause.Error()
 			}

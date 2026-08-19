@@ -194,9 +194,9 @@ func jcaEnrichment(providers []string) (fips, readiness string) {
 	}
 	switch {
 	case hasMLKEM && hasSLHDSA:
-		readiness = "provider-보강(전 표준 알고리즘)"
+		readiness = "provider-augmented (all standard algorithms)"
 	case hasMLKEM && !hasSLHDSA:
-		readiness = "provider-보강(SLH-DSA 갭)"
+		readiness = "provider-augmented (SLH-DSA gap)"
 	default:
 		readiness = "unknown"
 	}
@@ -256,15 +256,15 @@ func cngEnrichment(algs []*discoveryv1.CngAlgorithm) (fips, readiness string) {
 	}
 	switch {
 	case hasKEM && hasSig:
-		readiness = "네이티브(KEM·서명)"
+		readiness = "native (KEM and signature)"
 	case hasSig:
-		readiness = "네이티브(서명만 — KEM 미관측)"
+		readiness = "native (signature only — no KEM observed)"
 	case hasKEM:
-		readiness = "네이티브(KEM만 — 서명 미관측)"
+		readiness = "native (KEM only — no signature observed)"
 	case len(algs) == 0:
 		readiness = "unknown" // 알고리즘을 못 봤다. 없다는 뜻이 아니다(§2.6)
 	default:
-		readiness = "없음(관측된 것은 고전뿐)"
+		readiness = "none (only classical algorithms observed)"
 	}
 	return fips, readiness
 }

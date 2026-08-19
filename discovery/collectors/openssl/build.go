@@ -22,7 +22,7 @@ func BuildResult(node string, dets []Detection) *discoveryv1.CollectionResult {
 	}
 	var covered []commonv1.CollectionLayer
 	var cyclone []byte
-	note := "OpenSSL 미검출 또는 접근 불가"
+	note := "OpenSSL not detected, or inaccessible"
 	if len(dets) > 0 {
 		covered = []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS}
 		cyclone, _ = buildCycloneDX(dets)

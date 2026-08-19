@@ -63,7 +63,7 @@ func ShouldObserve(conn ConnTuple, selfAddrs map[string]bool) bool {
 // windowNote: 관측 구간 한계를 정직히 기록(미관측 링크 ≠ 부재, TD-NETWORK-7/§2.6).
 func BuildResult(node string, edges []*discoveryv1.ObservedEdge, windowNote string) *discoveryv1.CollectionResult {
 	if windowNote == "" {
-		windowNote = "관측 구간 동안 흐른 핸드셰이크만 — 유휴·배치·DR 링크는 미관측(갭≠부재)"
+		windowNote = "only handshakes that flowed during the observation window — idle, batch and DR links are unobserved (gap != absence)"
 	}
 	return &discoveryv1.CollectionResult{
 		Envelope: &commonv1.Envelope{

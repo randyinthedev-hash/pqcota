@@ -122,13 +122,13 @@ func main() {
 	// 완전성 노트에 남긴다 — 안 적으면 빈 app_key가 "이 통신에 앱이 없다"로 읽힌다.
 	note := attributionNote(len(order), unattributed)
 	if src.Truncated {
-		note = strings.TrimSpace(note + " " + fmt.Sprintf("관측 구간이 읽기 오류로 중단됨(%v) — 이 결과는 구간 전체를 대표하지 않는다(갭≠부재)", src.TruncErr))
+		note = strings.TrimSpace(note + " " + fmt.Sprintf("observation window cut short by a read error (%v) — this result does not represent the whole window (gap != absence)", src.TruncErr))
 		fmt.Fprintln(os.Stderr, "[netcap] ⚠ "+note)
 	}
 	emit(network.BuildResult(node, edges, note))
 	fmt.Fprintf(os.Stderr, "[netcap] 관측 엣지 %d개", len(edges))
 	if n := total(unattributed); n > 0 {
-		fmt.Fprintf(os.Stderr, "  · 앱 못 짚음 %d개", n)
+		fmt.Fprintf(os.Stderr, "  · %d without an app", n)
 	}
 	fmt.Fprintln(os.Stderr)
 	for reason, n := range unattributed {
@@ -147,7 +147,7 @@ func attributionNote(edges int, unattributed map[string]int) string {
 		reasons = append(reasons, fmt.Sprintf("%s(%d)", r, c))
 	}
 	sort.Strings(reasons) // 순서가 흔들리면 같은 관측이 다른 스냅샷으로 보인다
-	return fmt.Sprintf("엣지 %d개 중 %d개는 어느 앱인지 밝히지 못했다 — **앱이 없다는 뜻이 아니다**. 사유: %s",
+	return fmt.Sprintf("%[2]d of %[1]d edges could not be attributed to an app — **this does not mean there is no app**. Reasons: %[3]s",
 		edges, n, strings.Join(reasons, " · "))
 }
 

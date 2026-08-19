@@ -344,7 +344,7 @@ func (t truncSource) WindowTruncated() (bool, error) { return true, t.cause }
 // 때가 특히 위험하다 — 아무 말도 안 하면 "핸드셰이크 없음"으로 읽혀 결함이 갭으로
 // 위장된다(§2.6). 그래서 엣지가 없어도 노드별 결과를 내고 완전성 노트에 중단을 적는다.
 func TestCollect_marksTruncatedWindow(t *testing.T) {
-	const want = "관측 구간이 중단됐다"
+	const want = "observation window was cut short"
 	cause := errors.New("recvfrom: input/output error")
 
 	// ① 엣지가 하나도 없는데 구간이 중단된 경우.

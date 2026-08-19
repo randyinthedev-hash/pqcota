@@ -45,7 +45,7 @@ func main() {
 	// `/proc`를 못 열었으면 "OpenSSL 없음"이 아니라 **관측 자체가 불가**다. 빈 결과를 그대로
 	// 내보내면 부재로 읽히므로 완전성 노트에 남기고 크게 알린다(§2.6).
 	if st.ProcUnavailable {
-		const note = "/proc를 열 수 없어 관측하지 못했다 — 없는 것이 아니라 관측하지 못한 것이다(리눅스에서 실행할 것)"
+		const note = "/proc could not be opened, so nothing was observed — not absent, just unobserved (run this on Linux)"
 		if c := res.GetCompleteness(); c != nil {
 			c.Note = note
 		}

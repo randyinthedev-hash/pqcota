@@ -17,7 +17,7 @@ func TestAttributionNoteSaysWhatItDoesNotMean(t *testing.T) {
 	if got == "" {
 		t.Fatal("못 잡은 것이 있는데 노트가 비었다")
 	}
-	for _, want := range []string{"5개 중 3개", "앱이 없다는 뜻이 아니다", "소켓이 닫혔다(2)", "권한이 없다(1)"} {
+	for _, want := range []string{"3 of 5 edges", "does not mean there is no app", "소켓이 닫혔다(2)", "권한이 없다(1)"} {
 		if !contains(got, want) {
 			t.Errorf("노트에 %q가 없다: %s", want, got)
 		}

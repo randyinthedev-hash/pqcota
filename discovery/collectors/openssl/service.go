@@ -68,7 +68,7 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 	}
 	var covered []commonv1.CollectionLayer
 	var cyclone, raw []byte
-	note := "pid 미지정 — 프로세스 계층 미수집"
+	note := "no pid given — PROCESS layer not collected"
 
 	if pidStr := opts["pid"]; pidStr != "" {
 		if pid, err := strconv.Atoi(pidStr); err == nil {
@@ -77,11 +77,11 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 			case err != nil:
 				// 대상 프로세스를 **관측하지 못했다**. 컨테이너 네임스페이스가 갈렸거나 권한이 없다.
 				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 관측하지 못한 것은 부재가 아니다(§2.6).
-				note = "대상 프로세스를 볼 수 없다(네임스페이스 분리·권한 등) — 미관측 ≠ 부재: " + err.Error()
+				note = "target process not visible (namespace separation, permissions, …) — unobserved != absent: " + err.Error()
 			case len(dets) == 0:
 				// 봤는데 없었다. 이건 관측 결과이므로 계층은 커버된 것이다.
 				covered = append(covered, commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS)
-				note = "프로세스를 관측했으나 OpenSSL 없음"
+				note = "process observed; no OpenSSL"
 			default:
 				covered = append(covered, commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS)
 				cyclone, _ = buildCycloneDX(dets)
