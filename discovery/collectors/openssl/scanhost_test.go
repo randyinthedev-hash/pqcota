@@ -126,7 +126,7 @@ func TestCollectSeparatesUnseenFromAbsent(t *testing.T) {
 	// ① 관측하지 못함 — 없는 PID. PROCESS는 커버되지 않고 갭으로 남아야 한다.
 	unseen := collect(map[string]string{"pid": "4194304"})
 	cu := unseen.GetCompleteness()
-	if !strings.Contains(cu.GetNote(), "볼 수 없다") {
+	if !strings.Contains(cu.GetNote(), "not visible") {
 		t.Errorf("관측하지 못한 사유가 고지되지 않았다: %q", cu.GetNote())
 	}
 	if hasLayer(cu.GetLayersCovered(), commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS) {
@@ -139,7 +139,7 @@ func TestCollectSeparatesUnseenFromAbsent(t *testing.T) {
 	// ② 봤는데 없음 — 자기 프로세스(읽을 수 있다). PROCESS는 커버로 세야 한다.
 	seen := collect(map[string]string{"pid": strconv.Itoa(os.Getpid())})
 	cs := seen.GetCompleteness()
-	if strings.Contains(cs.GetNote(), "볼 수 없다") {
+	if strings.Contains(cs.GetNote(), "not visible") {
 		t.Errorf("읽을 수 있는 프로세스인데 관측하지 못했다고 한다: %q", cs.GetNote())
 	}
 	if !hasLayer(cs.GetLayersCovered(), commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS) {
