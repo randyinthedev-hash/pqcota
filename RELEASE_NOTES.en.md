@@ -47,6 +47,55 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.2 — What the program says, in English (2026-08-19)
+**Goal** — set the rule that **code and its output default to English** while the documents stay
+Korean-first, and bring the whole repo in line. A console line ends up in a log and gets pasted into
+an issue; there, Korean narrows who can read it.
+
+### Built
+
+- **The «Language» rule — [CONTRIBUTING](CONTRIBUTING.en.md)** — which language each kind of text
+  uses, and **why**. Comments are Korean (they never leave the program). Console output, flag help,
+  error values, test failure messages, and **strings that travel out through the contract** are
+  English (where an error flows is the caller's decision). The three exceptions the rule sets for
+  itself are written down too: comments in `.proto` and the CI workflows, comments inside SQL DDL
+  strings, and the **patterns** in `tools/checkdocs` (it is a tool for catching Korean prose — what
+  it **says** is English).
+- **Scope** — console output and flag help, the narration in the demo and example scripts, 53 error
+  values, 396 test failure messages across 65 files, and the strings carried by the contract:
+  `Completeness.Note`, `Attribution.Reason`, the `Remediation` rationale, and the maturity labels
+  (`standard`/`draft`/`experimental`/`broken`).
+- **Regenerated samples** — the demo was actually run again and
+  [expected-output](demo/expected-output/README.md) was captured fresh. The console blocks in the
+  READMEs and examples now match, as do output strings the documents had only named — `added`,
+  `removed` and `changed` for `-diff`. Display names in the demo and examples are English as well,
+  because they appear on screen verbatim.
+
+> **The contract's shape is unchanged; some values are not.** Not one line of `.proto` was touched.
+> But the **string values** in the four places above differ, so anything branching on those sentences
+> must move to the new ones. Matching on prose was never advisable — to tell reasons apart, compare
+> against the `Attribution.Reason` constants.
+
+### Learned
+
+- **Korean has no number agreement, so some faults only surface after the move.** The `-history`
+  header printed `1 change points`. The Korean original had no place to be wrong. `inventory.Plural`
+  now covers the view and `pqcota-prune` alike.
+- **Reordering a sentence silently misaligns format arguments.** Korean puts the subject first
+  ("web-01 records: 2"), English the count ("2 records for web-01") — translate the sentence and
+  `%s` and `%d` swap places while the arguments stay put. It still builds. `go vet` caught it twice;
+  the fix is explicit argument indexes (`%[2]d`). **This is where translation becomes a type error.**
+- **A test whose input is non-ASCII has nothing left to check once translated.**
+  `safeName("노드/1")` checks that non-ASCII collapses to hyphens and leading/trailing hyphens are
+  trimmed. Translating the input broke the test, and the right response was to restore the input,
+  not to adjust the expectation.
+
+### Fixed
+
+- **Nothing.** Everything touched here is a string this release wrote itself; no published version
+  emitted anything wrong. The two mistakes made during the move (format arguments, the non-ASCII
+  test) were caught by `go vet` and the tests before release.
+
 ## v0.6.1 — The two gaps left in CNG observation (2026-08-19)
 **Goal** — fill the two slots left open after v0.6.0. Both were confirmed in **a single run on the
 real hardware**.
