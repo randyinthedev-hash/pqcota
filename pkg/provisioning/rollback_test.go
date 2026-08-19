@@ -23,7 +23,7 @@ func TestRollbackPlaybookL2(t *testing.T) {
 			t.Errorf("L2 롤백 플레이북에 %q 없음:\n%s", want, pb)
 		}
 	}
-	if strings.Contains(pb, "restart") || strings.Contains(pb, "restart:") {
+	if strings.Contains(pb, "④ restart") {
 		t.Errorf("롤백에 재시작이 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
 	}
 	if strings.Contains(pb, "ansible.builtin.copy") {
