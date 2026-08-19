@@ -17,20 +17,20 @@
 
 기대 출력(요지):
 ```
-──────── ① 발견 자산 (노드별) ────────
+──────── ① discovered assets (per node) ────────
   node-a
     • OpenSSL  libssl.so.3 3.0.13 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
   node-b
     • JCA provider chain: SUN,SunJCE,BC [EVIDENCE_STRENGTH_CONFIRMED]
 
-──────── ② 관측 통신 엣지 + 양자내성 등급 ────────
-  🟢 node-a      → node-b             TLS   X25519MLKEM768 [표준]
+──────── ② observed edges + quantum-resistance grade ────────
+  🟢 node-a      → node-b             TLS   X25519MLKEM768 [standard]
   🔴 node-a      → node-c             TLS   x25519
-  🟢 node-a      → node-b             SSH   sntrup761x25519-sha512@openssh.com [실험]
+  🟢 node-a      → node-b             SSH   sntrup761x25519-sha512@openssh.com [experimental]
 
-  등급 합계: 🟢 PQC 2 · 🔴 고전 1 · ⚪ 불명 0
+  grade totals: 🟢 PQC 2 · 🔴 classical 1 · ⚪ unknown 0
 ```
-- **등급**: 🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명. PQC 그룹엔 성숙도(표준/초안/실험/취약) 병기.
+- **등급**: 🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명. PQC 그룹엔 성숙도(`standard`/`draft`/`experimental`/`broken`)를 함께 적는다.
 - **IP→노드 해소**: `nodes.json`으로 `10.0.0.9` → `node-c`(엣지의 `dstAddr`가 이름으로 표시됨).
 - 토폴로지 **DOT**도 함께 생성(색=등급) — `dot -Tsvg`로 SVG 렌더 가능.
 

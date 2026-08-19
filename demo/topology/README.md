@@ -70,21 +70,21 @@ networks: [dmz, app, db]        # 브리지 세그먼트(망 분리 흉내). 생
 
 nodes:
   - id: web-gw                  # 컨테이너명·node_id (소문자/숫자/-)
-    name: 결제 웹 게이트웨이       # 인벤토리 뷰에 뜨는 이름
+    name: Payments Web Gateway  # 인벤토리 뷰에 뜨는 이름
     kind: openssl               # openssl | java  ← pqcota가 실제로 관측하는 것만
     role: client                # openssl: client | server
     openssl: { fork: openssl, version: "3.0" }   # fork=openssl일 때 version→base 이미지
     networks: [dmz, app]        # 여러 세그먼트에 걸칠 수 있다
-    profile: { env: production, role: web, owner: 플랫폼팀 }
+    profile: { env: production, role: web, owner: Platform team }
 
   - id: pay-app
-    name: 결제 앱
+    name: Payments App
     kind: java
     jca: { providers: [BC] }    # 런타임 등록 provider(SUN·SunJCE는 JDK 기본). BC 유무가 등급을 가른다
     networks: [app]
 
   - id: pay-db
-    name: 결제 DB
+    name: Payments DB
     kind: openssl
     role: server
     openssl: { fork: openssl, version: "1.1.1" }  # 레거시 = 양자취약

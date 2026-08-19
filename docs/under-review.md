@@ -266,8 +266,8 @@ netcap이 이미 그 노드에서 도니 자리는 맞고, 계약 변경도 `Obs
 v0.3.0 데모(6단계)에서 나온 숫자다.
 
 ```
-엣지 4개 중 3개는 어느 앱인지 밝히지 못했다.
-사유: 캡처와 조회 사이에 소켓이 닫혔다(3)
+3 of 4 edges could not be attributed to an app — **this does not mean there is no app**.
+Reasons: socket closed between capture and lookup — short-lived connections are missed(3)
 
   web-gw → 172.18.0.3:8443  tls  X25519MLKEM768  @?
   web-gw → 172.18.0.4:4433  tls  x25519          @/usr/bin/openssl(exe-path)

@@ -12,9 +12,9 @@
 입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
 ```
 node_id,name,ip,port,ssh_user,ssh_key,ssh_pass
-node-a,Web 프론트,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,      ← SSH 키 방식(권장)
-node-b,결제 앱(Java),10.0.0.3,22,deploy,,example-password           ← 비밀번호 방식
-node-c,결제 DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,
+node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,      ← SSH 키 방식(권장)
+node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password       ← 비밀번호 방식
+node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,
 ```
 → 두 가지를 낸다:
 - `--ansible-out targets.ini`: 런타임 전용 **Ansible 인벤토리**(접속 비밀이 실려 소유자만 읽을 수 있게 `0600`). 이걸로 각 노드에서 collector를 돌린다. **pqcota 인벤토리엔 영속하지 않는다.**
