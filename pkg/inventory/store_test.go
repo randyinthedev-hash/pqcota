@@ -40,7 +40,7 @@ func TestRenderStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"web-01", "db-01", "자산 1", "관측엣지 2", "🟢 PQC 1", "🔴 고전 1",
+	for _, want := range []string{"web-01", "db-01", "assets 1", "observed edges 2", "🟢 PQC 1", "🔴 classical 1",
 		"Web 1", "10.0.0.2:22", "Payment Web", "production", "owner=pay-team"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("RenderStore 출력에 %q 없음:\n%s", want, out)

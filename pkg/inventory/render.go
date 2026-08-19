@@ -98,7 +98,7 @@ func RenderHistory(nodeID string, snaps []*history.Snapshot, stats map[string]hi
 	fmt.Fprintf(&b, "node %s — %d change points (oldest first)\n", nodeID, len(snaps))
 	// 절단이 있었으면 먼저 고지한다 — 안 그러면 이력의 구멍이 "관측을 안 함"으로 읽힌다(§2.6 정신).
 	for _, e := range pruned {
-		fmt.Fprintf(&b, "⌫ %d change points before %s were pruned by the retention policy (%s, %d observations · run at %s)\n",
+		fmt.Fprintf(&b, "⌫ %[2]d change points before %[1]s were pruned by the retention policy (%[3]s, %[4]d observations · run %[5]s)\n",
 			e.PrunedUpTo.Format("2006-01-02 15:04:05"), e.Snapshots, e.Policy, e.Observations,
 			e.ExecutedAt.Format("2006-01-02"))
 	}

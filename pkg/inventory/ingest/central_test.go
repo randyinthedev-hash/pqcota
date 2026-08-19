@@ -110,7 +110,7 @@ func TestIngestReportsScopeExclusions(t *testing.T) {
 	if len(snap.Findings) != 0 {
 		t.Errorf("제외한 자산이 그대로 남았다: %d건", len(snap.Findings))
 	}
-	if out := inventory.RenderDetail(snap); !strings.Contains(out, "자산 스코프 제외: 1건") {
+	if out := inventory.RenderDetail(snap); !strings.Contains(out, "excluded by asset scope: 1") {
 		t.Errorf("인벤토리 뷰가 제외를 고지하지 않는다:\n%s", out)
 	}
 }
