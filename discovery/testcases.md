@@ -138,6 +138,7 @@
 | TD-CNG-5 | **실물** — 확인 | Windows 11 Pro 25H2(26200)에서 `pqcota-cngscan --output json` | provider 9개가 **순서대로**, 알고리즘 50개. `CNG_INTROSPECTION` 커버, 노트 없음 | 스키마만 있고 채우는 코드가 없던 자리를 실측으로 닫는다 |
 | [TD-CNG-6](collectors/cng/cng_test.go) | unit | `TestAlgorithmClassFollowsTheInterfaceConstants` — dwClass 1–7과 모르는 값들 | 1–7이 각 종류로, 그 밖은 **빈 값** | 실측에서 나온 결함이다: 열거 요청의 연산 비트마스크와 반환값의 인터페이스 상수는 다른 어휘인데 값이 겹쳐 조용히 틀렸다 |
 | [TD-CNG-8](collectors/cng/cng_test.go) | unit | `TestUnknownClassKeepsTheAlgorithm` — 종류를 모르는 알고리즘 · 이름 없는 항목 | 앞은 **이름을 살리고** 종류만 비운다. 뒤는 세지 않는다 | 종류를 못 읽은 것이 알고리즘을 못 본 것이 되면 안 된다(§2.6). 빈 항목이 개수에 섞이면 집계가 거짓이 된다 |
+| TD-CNG-9 | **실물 종단** — 확인 | 실기 결과를 `pqcota-ingest` → `pqcota-inventory` | `win_cng  confirmed  runtime_introspection  providers=9 algorithms=50 네이티브(서명만 — KEM 미관측)` · 이력 1건 | 관측이 화면까지 오지 않으면 적지 않은 것과 같다. 파생까지만 보고 닫으면 그리는 자리가 비어 있는 것을 못 잡는다 — 실제로 뷰 둘이 비어 있었다 |
 | TD-CNG-7 | **실물** — 확인 | Windows 노드에서 `pqcota-cngscan` 재실행 | `machine_id`가 `MachineGuid`로 차고 `derived_from`=`machine-id`. 알고리즘 50개 **전부** 종류가 붙는다(빈 값 0) | 첫 실측에서 `fqdn`으로 떨어졌다 — 호스트명을 바꾸면 같은 머신이 다른 노드가 된다. `hardware_uuid`는 SMBIOS라 아직 빈다 |
 
 ### TD-NETWORK. network-collector — 통신 엣지 관측 (설계 §2.3, Phase 1)
