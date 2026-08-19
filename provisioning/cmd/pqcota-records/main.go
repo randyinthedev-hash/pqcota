@@ -19,12 +19,12 @@ import (
 func main() {
 	dsn := os.Getenv("PQCOTA_DSN")
 	if dsn == "" {
-		fmt.Fprintln(os.Stderr, "PQCOTA_DSN 필요 — pqcota-provision이 레코드를 적재한 Postgres.")
+		fmt.Fprintln(os.Stderr, "PQCOTA_DSN is required — the Postgres that pqcota-provision wrote records to.")
 		os.Exit(2)
 	}
 	store, err := provisioning.NewPgRecordStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Postgres 연결:", err)
+		fmt.Fprintln(os.Stderr, "connecting to Postgres:", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -36,16 +36,16 @@ func main() {
 		recs, err = store.All()
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "조회:", err)
+		fmt.Fprintln(os.Stderr, "query:", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("═══ 프로비저닝 레코드 (%d) ═══\n", len(recs))
+	fmt.Printf("═══ provisioning records (%d) ═══\n", len(recs))
 	for _, r := range recs {
 		fmt.Printf("• %s  [%s]  node=%s  plan=%s\n", r.GetId(),
 			short(r.GetStatus().String(), "PROVISIONING_STATUS_"), r.GetNodeId(), r.GetPlanId())
 		if ak := r.GetAppKeys(); len(ak) > 0 {
-			fmt.Printf("    영향 앱: %s\n", strings.Join(ak, ", "))
+			fmt.Printf("    affected apps: %s\n", strings.Join(ak, ", "))
 		}
 		if b := r.GetBefore(); b != nil && len(b.GetModules()) > 0 {
 			fmt.Printf("    before : %s\n", strings.Join(b.GetModules(), ", "))
