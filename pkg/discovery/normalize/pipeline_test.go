@@ -141,3 +141,61 @@ func TestNormalizePipeline(t *testing.T) {
 		t.Errorf("관측 횟수 = %d, want 2 (봤다는 사실은 보존)", stats["snap-1"].Count)
 	}
 }
+
+// TK-PIPELINE-CNG — 실측 그대로의 CNG 관측이 파생 뷰까지 간다.
+//
+// 아래 값은 지어낸 것이 아니라 **Windows 11 Pro 25H2(빌드 26200)에서 관측한 것**이다. provider
+// 이름 9개는 전부 Microsoft라 그것만으로는 이 노드의 PQC 가능 여부를 답할 수 없다 — 답은
+// 알고리즘 목록에 있고(ML-DSA 있음·ML-KEM 없음), 그래서 계약에 알고리즘 축을 더했다.
+func TestDeriveFindings_CNG(t *testing.T) {
+	cbom := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.6","components":[
+      {"type":"cryptographic-asset","name":"cng-providers","properties":[
+        {"name":"pqcota:crypto_runtime","value":"cng"},
+        {"name":"pqcota:detection_method","value":"runtime-introspection"},
+        {"name":"pqcota:cng.provider_set","value":"Microsoft Key Protection Provider,Microsoft Primitive Provider,Microsoft SSL Protocol Provider"},
+        {"name":"pqcota:cng.algorithms","value":"AES:cipher,ECDH_P256:secret-agreement,ML-DSA:signature,RSA:asymmetric-encryption,SHA256:hash"}]}]}`)
+	res := &discoveryv1.CollectionResult{
+		Envelope:      &commonv1.Envelope{TargetNodeId: "cmdb://win-01"},
+		CbomCyclonedx: cbom,
+	}
+	fs, err := normalize.DeriveFindings(res, "snap-1", "ruleset-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(fs) != 1 {
+		t.Fatalf("got %d findings, want 1", len(fs))
+	}
+	f := fs[0]
+	if f.GetCryptoRuntime() != commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG {
+		t.Errorf("crypto_runtime = %v, want WIN_CNG", f.GetCryptoRuntime())
+	}
+	// provider 순서는 우선순위다 — 파생에서 흔들리면 안 된다.
+	if got := f.GetCng().GetProviderSet(); len(got) != 3 || got[0] != "Microsoft Key Protection Provider" {
+		t.Errorf("provider_set이 순서대로 오지 않았다: %v", got)
+	}
+	algs := f.GetCng().GetAlgorithms()
+	if len(algs) != 5 {
+		t.Fatalf("알고리즘 %d개, 5개여야 한다", len(algs))
+	}
+	var mldsa, ecdh string
+	for _, a := range algs {
+		switch a.GetName() {
+		case "ML-DSA":
+			mldsa = a.GetClass()
+		case "ECDH_P256":
+			ecdh = a.GetClass()
+		}
+	}
+	// 이 두 줄이 이 릴리스의 질문에 답한다: 서명은 양자내성으로 갈 수 있고, 키 교환은 못 간다.
+	if mldsa != "signature" {
+		t.Errorf("ML-DSA가 파생 뷰까지 오지 않았다(class=%q) — 원본에만 있으면 조회되지 않는다", mldsa)
+	}
+	if ecdh != "secret-agreement" {
+		t.Errorf("ECDH_P256 종류가 %q — 실측은 secret-agreement다", ecdh)
+	}
+	for _, a := range algs {
+		if a.GetName() == "ML-KEM" {
+			t.Error("관측되지 않은 ML-KEM이 파생 뷰에 나타났다 — 없는 것을 지어냈다")
+		}
+	}
+}

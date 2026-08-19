@@ -57,27 +57,52 @@ func TestRawFormatEmptyWithoutRaw(t *testing.T) {
 	}
 }
 
-// TD-CNG-4 — 알고리즘은 원본에만 실린다. 계약(CngAxes)에 자리가 없는 것을 파생 뷰에 지어내지
-// 않으면서도, 관측한 사실은 버리지 않는다.
-func TestAlgorithmsRideOnRawOnly(t *testing.T) {
+// TD-CNG-4 — 알고리즘은 파생 뷰와 원본 **양쪽**에 남는다.
+//
+// v0.6.0 실측 전에는 계약에 자리가 없어 원본에만 실었다. provider 이름 9개가 전부 Microsoft라
+// "이 노드가 ML-DSA를 할 수 있나"에 답하지 못한다는 것이 실측에서 드러나 계약에 더했다.
+func TestAlgorithmsRideOnBothLanes(t *testing.T) {
 	obs := Observation{
 		Providers:  []string{"Microsoft Primitive Provider"},
-		Algorithms: []Algorithm{{Name: "ML-KEM", Class: "secret-agreement"}},
+		Algorithms: []Algorithm{{Name: "ML-DSA", Class: "signature"}, {Name: "SHA256", Class: "hash"}},
 	}
 	res := BuildResult("win-01", obs, nil)
-	if strings.Contains(string(res.GetCbomCyclonedx()), "ML-KEM") {
-		t.Error("계약에 자리 없는 축이 CycloneDX로 샜다")
+
+	if got := propValue(t, res.GetCbomCyclonedx(), "pqcota:cng.algorithms"); got != "ML-DSA:signature,SHA256:hash" {
+		t.Errorf("파생 레인에 실린 알고리즘이 다르다: %q", got)
 	}
 	var back Observation
 	if err := json.Unmarshal(res.GetRawCapture(), &back); err != nil {
 		t.Fatalf("원본이 다시 읽히지 않는다: %v", err)
 	}
-	if len(back.Algorithms) != 1 || back.Algorithms[0].Name != "ML-KEM" {
+	if len(back.Algorithms) != 2 {
 		t.Errorf("관측한 알고리즘이 원본에서 사라졌다: %+v", back.Algorithms)
 	}
 }
 
+// TD-CNG-8 — 종류를 못 읽어도 알고리즘 자체는 남는다(§2.6 갭 ≠ 부재).
+func TestUnknownClassKeepsTheAlgorithm(t *testing.T) {
+	// 종류가 빈 값인 관측(모르는 dwClass) → 표기에서도 빈 값 → 되읽어도 이름은 그대로.
+	encoded := EncodeAlgorithms([]Algorithm{{Name: "FUTURE-ALG"}, {Name: "AES", Class: "cipher"}})
+	if encoded != "FUTURE-ALG:,AES:cipher" {
+		t.Fatalf("표기가 다르다: %q", encoded)
+	}
+	back := DecodeAlgorithms(encoded)
+	if len(back) != 2 || back[0].Name != "FUTURE-ALG" || back[0].Class != "" {
+		t.Errorf("모르는 종류 때문에 알고리즘이 사라지거나 종류가 지어내졌다: %+v", back)
+	}
+	// 이름 없는 항목은 나를 것이 없다 — 빈 줄이 알고리즘 하나로 세어지면 개수가 거짓이 된다.
+	if got := DecodeAlgorithms(",:cipher,AES:cipher"); len(got) != 1 || got[0].Name != "AES" {
+		t.Errorf("이름 없는 항목이 알고리즘으로 세어졌다: %+v", got)
+	}
+}
+
 func providerSetProp(t *testing.T, cyclone []byte) string {
+	t.Helper()
+	return propValue(t, cyclone, "pqcota:cng.provider_set")
+}
+
+func propValue(t *testing.T, cyclone []byte, key string) string {
 	t.Helper()
 	var doc struct {
 		Components []struct {
@@ -92,12 +117,12 @@ func providerSetProp(t *testing.T, cyclone []byte) string {
 	}
 	for _, c := range doc.Components {
 		for _, p := range c.Properties {
-			if p.Name == "pqcota:cng.provider_set" {
+			if p.Name == key {
 				return p.Value
 			}
 		}
 	}
-	t.Fatal("pqcota:cng.provider_set 속성이 없다")
+	t.Fatalf("%s 속성이 없다", key)
 	return ""
 }
 

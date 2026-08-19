@@ -71,11 +71,12 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 			// provider 시그니처 레지스트리 강화(수용 원칙 §2.3 · 규정서 §4.10): FIPS·SLH-DSA 갭.
 			f.FipsValidation, f.PqcReadiness = jcaEnrichment(providerSet)
 		case commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG:
-			// CNG는 JCA와 같은 provider 축이다(수용 원칙 §2.1). 계약이 지금 담는 것은
-			// provider_set 하나뿐이라 그것만 옮긴다 — 관측한 알고리즘 목록은 원본에 남아 있고,
-			// 실물을 재고 나서 계약에 번호를 부여해 더한다(투기적 추상화 금지).
+			// CNG는 JCA와 같은 provider 축이다(수용 원칙 §2.1). provider 이름만으로는
+			// "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없어(실측: provider 9개가 전부
+			// Microsoft 이름) 알고리즘 목록도 함께 파생한다.
 			f.RuntimeAxes = &discoveryv1.Finding_Cng{Cng: &discoveryv1.CngAxes{
 				ProviderSet: splitCSV(props["pqcota:cng.provider_set"]),
+				Algorithms:  cngAlgorithms(props["pqcota:cng.algorithms"]),
 			}}
 		}
 
@@ -198,4 +199,24 @@ func jcaEnrichment(providers []string) (fips, readiness string) {
 		readiness = "unknown"
 	}
 	return fips, readiness
+}
+
+// cngAlgorithms — collector가 property 한 줄로 나른 알고리즘 목록을 계약 타입으로.
+//
+// 표기는 `이름:종류`를 쉼표로 이은 것이다(cng collector의 EncodeAlgorithms). 종류를 못 읽으면
+// **이름만 살린다** — 종류를 모르는 것이 알고리즘을 못 본 것이 되면 안 된다(§2.6).
+func cngAlgorithms(s string) []*discoveryv1.CngAlgorithm {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	var out []*discoveryv1.CngAlgorithm
+	for _, part := range strings.Split(s, ",") {
+		name, class, _ := strings.Cut(part, ":")
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		out = append(out, &discoveryv1.CngAlgorithm{Name: name, Class: strings.TrimSpace(class)})
+	}
+	return out
 }

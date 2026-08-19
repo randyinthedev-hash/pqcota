@@ -134,9 +134,10 @@
 | [TD-CNG-1](collectors/cng/cng_test.go) | unit | `TestProviderOrderIsPreserved` — 관측 순서가 있는 provider 셋 | `pqcota:cng.provider_set`이 **그 순서 그대로** | 순서가 곧 우선순위다(수용 원칙 §2.2). 정렬하면 "어느 provider가 먼저 서비스하나"에 답할 수 없다 |
 | [TD-CNG-2](collectors/cng/cng_test.go) | unit | `TestUnobservedIsNotAbsence` — 열거 실패 / 봤는데 0건 | 앞은 계층 미커버 + 사유 노트, 뒤는 **커버**로 센다 | 못 본 것과 없는 것을 같은 얼굴로 내보내면 "이 노드엔 CNG가 없다"로 읽힌다(§2.6) |
 | [TD-CNG-3](collectors/cng/cng_test.go) | unit | `TestRawFormatEmptyWithoutRaw` — 원본이 없는 결과 | 형식 이름도 빈다 | 재정규화할 것이 없는데 있다고 적으면 §1.2의 약속이 거짓이 된다 |
-| [TD-CNG-4](collectors/cng/cng_test.go) | unit | `TestAlgorithmsRideOnRawOnly` — 알고리즘까지 관측한 결과 | CycloneDX엔 안 실리고 **원본에는 남는다** | 계약(`CngAxes`)에 자리 없는 축을 파생 뷰에 지어내지 않으면서, 관측한 것을 버리지도 않는다 |
+| [TD-CNG-4](collectors/cng/cng_test.go) | unit | `TestAlgorithmsRideOnBothLanes` — 알고리즘까지 관측한 결과 | 파생 레인(`pqcota:cng.algorithms`)과 원본 **양쪽**에 남는다 | provider 이름 9개가 전부 Microsoft라, 알고리즘이 파생까지 가지 않으면 "이 노드가 ML-DSA를 하나"에 답할 수 없다 |
 | TD-CNG-5 | **실물** — 확인 | Windows 11 Pro 25H2(26200)에서 `pqcota-cngscan --output json` | provider 9개가 **순서대로**, 알고리즘 50개. `CNG_INTROSPECTION` 커버, 노트 없음 | 스키마만 있고 채우는 코드가 없던 자리를 실측으로 닫는다 |
 | [TD-CNG-6](collectors/cng/cng_test.go) | unit | `TestAlgorithmClassFollowsTheInterfaceConstants` — dwClass 1–7과 모르는 값들 | 1–7이 각 종류로, 그 밖은 **빈 값** | 실측에서 나온 결함이다: 열거 요청의 연산 비트마스크와 반환값의 인터페이스 상수는 다른 어휘인데 값이 겹쳐 조용히 틀렸다 |
+| [TD-CNG-8](collectors/cng/cng_test.go) | unit | `TestUnknownClassKeepsTheAlgorithm` — 종류를 모르는 알고리즘 · 이름 없는 항목 | 앞은 **이름을 살리고** 종류만 비운다. 뒤는 세지 않는다 | 종류를 못 읽은 것이 알고리즘을 못 본 것이 되면 안 된다(§2.6). 빈 항목이 개수에 섞이면 집계가 거짓이 된다 |
 | TD-CNG-7 | **실물** — 확인 | Windows 노드에서 `pqcota-cngscan` 재실행 | `machine_id`가 `MachineGuid`로 차고 `derived_from`=`machine-id`. 알고리즘 50개 **전부** 종류가 붙는다(빈 값 0) | 첫 실측에서 `fqdn`으로 떨어졌다 — 호스트명을 바꾸면 같은 머신이 다른 노드가 된다. `hardware_uuid`는 SMBIOS라 아직 빈다 |
 
 ### TD-NETWORK. network-collector — 통신 엣지 관측 (설계 §2.3, Phase 1)
