@@ -121,6 +121,25 @@ Acceptance criteria and implementation order: [discovery test cases](discovery/t
 
 ## Language
 
+**Documents are Korean; whatever the code emits is English.** The dividing line is not "who reads it"
+but **how far it travels**.
+
+| | Language | Why |
+|---|---|---|
+| Documents (`*.md`) | **Korean** (canonical); `*.en.md` are translations | the maintainer is Korean-speaking, and design judgments are most precise in one's first language |
+| **Comments** | **Korean** | they reach only whoever reads the code; they never leave the program |
+| **Console output** (stdout, stderr, flag help) | **English** | it ends up in logs, gets pasted into issues, and is read by strangers |
+| **Strings carried by the contract** (`Completeness.Note`, `Attribution.Reason`, remediation notes) | **English** | they are stored and **travel out through the contract** — in Korean, that language becomes part of the contract |
+| **Error values** (`errors.New`, `fmt.Errorf`) | **English** | where they flow is the caller's decision, not ours |
+| **Test failure messages** | **English** | they land in CI logs |
+
+**That table is the whole reason comments alone stay Korean** — everything else is something the
+program **emits**, and what you emit does not get to choose its reader. If Korean should appear on a
+screen, that is a job for the view, not a reason to put Korean into observation data.
+
+> **One exception** — the **patterns** in `tools/checkdocs` are Korean. It gates Korean documents, so
+> what it searches for cannot be anything else. What that tool **says** is English.
+
 The **Korean** documents are authoritative; the English ones (`*.en.md`) are translations — machine-assisted, and where the two differ the Korean is correct.
 
 **When you edit a Korean document, re-translate its `*.en.md` counterpart against the new original.** Fixing only one
