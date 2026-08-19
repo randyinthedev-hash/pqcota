@@ -49,8 +49,10 @@ func TestProvisioningPlaybookL2(t *testing.T) {
 			t.Errorf("L2 플레이북에 %q 없음:\n%s", want, pb)
 		}
 	}
-	if strings.Contains(pb, "restart") || strings.Contains(pb, "restart:") {
-		t.Errorf("L2에 재시작이 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
+	// 태스크 이름으로 본다 — 머리말 주석에도 "restart"라는 낱말이 들어가므로
+	// 낱말만 세면 자기 설명에 걸린다(영어로 옮기며 실제로 걸렸다).
+	if strings.Contains(pb, "③ restart") {
+		t.Errorf("L2에 재시작 태스크가 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
 	}
 }
 
