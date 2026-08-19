@@ -15,7 +15,7 @@ security.provider.3=SunEC
 security.provider.1=SUN
 
 security.provider.2=SunRsaSign
-# 아래는 인자가 붙는 형태
+# the entries below carry arguments
 security.provider.4=SunPKCS11 ${java.home}/conf/security/pkcs11.cfg
 securerandom.source=file:/dev/random
 security.provider.5=

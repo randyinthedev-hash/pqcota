@@ -19,10 +19,10 @@ func TestEveryResultCarriesCollectedAt(t *testing.T) {
 
 	for name, at := range map[string]time.Time{
 		"BuildResult":    BuildResult("node-a", nil, "").GetEnvelope().GetCollectedAt().AsTime(),
-		"DegradedResult": DegradedResult("node-a", "CAP_NET_RAW 없음").GetEnvelope().GetCollectedAt().AsTime(),
+		"DegradedResult": DegradedResult("node-a", "no CAP_NET_RAW").GetEnvelope().GetCollectedAt().AsTime(),
 	} {
 		if !at.Equal(fixed) {
-			t.Errorf("%s: 수집 시각이 %v — 주입한 시계(%v)를 쓰지 않는다", name, at, fixed)
+			t.Errorf("%s: collected at %v — the injected clock (%v) is not used", name, at, fixed)
 		}
 	}
 }

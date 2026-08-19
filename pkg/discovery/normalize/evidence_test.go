@@ -37,7 +37,7 @@ func TestEvidenceStrength(t *testing.T) {
 		{"symbol-analysis→inferred-low",
 			commonv1.DetectionMethod_DETECTION_METHOD_SYMBOL_ANALYSIS,
 			commonv1.EvidenceStrength_EVIDENCE_STRENGTH_INFERRED_LOW},
-		{"unspecified→unspecified (unknown 1급)",
+		{"unspecified→unspecified (unknown is first-class)",
 			commonv1.DetectionMethod_DETECTION_METHOD_UNSPECIFIED,
 			commonv1.EvidenceStrength_EVIDENCE_STRENGTH_UNSPECIFIED},
 	}

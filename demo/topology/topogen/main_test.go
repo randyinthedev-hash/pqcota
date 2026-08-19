@@ -20,12 +20,12 @@ const sample = `
 networks: [corp, db]
 nodes:
   - id: web-gw
-    name: 결제 웹
+    name: Payments Web
     kind: openssl
     role: client
     openssl: { fork: openssl, version: "3.0" }
     networks: [corp]
-    profile: { env: production, role: web, owner: 플랫폼팀 }
+    profile: { env: production, role: web, owner: Platform team }
   - id: pay-app
     kind: java
     jca: { providers: [BC] }
@@ -135,7 +135,7 @@ func TestProfilesHeader(t *testing.T) {
 	if !strings.HasPrefix(out, "node_id,display_name,environment,role,owner\n") {
 		t.Errorf("header mismatch:\n%s", out)
 	}
-	if !strings.Contains(out, "web-gw,결제 웹,production,web,플랫폼팀") {
+	if !strings.Contains(out, "web-gw,Payments Web,production,web,Platform team") {
 		t.Errorf("the profile row is missing:\n%s", out)
 	}
 	if !strings.Contains(out, "pay-app,pay-app,,,") { // name·profile 생략 시 id로 폴백
@@ -146,7 +146,7 @@ func TestProfilesHeader(t *testing.T) {
 // manifest는 bash가 source해 그대로 쓴다(배열·연관배열 문법).
 func TestManifest(t *testing.T) {
 	out := ManifestEnv(parse(t, sample))
-	for _, want := range []string{"NODES=(web-gw pay-app pay-db)", "EDGE_COUNT=2", `[web-gw]="결제 웹"`} {
+	for _, want := range []string{"NODES=(web-gw pay-app pay-db)", "EDGE_COUNT=2", `[web-gw]="Payments Web"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the manifest is missing %q:\n%s", want, out)
 		}

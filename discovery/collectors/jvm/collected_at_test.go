@@ -18,12 +18,12 @@ func TestEveryResultCarriesCollectedAt(t *testing.T) {
 	now = func() time.Time { return fixed }
 
 	for name, res := range map[string]*discoveryv1.CollectionResult{
-		"BuildResult":            BuildResult("node-a", Collected{}),
-		"BuildResultFor(단일)":     BuildResultFor("node-a", Collected{}, ""),
-		"BuildResultFor(다중 JVM)": BuildResultFor("node-a", Collected{}, "app-a"),
+		"BuildResult":                   BuildResult("node-a", Collected{}),
+		"BuildResultFor (single)":       BuildResultFor("node-a", Collected{}, ""),
+		"BuildResultFor (several JVMs)": BuildResultFor("node-a", Collected{}, "app-a"),
 	} {
 		if at := res.GetEnvelope().GetCollectedAt().AsTime(); !at.Equal(fixed) {
-			t.Errorf("%s: 수집 시각이 %v — 주입한 시계(%v)를 쓰지 않는다", name, at, fixed)
+			t.Errorf("%s: collected at %v — the injected clock (%v) is not used", name, at, fixed)
 		}
 	}
 }

@@ -16,12 +16,12 @@ func TestMemRecordStore(t *testing.T) {
 
 	web, _ := s.ByNode("web-01")
 	if len(web) != 2 {
-		t.Fatalf("web-01 레코드 %d개(2 기대)", len(web))
+		t.Fatalf("%d web-01 records (want 2)", len(web))
 	}
 	if web[0].GetId() != "r1" || web[1].GetId() != "r2" {
-		t.Errorf("append 순서 보존 실패: %s,%s", web[0].GetId(), web[1].GetId())
+		t.Errorf("the append order was not preserved: %s,%s", web[0].GetId(), web[1].GetId())
 	}
 	if db, _ := s.ByNode("db-01"); len(db) != 1 {
-		t.Errorf("db-01 레코드 %d개(1 기대)", len(db))
+		t.Errorf("%d db-01 records (want 1)", len(db))
 	}
 }

@@ -26,13 +26,13 @@ func TestRawFormatImpliesRawCapture(t *testing.T) {
 	}
 	decl, err := declaration.ImportCSV(strings.NewReader("node_id,crypto_runtime,component\ncmdb://n1,openssl,libssl\n"))
 	if err != nil || len(decl) != 1 {
-		t.Fatalf("선언 임포트: %v (건수 %d)", err, len(decl))
+		t.Fatalf("declaration import: %v (count %d)", err, len(decl))
 	}
 	cases["declaration"] = decl[0]
 
 	for name, res := range cases {
 		if res.GetRawFormat() != "" && len(res.GetRawCapture()) == 0 {
-			t.Errorf("%s: raw_format=%q인데 raw_capture가 비었다 — 재정규화할 원본이 없다",
+			t.Errorf("%s: raw_format=%q but raw_capture is empty — there is nothing to re-normalize",
 				name, res.GetRawFormat())
 		}
 	}
@@ -45,6 +45,6 @@ func TestRawCaptureDeterministic(t *testing.T) {
 		{Lib: "libssl", Path: "/usr/lib/libssl.so.3"},
 	}
 	if a, b := string(openssl.RawCapture(dets)), string(openssl.RawCapture(dets)); a != b {
-		t.Errorf("같은 입력에 다른 바이트:\n%s\n%s", a, b)
+		t.Errorf("the same input gave different bytes:\n%s\n%s", a, b)
 	}
 }

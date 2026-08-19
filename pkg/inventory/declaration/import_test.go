@@ -16,17 +16,17 @@ func TestImportCSV(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(results) != 2 {
-		t.Fatalf("got %d results, want 2 (헤더 제외)", len(results))
+		t.Fatalf("got %d results, want 2 (header excluded)", len(results))
 	}
 	r := results[0]
 	// 선언은 관측 아님 → detection_method UNSPECIFIED (evidence_strength unknown, 정직).
 	if r.GetEnvelope().GetDetectionMethod() != commonv1.DetectionMethod_DETECTION_METHOD_UNSPECIFIED {
-		t.Errorf("detection_method = %v, want UNSPECIFIED (선언≠관측)", r.GetEnvelope().GetDetectionMethod())
+		t.Errorf("detection_method = %v, want UNSPECIFIED (declared is not observed)", r.GetEnvelope().GetDetectionMethod())
 	}
 	if r.GetEnvelope().GetCollectorId() != "declaration-importer" {
 		t.Errorf("collector_id = %q", r.GetEnvelope().GetCollectorId())
 	}
 	if !strings.Contains(string(r.GetCbomCyclonedx()), `"declared"`) {
-		t.Errorf("lane=declared 라벨 없음: %s", r.GetCbomCyclonedx())
+		t.Errorf("no lane=declared label: %s", r.GetCbomCyclonedx())
 	}
 }

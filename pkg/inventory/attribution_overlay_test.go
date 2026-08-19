@@ -53,7 +53,7 @@ func observed(t *testing.T) *history.Snapshot {
 func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 	// 관측이 이미 채운 자리를 노리는 선언을 일부러 넣는다.
 	store := history.NewMemStore()
-	declaredInto(t, store, "node_id,dst,app_key\nweb-01,10.0.0.5,사람이-적은-다른-앱\nweb-01,10.0.0.7,batch-job.service\n")
+	declaredInto(t, store, "node_id,dst,app_key\nweb-01,10.0.0.5,another-app-written-by-a-person\nweb-01,10.0.0.7,batch-job.service\n")
 	out := inventory.RenderDetailWith(observed(t), inventory.BuildAttributionOverlay(store))
 
 	if strings.Contains(out, "another-app-written-by-a-person") {
