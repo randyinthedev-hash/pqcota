@@ -15,7 +15,7 @@ func TestSafeNameHandlesSchemeIDs(t *testing.T) {
 		"host://local":     "host-local",
 		"web-1":            "web-1",
 		"cmdb://a//b":      "cmdb-a-b",
-		"node/1":           "1", // 비ASCII는 하이픈으로 바뀌고 앞뒤 하이픈은 잘린다
+		"노드/1":             "1", // 비ASCII는 하이픈으로 바뀌고 앞뒤 하이픈은 잘린다 — 입력이 한국어인 것이 이 케이스의 요점이다
 		"///":              "",
 		"node_1.example":   "node_1.example",
 		"UPPER/lower-MIX!": "UPPER-lower-MIX",
