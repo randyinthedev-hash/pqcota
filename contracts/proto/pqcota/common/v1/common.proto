@@ -72,6 +72,9 @@ enum CollectionLayer {
   COLLECTION_LAYER_PROCESS = 3;           // 런타임/프로세스
   COLLECTION_LAYER_NETWORK = 4;
   COLLECTION_LAYER_JVM_INTROSPECTION = 5; // JCA 전용 (§2.2 자체 구현 공백)
+  // CNG 전용. JCA와 같은 이유로 자기 계층을 둔다 — 프로세스도 아티팩트도 아니고
+  // **머신에 등록된 provider를 조회**한 것이라, 무엇을 보고 무엇을 못 봤는지가 다른 계층과 다르다.
+  COLLECTION_LAYER_CNG_INTROSPECTION = 6;
 }
 
 // OpenSSL 바인딩 방식 (수용 원칙 §2.4).

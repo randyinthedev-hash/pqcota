@@ -70,6 +70,13 @@ func DeriveFindings(res *discoveryv1.CollectionResult, snapshotID, rulesetVersio
 			}}
 			// provider 시그니처 레지스트리 강화(수용 원칙 §2.3 · 규정서 §4.10): FIPS·SLH-DSA 갭.
 			f.FipsValidation, f.PqcReadiness = jcaEnrichment(providerSet)
+		case commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG:
+			// CNG는 JCA와 같은 provider 축이다(수용 원칙 §2.1). 계약이 지금 담는 것은
+			// provider_set 하나뿐이라 그것만 옮긴다 — 관측한 알고리즘 목록은 원본에 남아 있고,
+			// 실물을 재고 나서 계약에 번호를 부여해 더한다(투기적 추상화 금지).
+			f.RuntimeAxes = &discoveryv1.Finding_Cng{Cng: &discoveryv1.CngAxes{
+				ProviderSet: splitCSV(props["pqcota:cng.provider_set"]),
+			}}
 		}
 
 		f.AppKeys = splitCSV(props["pqcota:app_keys"]) // 자산이 어느 앱 것인지(§1.5) — 어느 앱(들)의 크립토인가
@@ -96,6 +103,8 @@ func parseCryptoRuntime(s string) commonv1.CryptoRuntime {
 		return commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL
 	case "jca":
 		return commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA
+	case "cng":
+		return commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG
 	default:
 		return commonv1.CryptoRuntime_CRYPTO_RUNTIME_UNSPECIFIED
 	}
