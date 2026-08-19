@@ -173,7 +173,10 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 // 등록 방식 등)는 그때 **번호를 새로 부여해 추가**한다(proto3 additive — 하위호환). 상세: docs/런타임_확장_계약.md
 type CngAxes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// provider_set: 등록된 CNG provider(KSP/SSP) 목록. JcaAxes와 같이 **순서 유의미**(우선순위).
+	// provider_set: 등록된 CNG provider(KSP/SSP) 목록. **관측된 순서 그대로** 담는다 — 정렬하지
+	// 않는 이유는 관측한 대로 적기 때문이고, 그 순서가 곧 우선순위인지는 CNG에서 **아직 확인되지
+	// 않았다**(JcaAxes에서 물려받은 전제다). 실측: Windows 11 26200에서 알고리즘 50개가 전부
+	// provider 하나씩이라 우선순위 다툼 자체가 일어나지 않았다.
 	ProviderSet []string `protobuf:"bytes,1,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"`
 	// algorithms: 그 머신의 CNG가 열거한 알고리즘. **v0.6.0 실측 뒤에 번호를 부여해 더했다** —
 	// provider 이름만으로는 "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없기 때문이다(Windows 11
