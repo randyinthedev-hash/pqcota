@@ -39,6 +39,18 @@ func ContentHash(s *Snapshot) string {
 			fmt.Fprintf(h, "  J|%s|%s|%s|%d\n", j.GetJdkVendor(), j.GetJdkVersion(),
 				strings.Join(j.GetProviderSet(), ","), j.GetRegistrationMode())
 		}
+		if c := f.GetCng(); c != nil {
+			// provider_set은 **관측된 순서 그대로** 담긴 것이라 정렬하지 않는다(그 순서가 우선순위인지는
+			// CNG에서 미확인 — 관측을 고치지 않으려고 순서를 보존한다).
+			//
+			// 알고리즘은 collector가 이미 정렬해 낸다. 여기서 다시 정렬하지 않는 대신 **있는 그대로**
+			// 넣는다 — 순서가 흔들리면 그것도 관측이 달라진 것이다.
+			var algs []string
+			for _, a := range c.GetAlgorithms() {
+				algs = append(algs, a.GetName()+":"+a.GetClass()+":"+strings.Join(a.GetProviders(), "|"))
+			}
+			fmt.Fprintf(h, "  N|%s|%s\n", strings.Join(c.GetProviderSet(), ","), strings.Join(algs, ","))
+		}
 	}
 
 	es := append([]*discoveryv1.ObservedEdge(nil), s.Edges...)
