@@ -14,12 +14,12 @@ public class CryptoApp {
       p = p.trim();
       if (p.equals("BC")) {
         Security.addProvider(new BouncyCastleProvider());
-        System.out.println("[java-app] BouncyCastle 런타임 등록");
+        System.out.println("[java-app] BouncyCastle registered at runtime");
       } else if (!p.isEmpty()) {
-        System.out.println("[java-app] provider " + p + " 는 데모 미지원 — 건너뜀");
+        System.out.println("[java-app] provider " + p + " is not supported by the demo — skipping");
       }
     }
-    System.out.println("[java-app] 등록 완료 — providers=" + Security.getProviders().length);
+    System.out.println("[java-app] registration done — providers=" + Security.getProviders().length);
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
     while (true) {
       KeyPair kp = kpg.generateKeyPair();

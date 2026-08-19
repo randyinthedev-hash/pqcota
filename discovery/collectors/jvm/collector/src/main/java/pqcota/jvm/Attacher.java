@@ -23,11 +23,11 @@ public final class Attacher {
             } finally {
                 vm.detach();
             }
-            System.out.println("[attacher] attach 성공 → getProviders() 실체 (confirmed)");
+            System.out.println("[attacher] attach succeeded → the real getProviders() (confirmed)");
         } catch (Exception e) {
             // JEP 451 / DisableAttachMechanism / 권한 → 정적 폴백(설계 §2.2, S2-4).
-            System.out.println("[attacher] attach 불가(" + e.getClass().getSimpleName()
-                    + ") → 정적 폴백 (inferred + gap)");
+            System.out.println("[attacher] attach unavailable (" + e.getClass().getSimpleName()
+                    + ") → static fallback (inferred + gap)");
             StaticFallback.run(System.getProperty("java.home"), out);
         }
     }

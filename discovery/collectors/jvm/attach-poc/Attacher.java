@@ -18,6 +18,6 @@ public class Attacher {
         } finally {
             vm.detach();
         }
-        System.out.println("[attacher] attach + agent 주입 완료 (pid=" + pid + ")");
+        System.out.println("[attacher] attached and injected the agent (pid=" + pid + ")");
     }
 }

@@ -37,7 +37,7 @@ final class StaticFallback {
         try {
             Files.writeString(Path.of(out), sb.toString());
         } catch (IOException e) {
-            System.err.println("[fallback] 출력 실패: " + e.getMessage());
+            System.err.println("[fallback] failed to write output: " + e.getMessage());
         }
     }
 
