@@ -46,13 +46,13 @@ func TestProvisioningPlaybookL2(t *testing.T) {
 		"a3 (REMEDIATION_KIND_FORK_REPLACE): cannot be delivered through config", // 비-config 조치는 주석
 	} {
 		if !strings.Contains(pb, want) {
-			t.Errorf("L2 플레이북에 %q 없음:\n%s", want, pb)
+			t.Errorf("the L2 playbook is missing %q:\n%s", want, pb)
 		}
 	}
 	// 태스크 이름으로 본다 — 머리말 주석에도 "restart"라는 낱말이 들어가므로
 	// 낱말만 세면 자기 설명에 걸린다(영어로 옮기며 실제로 걸렸다).
 	if strings.Contains(pb, "③ restart") {
-		t.Errorf("L2에 재시작 태스크가 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
+		t.Errorf("L2 must have no restart task (restart belongs to the L3 hook):\n%s", pb)
 	}
 }
 
@@ -67,7 +67,7 @@ func TestJCAClasspathHintInHeader(t *testing.T) {
 		pb := provisioning.GenerateProvisioningPlaybook(samplePlan(), lvl)
 		for _, want := range []string{"includes a JCA provider injection", "classpath or --module-path", "activation.activate"} {
 			if !strings.Contains(pb, want) {
-				t.Errorf("lvl=%s: JCA 함정 헤더에 %q 없음:\n%s", levelName(lvl), want, pb)
+				t.Errorf("lvl=%s: the JCA pitfall header is missing %q:\n%s", levelName(lvl), want, pb)
 			}
 		}
 	}
@@ -78,7 +78,7 @@ func TestJCAClasspathHintInHeader(t *testing.T) {
 			Kind: provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, ProviderChoice: "oqsprovider"},
 	}}
 	if pb := provisioning.GenerateProvisioningPlaybook(ossl, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL); strings.Contains(pb, "includes a JCA provider injection") {
-		t.Errorf("openssl 전용인데 JCA 노트가 떴다:\n%s", pb)
+		t.Errorf("an openssl-only plan produced a JCA note:\n%s", pb)
 	}
 }
 
@@ -86,10 +86,10 @@ func TestJCAClasspathHintInHeader(t *testing.T) {
 func TestProvisioningPlaybookL1(t *testing.T) {
 	pb := provisioning.GenerateProvisioningPlaybook(samplePlan(), provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
 	if !strings.Contains(pb, "/opt/pqcota/BC.jar") {
-		t.Error("L1도 모듈 스테이지는 해야")
+		t.Error("L1 must still stage the module")
 	}
 	if strings.Contains(pb, "content: |") {
-		t.Errorf("L1(stage-only)은 config 조각을 배치하지 않아야:\n%s", pb)
+		t.Errorf("L1 (stage-only) must not place config fragments:\n%s", pb)
 	}
 }
 
@@ -115,11 +115,11 @@ func TestL3ActivationOrder(t *testing.T) {
 	iAct, iRst := strings.Index(fwd, "ln -sf"), strings.Index(fwd, "systemctl start payment")
 	for _, s := range []int{iPre, iCfg, iAct, iRst} {
 		if s < 0 {
-			t.Fatalf("L3 플레이북에 단계가 빠졌다:\n%s", fwd)
+			t.Fatalf("the L3 playbook is missing a step:\n%s", fwd)
 		}
 	}
 	if !(iPre < iCfg && iCfg < iAct && iAct < iRst) {
-		t.Errorf("순서가 pre→배치→activate→restart여야: pre=%d cfg=%d act=%d restart=%d", iPre, iCfg, iAct, iRst)
+		t.Errorf("order must be pre→stage→activate→restart: pre=%d cfg=%d act=%d restart=%d", iPre, iCfg, iAct, iRst)
 	}
 
 	// 롤백은 정확한 역순 — 내리고 → 활성화 되돌리고 → 파일 제거 → 재시작.
@@ -127,13 +127,13 @@ func TestL3ActivationOrder(t *testing.T) {
 	jPre, jDeact := strings.Index(back, "systemctl stop payment"), strings.Index(back, "rm -f /etc/ssl/inc")
 	jRm, jRst := strings.Index(back, "state: absent"), strings.Index(back, "systemctl start payment")
 	if !(jPre < jDeact && jDeact < jRm && jRm < jRst) {
-		t.Errorf("롤백 순서가 pre→deactivate→제거→restart여야: %d %d %d %d", jPre, jDeact, jRm, jRst)
+		t.Errorf("rollback order must be pre→deactivate→remove→restart: %d %d %d %d", jPre, jDeact, jRm, jRst)
 	}
 
 	// L2에는 훅이 들어가지 않는다 — 활성화는 L3에서만.
 	l2 := provisioning.GenerateProvisioningPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	if strings.Contains(l2, "systemctl") || strings.Contains(l2, "ln -sf") {
-		t.Errorf("L2에 활성화 훅이 새어들었다:\n%s", l2)
+		t.Errorf("an activation hook leaked into L2:\n%s", l2)
 	}
 }
 
@@ -152,27 +152,27 @@ func TestL3MissingHooksWarnButDoNotGuess(t *testing.T) {
 	// 활성화 명령을 지어내지 않는다 — systemctl 같은 걸 추측하면 남의 운영을 망가뜨린다.
 	out := provisioning.GenerateProvisioningPlaybook(plan, L3)
 	if strings.Contains(out, "systemctl") || strings.Contains(out, "ansible.builtin.shell") {
-		t.Errorf("빈 훅에서 명령을 지어냈다:\n%s", out)
+		t.Errorf("a command was invented for an empty hook:\n%s", out)
 	}
 	// 대신 무엇이 일어나지 않는지 경고한다.
 	w := provisioning.ActivationWarnings(plan, L3)
 	if len(w) < 2 {
-		t.Fatalf("activate·restart 부재를 각각 고지해야: %v", w)
+		t.Fatalf("the missing activate and restart must each be reported: %v", w)
 	}
 	joined := strings.Join(w, " ")
 	for _, want := range []string{"activate", "restart"} {
 		if !strings.Contains(joined, want) {
-			t.Errorf("경고에 %q 없음: %v", want, w)
+			t.Errorf("the warning is missing %q: %v", want, w)
 		}
 	}
 	// L1/L2에서는 훅 경고가 없다(활성화를 약속하지 않으므로).
 	if len(provisioning.ActivationWarnings(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)) != 0 {
-		t.Error("L2에서 활성화 경고가 나오면 안 된다")
+		t.Error("L2 must not emit an activation warning")
 	}
 	// deactivate 경고는 activate가 있을 때만 의미 있다(되돌릴 게 있을 때).
 	bare.Activation = &provisioningv1.ActivationHooks{Activate: "x", Restart: "y"}
 	if got := strings.Join(provisioning.ActivationWarnings(plan, L3), " "); !strings.Contains(got, "deactivate") {
-		t.Errorf("activate만 있고 deactivate 없으면 가역성 경고가 있어야: %q", got)
+		t.Errorf("with activate but no deactivate there must be a reversibility warning: %q", got)
 	}
 }
 
@@ -202,14 +202,14 @@ func TestL3HooksGroupedAndDeduped(t *testing.T) {
 		"rollback": provisioning.GenerateRollbackPlaybook(plan, L3),
 	} {
 		if n := strings.Count(pb, "svc start pay"); n != 1 {
-			t.Errorf("%s: 같은 재시작 명령이 %d번(1이어야):\n%s", name, n, pb)
+			t.Errorf("%s: the same restart command appears %d times (must be 1):\n%s", name, n, pb)
 		}
 		if n := strings.Count(pb, "svc stop pay"); n != 1 {
-			t.Errorf("%s: 같은 pre 명령이 %d번(1이어야)", name, n)
+			t.Errorf("%s: the same pre command appears %d times (must be 1)", name, n)
 		}
 		// 재시작은 활성화보다 **뒤**에 한 번 — 사이에 끼지 않는다.
 		if i, j := strings.Index(pb, "touch /etc/ssl/inc/on"), strings.Index(pb, "svc start pay"); name == "forward" && !(i > 0 && i < j) {
-			t.Errorf("forward: 활성화(%d)가 재시작(%d)보다 앞이어야", i, j)
+			t.Errorf("forward: activation (%d) must come before restart (%d)", i, j)
 		}
 	}
 }
@@ -233,23 +233,23 @@ func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 
 	pb := provisioning.GenerateProvisioningPlaybook(plan, L2)
 	if n := strings.Count(pb, `dest: "`+provisioning.OpenSSLConfigPath+`"`); n > 1 {
-		t.Errorf("같은 경로에 %d번 배치 — 뒤가 앞을 덮어쓴다:\n%s", n, pb)
+		t.Errorf("placed at the same path %d times — the later one overwrites the earlier:\n%s", n, pb)
 	}
 	// 두 조각이 모두 살아 있어야 한다(하나가 사라지면 안 된다).
 	for _, want := range []string{"provider_sect", "config-only"} {
 		if !strings.Contains(pb, want) {
-			t.Errorf("조각 %q가 유실됐다:\n%s", want, pb)
+			t.Errorf("fragment %q was lost:\n%s", want, pb)
 		}
 	}
 	// 경로를 나눈 사실을 알린다 — 나눈 채 두면 어느 것도 참조되지 않는다.
 	if w := provisioning.ConfigConflictWarnings(plan); len(w) != 1 || !strings.Contains(w[0], "activation.activate") {
-		t.Errorf("경로 분리를 고지해야: %v", w)
+		t.Errorf("the path split must be reported: %v", w)
 	}
 	// 롤백은 나눈 경로를 **그대로** 지운다(대칭) — 안 지우면 잔재가 남는다.
 	back := provisioning.GenerateRollbackPlaybook(plan, L2)
 	for id, d := range provisioning.ConfigDests(plan.GetActions()) {
 		if !strings.Contains(back, `path: "`+d+`",`) {
-			t.Errorf("롤백이 %s(조치 %s)를 지우지 않는다:\n%s", d, id, back)
+			t.Errorf("rollback does not remove %s (action %s):\n%s", d, id, back)
 		}
 	}
 
@@ -257,10 +257,10 @@ func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 	same := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{mk("b1", "cfg"), mk("b2", "cfg")}}
 	sp := provisioning.GenerateProvisioningPlaybook(same, L2)
 	if n := strings.Count(sp, "place the config fragment"); n != 1 {
-		t.Errorf("동일 조각인데 배치 태스크가 %d개(1이어야):\n%s", n, sp)
+		t.Errorf("identical fragments produced %d placement tasks (must be 1):\n%s", n, sp)
 	}
 	if len(provisioning.ConfigConflictWarnings(same)) != 0 {
-		t.Error("동일 조각엔 충돌 경고가 없어야")
+		t.Error("identical fragments must not raise a collision warning")
 	}
 }
 
@@ -294,13 +294,13 @@ func TestGeneratedPlaybooksAreValidYAML(t *testing.T) {
 		} {
 			var plays []map[string]any
 			if err := yaml.Unmarshal([]byte(pb), &plays); err != nil {
-				t.Fatalf("%s/%s: 생성물이 YAML이 아니다: %v\n%s", levelName(lvl), name, err, pb)
+				t.Fatalf("%s/%s: the output is not YAML: %v\n%s", levelName(lvl), name, err, pb)
 			}
 			if len(plays) != 1 {
-				t.Fatalf("%s/%s: play 1개여야, %d개", levelName(lvl), name, len(plays))
+				t.Fatalf("%s/%s: expected 1 play, got %d", levelName(lvl), name, len(plays))
 			}
 			if got := plays[0]["hosts"]; !strings2Contains(got, "db-01") {
-				t.Errorf("%s/%s: hosts가 온전하지 않다: %#v", levelName(lvl), name, got)
+				t.Errorf("%s/%s: hosts is malformed: %#v", levelName(lvl), name, got)
 			}
 		}
 	}
@@ -320,7 +320,7 @@ func TestGeneratedPlaybooksAreValidYAML(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Errorf("훅 명령이 원문 그대로 실리지 않았다:\n%s", fwd)
+		t.Errorf("the hook command was not carried through verbatim:\n%s", fwd)
 	}
 }
 

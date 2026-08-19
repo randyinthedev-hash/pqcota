@@ -54,13 +54,13 @@ func TestRenderHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(snaps) != 2 {
-		t.Fatalf("변화가 있었으니 스냅샷 2건이어야 함, 실제 %d", len(snaps))
+		t.Fatalf("the content changed, so there must be 2 snapshots, got %d", len(snaps))
 	}
 	if snaps[0].Seq == 0 || snaps[0].CreatedAt.IsZero() {
-		t.Error("적재 시 저장소가 seq·CreatedAt을 부여해야 함")
+		t.Error("the store must assign seq and CreatedAt on ingest")
 	}
 	if snaps[0].Seq >= snaps[1].Seq {
-		t.Errorf("seq는 단조증가여야 함: %d → %d", snaps[0].Seq, snaps[1].Seq)
+		t.Errorf("seq must increase monotonically: %d → %d", snaps[0].Seq, snaps[1].Seq)
 	}
 
 	stats, err := store.ObservationStats("node-db")
@@ -70,7 +70,7 @@ func TestRenderHistory(t *testing.T) {
 	out := inventory.RenderHistory("node-db", snaps, stats, nil)
 	for _, want := range []string{"node-db", "2 change points", "snap-a", "snap-b", "rs-1", "obs"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("이력 뷰에 %q 없음:\n%s", want, out)
+			t.Errorf("the history view is missing %q:\n%s", want, out)
 		}
 	}
 }
@@ -83,28 +83,28 @@ func TestRepeatObservationDoesNotDuplicateSnapshot(t *testing.T) {
 	changed := snapOf(t, store, "snap-b", "3.5.0", "", nil) // 버전 변경 → 새 스냅샷
 
 	if !first.Created {
-		t.Error("첫 적재는 새 스냅샷이어야 함")
+		t.Error("the first ingest must create a snapshot")
 	}
 	if again.Created {
-		t.Error("같은 내용 재관측은 새 스냅샷을 만들지 않아야 함")
+		t.Error("re-observing identical content must not create a snapshot")
 	}
 	if again.ID != first.ID {
-		t.Errorf("재관측은 기존 스냅샷을 가리켜야 함: %s ≠ %s", again.ID, first.ID)
+		t.Errorf("a re-observation must point at the existing snapshot: %s != %s", again.ID, first.ID)
 	}
 	if !changed.Created {
-		t.Error("내용이 바뀌면 새 스냅샷이어야 함")
+		t.Error("changed content must create a new snapshot")
 	}
 
 	snaps, _ := store.Snapshots("node-db")
 	if len(snaps) != 2 {
-		t.Fatalf("스냅샷은 변화 횟수만큼(2건)이어야 함, 실제 %d", len(snaps))
+		t.Fatalf("there must be as many snapshots as changes (2), got %d", len(snaps))
 	}
 	stats, _ := store.ObservationStats("node-db")
 	if got := stats[first.ID].Count; got != 2 {
-		t.Errorf("첫 상태는 2번 관측됐어야 함, 실제 %d", got)
+		t.Errorf("the first state must have been observed twice, got %d", got)
 	}
 	if stats[first.ID].First.After(stats[first.ID].Last) {
-		t.Error("관측 구간은 First ≤ Last 여야 함")
+		t.Error("the observation window must satisfy First <= Last")
 	}
 }
 
@@ -121,7 +121,7 @@ func TestVolatileEdgeFieldsAreNotChange(t *testing.T) {
 	snapOf(t, store, "s1", "3.0.20", "", mk(3))
 	second := snapOf(t, store, "s2", "3.0.20", "", mk(9999)) // 빈도만 다름
 	if second.Created {
-		t.Error("관측 빈도만 다른 것은 변화가 아니어야 함")
+		t.Error("a difference only in observation frequency is not a change")
 	}
 	third := snapOf(t, store, "s3", "3.0.20", "", []*discoveryv1.ObservedEdge{{
 		SrcNodeId: "node-web", DstNodeId: "node-db", Port: 4433,
@@ -129,7 +129,7 @@ func TestVolatileEdgeFieldsAreNotChange(t *testing.T) {
 		NegotiatedGroup: "X25519MLKEM768", // 협상 그룹이 바뀌면 실질 변화
 	}})
 	if !third.Created {
-		t.Error("협상 그룹이 바뀌면 변화로 잡혀야 함")
+		t.Error("a changed negotiated group must count as a change")
 	}
 }
 
@@ -140,14 +140,14 @@ func TestByID(t *testing.T) {
 
 	got, err := store.ByID("snap-a")
 	if err != nil || got == nil {
-		t.Fatalf("snap-a를 찾아야 함: %v %v", got, err)
+		t.Fatalf("snap-a must be found: %v %v", got, err)
 	}
 	if got.NodeID != "node-db" {
-		t.Errorf("노드 불일치: %s", got.NodeID)
+		t.Errorf("node mismatch: %s", got.NodeID)
 	}
 	missing, err := store.ByID("snap-none")
 	if err != nil || missing != nil {
-		t.Errorf("없는 id는 (nil, nil)이어야 함: %v %v", missing, err)
+		t.Errorf("an unknown id must return (nil, nil): %v %v", missing, err)
 	}
 }
 
@@ -165,7 +165,7 @@ func TestRenderDetailShowsEdges(t *testing.T) {
 	out := inventory.RenderDetail(snap)
 	for _, want := range []string{"libcrypto/OpenSSL 3.0.20", "1 observed edges", "node-web", "node-db:4433", "x25519"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("상세 뷰에 %q 없음:\n%s", want, out)
+			t.Errorf("the detail view is missing %q:\n%s", want, out)
 		}
 	}
 }
@@ -179,13 +179,13 @@ func TestRenderDiff(t *testing.T) {
 	out := inventory.RenderDiff(a, b)
 	for _, want := range []string{"changes", "changed", "3.0.20", "3.5.0", "added", "libssl"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("diff에 %q 없음:\n%s", want, out)
+			t.Errorf("the diff is missing %q:\n%s", want, out)
 		}
 	}
 	// 판정은 하지 않는다 — 위험/조치 같은 단어가 새어들면 §2.1 무판단 위반.
-	for _, forbidden := range []string{"위험", "취약함", "조치 필요"} {
+	for _, forbidden := range []string{"risky", "vulnerable", "action required"} {
 		if strings.Contains(out, forbidden) {
-			t.Errorf("diff는 무판단이어야 하는데 %q가 있음:\n%s", forbidden, out)
+			t.Errorf("the diff must pass no judgment, yet it contains %q:\n%s", forbidden, out)
 		}
 	}
 }
@@ -195,6 +195,6 @@ func TestRenderDiffNoChange(t *testing.T) {
 	store := history.NewMemStore()
 	a := snapOf(t, store, "snap-a", "3.0.20", "", nil)
 	if out := inventory.RenderDiff(a, a); !strings.Contains(out, "no asset changes") {
-		t.Errorf("동일 스냅샷 diff는 '변화 없음'이어야 함:\n%s", out)
+		t.Errorf("a diff of identical snapshots must say there is no change:\n%s", out)
 	}
 }

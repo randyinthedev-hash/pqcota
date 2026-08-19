@@ -25,11 +25,11 @@ func TestRenderOpenSSLConfigOnly(t *testing.T) {
 		provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", ""))
 	for _, want := range []string{"[system_default_sect]", "Groups", "X25519MLKEM768"} {
 		if !strings.Contains(art, want) {
-			t.Errorf("config-only 조각에 %q 없음:\n%s", want, art)
+			t.Errorf("the config-only fragment is missing %q:\n%s", want, art)
 		}
 	}
 	if strings.Contains(art, "module") {
-		t.Errorf("config-only는 provider 로드(module) 없어야:\n%s", art)
+		t.Errorf("config-only must load no provider (no module line):\n%s", art)
 	}
 }
 
@@ -39,7 +39,7 @@ func TestRenderOpenSSLProviderInject(t *testing.T) {
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "oqsprovider"))
 	for _, want := range []string{"provider_sect", "activate = 1", "module", "oqsprovider", "X25519MLKEM768"} {
 		if !strings.Contains(art, want) {
-			t.Errorf("provider-inject 조각에 %q 없음:\n%s", want, art)
+			t.Errorf("the provider-inject fragment is missing %q:\n%s", want, art)
 		}
 	}
 }
@@ -59,10 +59,10 @@ func TestRenderOpenSSLConfigIsUsableStandalone(t *testing.T) {
 				kind, "ML-KEM (FIPS 203)", ""))
 			at := strings.Index(art, "openssl_conf = openssl_init")
 			if at < 0 {
-				t.Fatalf("최상위 지시자가 없다 — OpenSSL이 [openssl_init]을 읽지 않는다:\n%s", art)
+				t.Fatalf("the top-level directive is missing — OpenSSL will never read [openssl_init]:\n%s", art)
 			}
 			if sect := strings.Index(art, "["); sect >= 0 && at > sect {
-				t.Errorf("최상위 지시자가 첫 섹션(%d) 뒤(%d)에 있다 — 그 섹션에 속해 버린다:\n%s", sect, at, art)
+				t.Errorf("the top-level directive sits after the first section (%d at %d) — it would belong to that section:\n%s", sect, at, art)
 			}
 		})
 	}
@@ -73,7 +73,7 @@ func TestRenderOpenSSLNonConfig(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE, "ML-KEM (FIPS 203)", ""))
 	if !strings.Contains(art, "#") || strings.Contains(art, "[system_default_sect]") {
-		t.Errorf("포크 교체는 config 조각이 아니라 주석 조치여야:\n%s", art)
+		t.Errorf("a fork replacement must be a commented remediation, not a config fragment:\n%s", art)
 	}
 }
 
@@ -82,10 +82,10 @@ func TestRenderJCAConfigOnly(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", "JDK-native"))
 	if !strings.Contains(art, "jdk.tls.namedGroups") {
-		t.Errorf("JCA config-only에 namedGroups 없음:\n%s", art)
+		t.Errorf("JCA config-only is missing namedGroups:\n%s", art)
 	}
 	if strings.Contains(art, "security.provider.") {
-		t.Errorf("config-only는 provider 등록 없어야:\n%s", art)
+		t.Errorf("config-only must register no provider:\n%s", art)
 	}
 }
 
@@ -95,13 +95,13 @@ func TestRenderJCAProviderInject(t *testing.T) {
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC"))
 	for _, want := range []string{"security.provider.", "BouncyCastleProvider", "jdk.tls.namedGroups"} {
 		if !strings.Contains(bc, want) {
-			t.Errorf("BC provider-inject에 %q 없음:\n%s", want, bc)
+			t.Errorf("the BC provider-inject is missing %q:\n%s", want, bc)
 		}
 	}
 	fips := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BCFIPS"))
 	if !strings.Contains(fips, "BouncyCastleFipsProvider") {
-		t.Errorf("BCFIPS는 FIPS provider 클래스여야:\n%s", fips)
+		t.Errorf("BCFIPS must use the FIPS provider class:\n%s", fips)
 	}
 }
 
@@ -114,7 +114,7 @@ func TestFillPlan(t *testing.T) {
 	provisioning.FillPlan(p)
 	for i, a := range p.GetActions() {
 		if a.GetConfigArtifact() == "" {
-			t.Errorf("actions[%d] config_artifact 미채움", i)
+			t.Errorf("actions[%d] has no config_artifact", i)
 		}
 	}
 }
@@ -129,10 +129,10 @@ func TestRenderJCAExplicitProviderClass(t *testing.T) {
 		ProviderClass:   "com.acme.jce.AcmeProvider",
 	})
 	if !strings.Contains(out, "security.provider.2=com.acme.jce.AcmeProvider") {
-		t.Errorf("명시한 FQCN이 그대로 등록돼야 함:\n%s", out)
+		t.Errorf("the FQCN given must be registered verbatim:\n%s", out)
 	}
 	if strings.Contains(out, "placeholder") {
-		t.Errorf("클래스명을 명시했는데 placeholder 경고가 남았다:\n%s", out)
+		t.Errorf("a class name was given, yet the placeholder warning remains:\n%s", out)
 	}
 }
 
@@ -146,7 +146,7 @@ func TestRenderJCAUnknownProviderKeepsPlaceholder(t *testing.T) {
 	})
 	for _, want := range []string{"placeholder", "provider_class", "<acme-jce:"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("미상 provider 안내에 %q 없음:\n%s", want, out)
+			t.Errorf("the guidance for an unknown provider is missing %q:\n%s", want, out)
 		}
 	}
 }
@@ -160,10 +160,10 @@ func TestRenderJCAJarPlacementGuidance(t *testing.T) {
 		ProviderChoice:  "BC",
 	})
 	if !strings.Contains(out, provisioning.ModulePath("BC", true)) {
-		t.Errorf("실제 배치 경로가 안내에 없다:\n%s", out)
+		t.Errorf("the guidance does not mention the actual staging path:\n%s", out)
 	}
 	if !strings.Contains(out, "JDK 9+") {
-		t.Errorf("JDK 9+ 안내가 없다 — lib/ext는 9에서 제거됐다:\n%s", out)
+		t.Errorf("no JDK 9+ guidance — lib/ext was removed in 9:\n%s", out)
 	}
 }
 
@@ -176,21 +176,21 @@ func TestBCDefaultClassStatesVersionAssumption(t *testing.T) {
 	out := provisioning.Render(bc)
 	for _, want := range []string{"1.80+", "BouncyCastlePQCProvider", "provider_class"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("BC 기본값에 버전 전제(%q)가 없다:\n%s", want, out)
+			t.Errorf("the BC default does not state its version assumption (%q):\n%s", want, out)
 		}
 	}
 
 	// 계획이 클래스를 명시했으면 그건 저자의 결정이라 도구가 전제를 덧붙이지 않는다.
 	bc.ProviderClass = "com.acme.AcmeProvider"
 	if out := provisioning.Render(bc); strings.Contains(out, "1.80+") {
-		t.Errorf("명시된 클래스에 BC 버전 전제가 붙었다:\n%s", out)
+		t.Errorf("a BC version assumption was attached to an explicit class:\n%s", out)
 	}
 
 	// BCFIPS는 다른 아티팩트라 BC 세대 문제와 무관하다.
 	fips := action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BCFIPS")
 	if out := provisioning.Render(fips); strings.Contains(out, "1.80+") {
-		t.Errorf("BCFIPS에 BC 버전 전제가 붙었다:\n%s", out)
+		t.Errorf("a BC version assumption was attached to BCFIPS:\n%s", out)
 	}
 }
 
@@ -204,7 +204,7 @@ func TestNamedGroupsAlwaysKeepsClassicFallback(t *testing.T) {
 	} {
 		out := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA, kind, "ML-KEM (FIPS 203)", "BC"))
 		if !strings.Contains(out, "jdk.tls.namedGroups=X25519MLKEM768,x25519") {
-			t.Errorf("%s: PQC 그룹만 남으면 JSSE가 뜨지 않는다 — 고전 폴백이 있어야:\n%s", kind, out)
+			t.Errorf("%s: with PQC groups alone JSSE will not come up — a classical fallback is required:\n%s", kind, out)
 		}
 	}
 }
@@ -217,24 +217,24 @@ func TestProviderSlotReplacementIsStated(t *testing.T) {
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC")
 	out := provisioning.Render(bc)
 	if !strings.Contains(out, "security.provider.2=") {
-		t.Fatalf("등록 줄이 없다:\n%s", out)
+		t.Fatalf("the registration line is missing:\n%s", out)
 	}
 	for _, want := range []string{"takes over slot 2", "SunRsaSign", "renumber the entries"} {
 		if !strings.Contains(out, want) {
-			t.Errorf("자리 대체 사실(%q)이 조각에 없다:\n%s", want, out)
+			t.Errorf("the fragment does not state that it takes over the slot (%q):\n%s", want, out)
 		}
 	}
 
 	// 조각 안 주석은 열어봐야 보이므로 stderr 경고로도 나가야 한다.
 	plan := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{bc}}
 	if w := provisioning.ProviderSlotWarnings(plan); len(w) != 1 || !strings.Contains(w[0], "takes over") {
-		t.Errorf("주입 조치에 자리 대체 경고가 있어야: %v", w)
+		t.Errorf("an injection must carry the slot-takeover warning: %v", w)
 	}
 	// config-only는 provider를 등록하지 않으므로 경고 대상이 아니다.
 	cfg := action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY, "ML-KEM (FIPS 203)", "")
 	if w := provisioning.ProviderSlotWarnings(&provisioningv1.FinalizedPlan{
 		Actions: []*provisioningv1.RemediationAction{cfg}}); len(w) != 0 {
-		t.Errorf("config-only에 자리 경고가 나오면 안 된다: %v", w)
+		t.Errorf("config-only must not emit a slot warning: %v", w)
 	}
 }
