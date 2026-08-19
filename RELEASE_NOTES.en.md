@@ -47,6 +47,53 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.1 — The two gaps left in CNG observation (2026-08-19)
+**Goal** — fill the two slots left open after v0.6.0. Both were confirmed in **a single run on the
+real hardware**.
+
+### Built
+
+- **`CngAlgorithm.providers`** — for each algorithm, `BCryptEnumProviders` answers **who actually
+  serves it**. The registration list (`provider_set`) only says what exists on the machine, so
+  choosing what to act on needs this. Purely additive. When it could not be asked, the list stays
+  **empty** — "not asked" and "asked and found none" are not written the same way (§2.6).
+- **Windows `hardware_uuid`** — SMBIOS Type 1, read via `GetSystemFirmwareTable('RSMB')`; no WMI or
+  PowerShell (§2.3). `MachineGuid` is per **installation** (a reinstall changes it), so a per
+  **hardware** anchor is needed as well. The formatting matches Linux's
+  `/sys/class/dmi/id/product_uuid` — the first three groups are little-endian, and without reversing
+  them the same machine looks like a different UUID when dual-booted. Firmware placeholders (all
+  `0x00` or all `0xFF`) are **not used as identifiers** (they would merge distinct machines into one node).
+
+### Learned
+
+- **A premise inherited from JCA does not hold for CNG.** In the measurement, **all 50 algorithms had
+  exactly one provider** — no algorithm is served by two, so there is no priority contention at all.
+  The order in `provider_set` is preserved for a different reason: **it is what was observed**, and
+  sorting it would be editing the observation.
+- **Of the nine registered providers, the one that actually serves algorithms is `Microsoft Primitive
+  Provider`.** The other eight are key-storage providers and do not appear in an algorithm
+  enumeration. This narrows "what must be touched to use ML-DSA" for v0.7.0.
+- **Adding a fingerprint did not move `node_id`.** Self-id priority consults `machine-id` first, so
+  `derived_from` stayed put even once `hardware_uuid` appeared (§1.4). The thing to fear when adding
+  fingerprints is a split history, and the priority order already covered that.
+- **The SMBIOS value matched what Windows itself reports** (`Win32_ComputerSystemProduct.UUID`).
+
+### Fixed
+
+- **A sentence asserting something never verified**(v0.6.0).
+
+  **What was wrong** — the contract comment, `contracts/README`, the collector README, and the test
+  case table all called the order of `provider_set` a **"priority"**. That premise was carried over
+  from JCA and had never been checked for CNG.
+
+  **What came out wrong** — whoever reads the contract reads it **as a verified fact**. And the
+  measurement pointed the other way: with no overlapping providers, order has no place to act as a
+  priority at all.
+
+  **What changes** — it now says the order is kept **as observed**, and whether that order means
+  priority is stated as **unverified**. It will be measured again on a machine with a third-party
+  provider where two overlap.
+
 ## v0.6.0 — Observing Windows CNG (2026-08-19)
 **Goal** — fill `CngAxes`, which v0.1.0 **reserved as schema only**. Measure it on real Windows and
 confirm the observation reaches the inventory screen. This release closes the state where the
