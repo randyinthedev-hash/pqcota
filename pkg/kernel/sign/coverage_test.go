@@ -36,7 +36,7 @@ func signed(t *testing.T) (pub string, res *discoveryv1.CollectionResult) {
 		Completeness: &commonv1.Completeness{
 			LayersCovered: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS},
 			LayersMissing: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_NETWORK},
-			Note:          "네트워크 계층 미수집",
+			Note:          "network layer not collected",
 		},
 		ObservedEdges: []*discoveryv1.ObservedEdge{{
 			SrcNodeId: "node-a", DstNodeId: "node-b", DstAddr: "10.0.0.2:443", Port: 443,
@@ -53,7 +53,7 @@ func signed(t *testing.T) (pub string, res *discoveryv1.CollectionResult) {
 	}
 	res.Envelope.Signature = sig
 	if !sign.Verify([]string{pub}, res) {
-		t.Fatal("서명 직후 검증이 실패하면 안 된다")
+		t.Fatal("verification must not fail right after signing")
 	}
 	return pub, res
 }
@@ -79,11 +79,11 @@ func TestTamperBreaksVerification(t *testing.T) {
 		"cbom_cyclonedx":              func(r *discoveryv1.CollectionResult) { r.CbomCyclonedx = []byte(`{"bomFormat":"x"}`) },
 		"cyclonedx_spec_version":      func(r *discoveryv1.CollectionResult) { r.CyclonedxSpecVersion = "1.7" },
 		// ★ 갭 선언 제거 — "원리상 관측하지 못했다"를 "없다"로 바꾸는 변조(§2.6). 반드시 잡혀야 한다.
-		"completeness.layers_missing 제거": func(r *discoveryv1.CollectionResult) { r.Completeness.LayersMissing = nil },
-		"completeness.note":              func(r *discoveryv1.CollectionResult) { r.Completeness.Note = "" },
-		"completeness 통째 제거":             func(r *discoveryv1.CollectionResult) { r.Completeness = nil },
-		"edge.dst_node_id":               func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].DstNodeId = "node-z" },
-		"edge.port":                      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].Port = 8443 },
+		"completeness.layers_missing removed": func(r *discoveryv1.CollectionResult) { r.Completeness.LayersMissing = nil },
+		"completeness.note":                   func(r *discoveryv1.CollectionResult) { r.Completeness.Note = "" },
+		"completeness removed entirely":       func(r *discoveryv1.CollectionResult) { r.Completeness = nil },
+		"edge.dst_node_id":                    func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].DstNodeId = "node-z" },
+		"edge.port":                           func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].Port = 8443 },
 		"edge.negotiated_group": func(r *discoveryv1.CollectionResult) {
 			r.ObservedEdges[0].NegotiatedGroup = "x25519" // 🟢 → 🔴 등급을 뒤집는 변조
 		},
@@ -94,17 +94,17 @@ func TestTamperBreaksVerification(t *testing.T) {
 		// 앱을 갈아끼우는 변조 — 어느 앱이 그 통신을 했나가 바뀌면 조치 대상이 바뀐다.
 		"edge.app_key":      func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKey = "other.service" },
 		"edge.app_key_kind": func(r *discoveryv1.CollectionResult) { r.ObservedEdges[0].AppKeyKind = "exe-path" },
-		"edge 추가": func(r *discoveryv1.CollectionResult) {
+		"edge added": func(r *discoveryv1.CollectionResult) {
 			r.ObservedEdges = append(r.ObservedEdges, &discoveryv1.ObservedEdge{SrcNodeId: "node-a", DstAddr: "10.0.0.3:22"})
 		},
-		"edge 제거": func(r *discoveryv1.CollectionResult) { r.ObservedEdges = nil },
+		"edge removed": func(r *discoveryv1.CollectionResult) { r.ObservedEdges = nil },
 	}
 	for name, tamper := range cases {
 		t.Run(name, func(t *testing.T) {
 			pub, res := signed(t)
 			tamper(res)
 			if sign.Verify([]string{pub}, res) {
-				t.Errorf("%s 를 변조했는데 검증이 통과했다 — 이 필드가 서명 사각지대다", name)
+				t.Errorf("%s was tampered with and verification still passed — this field is a signing blind spot", name)
 			}
 		})
 	}
@@ -125,7 +125,7 @@ func TestEdgeOrderDoesNotMatter(t *testing.T) {
 	res.Envelope.Signature = sig
 	res.ObservedEdges[0], res.ObservedEdges[1] = res.ObservedEdges[1], res.ObservedEdges[0]
 	if !sign.Verify([]string{pub2}, res) {
-		t.Error("엣지 순서만 바뀌었는데 검증이 실패했다 — 정규화가 순서에 흔들린다")
+		t.Error("only the edge order changed and verification failed — canonicalization is order-sensitive")
 	}
 	_ = pub
 }
@@ -149,10 +149,10 @@ func TestCanonicalCoversAllFields(t *testing.T) {
 	}
 	for msg, n := range want {
 		if got[msg] != n {
-			t.Errorf("%s 필드 수가 %d → %d로 바뀌었다.\n"+
-				"  계약이 바뀌면 sign.Canonical도 함께 갱신해야 한다 — 안 그러면 새 필드가 서명 사각지대가 된다.\n"+
-				"  갱신했다면 이 기대값도 %d로 고치고, TestTamperBreaksVerification에 케이스를 추가하라.\n"+
-				"  주의: Canonical 범위를 바꾸면 기존 서명은 전부 무효가 된다.", msg, n, got[msg], got[msg])
+			t.Errorf("the field count of %s changed from %d to %d.\n"+
+				"  when the contract changes, sign.Canonical must change with it — otherwise the new field becomes a signing blind spot.\n"+
+				"  once updated, fix this expectation to %d as well and add a case to TestTamperBreaksVerification.\n"+
+				"  note: changing the scope of Canonical invalidates every existing signature.", msg, n, got[msg], got[msg])
 		}
 	}
 }

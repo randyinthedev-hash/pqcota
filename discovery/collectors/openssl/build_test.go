@@ -25,30 +25,30 @@ func TestBuildResult(t *testing.T) {
 	})
 	env := res.GetEnvelope()
 	if env.GetTargetNodeId() != "cmdb://web-01" || env.GetCollectorId() != "openssl-collector" {
-		t.Errorf("Envelope 앵커·collector id: %+v", env)
+		t.Errorf("Envelope anchor and collector id: %+v", env)
 	}
 	if env.GetDetectionMethod() != commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION {
 		t.Errorf("detection_method = %v", env.GetDetectionMethod())
 	}
 	// 원본은 형식 이름만 있고 내용이 비면 "재정규화 가능"이 거짓말이 된다(§1.2).
 	if res.GetRawFormat() == "" || len(res.GetRawCapture()) == 0 {
-		t.Errorf("raw_format=%q raw_capture=%dB — 형식만 있고 원본이 없다",
+		t.Errorf("raw_format=%q raw_capture=%dB — a format with no raw capture behind it",
 			res.GetRawFormat(), len(res.GetRawCapture()))
 	}
 	body := string(res.GetCbomCyclonedx())
 	for _, want := range []string{`"bomFormat":"CycloneDX"`, "libcrypto", "pqcota:crypto_runtime", "/opt/apps/pay"} {
 		if !strings.Contains(body, want) {
-			t.Errorf("CycloneDX 본문에 %q 없음:\n%s", want, body)
+			t.Errorf("the CycloneDX body does not contain %q:\n%s", want, body)
 		}
 	}
 	if got := res.GetCompleteness().GetLayersCovered(); len(got) != 1 ||
 		got[0] != commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS {
-		t.Errorf("탐지가 있으면 PROCESS 커버: %v", got)
+		t.Errorf("with detections the PROCESS layer must be covered: %v", got)
 	}
 	// ARTIFACT는 선언만 하고 덮지 않았으므로 갭으로 남아야 한다 — 갭 ≠ 부재(§2.6).
 	if m := res.GetCompleteness().GetLayersMissing(); len(m) != 1 ||
 		m[0] != commonv1.CollectionLayer_COLLECTION_LAYER_ARTIFACT {
-		t.Errorf("덮지 못한 계층이 갭으로 남아야: %v", m)
+		t.Errorf("layers that were not covered must remain as gaps: %v", m)
 	}
 }
 
@@ -56,11 +56,11 @@ func TestBuildResult(t *testing.T) {
 func TestBuildResultNoDetection(t *testing.T) {
 	res := openssl.BuildResult("cmdb://web-01", nil)
 	if len(res.GetCbomCyclonedx()) != 0 || len(res.GetRawCapture()) != 0 {
-		t.Error("탐지가 없는데 본문·원본이 채워졌다")
+		t.Error("no detections, yet body and raw capture were filled in")
 	}
 	c := res.GetCompleteness()
 	if len(c.GetLayersCovered()) != 0 || len(c.GetLayersMissing()) != 2 || c.GetNote() == "" {
-		t.Errorf("미검출은 전 계층 갭 + 사유 고지여야: %+v", c)
+		t.Errorf("no detection must mean every layer is a gap plus a stated reason: %+v", c)
 	}
 }
 
@@ -72,16 +72,16 @@ func TestRawCaptureRoundTripsAndIsStable(t *testing.T) {
 	}
 	a, b := openssl.RawCapture(dets), openssl.RawCapture(dets)
 	if string(a) != string(b) {
-		t.Errorf("같은 관측인데 바이트가 다르다:\n%s\n%s", a, b)
+		t.Errorf("the same observation produced different bytes:\n%s\n%s", a, b)
 	}
 	var back []openssl.Detection
 	if err := json.Unmarshal(a, &back); err != nil {
-		t.Fatalf("원본이 다시 읽히지 않는다: %v", err)
+		t.Fatalf("the raw capture cannot be read back: %v", err)
 	}
 	if len(back) != 2 || back[1].Fork != "AWS-LC" || back[0].Path != "/usr/lib/libssl.so.3" {
-		t.Errorf("원본에서 탐지가 복원되지 않았다: %+v", back)
+		t.Errorf("the detections were not restored from the raw capture: %+v", back)
 	}
 	if openssl.RawCapture(nil) != nil {
-		t.Error("탐지가 없으면 원본도 없어야 한다(빈 배열을 지어내지 않는다)")
+		t.Error("with no detections there must be no raw capture either (no invented empty array)")
 	}
 }

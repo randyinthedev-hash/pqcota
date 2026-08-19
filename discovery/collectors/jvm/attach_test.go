@@ -18,7 +18,7 @@ func TestAttachAll(t *testing.T) {
 	}
 	attach := func(j jvm.JVMProc) (jvm.Collected, error) {
 		if j.PID == 20 {
-			return jvm.Collected{}, errors.New("attach 차단(DisableAttachMechanism)")
+			return jvm.Collected{}, errors.New("attach blocked (DisableAttachMechanism)")
 		}
 		return jvm.Collected{Providers: []jvm.Provider{{Order: 1, Name: "SUN"}, {Order: 2, Name: "BC"}}}, nil
 	}
@@ -28,7 +28,7 @@ func TestAttachAll(t *testing.T) {
 		t.Fatalf("stats = %+v, want discovered 3 · attached 2 · failed 1", st)
 	}
 	if len(results) != 3 {
-		t.Fatalf("결과는 발견 수만큼(3, 실패 포함): %d", len(results))
+		t.Fatalf("one result per JVM found (3, failures included): %d", len(results))
 	}
 	// 실패한 JVM도 결과에 남아야 한다(갭으로 보고할 근거) — 조용히 사라지면 안 됨.
 	var sawFail bool
@@ -36,19 +36,19 @@ func TestAttachAll(t *testing.T) {
 		if r.JVM.PID == 20 {
 			sawFail = true
 			if r.Err == nil {
-				t.Error("attach 실패한 JVM은 Err를 담아야 함")
+				t.Error("a JVM that failed to attach must carry Err")
 			}
 		}
 	}
 	if !sawFail {
-		t.Error("실패한 JVM이 결과에서 사라졌다 — 갭이 은폐됨")
+		t.Error("the failed JVM vanished from the results — the gap is hidden")
 	}
 }
 
 func TestAttachAllEmpty(t *testing.T) {
 	results, st := jvm.AttachAll(nil, func(jvm.JVMProc) (jvm.Collected, error) { return jvm.Collected{}, nil })
 	if len(results) != 0 || st.Discovered != 0 {
-		t.Errorf("빈 입력은 빈 결과: %+v %+v", results, st)
+		t.Errorf("empty input gives an empty result: %+v %+v", results, st)
 	}
 }
 
@@ -60,17 +60,17 @@ func TestBuildResultForDistinguishesJVMs(t *testing.T) {
 	b := string(jvm.BuildResultFor("node-app", c, "/opt/jdk8").GetCbomCyclonedx())
 
 	if a == b {
-		t.Fatal("서로 다른 JDK인데 CBOM이 동일 — finding이 하나로 뭉개진다")
+		t.Fatal("different JDKs but identical CBOMs — the findings get merged into one")
 	}
 	for _, want := range []string{"jca-provider-chain@/opt/jdk17", "pqcota:app_keys", "/opt/jdk17"} {
 		if !strings.Contains(a, want) {
-			t.Errorf("JDK17 결과에 %q 없음:\n%s", want, a)
+			t.Errorf("the JDK17 result does not contain %q:\n%s", want, a)
 		}
 	}
 	// ident 없으면 기존 단일 형태 그대로(하위호환) — @·app_keys 미부착.
 	single := string(jvm.BuildResult("node-app", c).GetCbomCyclonedx())
 	if strings.Contains(single, "@") || strings.Contains(single, "app_keys") {
-		t.Errorf("ident 없는 단일 결과에 구별자가 붙었다:\n%s", single)
+		t.Errorf("a discriminator was added to a single result with no ident:\n%s", single)
 	}
 }
 
@@ -82,7 +82,7 @@ func TestBuildResultForIdentIsStable(t *testing.T) {
 	r1 := string(jvm.BuildResultFor("n", c, "/opt/jdk17").GetCbomCyclonedx())
 	r2 := string(jvm.BuildResultFor("n", c, "/opt/jdk17").GetCbomCyclonedx())
 	if r1 != r2 {
-		t.Error("같은 식별자면 결과가 결정적이어야 함(이력 안정)")
+		t.Error("the same identifier must give a deterministic result (stable history)")
 	}
 }
 
@@ -95,14 +95,14 @@ func TestAttachClient(t *testing.T) {
 		{PID: 2, JavaBin: "/opt/jdk21/bin/java", AttachCapable: true},
 	}
 	if got := jvm.AttachClient(mixed); got != "/opt/jdk21/bin/java" {
-		t.Errorf("attach 가능한 JDK를 골라야: %q", got)
+		t.Errorf("a JDK that can attach must be chosen: %q", got)
 	}
 	// 하나도 없으면 "" — 별도 런타임을 지어내지 않고 정적 폴백으로 내려간다(§2.5).
 	jreOnly := []jvm.JVMProc{{PID: 1, JavaBin: "/opt/jre/bin/java", AttachCapable: false}}
 	if got := jvm.AttachClient(jreOnly); got != "" {
-		t.Errorf("attach 가능 JDK가 없으면 빈 값이어야: %q", got)
+		t.Errorf("with no attach-capable JDK it must be empty: %q", got)
 	}
 	if got := jvm.AttachClient(nil); got != "" {
-		t.Errorf("JVM이 없으면 빈 값이어야: %q", got)
+		t.Errorf("with no JVM it must be empty: %q", got)
 	}
 }

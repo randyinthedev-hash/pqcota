@@ -43,10 +43,10 @@ func TestIngestResults(t *testing.T) {
 	}
 	snap, _ := store.Latest("web-01")
 	if snap == nil || len(snap.Edges) != 1 {
-		t.Fatalf("web-01 스냅샷에 엣지 미저장: %+v", snap)
+		t.Fatalf("the web-01 snapshot did not store the edges: %+v", snap)
 	}
 	if s, _ := store.Latest("rogue"); s != nil {
-		t.Error("미등재 노드가 적재됨 — 스코프 게이트 실패")
+		t.Error("an unregistered node was ingested — the scope gate failed")
 	}
 }
 
@@ -57,7 +57,7 @@ func TestIngestSignatureReject(t *testing.T) {
 	rep, _ := ingest.IngestResults([]*discoveryv1.CollectionResult{edgeResult("web-01")},
 		master, func(*discoveryv1.CollectionResult) bool { return false }, "snap", "r", store, nil)
 	if rep.Rejected != 1 || rep.Accepted != 0 || rep.Snapshots != 0 {
-		t.Errorf("서명 거부 실패: %+v", rep)
+		t.Errorf("the bad signature was not refused: %+v", rep)
 	}
 }
 
@@ -67,7 +67,7 @@ func TestIngestNoMaster(t *testing.T) {
 	rep, _ := ingest.IngestResults([]*discoveryv1.CollectionResult{edgeResult("a"), edgeResult("b")},
 		nil, nil, "snap", "r", store, nil)
 	if rep.Accepted != 2 || rep.Snapshots != 2 {
-		t.Errorf("no-master 적재 실패: %+v", rep)
+		t.Errorf("the no-master ingest failed: %+v", rep)
 	}
 }
 
@@ -89,7 +89,7 @@ func opensslResult(node, lib string) *discoveryv1.CollectionResult {
 // 뷰 **양쪽**에 남아야 한다. 스코프가 조용히 자산을 지우면 인벤토리가 거짓말을 한다.
 func TestIngestReportsScopeExclusions(t *testing.T) {
 	policy, err := scope.LoadAssetPolicy(strings.NewReader(
-		"exclude,openssl,libtest.so.*,/opt/apps/internal-test,테스트 앱 제외\n"))
+		"exclude,openssl,libtest.so.*,/opt/apps/internal-test,exclude test apps\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,17 +101,17 @@ func TestIngestReportsScopeExclusions(t *testing.T) {
 		t.Fatal(err)
 	}
 	if rep.ExcludedByScope != 1 {
-		t.Fatalf("적재 요약이 제외를 고지하지 않는다: %+v", rep)
+		t.Fatalf("the ingest summary does not report the exclusions: %+v", rep)
 	}
 	snap, _ := store.Latest("web-01")
 	if snap == nil || snap.ExcludedByScope != 1 {
-		t.Fatalf("스냅샷에 제외 건수가 남지 않았다: %+v", snap)
+		t.Fatalf("the excluded count was not recorded in the snapshot: %+v", snap)
 	}
 	if len(snap.Findings) != 0 {
-		t.Errorf("제외한 자산이 그대로 남았다: %d건", len(snap.Findings))
+		t.Errorf("the excluded assets are still there: %d", len(snap.Findings))
 	}
 	if out := inventory.RenderDetail(snap); !strings.Contains(out, "excluded by asset scope: 1") {
-		t.Errorf("인벤토리 뷰가 제외를 고지하지 않는다:\n%s", out)
+		t.Errorf("the inventory view does not report the exclusions:\n%s", out)
 	}
 }
 
@@ -137,6 +137,6 @@ func TestIngestAcceptsValidSignature(t *testing.T) {
 		t.Fatal(err)
 	}
 	if rep.Rejected != 0 || rep.Accepted != 1 || rep.Snapshots != 1 {
-		t.Fatalf("정상 서명이 통과하지 못했다: %+v", rep)
+		t.Fatalf("a valid signature did not pass: %+v", rep)
 	}
 }
