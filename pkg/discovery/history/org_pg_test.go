@@ -19,7 +19,7 @@ import (
 func TestPgOrgsShareATableAndStillDoNotSeeEachOther(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
-		t.Skip("PQCOTA_TEST_DSN 미설정 — Postgres 통합 테스트 스킵")
+		t.Skip("PQCOTA_TEST_DSN is not set — skipping the Postgres integration test")
 	}
 	ctx := context.Background()
 	// 실행마다 유니크 조직(append-only라 삭제하지 않는다).
@@ -43,20 +43,20 @@ func TestPgOrgsShareATableAndStillDoNotSeeEachOther(t *testing.T) {
 	}
 
 	if nodes, err := b.Nodes(); err != nil || len(nodes) != 0 {
-		t.Fatalf("Nodes()가 다른 조직 노드를 흘린다: %v %v", nodes, err)
+		t.Fatalf("Nodes() leaks nodes of another organization: %v %v", nodes, err)
 	}
 	if s, err := b.ByID(snapID); err != nil || s != nil {
-		t.Fatalf("ByID가 ID만으로 남의 스냅샷을 연다: %v %v", s, err)
+		t.Fatalf("ByID opens someone else's snapshot from the id alone: %v %v", s, err)
 	}
 	if s, err := b.Latest(node); err != nil || s != nil {
-		t.Fatalf("Latest가 같은 node_id로 남의 이력을 준다: %v %v", s, err)
+		t.Fatalf("Latest returns someone else's history for the same node_id: %v %v", s, err)
 	}
 	if snaps, err := b.Snapshots(node); err != nil || len(snaps) != 0 {
-		t.Fatalf("Snapshots가 남의 이력과 병합된다: %v %v", snaps, err)
+		t.Fatalf("Snapshots merges in someone else's history: %v %v", snaps, err)
 	}
 
 	// 자기 것은 보인다 — 격리가 과해서 자기 데이터를 잃는 것도 결함이다.
 	if s, err := a.Latest(node); err != nil || s == nil || s.ID != snapID {
-		t.Fatalf("자기 조직 이력이 안 보인다: %v %v", s, err)
+		t.Fatalf("the own organization history is not visible: %v %v", s, err)
 	}
 }

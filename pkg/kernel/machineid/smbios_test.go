@@ -25,24 +25,24 @@ func TestParseSMBIOSUUID(t *testing.T) {
 
 	const want = "12345678-9ABC-DEF0-1234-56789ABCDEF0"
 	if got := parseSMBIOSUUID(raw); got != want {
-		t.Errorf("UUID = %q, want %q — 리틀엔디언을 되돌리지 않으면 같은 머신이 달라 보인다", got, want)
+		t.Errorf("UUID = %q, want %q — without undoing the little-endian order the same machine looks different", got, want)
 	}
 }
 
 // 펌웨어가 값을 안 채우면 **빈 값**이다. 0으로 채워진 UUID를 식별자로 쓰면 서로 다른 머신이
 // 한 노드로 합쳐진다 — 못 읽은 것을 지어내지 않는다(§2.5).
 func TestParseSMBIOSUUIDRefusesPlaceholders(t *testing.T) {
-	for name, fill := range map[string]byte{"전부 0x00": 0x00, "전부 0xFF": 0xFF} {
+	for name, fill := range map[string]byte{"all 0x00": 0x00, "all 0xFF": 0xFF} {
 		b := make([]byte, 16)
 		for i := range b {
 			b[i] = fill
 		}
 		if got := formatSMBIOSUUID(b); got != "" {
-			t.Errorf("%s인데 UUID를 냈다: %q", name, got)
+			t.Errorf("%s, yet a UUID was emitted: %q", name, got)
 		}
 	}
 	if got := formatSMBIOSUUID([]byte{1, 2, 3}); got != "" {
-		t.Errorf("16바이트가 아닌데 UUID를 냈다: %q", got)
+		t.Errorf("not 16 bytes, yet a UUID was emitted: %q", got)
 	}
 }
 
@@ -56,7 +56,7 @@ func TestParseSMBIOSUUIDSurvivesGarbage(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0, 9, 6, 0, 0}, // 다른 타입 + 문자열 종료가 없다
 	} {
 		if got := parseSMBIOSUUID(raw); got != "" {
-			t.Errorf("깨진 입력에서 UUID를 냈다: %q (raw=%v)", got, raw)
+			t.Errorf("a UUID was emitted from broken input: %q (raw=%v)", got, raw)
 		}
 	}
 }
