@@ -11,9 +11,9 @@ public class ProviderApp {
         try {
             Class<?> bc = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
             Security.addProvider((Provider) bc.getDeclaredConstructor().newInstance());
-            System.out.println("[app] BouncyCastle 동적 등록 완료 (정적 스캔 불가)");
+            System.out.println("[app] BouncyCastle registered dynamically (invisible to a static scan)");
         } catch (Throwable t) {
-            System.out.println("[app] BC classpath 없음 — 기본 provider만");
+            System.out.println("[app] BC not on the classpath — default providers only");
         }
         System.out.println("[app] running pid=" + ProcessHandle.current().pid());
         Thread.sleep(Long.MAX_VALUE);

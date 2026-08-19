@@ -93,10 +93,10 @@ func runClient(addr string, curves []tls.CurveID, count int) {
 		grp := c.ConnectionState().CurveID // 협상된 그룹
 		c.Close()
 		ok++
-		fmt.Fprintf(os.Stderr, "[pqc-echo] %s 핸드셰이크 OK (curve=%v)\n", addr, grp)
+		fmt.Fprintf(os.Stderr, "[pqc-echo] %s handshake OK (curve=%v)\n", addr, grp)
 		time.Sleep(300 * time.Millisecond)
 	}
-	fmt.Fprintf(os.Stderr, "[pqc-echo] %d/%d 성공\n", ok, count)
+	fmt.Fprintf(os.Stderr, "[pqc-echo] %d/%d succeeded\n", ok, count)
 }
 
 func selfSigned() tls.Certificate {

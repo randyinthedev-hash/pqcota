@@ -79,7 +79,7 @@ func tracked(globs ...string) []string {
 	args := append([]string{"-c", "core.quotePath=off", "ls-files"}, globs...)
 	out, err := exec.Command("git", args...).Output()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "git ls-files 실패:", err)
+		fmt.Fprintln(os.Stderr, "git ls-files failed:", err)
 		os.Exit(1)
 	}
 	return strings.Fields(string(out))
@@ -114,7 +114,7 @@ func lines(path string) ([]string, string, error) {
 func main() {
 	root, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "git 저장소가 아니다:", err)
+		fmt.Fprintln(os.Stderr, "not a git repository:", err)
 		os.Exit(1)
 	}
 	if err := os.Chdir(strings.TrimSpace(string(root))); err != nil {
@@ -150,15 +150,15 @@ func main() {
 	}
 
 	titles := []string{
-		`링크가 끊어졌다 — 문서를 옮기거나 제목을 바꿀 때 참조도 함께 고칠 것`,
-		`이 리포가 하는 일을 "범위 밖"이라 말한다 — 구현을 따라 문장을 고칠 것`,
-		`역할분담 산문 — 문서에는 기능·사용법만 둘 것`,
-		`개인 개발 환경 정보가 남아 있다 — 일반화할 것(예: "빌드 머신")`,
-		`부정확한 표현 — 우리가 보는 것은 암호가 아니라 **알고리즘**이다(암호문·키를 읽지 않는다)`,
-		`제목만 있고 내용이 없는 절 — 옮기다 본문을 흘렸거나, 쓰다 만 것이다`,
-		"범위 표기의 `~` — GitHub이 취소선으로 읽어 문장 일부에 줄이 그어진다. `–`를 쓸 것",
-		"`§N`을 쓰면서 그게 어느 문서의 절인지 밝히지 않았다 — 처음 읽는 사람은 찾을 방법이 없다",
-		"영문 문서가 한국어 문서를 가리킨다 — 영문 짝이 있으면 그쪽으로, 없으면 `(Korean)`으로 밝힐 것",
+		`a link is broken — when a document moves or a heading changes, fix the references too`,
+		`says something this repo does is "out of scope" — bring the sentence back in line with the implementation`,
+		`prose about who does what — documents carry function and usage only`,
+		`personal dev-environment details left behind — generalize them (e.g. "the build machine")`,
+		`imprecise wording — what is observed is the **algorithm**, not the cryptography itself (no ciphertext, no keys)`,
+		`a section with a heading and no body — the text was dropped while moving it, or never finished`,
+		"`~` in a range — GitHub reads it as strikethrough and strikes part of the sentence. Use `–`",
+		"uses `§N` without saying which document the section belongs to — a first-time reader has no way to find it",
+		"an English document links to a Korean one — point at the English counterpart if it exists, otherwise mark it `(Korean)`",
 	}
 	hits := make([][]string, len(titles))
 
@@ -186,9 +186,9 @@ func main() {
 					}
 					p := filepath.Clean(filepath.Join(filepath.Dir(d), path))
 					if _, err := os.Stat(p); err != nil {
-						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: 링크 대상 없음 → %s", d, n+1, target))
+						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: link target missing → %s", d, n+1, target))
 					} else if anchor != "" && anchors[p] != nil && !anchors[p][slug(anchor)] {
-						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: 앵커 없음 → %s", d, n+1, target))
+						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: anchor missing → %s", d, n+1, target))
 					}
 					// (9) 영문 문서가 한국어 문서를 가리키는 자리. 규칙은 CONTRIBUTING「언어」에
 					// 있다: 영문 짝이 있으면 그쪽을 가리키고, 없으면 `(Korean)`으로 밝힌다.
@@ -224,7 +224,7 @@ func main() {
 	// (8) 라이선스 표 ↔ 실제 링크되는 모듈. 손으로 관리하면 반드시 어긋난다(실제로 어긋났다).
 	if dep := checkLicenseTable(); len(dep) > 0 {
 		hits = append(hits, dep)
-		titles = append(titles, "라이선스 문서가 실제 의존성과 어긋난다 — docs/licensing.md §2를 고칠 것")
+		titles = append(titles, "the licensing document disagrees with the actual dependencies — fix docs/licensing.md §2")
 	} else {
 		hits = append(hits, nil)
 		titles = append(titles, "")
@@ -246,10 +246,10 @@ func main() {
 		fmt.Println()
 	}
 	if fail {
-		fmt.Println("문서 게이트 실패 — 위 위치를 고치고 다시 `make check-docs`.")
+		fmt.Println("docs gate failed — fix the locations above and run `make check-docs` again.")
 		os.Exit(1)
 	}
-	fmt.Printf("✓ 문서 검사 통과 (%d개 md + %d개 스크립트·계약 — 링크·앵커·범위 표현·역할 산문·개인정보)\n",
+	fmt.Printf("✓ docs check passed (%d md + %d scripts/contracts — links, anchors, scope wording, role prose, personal details)\n",
 		len(docs), len(prose)-len(docs))
 }
 
@@ -296,10 +296,10 @@ func crossLang(from, to, line string) string {
 		return ""
 	}
 	if _, err := os.Stat(strings.TrimSuffix(to, ".md") + ".en.md"); err == nil {
-		return "영문 짝이 있는데 한국어로 링크"
+		return "links to Korean although an English counterpart exists"
 	}
 	if !strings.Contains(line, "Korean") {
-		return "한국어 전용 문서인데 `(Korean)` 표시가 없다"
+		return "a Korean-only document without the `(Korean)` marker"
 	}
 	return ""
 }
@@ -321,7 +321,7 @@ func checkLicenseTable() []string {
 	if err != nil {
 		// 환경 미비(gen/ 없음)를 문서 오류와 같은 실패로 다루지 않는다. 다만 **검사하지 못했다는
 		// 사실**은 크게 남긴다 — `make`(전체)는 generate 뒤에 돌므로 거기서는 항상 검사된다.
-		fmt.Fprintln(os.Stderr, "⚠ 라이선스 표 대조를 건너뛴다: `go list -deps` 실패(`make generate` 필요)")
+		fmt.Fprintln(os.Stderr, "⚠ skipping the licence-table check: `go list -deps` failed (run `make generate`)")
 		return nil
 	}
 	seen := map[string]bool{}
@@ -335,9 +335,9 @@ func checkLicenseTable() []string {
 		mod, ver := f[0], f[1]
 		switch {
 		case !strings.Contains(body, mod):
-			miss = append(miss, fmt.Sprintf("%s: `%s`가 표에 없다(링크되는데 고지 대상에서 빠졌다)", doc, mod))
+			miss = append(miss, fmt.Sprintf("%s: `%s` is missing from the table (it is linked but not disclosed)", doc, mod))
 		case !strings.Contains(body, ver):
-			miss = append(miss, fmt.Sprintf("%s: `%s`의 버전이 다르다 — 실제 %s", doc, mod, ver))
+			miss = append(miss, fmt.Sprintf("%s: `%s` has a different version — actually %s", doc, mod, ver))
 		}
 	}
 	return miss
@@ -362,7 +362,7 @@ func unexplainedSectionRefs(doc string, ls []string) []string {
 	}
 	for n, line := range ls {
 		if m := sectionRef.FindString(line); m != "" {
-			return []string{fmt.Sprintf("%s:%d: %s — 「§ 표기」 한 줄로 어느 문서의 절인지 밝힐 것", doc, n+1, m)}
+			return []string{fmt.Sprintf("%s:%d: %s — add a '§ notation' line saying which document the sections belong to", doc, n+1, m)}
 		}
 	}
 	return nil

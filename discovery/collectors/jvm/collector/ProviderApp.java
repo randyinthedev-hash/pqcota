@@ -7,9 +7,9 @@ public class ProviderApp {
         try {
             Class<?> bc = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
             Security.addProvider((Provider) bc.getDeclaredConstructor().newInstance());
-            System.out.println("[app] BouncyCastle 동적 등록 완료");
+            System.out.println("[app] BouncyCastle registered dynamically");
         } catch (Throwable t) {
-            System.out.println("[app] BC 없음 — 기본 provider만");
+            System.out.println("[app] no BC — default providers only");
         }
         System.out.println("[app] running pid=" + ProcessHandle.current().pid());
         Thread.sleep(Long.MAX_VALUE);
