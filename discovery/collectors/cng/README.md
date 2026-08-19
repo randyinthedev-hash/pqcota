@@ -82,13 +82,19 @@ Windows Client Key Protection Provider
 바뀌었다. 그 결과 **같은 머신의 node_id도 바뀌었다**(호스트명 기반 → 설치 기반). Windows 노드를
 적재한 적이 없어 이행할 것은 없지만, 이름에 매달린 앵커가 어떤 모양으로 새는지가 여기 남는다.
 
+**provider 매핑과 하드웨어 UUID도 실측으로 닫았다.** 알고리즘마다 `BCryptEnumProviders`를 물으면
+`ML-DSA`·`ECDH_P256`·`SHA256`이 모두 **`Microsoft Primitive Provider`** 하나를 가리킨다 — 등록 목록의
+아홉 중 알고리즘을 실제로 서비스하는 것은 그것이라는 뜻이고, 조치 대상을 고를 때 봐야 할 자리다.
+`hardware_uuid`는 SMBIOS에서 읽은 값이 **Windows 자신이 보고하는 UUID와 일치**했다. 지문이 하나
+늘었어도 `derived_from`은 `machine-id` 그대로라 **node_id는 흔들리지 않았다**(§1.4 우선순위).
+
 ## 지금 어디까지 됐나
 
 | | 상태 |
 |---|---|
 | 순수 조립·완전성 규칙 + 단위 테스트 | **된다** — Windows 없이 돈다 |
 | `bcrypt.dll` 열거 | **된다** — Windows 11 26200에서 실측(위) |
-| 노드 식별 | **된다** — `MachineGuid`(설치 단위)로 실측 확인. `hardware_uuid`는 SMBIOS Type 1을 펌웨어 테이블에서 읽는다(하드웨어 단위, 리눅스 `product_uuid`와 같은 표기) — 실측 확인 대기 |
+| 노드 식별 | **된다** — `MachineGuid`(설치 단위)와 SMBIOS `hardware_uuid`(하드웨어 단위) 둘 다 실측 확인. 표기는 리눅스 `product_uuid`와 같다 |
 | 정규화 → 파생 뷰 | **된다** — provider·알고리즘이 `CngAxes`까지 온다(실측 값으로 못 박음) |
 | 적재 → 인벤토리 조회 | **된다** — 실기 결과를 Postgres에 적재해 뷰까지 확인(TD-CNG-9). 화면에 이렇게 나온다:<br>`win_cng  confirmed  runtime_introspection  providers=9 algorithms=50 네이티브(서명만 — KEM 미관측)` |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다** — 이 collector는 관측까지다 |
