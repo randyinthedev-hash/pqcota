@@ -27,17 +27,17 @@ func TestUnattributedEdgeIsMarkedNotBlank(t *testing.T) {
 	out := inventory.RenderDetail(snap)
 
 	if !strings.Contains(out, "@payment.service") {
-		t.Error("systemd 유닛을 안 냈다")
+		t.Error("the systemd unit was not emitted")
 	}
 	// 근거가 유닛이 아니면 그 사실을 함께 적는다 — 같은 값이라도 얼마나 믿을지가 다르다.
 	if !strings.Contains(out, "@/opt/app/bin/svc(exe-path)") {
-		t.Error("exe 경로인데 근거를 안 밝혔다")
+		t.Error("it is an exe path but the basis was not stated")
 	}
 	if !strings.Contains(out, "@?") {
-		t.Error("어느 앱인지 못 밝힌 엣지가 빈칸이다 — 열이 없는 것과 구별되지 않는다")
+		t.Error("an edge with no app named is left blank — indistinguishable from the column not being there")
 	}
 	// 왜 못 잡았는지는 완전성 노트에 적힌다. 화면이 그것을 감추면 안 된다.
 	if !strings.Contains(out, "could not be attributed to an app") {
-		t.Error("완전성 노트가 화면에 안 나온다")
+		t.Error("the completeness note does not appear on screen")
 	}
 }

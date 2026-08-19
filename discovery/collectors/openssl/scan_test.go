@@ -17,7 +17,7 @@ func TestMergeByPathUnionsAppKeys(t *testing.T) {
 	out := mergeByPath(perPID)
 
 	if len(out) != 2 {
-		t.Fatalf("경로별 유니크 %d개(2 기대): %v", len(out), out)
+		t.Fatalf("%d unique paths (want 2): %v", len(out), out)
 	}
 	byPath := map[string][]string{}
 	for _, d := range out {
@@ -25,10 +25,10 @@ func TestMergeByPathUnionsAppKeys(t *testing.T) {
 	}
 	crypto := byPath["/usr/lib/libcrypto.so.3"]
 	if strings.Join(crypto, ",") != "api.service,payment.service" { // 합집합·정렬·중복제거
-		t.Errorf("공유 .so 여러 앱에 걸침 실패: %v", crypto)
+		t.Errorf("a shared .so did not span several apps: %v", crypto)
 	}
 	if ssl := byPath["/usr/lib/libssl.so.3"]; len(ssl) != 1 || ssl[0] != "batch.service" {
-		t.Errorf("앱 하나로 합쳐야: %v", ssl)
+		t.Errorf("it must collapse into one app: %v", ssl)
 	}
 }
 
@@ -36,6 +36,6 @@ func TestMergeByPathUnionsAppKeys(t *testing.T) {
 func TestMergeByPathNoAppKeys(t *testing.T) {
 	out := mergeByPath([][]Detection{{{Path: "/usr/lib/libcrypto.so.3"}}})
 	if len(out) != 1 || out[0].AppKeys != nil {
-		t.Errorf("쓰는 앱이 없으면 nil: %v", out)
+		t.Errorf("with no using app it must be nil: %v", out)
 	}
 }

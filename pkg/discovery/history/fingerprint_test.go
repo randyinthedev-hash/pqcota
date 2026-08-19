@@ -27,20 +27,20 @@ func TestContentHashCoversCngAxes(t *testing.T) {
 		{Name: "ML-DSA", Class: "signature", Providers: []string{"Microsoft Primitive Provider"}}})
 
 	for name, other := range map[string]*history.Snapshot{
-		"provider가 하나 늘었다": snap([]string{"Microsoft Primitive Provider", "Vendor KSP"},
+		"one provider was added": snap([]string{"Microsoft Primitive Provider", "Vendor KSP"},
 			[]*discoveryv1.CngAlgorithm{{Name: "ML-DSA", Class: "signature", Providers: []string{"Microsoft Primitive Provider"}}}),
-		"알고리즘이 사라졌다": snap([]string{"Microsoft Primitive Provider"}, nil),
-		"서비스하는 provider가 바뀌었다": snap([]string{"Microsoft Primitive Provider"},
+		"an algorithm disappeared": snap([]string{"Microsoft Primitive Provider"}, nil),
+		"the serving provider changed": snap([]string{"Microsoft Primitive Provider"},
 			[]*discoveryv1.CngAlgorithm{{Name: "ML-DSA", Class: "signature", Providers: []string{"Vendor KSP"}}}),
 	} {
 		if history.ContentHash(base) == history.ContentHash(other) {
-			t.Errorf("%s인데 같은 지문이다 — 변화가 이력에서 사라진다", name)
+			t.Errorf("%s, yet the fingerprint is the same — the change vanishes from the history", name)
 		}
 	}
 	// 같은 관측이면 같아야 한다(중복 억제가 무력해지지 않게).
 	same := snap([]string{"Microsoft Primitive Provider"}, []*discoveryv1.CngAlgorithm{
 		{Name: "ML-DSA", Class: "signature", Providers: []string{"Microsoft Primitive Provider"}}})
 	if history.ContentHash(base) != history.ContentHash(same) {
-		t.Error("같은 관측인데 지문이 다르다 — 변화가 없는데 스냅샷이 쌓인다")
+		t.Error("the same observation gives a different fingerprint — snapshots pile up with no change")
 	}
 }

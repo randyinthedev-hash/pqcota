@@ -10,20 +10,20 @@ import (
 
 func TestParseProfiles(t *testing.T) {
 	csv := `node_id,display_name,environment,role,owner,location,labels
-node-db,결제 DB,production,db,DBA팀,seoul-dc,compliance=pci;tier=1
-# 주석 행은 무시
-node-web,결제 웹,dev,web,플랫폼팀,,
+node-db,Payments DB,production,db,DBA team,seoul-dc,compliance=pci;tier=1
+# comment rows are ignored
+node-web,Payments Web,dev,web,Platform team,,
 `
 	profs, err := inventory.ParseProfiles(strings.NewReader(csv))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(profs) != 2 {
-		t.Fatalf("프로필 %d개(2 기대)", len(profs))
+		t.Fatalf("%d profiles (want 2)", len(profs))
 	}
 	db := profs[0]
-	if db.GetNodeId() != "node-db" || db.GetDisplayName() != "결제 DB" || db.GetRole() != "db" {
-		t.Errorf("db 필드: %+v", db)
+	if db.GetNodeId() != "node-db" || db.GetDisplayName() != "Payments DB" || db.GetRole() != "db" {
+		t.Errorf("db fields: %+v", db)
 	}
 	if db.GetEnvironment() != inventoryv1.Environment_ENVIRONMENT_PRODUCTION {
 		t.Errorf("environment: %v", db.GetEnvironment())
@@ -35,6 +35,6 @@ node-web,결제 웹,dev,web,플랫폼팀,,
 		t.Errorf("source: %v", db.GetSource())
 	}
 	if profs[1].GetEnvironment() != inventoryv1.Environment_ENVIRONMENT_DEVELOPMENT {
-		t.Errorf("dev 별칭 파싱 실패: %v", profs[1].GetEnvironment())
+		t.Errorf("the dev alias did not parse: %v", profs[1].GetEnvironment())
 	}
 }
