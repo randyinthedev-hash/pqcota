@@ -29,9 +29,9 @@ import (
 )
 
 func main() {
-	levelFlag := flag.String("level", "l2", "배포 자동화 수준: l1(스테이지만) | l2(설치까지) | l3(활성화·재시작까지 — 계획의 activation 훅 사용)")
-	rollbackFlag := flag.Bool("rollback", false, "역방향(롤백) 플레이북 생성 — forward가 배치한 파일 제거")
-	dsn := flag.String("dsn", "", "히스토리·레코드 Postgres DSN(지정 시 before 캡처·영속)")
+	levelFlag := flag.String("level", "l2", "automation level: l1 (stage only) | l2 (through install) | l3 (through activation and restart, using the plan's activation hooks)")
+	rollbackFlag := flag.Bool("rollback", false, "generate the reverse (rollback) playbook — removes the files the forward run staged")
+	dsn := flag.String("dsn", "", "Postgres DSN for history and records; when given, captures the before state and persists it")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>")
@@ -51,7 +51,7 @@ func main() {
 
 	// §3.7 최강 게이트 — FINALIZED 아니면 실행 근거 없음.
 	if plan.GetStatus() != provisioningv1.PlanStatus_PLAN_STATUS_FINALIZED {
-		fmt.Fprintf(os.Stderr, "거부: 계획이 FINALIZED 아님(%s). 프로비저닝 근거는 확정 계획뿐(§3.7).\n", plan.GetStatus())
+		fmt.Fprintf(os.Stderr, "refused: the plan is not FINALIZED (%s). Only a finalized plan justifies provisioning (§3.7).\n", plan.GetStatus())
 		os.Exit(1)
 	}
 
@@ -89,7 +89,7 @@ func main() {
 	}
 
 	if *dsn == "" {
-		fmt.Fprintln(os.Stderr, "[provision] --dsn 미지정 → before 캡처·레코드 영속 생략(플레이북만).")
+		fmt.Fprintln(os.Stderr, "[provision] no --dsn → skipping the before capture and record persistence (playbook only).")
 		return
 	}
 
@@ -97,13 +97,13 @@ func main() {
 	ctx := context.Background()
 	hist, err := history.NewPgStoreIn(ctx, *dsn, org.FromEnv())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "히스토리 연결:", err)
+		fmt.Fprintln(os.Stderr, "connecting to history:", err)
 		os.Exit(1)
 	}
 	defer hist.Close()
 	recs, err := provisioning.NewPgRecordStore(ctx, *dsn)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "레코드 저장소:", err)
+		fmt.Fprintln(os.Stderr, "record store:", err)
 		os.Exit(1)
 	}
 	defer recs.Close()
@@ -117,7 +117,7 @@ func main() {
 		}
 		snap, err := hist.Latest(node)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "히스토리 조회:", err)
+			fmt.Fprintln(os.Stderr, "reading history:", err)
 			os.Exit(1)
 		}
 		var fs []*discoveryv1.Finding
@@ -142,10 +142,10 @@ func main() {
 		rec := provisioning.NewProvisioningRecord(
 			plan.GetId()+":"+a.GetId(), node, appKeys, plan.GetId(), a, before)
 		if err := recs.Append(rec); err != nil {
-			fmt.Fprintln(os.Stderr, "레코드 append:", err)
+			fmt.Fprintln(os.Stderr, "appending a record:", err)
 			os.Exit(1)
 		}
 		n++
 	}
-	fmt.Fprintf(os.Stderr, "[provision] 레코드 %d개 영속(before 캡처 · STAGED · 롤백 근거).\n", n)
+	fmt.Fprintf(os.Stderr, "[provision] persisted %d records (before capture · STAGED · rollback basis).\n", n)
 }

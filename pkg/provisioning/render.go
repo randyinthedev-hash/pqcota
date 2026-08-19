@@ -19,7 +19,7 @@ func Render(a *provisioningv1.RemediationAction) string {
 	case commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA:
 		return renderJCA(a)
 	default:
-		return "# (미상 런타임) — 조치 아티팩트 생성 불가\n"
+		return "# (unknown runtime) — no remediation artifact can be generated\n"
 	}
 }
 

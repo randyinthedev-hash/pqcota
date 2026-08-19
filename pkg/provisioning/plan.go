@@ -9,7 +9,7 @@ import (
 )
 
 // ErrNotFinalized — FINALIZED 아닌 계획을 실행 근거로 쓰려 할 때(§3.7 최강 게이트).
-var ErrNotFinalized = errors.New("plan not finalized — 프로비저닝 실행 거부(§3.7)")
+var ErrNotFinalized = errors.New("plan not finalized — refusing to provision (§3.7)")
 
 // Executable — 확정 계획이 프로비저닝 실행 근거로 유효한지 검증한다(§3.7 Inventory→Deploy 게이트).
 // 규칙: FINALIZED 상태 + 승인 서명(§3.3③) + 조치 최소 1건. 파생이 아니라 실행 직전 관문이다.
@@ -24,10 +24,10 @@ func Executable(p *provisioningv1.FinalizedPlan) error {
 		return fmt.Errorf("%w: status=%s", ErrNotFinalized, p.GetStatus())
 	}
 	if len(p.GetApprovalSignatures()) == 0 {
-		return fmt.Errorf("%w: 승인 서명 없음", ErrNotFinalized)
+		return fmt.Errorf("%w: no approval signature", ErrNotFinalized)
 	}
 	if len(p.GetActions()) == 0 {
-		return fmt.Errorf("%w: 조치 없음", ErrNotFinalized)
+		return fmt.Errorf("%w: no actions", ErrNotFinalized)
 	}
 	return nil
 }
