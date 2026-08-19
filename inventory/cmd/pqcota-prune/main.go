@@ -29,9 +29,9 @@ import (
 )
 
 func main() {
-	olderThan := flag.String("older-than", "", "이보다 오래된 변화 지점을 절단 (예: 90d, 720h)")
-	keepLast := flag.Int("keep-last", 0, "노드별 최근 N개 변화 지점은 보존")
-	apply := flag.Bool("apply", false, "실제로 삭제한다 (기본은 계획만)")
+	olderThan := flag.String("older-than", "", "prune change points older than this (e.g. 90d, 720h)")
+	keepLast := flag.Int("keep-last", 0, "keep the newest N change points per node")
+	apply := flag.Bool("apply", false, "actually delete (default is plan only)")
 	flag.Parse()
 
 	dur, err := parseDuration(*olderThan)
@@ -43,12 +43,12 @@ func main() {
 
 	dsn := os.Getenv("PQCOTA_DSN")
 	if dsn == "" {
-		fmt.Fprintln(os.Stderr, "PQCOTA_DSN 필요 — 절단할 영속 저장소를 가리켜야 함.")
+		fmt.Fprintln(os.Stderr, "PQCOTA_DSN is required — it must point at the persistent store to prune.")
 		os.Exit(2)
 	}
 	store, err := history.NewPgStoreIn(context.Background(), dsn, org.FromEnv())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Postgres 연결:", err)
+		fmt.Fprintln(os.Stderr, "connecting to Postgres:", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -63,24 +63,24 @@ func main() {
 
 func render(rep *history.PruneReport) string {
 	var b strings.Builder
-	mode := "계획 (dry-run — 아무것도 지우지 않았다)"
+	mode := "plan (dry run — nothing was deleted)"
 	if rep.Applied {
-		mode = "실행됨"
+		mode = "applied"
 	}
-	fmt.Fprintf(&b, "보존 정책 %s — %s\n\n", rep.Policy.String(), mode)
+	fmt.Fprintf(&b, "retention policy %s — %s\n\n", rep.Policy.String(), mode)
 	if len(rep.Nodes) == 0 {
-		b.WriteString("절단 대상 없음. (노드별 최신 스냅샷은 어떤 정책으로도 보존한다)\n")
+		b.WriteString("nothing to prune. (the newest snapshot per node is kept under every policy)\n")
 		return b.String()
 	}
-	fmt.Fprintf(&b, "%-24s %10s %10s  %s\n", "node", "snapshots", "observed", "~까지")
+	fmt.Fprintf(&b, "%-24s %10s %10s  %s\n", "node", "snapshots", "observed", "through")
 	for _, n := range rep.Nodes {
 		fmt.Fprintf(&b, "%-24s %10d %10d  %s\n",
 			n.NodeID, n.Snapshots, n.Observations, n.UpTo.Format("2006-01-02 15:04:05"))
 	}
 	s, o := rep.Total()
-	fmt.Fprintf(&b, "\n합계: 변화 지점 %d건 · 관측 기록 %d건\n", s, o)
+	fmt.Fprintf(&b, "\ntotals: %d change points · %d observations\n", s, o)
 	if !rep.Applied {
-		b.WriteString("실제로 지우려면 -apply 를 붙인다. 절단 사실은 기록으로 남아 이력에 고지된다.\n")
+		b.WriteString("add -apply to actually delete. The pruning itself is recorded and reported in the history.\n")
 	}
 	return b.String()
 }
@@ -95,13 +95,13 @@ func parseDuration(s string) (time.Duration, error) {
 	if days, ok := strings.CutSuffix(s, "d"); ok {
 		n, err := strconv.Atoi(days)
 		if err != nil || n < 0 {
-			return 0, fmt.Errorf("-older-than 값이 잘못됨: %q (예: 90d, 720h)", s)
+			return 0, fmt.Errorf("invalid -older-than: %q (e.g. 90d, 720h)", s)
 		}
 		return time.Duration(n) * 24 * time.Hour, nil
 	}
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		return 0, fmt.Errorf("-older-than 값이 잘못됨: %q (예: 90d, 720h)", s)
+		return 0, fmt.Errorf("invalid -older-than: %q (e.g. 90d, 720h)", s)
 	}
 	return d, nil
 }

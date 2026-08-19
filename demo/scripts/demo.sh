@@ -98,7 +98,7 @@ echo "▶ 5/6 중앙 인벤토리 적재·조회 (Postgres append-only · 엔드
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
 echo "   ── 조회(pqcota-inventory) — ▸머신 헤더(엔드포인트·프로필) · @앱 표시(공유 .so는 다중) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
-  | grep -E '중앙 인벤토리|▸|@|합계' | sed 's/^/   /'
+  | grep -E 'central inventory|▸|@|totals' | sed 's/^/   /'
 
 # 이력 — 같은 회수 결과를 한 번 더 적재한다(실운용의 "다음 회차 스캔"). 내용이 같으니
 # 스냅샷은 늘지 않고 관측 기록만 쌓인다 — 저장은 변화 횟수만큼만 자라되 "봤다"는 사실은 남는다.
@@ -132,7 +132,7 @@ CSV
     | sed 's/^/      /'
   echo "   ── 다시 조회: 관측 엣지는 그대로고, 빈 자리만 메워진다 ──"
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" \
-    | grep -E '관측 엣지|→|사람이 선언한 앱' | sed 's/^/   /'
+    | grep -E 'observed edges|→|declared by a person' | sed 's/^/   /'
 else
   echo "   (이번 구간에서는 모든 엣지가 앱까지 잡혔다 — 메울 자리가 없으면 선언도 없다)"
 fi
@@ -147,10 +147,10 @@ exclude,*,*,/usr/bin/python*,패키지가 딸려 넣은 python 런타임
 CSV
 echo "   ── 자산 스코프(-scope-assets): 잡음(sshd·python 런타임)을 관리 대상에서 뺀다 ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
-  'pqcota-ingest -scope-assets /work/scope-assets.csv /work/results' | grep -E '자산 스코프|•' | sed 's/^/   /'
+  'pqcota-ingest -scope-assets /work/scope-assets.csv /work/results' | grep -E 'asset scope|•' | sed 's/^/   /'
 echo "   ── 제외 후 인벤토리: 앱이 실제로 쓰는 자산만 남는다 (제외 ≠ 부재 — 건수를 고지한다) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
-  | grep -E '▸|openssl|jca|스코프 제외|합계' | sed 's/^/   /'
+  | grep -E '▸|openssl|jca|excluded by asset scope|totals' | sed 's/^/   /'
 
 POST_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
 echo "   ── 변화(-diff): 스코프 적용 전후. '사라짐'은 자산이 없어진 게 아니라 관리 대상에서 뺐다는 뜻 ──"

@@ -94,14 +94,14 @@ take_observe() {
 	type_cmd "pqcota-discover-view /work/results"
 	# 범위의 끝줄(다음 절 제목)은 빼고 낸다 — 남기면 엣지 절 제목이 두 번 나온다.
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
-		sed -n '/발견 자산/,/관측 통신 엣지/p' | sed '$d' | head -14
+		sed -n '/discovered assets/,/observed edges/p' | sed '$d' | head -14
 	note "   체인 마지막의 BC — 앱이 실행 중에 addProvider()로 등록한 것이다."
 	note "   파일을 아무리 읽어도 안 나온다. 이것이 런타임 관측의 이유다."
 	cut_mark
 
 	say "회선에서 실제로 협상된 것 — 복호화 없이 핸드셰이크만 본다"
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
-		sed -n '/관측 통신 엣지/,/등급 합계/p' | head -10
+		sed -n '/observed edges/,/grade totals/p' | head -10
 	note "   같은 게이트웨이인데 상대에 따라 갈린다 — 능력이 아니라 협상 결과다."
 }
 

@@ -64,7 +64,7 @@ type IngestOptions struct {
 }
 
 // ErrSignatureRequired — 필수 모드인데 검증자가 없다.
-var ErrSignatureRequired = errors.New("서명 검증이 필수인데 검증할 공개키가 없다")
+var ErrSignatureRequired = errors.New("signature verification is required but no public key is available")
 
 // IngestResults — 회수된 CollectionResult[]를 중앙 인벤토리(히스토리)에 적재한다.
 // 엣지↔중앙 경계를 넘어온 계약을 받아 노드별로 정규화·영속화하는 관문이다.
@@ -102,7 +102,7 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 	if len(declared) > 0 {
 		as, ok := o.Store.(history.AttributionStore)
 		if !ok {
-			return nil, errors.New("앱 선언이 왔는데 저장소가 그것을 담지 못한다")
+			return nil, errors.New("an app declaration arrived but the store cannot hold it")
 		}
 		for _, a := range declared {
 			if err := as.PutAttribution(a); err != nil {
@@ -123,24 +123,24 @@ func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*Inge
 		node := res.GetEnvelope().GetTargetNodeId()
 		if node == "" {
 			rep.OffScope++
-			rep.Notes = append(rep.Notes, "타깃 노드 미지정 — 스코프 앵커 없음")
-			o.record(rep, res, "", history.RejectOffScope, "타깃 노드 미지정 — 스코프 앵커 없음")
+			rep.Notes = append(rep.Notes, "no target node given — no scope anchor")
+			o.record(rep, res, "", history.RejectOffScope, "no target node given — no scope anchor")
 			continue
 		}
 		if master != nil && !master.Registered(node) {
 			rep.OffScope++
-			rep.Notes = append(rep.Notes, node+": 미등재 → 등재 판정 요청(§1.4)")
-			o.record(rep, res, node, history.RejectOffScope, "미등재 → 등재 판정 요청(§1.4)")
+			rep.Notes = append(rep.Notes, node+": not registered → routed to a registration decision (§1.4)")
+			o.record(rep, res, node, history.RejectOffScope, "not registered → routed to a registration decision (§1.4)")
 			continue
 		}
 		if verifySig == nil {
 			// 검증하지 않았다는 사실을 센다. 통과와 같은 자리에 두지 않는다.
 			rep.Unverified++
-			o.record(rep, res, node, history.RejectUnverified, "검증할 공개키 없음 — 서명을 확인하지 못했다")
+			o.record(rep, res, node, history.RejectUnverified, "no public key to verify with — the signature was not checked")
 		} else if !verifySig(res) {
 			rep.Rejected++
-			rep.Notes = append(rep.Notes, node+": 서명 검증 실패 → 거부(§2.6)")
-			o.record(rep, res, node, history.RejectSignature, "서명 검증 실패(§2.6)")
+			rep.Notes = append(rep.Notes, node+": signature verification failed → rejected (§2.6)")
+			o.record(rep, res, node, history.RejectSignature, "signature verification failed (§2.6)")
 			continue
 		}
 		if _, ok := byNode[node]; !ok {
@@ -218,7 +218,7 @@ func (o IngestOptions) record(rep *IngestReport, res *discoveryv1.CollectionResu
 		r.CanonicalHash = fmt.Sprintf("%x", sha256.Sum256(sign.Canonical(res)))
 	}
 	if err := o.Rejections.AppendRejection(r); err != nil {
-		rep.Notes = append(rep.Notes, "거절 기록을 남기지 못했다: "+err.Error())
+		rep.Notes = append(rep.Notes, "could not record the rejection: "+err.Error())
 	}
 }
 

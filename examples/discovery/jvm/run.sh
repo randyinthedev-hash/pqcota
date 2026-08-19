@@ -49,11 +49,11 @@ java -cp "$BC" /tmp/App.java & sleep 3
 echo
 echo "── 정찰(ScanJVMs) + attach → CollectionResult(JSON Lines) ──"
 PQCOTA_JVM_AGENT=/tmp/collector.jar /x/pqcota-jvmscan host://demo-jvm > /tmp/jca.jsonl 2>/tmp/err
-grep -E '발견 JVM|attach:' /tmp/err | sed 's/^/   /'
+grep -E 'found JVM|attach:' /tmp/err | sed 's/^/   /'
 
 echo "── 적재(pqcota-ingest, JSONL) — 동적 BC가 관측됐나 ──"
 mkdir -p /tmp/res && cp /tmp/jca.jsonl /tmp/res/
-/x/pqcota-ingest /tmp/res 2>&1 | grep -E '적재 결과|•' | sed 's/^/   /'
+/x/pqcota-ingest /tmp/res 2>&1 | grep -E 'ingest result|•' | sed 's/^/   /'
 # CBOM은 base64로 실려 있다. 이 이미지엔 python도 jq도 없으므로 **있는 것**으로 꺼낸다 —
 # 없는 도구로 확인하면 검사가 조용히 죽는다(실제로 죽어 있었다: python3가 없어 이 줄이 늘 실패했다).
 if grep -oE '"cbomCyclonedx": *"[^"]*"' /tmp/jca.jsonl | head -1 | cut -d'"' -f4 \

@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	out := flag.String("out", "declared-results", "CollectionResult JSON 출력 디렉터리")
+	out := flag.String("out", "declared-results", "directory to write the CollectionResult JSON into")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-declare [--out <dir>] <declaration.csv>")
@@ -57,8 +57,8 @@ func main() {
 		}
 	}
 
-	fmt.Printf("선언 레인 CollectionResult %d개 → %s/ (관측 아님·detection_method=UNSPECIFIED)\n", len(results), *out)
-	fmt.Printf("다음: pqcota-ingest %s  (env PQCOTA_DSN 있으면 Postgres 영속)\n", *out)
+	fmt.Printf("%d declared-lane CollectionResults → %s/ (not observations; detection_method=UNSPECIFIED)\n", len(results), *out)
+	fmt.Printf("next: pqcota-ingest %s  (with env PQCOTA_DSN it persists to Postgres)\n", *out)
 }
 
 // safeName — node_id를 파일명에 쓸 수 있게 다듬는다.

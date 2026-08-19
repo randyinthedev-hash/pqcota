@@ -38,7 +38,7 @@ import (
 
 func main() {
 	scopeAssets := flag.String("scope-assets", "",
-		"자산 스코프 정책 CSV — 노드 안에서 무엇을 계속 관리할지(action,runtime,lib,app_key,note)")
+		"asset scope policy CSV — what stays managed within a node (action,runtime,lib,app_key,note)")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {
@@ -51,7 +51,7 @@ func main() {
 	if len(args) > 1 {
 		ids, err := readScope(args[1])
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "scope 읽기:", err)
+			fmt.Fprintln(os.Stderr, "reading scope:", err)
 			os.Exit(1)
 		}
 		master = scope.NewMaster(ids)
@@ -59,7 +59,7 @@ func main() {
 
 	results := loadResults(dir)
 	if len(results) == 0 {
-		fmt.Fprintf(os.Stderr, "결과 JSON 없음: %s/*.json\n", dir)
+		fmt.Fprintf(os.Stderr, "no result JSON found: %s/*.json\n", dir)
 		os.Exit(1)
 	}
 
@@ -99,35 +99,35 @@ func main() {
 	}
 
 	fmt.Println("╔══════════════════════════════════════════════════╗")
-	fmt.Println("║  pqcota 중앙 적재 (Discovery → 히스토리)           ║")
+	fmt.Println("║  pqcota central ingest (discovery → history)      ║")
 	fmt.Println("╚══════════════════════════════════════════════════╝")
-	backing := "인메모리(요약만 — 프로세스 종료 시 소멸)"
+	backing := "in-memory (summary only — gone when the process exits)"
 	if persistent {
-		backing = "Postgres(append-only 영속)"
+		backing = "Postgres (append-only, persistent)"
 	}
-	fmt.Printf("입력: %d개 CollectionResult · 저장소: %s\n", len(results), backing)
+	fmt.Printf("input: %d CollectionResults · store: %s\n", len(results), backing)
 	if master != nil {
-		fmt.Printf("스코프 게이트: 등재분만 적재(미등재는 등재요청)\n")
+		fmt.Printf("scope gate: only registered nodes are ingested (the rest become registration requests)\n")
 	} else {
-		fmt.Printf("스코프 게이트: 생략(CMDB 미지정)\n")
+		fmt.Printf("scope gate: skipped (no CMDB given)\n")
 	}
 	if verifySig != nil {
-		fmt.Printf("서명 검증: PQCOTA_VERIFY_KEY로 검증(불일치는 거부, §2.6)\n")
+		fmt.Printf("signature check: verified with PQCOTA_VERIFY_KEY (mismatches are rejected, §2.6)\n")
 	} else {
-		fmt.Printf("서명 검증: **하지 않았다** — 검증할 공개키가 없다. 전송 보안이 대신한다는 전제다.\n")
-		fmt.Printf("           그 전제가 서지 않는 곳이면 PQCOTA_REQUIRE_SIGNATURE=1로 막을 것.\n")
+		fmt.Printf("signature check: **not done** — no public key to verify with. The assumption is that transport security covers it.\n")
+		fmt.Printf("           where that assumption does not hold, block it with PQCOTA_REQUIRE_SIGNATURE=1.\n")
 	}
 	// 스냅샷은 실질 내용이 바뀐 노드에만 새로 생긴다 — 나머지는 관측 기록만 남아
 	// "봤다"는 사실은 보존하되 같은 상태를 중복 저장하지 않는다.
-	fmt.Printf("\n적재 결과: 수용 %d · 미등재/앵커없음 %d · 서명거부 %d → 노드 %d개 관측(변화 %d · 동일 %d)\n",
+	fmt.Printf("\ningest result: accepted %d · unregistered/no-anchor %d · signature-rejected %d → %d nodes observed (changed %d · identical %d)\n",
 		rep.Accepted, rep.OffScope, rep.Rejected, rep.Snapshots, rep.Changed, rep.Snapshots-rep.Changed)
 	if rep.Unverified > 0 {
 		// 확인하지 못한 것을 통과와 같은 자리에 두지 않는다 — 서명거부와도 다르다(§2.6).
-		fmt.Printf("서명 미확인: %d건 — 틀렸다는 것이 아니라 **물어보지 못했다**는 뜻이다.\n", rep.Unverified)
+		fmt.Printf("unverified signatures: %d — this does not mean they are wrong, it means **they were never checked**.\n", rep.Unverified)
 	}
 	if rep.ExcludedByScope > 0 {
 		// 제외는 "없음"이 아니다 — 몇 건을 왜 뺐는지 반드시 밝힌다(§2.6).
-		fmt.Printf("자산 스코프: 관리 대상 아님으로 %d건 제외(관측은 됐으나 적재 안 함)\n", rep.ExcludedByScope)
+		fmt.Printf("asset scope: %d excluded as out of scope (observed, but not ingested)\n", rep.ExcludedByScope)
 	}
 
 	for _, node := range rep.Nodes {
@@ -135,16 +135,16 @@ func main() {
 		if snap == nil {
 			continue
 		}
-		fmt.Printf("  • %-12s 자산 %d · 관측엣지 %d\n", node, len(snap.Findings), len(snap.Edges))
+		fmt.Printf("  • %-12s assets %d · observed edges %d\n", node, len(snap.Findings), len(snap.Edges))
 	}
 	for _, n := range rep.Notes {
 		fmt.Printf("  ⚠ %s\n", n)
 	}
 	for _, c := range rep.Conflicts {
 		if c.Kind == "duplicate" {
-			fmt.Printf("  ⚠ 중복: 물리머신 %s를 여러 node_id로 등록 → %v (같은 머신, 이름만 다름)\n", c.Key, c.Members)
+			fmt.Printf("  ⚠ duplicate: physical machine %s registered under several node_ids → %v (same machine, different names)\n", c.Key, c.Members)
 		} else {
-			fmt.Printf("  ⚠ 충돌: node_id %s가 여러 머신을 가리킴 → %v (재이미지·오라벨 의심)\n", c.Key, c.Members)
+			fmt.Printf("  ⚠ collision: node_id %s points at several machines → %v (suspect a re-image or a mislabel)\n", c.Key, c.Members)
 		}
 	}
 }
@@ -154,7 +154,7 @@ func openStore() (history.Store, func(), bool) {
 	if dsn == "" {
 		mem, err := history.NewMemStoreIn(org.FromEnv())
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "조직:", err)
+			fmt.Fprintln(os.Stderr, "organization:", err)
 			os.Exit(2)
 		}
 		return mem, func() {}, false
@@ -164,7 +164,7 @@ func openStore() (history.Store, func(), bool) {
 		// **인메모리로 대체하지 않는다.** v0.1.x는 여기서 폴백했는데, 그러면 적재된 줄 알았던
 		// 것이 프로세스와 함께 사라지고 화면에는 성공이 찍힌다 — 성공처럼 보이는 실패다.
 		// DSN을 준 것은 영속을 요구한 것이고, 그 요구를 못 들어주면 멈추는 것이 맞다.
-		fmt.Fprintln(os.Stderr, "저장소를 열지 못했다:", err)
+		fmt.Fprintln(os.Stderr, "could not open the store:", err)
 		os.Exit(1)
 	}
 	return pg, pg.Close, true
@@ -250,7 +250,7 @@ func loadAssetPolicy(path string) (*scope.AssetPolicy, error) {
 	}
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("자산 스코프 열기: %w", err)
+		return nil, fmt.Errorf("opening the asset scope: %w", err)
 	}
 	defer f.Close()
 	return scope.LoadAssetPolicy(f)

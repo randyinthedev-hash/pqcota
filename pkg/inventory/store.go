@@ -19,7 +19,7 @@ func RenderStore(store history.Store, meta MetaStore) (string, error) {
 		return "", err
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "═══ 중앙 인벤토리 (누적 · 노드 %d) ═══\n\n", len(nodes))
+	fmt.Fprintf(&b, "═══ central inventory (cumulative · %d nodes) ═══\n\n", len(nodes))
 
 	totalAssets := 0
 	var edges []*discoveryv1.ObservedEdge
@@ -51,7 +51,7 @@ func RenderStore(store history.Store, meta MetaStore) (string, error) {
 			unknown++
 		}
 	}
-	fmt.Fprintf(&b, "── 합계: 자산 %d · 관측엣지 %d (🟢 PQC %d · 🔴 고전 %d · ⚪ 불명 %d) ──\n",
+	fmt.Fprintf(&b, "── totals: %d assets · %d observed edges (🟢 PQC %d · 🔴 classical %d · ⚪ unknown %d) ──\n",
 		totalAssets, len(edges), pqc, classical, unknown)
 	return b.String(), nil
 }

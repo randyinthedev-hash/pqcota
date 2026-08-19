@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-	out := flag.String("out", "./declared-attribution", "선언 레인 결과를 쓸 디렉터리")
+	out := flag.String("out", "./declared-attribution", "directory to write the declared-lane result into")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-declare-attribution [--out <dir>] <attribution.csv>")
@@ -39,7 +39,7 @@ func main() {
 
 	f, err := os.Open(flag.Arg(0))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "입력을 열 수 없다:", err)
+		fmt.Fprintln(os.Stderr, "cannot open the input:", err)
 		os.Exit(1)
 	}
 	defer f.Close()
@@ -48,11 +48,11 @@ func main() {
 	if err != nil {
 		// 어느 엣지를 가리키는지 모르는 줄은 추측하지 않고 멈춘다 — 앱을 잘못 짚으면
 		// 조치 대상이 바뀐다.
-		fmt.Fprintln(os.Stderr, "선언을 읽을 수 없다:", err)
+		fmt.Fprintln(os.Stderr, "cannot read the declarations:", err)
 		os.Exit(1)
 	}
 	if len(results) == 0 {
-		fmt.Fprintln(os.Stderr, "선언이 하나도 없다 — CSV가 비었거나 헤더뿐이다.")
+		fmt.Fprintln(os.Stderr, "no declarations at all — the CSV is empty or header-only.")
 		os.Exit(1)
 	}
 	if err := os.MkdirAll(*out, 0o755); err != nil {
@@ -76,8 +76,8 @@ func main() {
 		total += len(res.GetObservedEdges())
 	}
 
-	fmt.Printf("사람이 선언한 앱 %d건 (노드 %d개) → %s\n", total, len(results), *out)
-	fmt.Println("이건 **관측이 아니다** — detection_method=UNSPECIFIED로 선언 레인에 쌓인다.")
-	fmt.Println("관측이 이미 짚은 앱은 덮지 않는다. 빈 자리만 조회 화면에서 메운다.")
-	fmt.Printf("다음: pqcota-ingest %s\n", *out)
+	fmt.Printf("%d apps declared by a person (%d nodes) → %s\n", total, len(results), *out)
+	fmt.Println("this is **not an observation** — it accumulates in the declared lane with detection_method=UNSPECIFIED.")
+	fmt.Println("apps already attributed by observation are not overwritten; only the blanks are filled at view time.")
+	fmt.Printf("next: pqcota-ingest %s\n", *out)
 }
