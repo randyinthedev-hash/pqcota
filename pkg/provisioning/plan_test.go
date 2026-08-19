@@ -20,7 +20,7 @@ func TestExecutable(t *testing.T) {
 	}
 
 	if err := provisioning.Executable(base()); err != nil {
-		t.Errorf("finalized 계획은 실행 가능해야: %v", err)
+		t.Errorf("a finalized plan must be executable: %v", err)
 	}
 
 	// draft/in-review는 거부(§3.7).
@@ -32,7 +32,7 @@ func TestExecutable(t *testing.T) {
 		p := base()
 		p.Status = s
 		if err := provisioning.Executable(p); err == nil {
-			t.Errorf("status=%s 계획은 거부돼야", s)
+			t.Errorf("a status=%s plan must be refused", s)
 		}
 	}
 
@@ -40,19 +40,19 @@ func TestExecutable(t *testing.T) {
 	p := base()
 	p.ApprovalSignatures = nil
 	if err := provisioning.Executable(p); err == nil {
-		t.Error("무서명 계획은 거부돼야")
+		t.Error("an unsigned plan must be refused")
 	}
 
 	// 조치 없으면 거부.
 	p = base()
 	p.Actions = nil
 	if err := provisioning.Executable(p); err == nil {
-		t.Error("빈 계획은 거부돼야")
+		t.Error("an empty plan must be refused")
 	}
 
 	// nil 거부.
 	if err := provisioning.Executable(nil); err == nil {
-		t.Error("nil 계획은 거부돼야")
+		t.Error("a nil plan must be refused")
 	}
 }
 
@@ -75,33 +75,33 @@ func TestProviderClassWarnings(t *testing.T) {
 
 	// 알 수 없는 provider + provider_class 미지정 → placeholder → 경고 1건.
 	if w := provisioning.ProviderClassWarnings(plan(jca(inject, "acme-jce", ""))); len(w) != 1 {
-		t.Errorf("미확정 provider는 경고 1건이어야: %v", w)
+		t.Errorf("an undecided provider must give exactly one warning: %v", w)
 	} else if !strings.Contains(w[0], "acme-jce") || !strings.Contains(w[0], "provider_class") {
-		t.Errorf("경고가 provider·해결책을 짚어야: %q", w[0])
+		t.Errorf("the warning must name the provider and the fix: %q", w[0])
 	}
 
 	// FQCN을 계획에 넣으면 경고 없음(커스텀 provider가 계획만으로 완결).
 	if w := provisioning.ProviderClassWarnings(plan(jca(inject, "acme-jce", "com.acme.AcmeProvider"))); len(w) != 0 {
-		t.Errorf("provider_class 명시 시 경고 없어야: %v", w)
+		t.Errorf("with provider_class given there must be no warning: %v", w)
 	}
 	// 알려진 이름(BC)도 경고 없음.
 	if w := provisioning.ProviderClassWarnings(plan(jca(inject, "BC", ""))); len(w) != 0 {
-		t.Errorf("BC는 확정 가능 — 경고 없어야: %v", w)
+		t.Errorf("BC can be resolved — there must be no warning: %v", w)
 	}
 	// PROVIDER_INJECT가 아니면(config-only 등) 무관.
 	cfg := provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
 	if w := provisioning.ProviderClassWarnings(plan(jca(cfg, "acme-jce", ""))); len(w) != 0 {
-		t.Errorf("provider 주입이 아니면 경고 없어야: %v", w)
+		t.Errorf("without a provider injection there must be no warning: %v", w)
 	}
 	// OpenSSL은 FQCN이 필요 없다 — provider 미확정이어도 경고 없음.
 	ossl := jca(inject, "myprov", "")
 	ossl.CryptoRuntime = commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL
 	if w := provisioning.ProviderClassWarnings(plan(ossl)); len(w) != 0 {
-		t.Errorf("OpenSSL은 FQCN 불필요 — 경고 없어야: %v", w)
+		t.Errorf("OpenSSL needs no FQCN — there must be no warning: %v", w)
 	}
 
 	// 경고가 있어도 Executable(거버넌스)은 통과한다 — 둘은 별개 관심사.
 	if err := provisioning.Executable(plan(jca(inject, "acme-jce", ""))); err != nil {
-		t.Errorf("placeholder 조치도 FINALIZED면 Executable 통과해야(하드 블록 아님): %v", err)
+		t.Errorf("a placeholder step must still pass Executable when FINALIZED (not a hard block): %v", err)
 	}
 }

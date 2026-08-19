@@ -14,12 +14,12 @@ import (
 func TestParseRejectsWhatCannotBeToldApart(t *testing.T) {
 	for _, s := range []string{"", " ", "a", "Acme", "ACME", "-acme", "acme_corp", "acme.corp", "acme corp"} {
 		if got, err := org.Parse(s); err == nil {
-			t.Errorf("%q를 받아들였다 → %q", s, got)
+			t.Errorf("%q was accepted → %q", s, got)
 		}
 	}
 	for _, s := range []string{"ac", "acme", "acme-corp", "org-2026", "a1"} {
 		if _, err := org.Parse(s); err != nil {
-			t.Errorf("%q를 거절했다: %v", s, err)
+			t.Errorf("%q was rejected: %v", s, err)
 		}
 	}
 }
@@ -27,10 +27,10 @@ func TestParseRejectsWhatCannotBeToldApart(t *testing.T) {
 // TestEmptyIsNotAChoice — 빈 조직은 Default를 고른 것이 아니라 대다 만 것이다.
 func TestEmptyIsNotAChoice(t *testing.T) {
 	if _, err := org.Parse(""); !errors.Is(err, org.ErrEmpty) {
-		t.Fatalf("빈 조직이 ErrEmpty가 아니다: %v", err)
+		t.Fatalf("an empty organization is not ErrEmpty: %v", err)
 	}
 	if org.Default == "" {
-		t.Fatal("Default가 빈 값이다 — \"조직 없음\"과 \"조직을 안 적었음\"이 같은 모양이 된다")
+		t.Fatal("Default is empty — \"no organization\" and \"organization not written\" take the same shape")
 	}
 }
 
@@ -38,10 +38,10 @@ func TestEmptyIsNotAChoice(t *testing.T) {
 func TestResolveFallsBackButNeverGuesses(t *testing.T) {
 	got, err := org.Resolve("")
 	if err != nil || got != org.Default {
-		t.Fatalf("빈 입력이 Default로 풀리지 않는다: %q %v", got, err)
+		t.Fatalf("empty input does not resolve to Default: %q %v", got, err)
 	}
 	if _, err := org.Resolve("Acme"); err == nil {
-		t.Fatal("오타를 기본값으로 삼켰다 — 그 행이 어디로 갔는지 알 수 없게 된다")
+		t.Fatal("a typo was swallowed into the default — where that row went becomes unknowable")
 	}
 }
 
@@ -49,10 +49,10 @@ func TestResolveFallsBackButNeverGuesses(t *testing.T) {
 func TestRequiredModeRefusesTheDefault(t *testing.T) {
 	t.Setenv(org.RequireEnv, "1")
 	if _, err := org.Resolve(""); !errors.Is(err, org.ErrDefaultNotAllowed) {
-		t.Fatalf("필수 모드인데 기본 조직으로 열렸다: %v", err)
+		t.Fatalf("in required mode it opened with the default organization: %v", err)
 	}
 	if got, err := org.Resolve("acme"); err != nil || got != org.ID("acme") {
-		t.Fatalf("필수 모드에서 정상 조직이 막혔다: %q %v", got, err)
+		t.Fatalf("in required mode a valid organization was blocked: %q %v", got, err)
 	}
 }
 
@@ -60,11 +60,11 @@ func TestRequiredModeRefusesTheDefault(t *testing.T) {
 // 고객 조직 ID로 배정될 수 있다. 배정되는 순간 단일 조직 시절 데이터와 한 조직이 된다.
 func TestDefaultIsReservedInRequiredMode(t *testing.T) {
 	if _, err := org.Parse(string(org.Default)); err != nil {
-		t.Fatal("전제 확인: Default는 모양 규칙을 통과한다 — 그래서 예약이 필요하다")
+		t.Fatal("premise check: Default passes the shape rule — which is why it must be reserved")
 	}
 	t.Setenv(org.RequireEnv, "1")
 	if _, err := org.Resolve(string(org.Default)); !errors.Is(err, org.ErrReserved) {
-		t.Fatalf("필수 모드에서 예약 이름이 조직으로 열렸다: %v", err)
+		t.Fatalf("in required mode a reserved name opened as an organization: %v", err)
 	}
 }
 
@@ -81,6 +81,6 @@ func TestScopedIsSatisfiedByTheStores(t *testing.T) {
 	var st history.Store = history.NewMemStore()
 	sc, ok := st.(org.Scoped)
 	if !ok || sc.Org() != org.Default {
-		t.Fatalf("Store를 org.Scoped로 물을 수 없다: ok=%v", ok)
+		t.Fatalf("a Store cannot be asked through org.Scoped: ok=%v", ok)
 	}
 }
