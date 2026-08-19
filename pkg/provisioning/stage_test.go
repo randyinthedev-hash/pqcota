@@ -39,17 +39,17 @@ func TestProvisioningPlaybookL2(t *testing.T) {
 	pb := provisioning.GenerateProvisioningPlaybook(samplePlan(), provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	for _, want := range []string{
 		`hosts: ["web-01"]`, `hosts: ["app-01"]`,
-		"provider 모듈 스테이지 (BC)", "/opt/pqcota/BC.jar", // JCA 주입 모듈
+		"stage the provider module (BC)", "/opt/pqcota/BC.jar", // JCA 주입 모듈
 		"content: |",           // config 조각 배치
 		"java.security.pqcota", // JCA config 경로
 		"openssl-pqc.cnf",      // openssl config 경로
-		"a3(REMEDIATION_KIND_FORK_REPLACE): config로 배포 불가", // 비-config 조치는 주석
+		"a3 (REMEDIATION_KIND_FORK_REPLACE): cannot be delivered through config", // 비-config 조치는 주석
 	} {
 		if !strings.Contains(pb, want) {
 			t.Errorf("L2 플레이북에 %q 없음:\n%s", want, pb)
 		}
 	}
-	if strings.Contains(pb, "restart") || strings.Contains(pb, "재시작:") {
+	if strings.Contains(pb, "restart") || strings.Contains(pb, "restart:") {
 		t.Errorf("L2에 재시작이 있으면 안 됨(재시작은 L3의 restart 훅):\n%s", pb)
 	}
 }
@@ -63,7 +63,7 @@ func TestJCAClasspathHintInHeader(t *testing.T) {
 		provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL,
 	} {
 		pb := provisioning.GenerateProvisioningPlaybook(samplePlan(), lvl)
-		for _, want := range []string{"JCA provider 주입 포함", "classpath 또는 --module-path", "activation.activate"} {
+		for _, want := range []string{"includes a JCA provider injection", "classpath or --module-path", "activation.activate"} {
 			if !strings.Contains(pb, want) {
 				t.Errorf("lvl=%s: JCA 함정 헤더에 %q 없음:\n%s", levelName(lvl), want, pb)
 			}
@@ -75,7 +75,7 @@ func TestJCAClasspathHintInHeader(t *testing.T) {
 		{Id: "a1", TargetNodeId: "web-01", CryptoRuntime: commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 			Kind: provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, ProviderChoice: "oqsprovider"},
 	}}
-	if pb := provisioning.GenerateProvisioningPlaybook(ossl, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL); strings.Contains(pb, "JCA provider 주입 포함") {
+	if pb := provisioning.GenerateProvisioningPlaybook(ossl, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL); strings.Contains(pb, "includes a JCA provider injection") {
 		t.Errorf("openssl 전용인데 JCA 노트가 떴다:\n%s", pb)
 	}
 }
@@ -109,7 +109,7 @@ func TestL3ActivationOrder(t *testing.T) {
 	L3 := provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
 
 	fwd := provisioning.GenerateProvisioningPlaybook(plan, L3)
-	iPre, iCfg := strings.Index(fwd, "systemctl stop payment"), strings.Index(fwd, "config 조각 배치")
+	iPre, iCfg := strings.Index(fwd, "systemctl stop payment"), strings.Index(fwd, "place the config fragment")
 	iAct, iRst := strings.Index(fwd, "ln -sf"), strings.Index(fwd, "systemctl start payment")
 	for _, s := range []int{iPre, iCfg, iAct, iRst} {
 		if s < 0 {
@@ -254,7 +254,7 @@ func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 	// 내용이 같은 조각 둘 → 경로를 나누지 않고, 배치도 한 번(중복 파일·중복 태스크 없음).
 	same := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{mk("b1", "cfg"), mk("b2", "cfg")}}
 	sp := provisioning.GenerateProvisioningPlaybook(same, L2)
-	if n := strings.Count(sp, "config 조각 배치"); n != 1 {
+	if n := strings.Count(sp, "place the config fragment"); n != 1 {
 		t.Errorf("동일 조각인데 배치 태스크가 %d개(1이어야):\n%s", n, sp)
 	}
 	if len(provisioning.ConfigConflictWarnings(same)) != 0 {
