@@ -66,7 +66,7 @@ func TestDeclarationNeverOverwritesObservation(t *testing.T) {
 		t.Error("빈 자리를 선언으로 메우지 못했다 — 메웠어도 declared 표시가 없다")
 	}
 	// 화면만 보면 관측과 구별되지 않으므로 몇 개가 선언인지 밝힌다.
-	if !strings.Contains(out, "1개는 관측이 아니라") {
+	if !strings.Contains(out, "1 of them are not observations") {
 		t.Error("몇 개가 선언으로 메워졌는지 안 밝힌다")
 	}
 }

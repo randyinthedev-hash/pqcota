@@ -68,7 +68,7 @@ func TestRenderHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := inventory.RenderHistory("node-db", snaps, stats, nil)
-	for _, want := range []string{"node-db", "변화 지점 2건", "snap-a", "snap-b", "rs-1", "obs"} {
+	for _, want := range []string{"node-db", "2 change points", "snap-a", "snap-b", "rs-1", "obs"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("이력 뷰에 %q 없음:\n%s", want, out)
 		}
@@ -163,7 +163,7 @@ func TestRenderDetailShowsEdges(t *testing.T) {
 	snap := snapOf(t, store, "snap-a", "3.0.20", "", edges)
 
 	out := inventory.RenderDetail(snap)
-	for _, want := range []string{"libcrypto/OpenSSL 3.0.20", "관측 엣지 1", "node-web", "node-db:4433", "x25519"} {
+	for _, want := range []string{"libcrypto/OpenSSL 3.0.20", "1 observed edges", "node-web", "node-db:4433", "x25519"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("상세 뷰에 %q 없음:\n%s", want, out)
 		}
@@ -177,7 +177,7 @@ func TestRenderDiff(t *testing.T) {
 	b := snapOf(t, store, "snap-b", "3.5.0", extraLibssl, nil)
 
 	out := inventory.RenderDiff(a, b)
-	for _, want := range []string{"변화", "변경", "3.0.20", "3.5.0", "추가", "libssl"} {
+	for _, want := range []string{"changes", "changed", "3.0.20", "3.5.0", "added", "libssl"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("diff에 %q 없음:\n%s", want, out)
 		}
@@ -194,7 +194,7 @@ func TestRenderDiff(t *testing.T) {
 func TestRenderDiffNoChange(t *testing.T) {
 	store := history.NewMemStore()
 	a := snapOf(t, store, "snap-a", "3.0.20", "", nil)
-	if out := inventory.RenderDiff(a, a); !strings.Contains(out, "변화 없음") {
+	if out := inventory.RenderDiff(a, a); !strings.Contains(out, "no asset changes") {
 		t.Errorf("동일 스냅샷 diff는 '변화 없음'이어야 함:\n%s", out)
 	}
 }
