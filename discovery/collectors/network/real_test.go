@@ -72,7 +72,7 @@ func TestRealTLSHandshake(t *testing.T) {
 	}()
 	c := tls.Client(cliRec, clientCfg)
 	if err := c.Handshake(); err != nil {
-		t.Fatalf("TLS 핸드셰이크 실패: %v", err)
+		t.Fatalf("TLS handshake failed: %v", err)
 	}
 	wg.Wait()
 	// tls.Conn.Close()는 net.Pipe에서 close_notify write 5s 데드라인에 걸리므로 원시 파이프만 닫는다.
@@ -82,34 +82,34 @@ func TestRealTLSHandshake(t *testing.T) {
 	// 서버가 읽은 첫 레코드 = 실제 ClientHello.
 	ch, err := network.ParseTLSHandshake(srvRec.bytes())
 	if err != nil {
-		t.Fatalf("실 ClientHello 파싱 실패: %v", err)
+		t.Fatalf("parsing the real ClientHello failed: %v", err)
 	}
 	if ch.Role != "client" {
 		t.Errorf("role = %s, want client", ch.Role)
 	}
 	if !containsStr(ch.OfferedGroups, "X25519MLKEM768") {
-		t.Errorf("실 ClientHello supported_groups에 X25519MLKEM768 없음: %v", ch.OfferedGroups)
+		t.Errorf("X25519MLKEM768 missing from the real ClientHello supported_groups: %v", ch.OfferedGroups)
 	}
 
 	// 클라이언트가 읽은 첫 레코드 = 실제 ServerHello.
 	sh, err := network.ParseTLSHandshake(cliRec.bytes())
 	if err != nil {
-		t.Fatalf("실 ServerHello 파싱 실패: %v", err)
+		t.Fatalf("parsing the real ServerHello failed: %v", err)
 	}
 	if sh.NegotiatedGroup != "X25519MLKEM768" {
-		t.Errorf("실 ServerHello negotiated_group = %q, want X25519MLKEM768", sh.NegotiatedGroup)
+		t.Errorf("real ServerHello negotiated_group = %q, want X25519MLKEM768", sh.NegotiatedGroup)
 	}
 	if posture.Classify(sh.NegotiatedGroup, sh.Cipher) != discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID {
-		t.Error("실 협상 그룹 → PQC_HYBRID(🟢)이어야")
+		t.Error("the real negotiated group must classify as PQC_HYBRID (🟢)")
 	}
-	t.Logf("실 TLS 관측: negotiated=%s cipher=%s version=%s", sh.NegotiatedGroup, sh.Cipher, sh.Version)
+	t.Logf("real TLS observation: negotiated=%s cipher=%s version=%s", sh.NegotiatedGroup, sh.Cipher, sh.Version)
 }
 
 // TD-NETWORK-12: 로컬 sshd(실물)의 KEXINIT를 직접 수신해 파싱 → 실제 협상 등급 관측.
 func TestRealSSHKexInit(t *testing.T) {
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:22", 2*time.Second)
 	if err != nil {
-		t.Skip("로컬 sshd(:22) 없음 — 실 SSH 관측 스킵")
+		t.Skip("no local sshd (:22) — skipping the real SSH observation")
 	}
 	defer conn.Close()
 	_ = conn.SetDeadline(time.Now().Add(3 * time.Second))
@@ -122,28 +122,28 @@ func TestRealSSHKexInit(t *testing.T) {
 	// 서버 배너 라인.
 	banner, err := br.ReadString('\n')
 	if err != nil {
-		t.Fatalf("배너 read: %v", err)
+		t.Fatalf("reading the banner: %v", err)
 	}
-	t.Logf("서버 배너: %s", strings.TrimSpace(banner))
+	t.Logf("server banner: %s", strings.TrimSpace(banner))
 
 	// 이어지는 바이트 = 첫 바이너리 패킷(KEXINIT). 넉넉히 읽어 파싱.
 	buf := make([]byte, 4096)
 	n, _ := br.Read(buf)
 	hs, err := network.ParseSSHKexInit(buf[:n])
 	if err != nil {
-		t.Fatalf("실 KEXINIT 파싱 실패(%d바이트): %v", n, err)
+		t.Fatalf("parsing the real KEXINIT failed (%d bytes): %v", n, err)
 	}
 	if hs.Protocol != "SSH" || len(hs.OfferedGroups) == 0 {
-		t.Fatalf("KEX 목록 비었음: %+v", hs)
+		t.Fatalf("the KEX list is empty: %+v", hs)
 	}
-	t.Logf("실 SSH KEX: %v", hs.OfferedGroups)
+	t.Logf("real SSH KEX: %v", hs.OfferedGroups)
 	if !containsSubstr(hs.OfferedGroups, "sntrup761x25519") {
-		t.Errorf("OpenSSH 9.x는 sntrup761x25519 제공 기대, got %v", hs.OfferedGroups)
+		t.Errorf("OpenSSH 9.x is expected to offer sntrup761x25519, got %v", hs.OfferedGroups)
 	}
 	// 실물 서버의 제안을 봤어도 그것만으로 협상을 단정하지 않는다 — 상대 목록을 봐야 안다(§2.5).
 	// (이 축을 안 봐서 "제안=협상" 결함이 실물 테스트도 통과했다.)
 	if hs.NegotiatedGroup != "" {
-		t.Errorf("단일 KEXINIT 관측에 negotiated가 채워졌다: %q", hs.NegotiatedGroup)
+		t.Errorf("negotiated was filled in from a single KEXINIT observation: %q", hs.NegotiatedGroup)
 	}
 }
 

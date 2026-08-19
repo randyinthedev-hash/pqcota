@@ -30,15 +30,15 @@ func TestModulePathAgreesAcrossGenerators(t *testing.T) {
 
 	cfg := provisioning.Render(plan.GetActions()[0])
 	if !strings.Contains(cfg, "module = "+want) {
-		t.Errorf("config가 절대 경로를 참조해야 함(%s):\n%s", want, cfg)
+		t.Errorf("config must reference an absolute path (%s):\n%s", want, cfg)
 	}
 	fwd := provisioning.GenerateProvisioningPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	if !strings.Contains(fwd, `dest: "`+want+`"`) {
-		t.Errorf("플레이북이 같은 경로에 배치해야 함(%s):\n%s", want, fwd)
+		t.Errorf("the playbook must place it at the same path (%s):\n%s", want, fwd)
 	}
 	back := provisioning.GenerateRollbackPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	if !strings.Contains(back, `path: "`+want+`", state: absent`) {
-		t.Errorf("롤백이 같은 경로를 제거해야 함(%s):\n%s", want, back)
+		t.Errorf("the rollback must remove the same path (%s):\n%s", want, back)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestConfigNeverUsesRelativeModule(t *testing.T) {
 		cfg := provisioning.Render(plan.GetActions()[0])
 		for _, line := range strings.Split(cfg, "\n") {
 			if strings.HasPrefix(line, "module = ") && !strings.HasPrefix(line, "module = /") {
-				t.Errorf("provider=%q: module이 상대 경로다 — OpenSSL이 모듈 디렉터리에서 찾다 실패한다: %q", prov, line)
+				t.Errorf("provider=%q: module is a relative path — OpenSSL looks in the module directory and fails: %q", prov, line)
 			}
 		}
 	}
@@ -61,13 +61,13 @@ func TestPerProviderModuleSourceVariable(t *testing.T) {
 	out := provisioning.GenerateProvisioningPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
 	// 이름의 비영숫자는 변수명에서 밑줄로 정규화된다.
 	if !strings.Contains(out, "pqcota_module_src_my_prov_1") {
-		t.Errorf("provider별 소스 변수가 없다:\n%s", out)
+		t.Errorf("no per-provider source variable:\n%s", out)
 	}
 	if !strings.Contains(out, "default(pqcota_module_src") {
-		t.Errorf("전역 변수 폴백이 없다:\n%s", out)
+		t.Errorf("no global variable fallback:\n%s", out)
 	}
 	if !strings.Contains(out, "default('my-prov.1.so')") {
-		t.Errorf("files/ 관례용 파일명 폴백이 없다:\n%s", out)
+		t.Errorf("no filename fallback for the files/ convention:\n%s", out)
 	}
 }
 
@@ -81,7 +81,7 @@ func TestChecksumGate(t *testing.T) {
 		"pqcota_module_sha256_myprovider is defined",
 	} {
 		if !strings.Contains(out, want) {
-			t.Errorf("무결성 확인에 %q 없음:\n%s", want, out)
+			t.Errorf("the integrity check does not mention %q:\n%s", want, out)
 		}
 	}
 }
@@ -91,11 +91,11 @@ func TestJCAModuleIsJar(t *testing.T) {
 	plan := injectPlan(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA, "BC")
 	want := provisioning.ModulePath("BC", true)
 	if !strings.HasSuffix(want, ".jar") {
-		t.Fatalf("JCA 모듈은 .jar이어야 함: %s", want)
+		t.Fatalf("a JCA module must be a .jar: %s", want)
 	}
 	out := provisioning.GenerateProvisioningPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
 	if !strings.Contains(out, `dest: "`+want+`"`) {
-		t.Errorf("JCA JAR 배치 경로 불일치(%s):\n%s", want, out)
+		t.Errorf("JCA JAR placement path mismatch (%s):\n%s", want, out)
 	}
 }
 
@@ -110,17 +110,17 @@ func TestL2CreatesConfigDirectory(t *testing.T) {
 		"path: " + provisioning.ConfigDir + ", state: directory",
 	} {
 		if !strings.Contains(l2, want) {
-			t.Errorf("L2가 디렉터리를 만들어야 함 (%s):\n%s", want, l2)
+			t.Errorf("L2 must create the directory (%s):\n%s", want, l2)
 		}
 	}
 	// 디렉터리 생성이 config 배치보다 **앞서야** 한다.
 	if strings.Index(l2, provisioning.ConfigDir+", state: directory") > strings.Index(l2, `dest: "`+provisioning.OpenSSLConfigPath+`"`) {
-		t.Error("config 디렉터리 생성이 배치보다 뒤에 있다 — copy가 실패한다")
+		t.Error("the config directory is created after the placement — the copy fails")
 	}
 
 	// L1은 config를 놓지 않으므로 그 디렉터리도 필요 없다.
 	l1 := provisioning.GenerateProvisioningPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
 	if strings.Contains(l1, provisioning.ConfigDir+", state: directory") {
-		t.Errorf("L1은 config 디렉터리를 만들 필요가 없다:\n%s", l1)
+		t.Errorf("L1 does not need to create the config directory:\n%s", l1)
 	}
 }
