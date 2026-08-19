@@ -1,8 +1,8 @@
 ╔══════════════════════════════════════════════════════════╗
-║  pqcota 디스커버리 뷰 (OSS · 읽기전용)                     ║
+║  pqcota discovery view (OSS · read-only)                  ║
 ╚══════════════════════════════════════════════════════════╝
 
-──────── ① 발견 자산 (노드별) ────────
+──────── ① discovered assets (per node) ────────
   pay-app
     • JCA provider chain: SUN,SunRsaSign,SunEC,SunJSSE,SunJCE,SunJGSS,SunSASL,XMLDSig,SunPCSC,JdkLDAP,JdkSASL,SunPKCS11,BC [EVIDENCE_STRENGTH_CONFIRMED]
     • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
@@ -12,12 +12,12 @@
   web-gw
     • OpenSSL  libcrypto.so.3 3.0.13 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
 
-──────── ② 관측 통신 엣지 + 양자내성 등급 ────────
-  🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [표준]
-  🟢 web-gw     → pay-app            SSH   sntrup761x25519-sha512@openssh.com [실험]
+──────── ② observed edges + quantum-resistance grade ────────
+  🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [standard]
+  🟢 web-gw     → pay-app            SSH   sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw     → pay-db             TLS   x25519
   🔴 web-gw     → pay-db             SSH   curve25519-sha256
 
-  등급 합계: 🟢 PQC 2 · 🔴 고전 2 · ⚪ 불명 0
+  grade totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
 
-관측 토폴로지 DOT 저장: /work/topology.dot (색=등급, 실선=관측). 선언 대비 3-상태 대조는 하지 않는다.
+observed topology written as DOT: /work/topology.dot (colour = grade, solid = observed). No three-state reconciliation against declarations.
