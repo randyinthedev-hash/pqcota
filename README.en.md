@@ -114,7 +114,7 @@ go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 
 **③ The collectors that go on the target nodes** — built statically **for the node's OS and arch**
 → [deployment design](discovery/collector-deployment.md) (Korean). Which collector runs on which OS is in
-the [command reference](discovery/cmd/README.en.md#collectors--they-observe-on-the-target-machine).
+the [command reference](discovery/cmd/README.en.md).
 
 ```bash
 # Linux nodes

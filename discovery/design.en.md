@@ -88,7 +88,7 @@ A scenario is a combination of the axes below. The combination is what determine
 > - **Touching OS APIs = that OS only.** openssl (§2.1), process scanning and jvm (§2.2) depend on `/proc` and ELF; network (§2.3) on AF_PACKET; cng (§2.4) on `bcrypt.dll`. Every other OS gets a **refusing stub**, so the result is a gap rather than an empty one (§2.6).
 > - **Touching only files and databases = cross-platform.** The central and operator CLIs (ingest, inventory, provision, and so on) touch no OS primitives, so they run anywhere.
 >
-> Which collector runs on which OS is in the [command reference](cmd/README.en.md#collectors--they-observe-on-the-target-machine). The distributed binaries are static (`CGO_ENABLED=0`), so cross-compiling across OS × arch is trivial.
+> Which collector runs on which OS is in the [command reference](cmd/README.en.md). The distributed binaries are static (`CGO_ENABLED=0`), so cross-compiling across OS × arch is trivial.
 
 ### 2.1 openssl-collector (Go) — SD-1, SD-3
 
