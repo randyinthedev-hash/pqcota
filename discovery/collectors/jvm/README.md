@@ -36,6 +36,7 @@
 | ② | JDK 클라이언트 (`SubprocessRunner`) | 대상 또는 머신의 JDK | **벤더 무관** — OpenJ9 등 비-HotSpot | 머신에 attach 가능 JDK가 있어야 |
 | ③ | 정적 폴백 (**`StaticFallbackGo`**, Java판도 있음) | Go(또는 대상 JVM) | **어떤 JVM·런타임이어도** — `java.security`는 텍스트 파일 | **동적 등록 사각** → 강등·갭 고지 |
 
+- **OS에 따라 커버가 갈린다**: ①은 리눅스 전용이라 Windows에서는 ②·③만 남는다. 즉 **머신에 JDK가 있어야 동적 등록까지 보고**, 없으면 ③으로 내려가 `java.security`만 읽는다. 리눅스에서 ①이 메우던 순수 JRE 구멍이 Windows에서는 열려 있다.
 - **②가 남아 있는 이유**: ①의 소켓 프로토콜은 HotSpot 구현이라 **OpenJ9**(공유 세마포어 + 다른 IPC)엔 안 통한다. ②는 그 JDK 자신의 attach 구현을 쓰므로 벤더를 안 가린다.
 - **②의 클라이언트 선택**: 대상이 순수 JRE여도, 머신에 attach 가능한 JDK가 있으면 **그걸 클라이언트로 재사용**한다(`AttachClient`). 클라이언트는 대상의 java일 필요가 없다.
 - **③으로 내려가는 조건**: `DisableAttachMechanism`, JEP 451(최신 JDK는 동적 에이전트 로딩 기본 차단 — `-XX:+EnableDynamicAgentLoading` 필요), 권한 부족, 비-HotSpot+JDK 없음 등.
@@ -66,11 +67,12 @@
 
 openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **jvm도 실행 중인 JVM을 먼저 조사한다**(`ScanJVMs`, [procscan.go](procscan.go)). 머신에 JDK가 여럿일 수 있고 **어느 JVM을 보느냐가 결과를 바꾸므로**, 호출자가 PID·JDK 경로를 미리 알아야 하던 비대칭을 없앤다.
 
-- **식별**: `/proc/<pid>/exe`가 `java`거나 `/proc/<pid>/maps`에 `libjvm.so`가 있는 프로세스(래퍼로 재실행돼 exe가 java가 아니어도 잡는다).
+- **식별**: 런처가 `java`거나 그 프로세스가 JVM 라이브러리를 로드한 것(래퍼로 재실행돼 exe가 java가 아니어도 잡는다). 보는 창구가 OS마다 다르다 — 리눅스는 `/proc/<pid>/exe`·`maps`, Windows는 Toolhelp32의 프로세스·모듈 목록이다.
 - **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값 — 추측하지 않는다(§2.5).
 - **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector-deployment.md)의 입력.
 - **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로(§2.6). 조용한 0이 아니다.
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다.
+- **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다 — 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 뭉개진다**(리눅스에서는 `cmdline`이 파일이라 그냥 읽는다).
 
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).
 
@@ -140,7 +142,8 @@ provider 이름에서 `pqc_readiness`(전 표준 커버 / SLH-DSA 갭 등)를 �
 
 | 경로 | 역할 |
 |---|---|
-| `procscan.go` · `procscan_parse.go` | `/proc` 정찰 — JVM 발견·JAVA_HOME·버전·`AttachCapable`(순수 파싱 분리) |
+| `procscan.go`(linux) · **`procscan_windows.go`** | 정찰 I/O — 리눅스 `/proc`, Windows Toolhelp32 |
+| `procscan_parse.go` · `procscan_files.go` | 순수 판별(경로 규칙·`AttachCapable`)과 OS 무관 파일 읽기 — 리눅스 CI에서 Windows 규칙까지 검증한다 |
 | **`nativeattach_linux.go`** | **① Go 네이티브 attach** — 트리거·SIGQUIT·소켓·네임스페이스 교차 |
 | **`nativeattach_parse.go`** | 프로토콜 순수 부분(요청 조립·응답 파싱·NSpid) — 실 JVM 없이 테스트 |
 | `attach.go` | 다중 JVM attach 오케스트레이션 + `AttachClient`(②용 JDK 선택) |

@@ -62,9 +62,11 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다** — `
 | collector | 노드 OS | 관측 대상 |
 |---|---|---|
 | `pqcota-nodescan` | **linux** | `/proc`의 로드된 OpenSSL(libssl/libcrypto) |
-| `pqcota-jvmscan` | **linux** | 실행 중 JVM의 JCA provider 체인(`Security.getProviders()`) — 프로세스 열거가 `/proc`다 |
+| `pqcota-jvmscan` | **linux** · windows | 실행 중 JVM의 JCA provider 체인(`Security.getProviders()`). Windows는 **커버가 좁다**(아래) |
 | `pqcota-netcap` | **linux** | TLS/SSH 핸드셰이크(AF_PACKET) |
 | `pqcota-cngscan` | **windows** | 등록된 CNG provider와 그 머신이 열거하는 알고리즘(`bcrypt.dll`) |
+
+`pqcota-jvmscan`은 두 OS에서 프로세스를 훑지만 **거기서 보는 깊이가 다르다.** JDK 없이 붙는 Go 네이티브 attach가 리눅스 전용이라, Windows에서는 머신에 JDK가 있어야 런타임 등록까지 보고 없으면 `java.security`만 읽는 정적 폴백으로 내려간다(동적 등록은 사각) → [jvm-collector](../collectors/jvm/README.md).
 
 넷 다 `CollectionResult`를 낸다. **표에 없는 OS에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 0이다 — "그것이 없는 노드"와 "그것을 못 본 노드"가 구별돼야 한다(§2.6).
 

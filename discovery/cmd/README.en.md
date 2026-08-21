@@ -66,9 +66,11 @@ The node **registration gate** (the scope-master argument to `pqcota-ingest`) is
 | Collector | Node OS | What it observes |
 |---|---|---|
 | `pqcota-nodescan` | **linux** | the loaded OpenSSL in `/proc` (libssl/libcrypto) |
-| `pqcota-jvmscan` | **linux** | a live JVM's JCA provider chain (`Security.getProviders()`) — process enumeration is `/proc` |
+| `pqcota-jvmscan` | **linux** · windows | a live JVM's JCA provider chain (`Security.getProviders()`). Coverage on Windows is **narrower** (below) |
 | `pqcota-netcap` | **linux** | TLS/SSH handshakes (AF_PACKET) |
 | `pqcota-cngscan` | **windows** | the registered CNG providers and the algorithms the machine enumerates (`bcrypt.dll`) |
+
+`pqcota-jvmscan` enumerates processes on both, but **sees a different depth on each.** The Go-native attach that works without a JDK is Linux-only, so on Windows the machine needs a JDK to reach runtime registrations; without one it drops to the static fallback that only reads `java.security` (dynamic registrations stay a blind spot) → [jvm-collector](../collectors/jvm/README.md) (Korean).
 
 All four emit a `CollectionResult`. **Run one on an OS not in the table and it emits a gap, not an empty result**, with exit code 0 — "a node that has none" and "a node whose state was not seen" must stay apart (§2.6).
 
