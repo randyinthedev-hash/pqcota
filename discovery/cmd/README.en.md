@@ -68,8 +68,9 @@ The node **registration gate** (the scope-master argument to `pqcota-ingest`) is
 | `pqcota-nodescan` | the loaded OpenSSL in `/proc` (libssl/libcrypto) | CollectionResult |
 | `pqcota-jvmscan` | a live JVM's JCA provider chain (`Security.getProviders()`) | CollectionResult |
 | `pqcota-netcap` | TLS/SSH handshakes (AF_PACKET, Linux only) | CollectionResult (observed edges) |
+| `pqcota-cngscan` | the registered CNG providers and the algorithms the machine enumerates (`bcrypt.dll`, **Windows only**) | CollectionResult |
 
-All three emit a `CollectionResult`, and these three are what the root README's build puts in `dist/linux-<arch>/`. Each is a thin entry point wrapping the `discovery/collectors/{openssl,jvm,network}` package, so when a new observation target appears you add one more collector — the core stays as it is.
+All four emit a `CollectionResult`. Only the three Linux ones, however, get **static binaries attached to the release** — `pqcota-cngscan` is Windows-only, so whoever needs it builds it ([below](#pqcota-cngscan)). Each is a thin entry point wrapping the `discovery/collectors/{openssl,jvm,network,cng}` package, so when a new observation target appears you add one more collector — the core stays as it is.
 
 How to run them across many nodes at once → [the reference playbook in ①](#then--running-the-collectors-with-the-inventory-you-made).
 
@@ -82,7 +83,7 @@ pqcota-nodescan [--output json|table] [node-id]
 | Argument/option | What it does |
 |---|---|
 | `[node-id]` | the authoritative CMDB id. Omitted, it derives a deterministic self-id from the machine fingerprint, and failing that uses `host://local` |
-| `--output` | output format → [shared, below](#--output--shared-by-nodescan-and-jvmscan) |
+| `--output` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
 
 If `/proc` cannot be opened it **does not emit an empty result** — that is not "no OpenSSL" but an inability to observe at all, so it records a gap in the completeness note and says so on stderr.
 
@@ -98,7 +99,7 @@ pqcota-jvmscan --recon
 | `[node-id]` | omitted, `host://local` |
 | `--pid N` | observe only the JVM with that PID. The default is every one recon finds |
 | `--recon` | only reconnoiter, emitting the JVMs found as JSON (no observation) |
-| `--output` | output format → [shared, below](#--output--shared-by-nodescan-and-jvmscan) |
+| `--output` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
 
 If the PID given by `--pid` is not among the running JVMs it **fails instead of falling back to scanning everything** — what was not observed is a gap, not something to substitute another target for.
 
@@ -125,7 +126,28 @@ It is 0 because that gap has to reach the center. When Ansible drives many nodes
 
 If you are running it by hand and want it to fail, pass `--strict` (the gap still goes to stdout).
 
-### `--output` — shared by nodescan and jvmscan
+### `pqcota-cngscan`
+
+```
+pqcota-cngscan [--output json|table] [node-id]
+```
+
+| Argument/option | Default | What it does |
+|---|---|---|
+| `[node-id]` | the self-id derived from the machine fingerprint (§1.4), or `host://local` if that is empty too | the node the observation is attached to |
+| `--output` | `json` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
+
+**No binary is attached to the release** — the three collectors shipped for the nodes are Linux-only, so this one is not in that bundle. Build it yourself:
+
+```bash
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
+```
+
+**Run anywhere other than Windows and it emits a gap, not an empty result**, with exit code **0**. This is the same rule netcap follows when `CAP_NET_RAW` is missing, for the same reason — the gap has to reach the centre for "a node with no CNG" and "a node whose CNG was not seen" to stay apart (§2.6).
+
+It calls `bcrypt.dll` directly instead of `certutil`, PowerShell or WMI. What it looks at, through which API → [cng-collector](../collectors/cng/README.md) (Korean).
+
+### `--output` — shared by nodescan, jvmscan and cngscan
 
 The same collection runs; what differs is **which layer is emitted**.
 
@@ -147,6 +169,7 @@ What you need when running on a node. Insufficient privilege means **the visible
 | `pqcota-nodescan` | its own process works as-is. **Seeing other users' requires root** (or `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
 | `pqcota-netcap` | **`CAP_NET_RAW` required** (`setcap` or root) — without it capture never starts | `NETCAP_IFACE` (default `eth0`) · `NETCAP_WINDOW_SEC` (default 8s) |
 | `pqcota-jvmscan` | **the same UID** as the target JVM (or root). If the target blocks attach it degrades to a static probe | `PQCOTA_JVM_AGENT`=path to collector.jar — given, it takes the attach path; without it, the static probe |
+| `pqcota-cngscan` | no special privilege — the `bcrypt.dll` enumeration APIs are read-only queries | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
 
 
 ### Runtime requirements — kernel and privileges
