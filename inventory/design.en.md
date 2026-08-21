@@ -153,7 +153,7 @@ After building the scope master from the legacy IP list the user supplied, the [
 
 - **Nodes** = machines registered in the scope master (the user's IPs). An observed peer that is not registered is marked separately as "a registration decision request" (§1.4/§5).
 - **Edges** = observed communication (the §2 CommunicationEdge). src→dst, role (client/server), protocol (TLS/SSH), and the **negotiated KEX group and cipher**.
-- **Edge color = quantum posture** (the heart of the migration dashboard):
+- **Edge colour = the quantum-resistance grade** (the heart of the migration dashboard):
 
 | Color | Meaning | Examples |
 |---|---|---|

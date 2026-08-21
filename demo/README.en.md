@@ -130,7 +130,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 2. **The JCA provider chain** — `pqcota-jvmscan`: **recon then attach**. It finds the running JVM (pay-app's CryptoApp) through `/proc`, attaches to that PID, and reads the real `Security.getProviders()`. That catches **the BouncyCastle CryptoApp registered at runtime with `addProvider`** — there is no static registration in java.security, so **a static scan cannot see it** (symmetrical with openssl's `/proc` scan; `detection=runtime-introspection`). If attach is impossible it falls back honestly to a static probe.
 3. **Communication edges** — `pqcota-netcap`: TLS/SSH handshakes observed through AF_PACKET (`CAP_NET_RAW`) without decryption.
 
-`pqcota-discover-view` (OSS) collates the results into **discovered assets plus the posture of observed edges**:
+`pqcota-discover-view` (OSS) collates the results into **discovered assets plus the grade of the observed edges**:
 - 🟢 **PQC/hybrid** (`X25519MLKEM768`, `sntrup761x25519`) · 🔴 **classical = quantum-vulnerable** (`x25519`, `ECDHE`) · ⚪ **unknown**
 - For example: `web-gw → pay-app` 🟢 MLKEM · `web-gw → pay-db` 🔴 classical · SSH splits the same way (`→pay-app` 🟢 sntrup761 · `→pay-db` 🔴 — the legacy OS's OpenSSH has no PQC KEX)
 
@@ -209,4 +209,4 @@ After that it is the same as the demo — hand the collected results to `pqcota-
 **Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.en.md).
 
 ## Beyond discovery
-Discovery shows you as far as "what is actually negotiated" (the posture). **"How well does that match what was declared (CONFIRMED/UNDECLARED/UNOBSERVED)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.
+Discovery shows you as far as "what is actually negotiated" (the grade). **"How well does that match what was declared (CONFIRMED/UNDECLARED/UNOBSERVED)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.
