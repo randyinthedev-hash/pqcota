@@ -112,7 +112,14 @@ func main() {
 	// 그 JVM의 provider 체인(동적 등록 포함)을 관측한다. 정찰→attach 대칭 완성.
 	// 없으면 프로브 경로(정적 등록 체인, 데모 경량)로 폴백한다.
 	if agent := os.Getenv("PQCOTA_JVM_AGENT"); agent != "" && len(jvms) > 0 {
-		emit(*out, node, attachAll(node, jvms, agent), true, fmt.Sprintf("%d JVMs observed", len(jvms)))
+		res, observed := attachAll(node, jvms, agent)
+		// **관측한 수를 적는다.** 찾은 수를 적으면 갭이 관측으로 세어진다 — 실측에서
+		// "2 JVMs observed" 아래에 행이 하나만 있었다.
+		head := fmt.Sprintf("%d JVMs observed", observed)
+		if gap := len(jvms) - observed; gap > 0 {
+			head += fmt.Sprintf(" · %d found but not observed (gap)", gap)
+		}
+		emit(*out, node, res, true, head)
 		return
 	}
 
@@ -264,7 +271,7 @@ func nz(s string) string {
 
 // attachAll — 발견된 각 JVM에 attach(agent JAR)해 provider 체인을 관측하고 JVM별로 구별되는
 // CollectionResult를 모아 돌려준다. attach 실패는 갭으로 센다(조용히 0이 되지 않게 §2.5).
-func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.CollectionResult {
+func attachAll(node string, jvms []jvm.JVMProc, agent string) (res []*discoveryv1.CollectionResult, observed int) {
 	// attach 경로는 3계층이다(collector 배포 설계 §2) — 앞이 막히면 뒤로, 다 막히면 정직히 갭.
 	//   ① Go 네이티브: JDK 없이 HotSpot 프로토콜로 직접. JRE·jlink·최소 컨테이너까지 커버.
 	//   ② JDK 클라이언트: 벤더 무관(OpenJ9 등 HotSpot 아닌 JVM). 머신에 JDK가 있어야.
@@ -302,7 +309,10 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 	out := make([]*discoveryv1.CollectionResult, 0, len(results))
 	for _, r := range results {
 		if r.Err != nil {
+			// 결과를 안 내면 이 JVM이 있었다는 사실이 중앙에 닿지 않는다 — 갭을 실어 보낸다(§2.6).
 			fmt.Fprintf(os.Stderr, "[jvmscan] attach failed pid=%d: %v (gap)\n", r.JVM.PID, r.Err)
+			out = append(out, jvm.GapResult(node, r.JVM.Ident(),
+				"a JVM was found but could not be observed: "+r.Err.Error()))
 			continue
 		}
 		// 식별자는 앱(main·jar) 우선, 없으면 JAVA_HOME→exe — PID는 휘발이라 이력이 깨진다.
@@ -310,5 +320,6 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) []*discoveryv1.Col
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] attach: found %d · ok %d · failed %d (gap) → emitted %d\n",
 		ast.Discovered, ast.Attached, ast.Failed, len(out))
+	observed = ast.Attached
 	return out
 }

@@ -142,3 +142,20 @@ func TestDegradedNoteCarriesItsOwnReason(t *testing.T) {
 		t.Errorf("the default reason disappeared: %q", n)
 	}
 }
+
+// 찾았는데 관측하지 못한 JVM은 **계약에 실려 중앙까지 가야 한다.** 결과를 안 내면 실패가
+// stderr에만 남고 중앙은 그런 JVM이 있었다는 것조차 모른다 — 갭이 부재와 같은 얼굴이 된다.
+func TestGapResultCarriesTheJVMToTheCentre(t *testing.T) {
+	r := jvm.GapResult("node-a", "/opt/jdk21", "a JVM was found but could not be observed: jvm.dll not loaded")
+	c := r.GetCompleteness()
+	if len(c.GetLayersMissing()) != 1 {
+		t.Fatalf("the JVM layer must be marked missing: %+v", c.GetLayersMissing())
+	}
+	if !strings.Contains(c.GetNote(), "/opt/jdk21") || !strings.Contains(c.GetNote(), "jvm.dll") {
+		t.Errorf("the note must say which JVM and why: %q", c.GetNote())
+	}
+	// **컴포넌트를 만들지 않는다** — 빈 provider 체인은 "이 JVM엔 provider가 없다"로 읽힌다.
+	if len(r.GetCbomCyclonedx()) > 0 {
+		t.Errorf("a gap must not carry a CBOM body: %s", r.GetCbomCyclonedx())
+	}
+}

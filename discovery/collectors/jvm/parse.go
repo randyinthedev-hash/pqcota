@@ -67,6 +67,33 @@ func ParseProviders(output string) Collected {
 	return c
 }
 
+// GapResult — **JVM을 찾았는데 관측하지 못했다**를 계약에 실어 보낸다(network의 DegradedResult와 같은 자리).
+//
+// 예전에는 attach가 다 막히면 그 JVM의 결과를 아예 내지 않았다. 그러면 실패는 stderr에만 남고
+// **중앙은 그런 JVM이 있었다는 것조차 모른다** — "관측하지 못했다"가 "없다"와 같은 얼굴이 된다(§2.6).
+//
+// 컴포넌트를 만들지 않는 이유: provider를 하나도 못 봤는데 빈 체인을 실으면 "이 JVM엔 provider가
+// 없다"로 읽힌다. 실은 것은 완전성 갭과 사유뿐이다.
+func GapResult(node, ident, reason string) *discoveryv1.CollectionResult {
+	if ident != "" {
+		reason = ident + ": " + reason
+	}
+	return &discoveryv1.CollectionResult{
+		Envelope: &commonv1.Envelope{
+			CollectorId:      "jvm-collector",
+			CollectorVersion: "0.1.0",
+			DetectionMethod:  commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
+			CollectedAt:      timestamppb.New(now()),
+			TargetNodeId:     node,
+			CollectorLicense: "Apache-2.0",
+		},
+		Completeness: &commonv1.Completeness{
+			LayersMissing: []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_JVM_INTROSPECTION},
+			Note:          reason,
+		},
+	}
+}
+
 // BuildResult — ident 없는 단일 JVM 편의 형태. 다중 JVM은 BuildResultFor로 구별한다.
 func BuildResult(node string, c Collected) *discoveryv1.CollectionResult {
 	return BuildResultFor(node, c, "")
