@@ -33,7 +33,7 @@
 ### 통제 어휘 (enum) — 전 단계 공유
 | enum | 뜻 | 값(0=UNSPECIFIED 생략) |
 |---|---|---|
-| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG`(v0.1.0 **스키마 예약**, 미구현 — 채우는 코드는 v0.5.0+) |
+| `CryptoRuntime` | 암호 런타임 — 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG` |
 | `DetectionMethod` | 탐지 방법. collector가 신고 → evidence 파생 근거 | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
 | `EvidenceStrength` | 증거 강도. **detection_method에서 파생**(core만 채움) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
 | `UsageContext` | 사용 맥락 | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
@@ -70,7 +70,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 |---|---|---|
 | `OpensslAxes` | OpenSSL 분기축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode` |
 | `JcaAxes` | JCA 분기축 | `jdk_vendor`·`jdk_version`·`provider_set`(**순서 유의미** — 우선순위 협상)·`registration_mode` |
-| `CngAxes` | Windows CNG 분기축 (**v0.1.0 예약**, 미구현) | `provider_set`(KSP/SSP, **순서 유의미**). 실물 관측이 정할 나머지 필드는 v0.5.0에서 additive로 추가 |
+| `CngAxes` | Windows CNG 분기축 | `provider_set`(KSP/SSP, **관측된 순서 그대로**) · `algorithms`(이름·종류·서비스하는 provider) |
 | **`Finding`** | 크립토 자산 한 건(파생 뷰) | `id`(정규화 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method`+**`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id`+`ruleset_version`(재현) · **`app_keys`**(자산이 어느 앱 것인지, 공유 .so는 다중) |
 
 ### `asset.proto` — 자산 계층 (Machine → Application → Process)
@@ -163,13 +163,13 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 **레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 이어 discovery→provisioning까지 흐른다.
 
 > **`app_key`가 늘 채워지는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 관측한 프로세스에서
-> 바로 나오므로 앱이 항상 붙는다. **`ObservedEdge`는 v0.3.0부터 앱까지 가되, 조회하는 순간 소켓이
+> 바로 나오므로 앱이 항상 붙는다. **`ObservedEdge`도 앱까지 가되, 조회하는 순간 소켓이
 > 살아 있어야 된다** — 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없어서, 캡처 시점에 소켓
 > inode를 `/proc/*/fd`와 대조해 채우기 때문이다.
 >
 > 그래서 짧게 붙었다 끊긴 연결은 비고, 권한이 모자라 남의 프로세스를 못 읽어도 빈다. **빈
 > `app_key`는 "이 엣지에 앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 왜 못 했는지는 완전성 맵의
-> note에 적혀 있다. 못 채운 자리는 v0.4.0부터 사람이 지정할 수 있다
+> note에 적혀 있다. 못 채운 자리는 사람이 지정할 수 있다
 > (`pqcota-declare-attribution`) — 다만 그 선언은 **관측을 고치지 않고** 자기 레인에 쌓이고,
 > 합치는 일은 조회 화면에서 일어난다([검토 중인 설계 §5.2](../docs/under-review.md)).
 
