@@ -15,7 +15,7 @@ pqcota-hosts [--ansible-out <path>] [--dsn <postgres>] <hosts.csv>
 
 | 인자·옵션 | 하는 일 |
 |---|---|
-| `<hosts.csv>` | 접속 정보 파일(사용자 작성) |
+| `<hosts.csv>` | 접속 정보 파일(사용자 작성). 헤더 필수·순서 자유이며 `node_id`만 필수다 — **컬럼 표와 그대로 돌려볼 수 있는 샘플**은 [examples/discovery](../../examples/discovery/README.md)에 있다([hosts.csv](../../examples/discovery/hosts.csv)) |
 | `--ansible-out <path>` | Ansible 인벤토리(ini) 생성 — 계정·키가 담기므로 **소유자만 읽을 수 있게**(`0600`) 쓴다. 이걸로 ②를 각 노드에 돌린다 |
 | `--dsn <postgres>` | 엔드포인트를 pqcota 인벤토리에 upsert — 계정·키 제외, 나중에 수정·재사용 가능 |
 
