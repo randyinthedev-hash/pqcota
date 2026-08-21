@@ -85,7 +85,8 @@ A scenario is a combination of the axes below. The combination is what determine
 > **Terminology**: **a collector is a node observer *provided by pqcota*** (behind the intake contract; **runtimes**: openssl, jvm, network).
 
 > **Platform constraint**: **every binary is Go** (collectors and operator CLIs alike) — the only non-Go piece is the jvm-collector's Java sidecar. So **the OS split is decided not by language but by "what it touches"**:
-> - **Touching OS APIs = that OS only.** openssl (§2.1), process scanning and jvm (§2.2) depend on `/proc` and ELF; network (§2.3) on AF_PACKET; cng (§2.4) on `bcrypt.dll`. Every other OS gets a **refusing stub**, so the result is a gap rather than an empty one (§2.6).
+> - **Touching OS APIs = that OS only.** openssl (§2.1) and process scanning depend on `/proc` and ELF; network (§2.3) on AF_PACKET; cng (§2.4) on `bcrypt.dll`. Every other OS gets a **refusing stub**, so the result is a gap rather than an empty one (§2.6).
+> - **Some axes are seen through a different API per OS.** The jvm (§2.2) reconnaissance is one — `/proc` on Linux, Toolhelp32 on Windows. What differs there is the **depth of coverage**, not whether it works at all.
 > - **Touching only files and databases = cross-platform.** The central and operator CLIs (ingest, inventory, provision, and so on) touch no OS primitives, so they run anywhere.
 >
 > Which collector runs on which OS is in the [command reference](cmd/README.en.md). The distributed binaries are static (`CGO_ENABLED=0`), so cross-compiling across OS × arch is trivial.

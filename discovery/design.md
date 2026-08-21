@@ -84,7 +84,8 @@
 > **용어 규칙**: **Collector = *pqcota가 제공하는* 노드 관측기**(intake 계약 뒤, **런타임**: openssl·jvm·network).
 
 > **플랫폼 제약**: **전 바이너리가 Go**(collector도 운영자 CLI도) — 유일한 비-Go는 jvm-collector의 Java 사이드카뿐이다. 그래서 **OS 갈림은 언어가 아니라 "무엇을 만지느냐"로 정해진다**:
-> - **OS API를 만지는 것 = 그 OS 전용**. openssl(§2.1)·procs·jvm(§2.2)은 `/proc`·ELF, network(§2.3)는 AF_PACKET, cng(§2.4)는 `bcrypt.dll`이다. 다른 OS에는 **거부 스텁**을 둬 빈 결과가 아니라 갭을 낸다(§2.6).
+> - **OS API를 만지는 것 = 그 OS 전용**. openssl(§2.1)·procs는 `/proc`·ELF, network(§2.3)는 AF_PACKET, cng(§2.4)는 `bcrypt.dll`이다. 다른 OS에는 **거부 스텁**을 둬 빈 결과가 아니라 갭을 낸다(§2.6).
+> - **같은 축을 OS마다 다른 API로 보는 것도 있다**. jvm(§2.2)의 정찰이 그렇다 — 리눅스는 `/proc`, Windows는 Toolhelp32다. 이때 갈리는 것은 **커버의 깊이**이지 되고 안 되고가 아니다.
 > - **파일·DB만 만지는 것 = 크로스플랫폼**. 중앙·운영자 CLI(ingest·inventory·provision 등)는 OS 프리미티브를 안 만져 어디서든 돈다.
 >
 > collector별 대응 OS는 [커맨드 레퍼런스](cmd/README.md)에 있다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 OS×arch 교차 컴파일이 자명하다.
