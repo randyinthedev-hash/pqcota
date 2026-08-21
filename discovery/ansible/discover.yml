@@ -29,7 +29,7 @@
   tasks:
     # ── 리눅스 노드 — openssl · jvm · network ──
     - name: "리눅스 노드"
-      when: ansible_facts['os_family'] != 'Windows'
+      when: ansible_facts['os_family'] | default('') != 'Windows' # 못 알아냈으면 리눅스로 — 지금까지의 동작이다
       become: true # netcap의 CAP_NET_RAW, /proc 전 프로세스 커버리지
       block:
         # ── ① 반입 — 관측 대상에 collector만 올린다(중앙 CLI는 보내지 않는다) ──
@@ -101,7 +101,7 @@
 
     # ── Windows 노드 — CNG. 반입·실행·회수·정리는 같고 모듈만 다르다. ──
     - name: "Windows 노드"
-      when: ansible_facts['os_family'] == 'Windows'
+      when: ansible_facts['os_family'] | default('') == 'Windows'
       block:
         - name: "① 스테이징 디렉터리"
           ansible.windows.win_file: { path: "{{ stage_dir_win }}", state: directory }
