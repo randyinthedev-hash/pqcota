@@ -55,6 +55,23 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.5 — Unpacking compound loanwords and an English idiom (2026-08-21)
+**Goal** — untangle three words in the Korean documents. **No code changed**, and the English
+documents are untouched; what changes is the Korean vocabulary for things that already worked this way.
+
+### Fixed
+
+- **`해소` ("resolve")** — one word had been doing five jobs, so it is unpacked per site: an IP mapped
+  to a node is now "linked", a dependency `go get` could not fetch is "not fetched", an app key found
+  from a process is "found", a volatile process is "linked at the time", and a FIPS gap is "filled".
+  Identifiers are untouched — `ProcessMatch`, `TestResolve`, `procs.Attribution`.
+
+- **"조용히 틀린다"** (a literal rendering of *silently wrong*) → **"오류 없이 틀린다"** — *wrong
+  without raising an error*. The point is that nothing fails, not that the code is quiet.
+
+- **`갈리다`** now only means branching. Where it meant values diverging, it is "달라진다" — one word
+  covering both "splits" and "does not match" left the reader to work out which.
+
 ## v0.6.4 — The documents catch up with the code (2026-08-21)
 **Goal** — close the stale spots the documents were left with after the screen and the code moved on.
 **Not a line of code changed** — there is nothing to upgrade for.
