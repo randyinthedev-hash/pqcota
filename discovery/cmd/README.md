@@ -192,9 +192,26 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discov
 
 > **PoC/테스트 하네스는 여기 없다.** openssl collector의 실물 `/proc`·ELF 검증 CLI는 유일 소비자인 통합 테스트와 co-locate — [`discovery/collectors/openssl/integration/probe`](../collectors/openssl/integration). 이 폴더(discovery/cmd/)는 **제품 디스커버리 진입점만** 둔다.
 
-## ③ 기타 — collector가 아닌 노드측 커맨드
+## ③ 기타 — collector가 아닌 커맨드
 
-대상 머신에서 실행되지만 **관측이 아니다**. `CollectionResult`를 내지 않으므로 중앙에 적재되지 않는다.
+**관측이 아니다.** `CollectionResult`를 내지 않으므로 중앙에 적재되지 않는다. 도는 자리도 다르다 — `pqcota-procs`는 대상 머신에서, `pqcota-keygen`은 키를 마련할 때 한 번만이다.
+
+### `pqcota-keygen`
+
+```
+pqcota-keygen
+```
+
+인자가 없다. collector 리포트 서명용 **ed25519 키쌍**을 만들어 stdout에 낸다(§2.6). 낸 두 줄은 각각 갈 자리가 다르다:
+
+| 낸 것 | 어디에 | 누가 쓰나 |
+|---|---|---|
+| `PQCOTA_SIGN_KEY` (개인키) | 노드에서 collector를 돌릴 때 | 결과에 서명한다 — [권한·환경변수](#권한--환경변수) |
+| `PQCOTA_VERIFY_KEY` (공개키) | 중앙에서 `pqcota-ingest`를 돌릴 때 | 서명을 검증한다. 여럿이면 콤마로 잇는다 |
+
+**개인키가 stdout으로 나온다.** 그대로 파일에 받으면 그 파일이 남고, 셸에 붙이면 히스토리에 남는다.
+
+**서명은 선택이다.** 키를 안 주면 적재가 막히지 않고, 대신 중앙이 *"unverified signatures: N — 틀렸다는 뜻이 아니라 **검증한 적이 없다**는 뜻"* 이라고 고지한다. 검증할 키가 없을 때 아예 적재를 시작하지 않게 하려면 `PQCOTA_REQUIRE_SIGNATURE=1`을 준다.
 
 ### `pqcota-procs`
 
