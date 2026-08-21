@@ -22,7 +22,7 @@ func TestGrade(t *testing.T) {
 			t.Errorf("Grade(%q) = %q, want %q", group, got, want)
 		}
 	}
-	if posture.GradeLabel(registry.MaturityFIPS) != "standard" || posture.GradeLabel("") != "" {
+	if posture.GradeLabel(registry.MaturityFIPS) != "fips-standard" || posture.GradeLabel("") != "" {
 		t.Error("GradeLabel mapping is wrong")
 	}
 }

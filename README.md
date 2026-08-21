@@ -25,15 +25,15 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 ```
 ──────── ① discovered assets (per node) ────────
   pay-app
-    • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+    • JCA provider chain: SUN,SunRsaSign,…,BC   [EVIDENCE_STRENGTH_CONFIRMED]
         ↑ 이 BC는 java.security에 한 줄도 없다 (grep 0건).
           앱이 실행 중에 등록한 것이라 정적 스캔으로는 안 보인다.
-    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
+    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [EVIDENCE_STRENGTH_CONFIRMED]
   pay-db
-    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
+    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
 
 ──────── ② observed edges + quantum-resistance grade ────────
-  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [standard]
+  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [fips-standard]
   🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw  → pay-db    TLS  x25519
   🔴 web-gw  → pay-db    SSH  curve25519-sha256

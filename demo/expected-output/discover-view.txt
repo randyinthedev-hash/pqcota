@@ -13,7 +13,7 @@
     • OpenSSL  libcrypto.so.3 3.0.13 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
 
 ──────── ② observed edges + quantum-resistance grade ────────
-  🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [standard]
+  🟢 web-gw     → pay-app            TLS   X25519MLKEM768 [fips-standard]
   🟢 web-gw     → pay-app            SSH   sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw     → pay-db             TLS   x25519
   🔴 web-gw     → pay-db             SSH   curve25519-sha256
