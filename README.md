@@ -109,7 +109,7 @@ go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 
 **③ 대상 노드에 올릴 collector** — **노드 OS·arch에 맞춰** 정적으로 만든다
 → [배포 설계](discovery/collector-deployment.md). 어느 collector가 어느 OS에서 도는지는
-[커맨드 레퍼런스](discovery/cmd/README.md#collector--대상-머신에서-관측한다).
+[커맨드 레퍼런스](discovery/cmd/README.md).
 
 ```bash
 # 리눅스 노드

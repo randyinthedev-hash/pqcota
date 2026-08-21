@@ -87,7 +87,7 @@
 > - **OS API를 만지는 것 = 그 OS 전용**. openssl(§2.1)·procs·jvm(§2.2)은 `/proc`·ELF, network(§2.3)는 AF_PACKET, cng(§2.4)는 `bcrypt.dll`이다. 다른 OS에는 **거부 스텁**을 둬 빈 결과가 아니라 갭을 낸다(§2.6).
 > - **파일·DB만 만지는 것 = 크로스플랫폼**. 중앙·운영자 CLI(ingest·inventory·provision 등)는 OS 프리미티브를 안 만져 어디서든 돈다.
 >
-> collector별 대응 OS는 [커맨드 레퍼런스](cmd/README.md#collector--대상-머신에서-관측한다)에 있다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 OS×arch 교차 컴파일이 자명하다.
+> collector별 대응 OS는 [커맨드 레퍼런스](cmd/README.md)에 있다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 OS×arch 교차 컴파일이 자명하다.
 
 ### 2.1 openssl-collector (Go) — SD-1, SD-3
 
