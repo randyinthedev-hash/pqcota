@@ -172,7 +172,7 @@ Refine the collected facts into a **state you can decide on**. Reconcile the two
 ### 3.4 Review granularity (hybrid)
 
 - **Policy-level by default**: the reviewer decides on remediation rules. **The version × link-mode (and JDK × provider) solution catalog is itself the policy template under review**
-- **Individually isolated exceptions**: only policy exceptions, high-risk items, and shadow edges are handled per edge
+- **Individually isolated exceptions**: only policy exceptions, high-risk items, and `UNDECLARED` edges are handled per edge
 
 ### 3.5 Automation rules
 
