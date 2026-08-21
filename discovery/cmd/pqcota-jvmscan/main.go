@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/randyinthedev-hash/pqcota/discovery/cmd/internal/localview"
@@ -235,11 +234,12 @@ func deniedHint(denied int) {
 	if denied == 0 {
 		return
 	}
-	as := "root"
-	if runtime.GOOS == "windows" {
-		as = "an Administrator"
+	fmt.Fprintf(os.Stderr, "[jvmscan] ⚠ %d processes could not be opened, so a JVM running as another user is invisible here — that is a gap, not an absence.\n", denied)
+	// 이미 권한이 있으면 남은 것은 더 올려도 안 열린다(실측: 관리자에게도 3개가 남았다).
+	// 그 자리에서 "관리자로 돌리세요"는 안내가 아니라 잡음이다.
+	if !privileged() {
+		fmt.Fprintf(os.Stderr, "[jvmscan]   run as %s to widen the view.\n", elevateAs)
 	}
-	fmt.Fprintf(os.Stderr, "[jvmscan] ⚠ %d processes could not be opened, so a JVM running as another user is invisible here — that is a gap, not an absence. Run as %s to widen the view.\n", denied, as)
 }
 
 // nativeOutPath — 에이전트가 **대상 안에서** 쓸 출력 경로. 대상의 /tmp 기준이라 PID로 갈라
