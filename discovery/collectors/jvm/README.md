@@ -71,7 +71,7 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 - **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값 — 추측하지 않는다(§2.5).
 - **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector-deployment.md)의 입력.
 - **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로(§2.6). 조용한 0이 아니다.
-- **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다.
+- **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다. **Windows에서 특히 크게 갈린다** — 실측(Windows 11 26200)에서 일반 사용자는 265개 중 **163개를 못 열었고** 관리자는 264개 중 **3개**였다. Java 서버가 Windows 서비스(SYSTEM)로 도는 배치가 흔하므로, 권한 없이 돌리면 정작 봐야 할 JVM이 통째로 안 보인다. 그래서 못 연 수가 있으면 화면이 그 뜻과 넓히는 법을 함께 낸다.
 - **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다 — 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 뭉개진다**(리눅스에서는 `cmdline`이 파일이라 그냥 읽는다).
 
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).

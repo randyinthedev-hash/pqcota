@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/randyinthedev-hash/pqcota/discovery/cmd/internal/localview"
@@ -90,6 +91,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ process command lines were not read on this platform, so the app is left empty — several apps on one JDK collapse into one identifier")
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] recon: reachable %d · denied %d (not observed) · JVMs %d\n", st.Accessible, st.Denied, st.WithJVM)
+	deniedHint(st.Denied)
 
 	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
 	// 대상을 관측하지 못한 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
@@ -220,6 +222,24 @@ func emitRecon() {
 	os.Stdout.Write(b)
 	os.Stdout.Write([]byte("\n"))
 	fmt.Fprintf(os.Stderr, "[jvmscan -recon] %d JVMs · reachable %d · denied %d (not observed)\n", len(out), st.Accessible, st.Denied)
+	deniedHint(st.Denied)
+}
+
+// deniedHint — 열지 못한 프로세스가 있으면 그 뜻과 넓히는 법을 함께 낸다.
+//
+// 숫자만 내면 "JVM 0개"로 읽힌다. **못 본 것이지 없는 것이 아니다**(§2.6). Windows에서
+// 특히 크게 갈린다 — 실측(Windows 11 26200)에서 일반 사용자는 265개 중 163개를 못 열었고
+// 관리자는 264개 중 3개였다. Java 서버가 Windows 서비스(SYSTEM)로 도는 배치가 흔하므로,
+// 권한 없이 돌리면 **정작 봐야 할 JVM이 통째로 안 보인다**.
+func deniedHint(denied int) {
+	if denied == 0 {
+		return
+	}
+	as := "root"
+	if runtime.GOOS == "windows" {
+		as = "an Administrator"
+	}
+	fmt.Fprintf(os.Stderr, "[jvmscan] ⚠ %d processes could not be opened, so a JVM running as another user is invisible here — that is a gap, not an absence. Run as %s to widen the view.\n", denied, as)
 }
 
 // nativeOutPath — 에이전트가 **대상 안에서** 쓸 출력 경로. 대상의 /tmp 기준이라 PID로 갈라
