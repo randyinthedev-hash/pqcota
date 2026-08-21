@@ -25,7 +25,7 @@ pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 | 환경변수 | 하는 일 |
 |---|---|
 | `PQCOTA_DSN` | Postgres 접속 문자열([형식](../../discovery/cmd/README.md#pqcota-hosts)). 없으면 인메모리 요약만 — 영속되지 않는다 |
-| `PQCOTA_VERIFY_KEY` | 공개키(콤마 구분). 있으면 결과 서명을 검증하고 불일치는 거부한다 |
+| `PQCOTA_VERIFY_KEY` | 공개키(콤마 구분). 있으면 결과 서명을 검증하고 불일치는 거부한다. 키쌍은 [`pqcota-keygen`](../../discovery/cmd/README.md#pqcota-keygen)이 만들고, 짝이 되는 개인키는 **노드에서 collector가** 쓴다 |
 | `PQCOTA_REQUIRE_SIGNATURE` | `1`이면 검증할 키가 없을 때 **적재를 시작하지 않는다.** 없으면 검증을 건너뛰되 그 건수를 "서명 미확인"으로 따로 보고한다 — 통과와 같은 자리에 두지 않는다 |
 | `PQCOTA_ORG` | 이 적재가 속할 조직(소문자·숫자·하이픈 2–64자). 없으면 `default`에 묶인다. **저장소를 여는 모든 명령이 같은 값을 봐야 한다** — 읽는 쪽과 쓰는 쪽이 다르면 데이터가 있는데 안 보인다 |
 | `PQCOTA_REQUIRE_ORG` | `1`이면 조직 없이 저장소를 열 수 없다. `default`도 이름으로 쓸 수 없다(예약). 여러 조직이 한 저장소를 쓰는 배포용 — 섞인 뒤에는 되돌릴 수 없어 **여는 자리에서** 막는다 |
@@ -59,14 +59,6 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 >
 > 저장을 가르는 이유는 둘이다 — 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과
 > 달라지고, 원본에서 다시 계산할 때 저장된 값과 달라진다.
-
-### `pqcota-keygen`
-
-```
-pqcota-keygen
-```
-
-인자 없음. 서명용 ed25519 키쌍을 만든다 — 개인키는 노드로(`PQCOTA_SIGN_KEY`, ②가 서명), 공개키는 중앙으로(`PQCOTA_VERIFY_KEY`).
 
 ### 자산 스코프(`-scope-assets`)
 

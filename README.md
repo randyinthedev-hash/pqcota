@@ -154,7 +154,7 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 |---|---|---|
 | 적재·조회 CLI | **어디서든** — Linux · macOS · Windows | 파일과 DB만 만진다. OS 프리미티브를 안 쓴다 |
 | 저장소 | **Postgres** (append-only) | 이력·변화를 볼 때만. 한 번 훑는 정도면 `pqcota-discover-view`가 저장소 없이 낸다 |
-| 받는 입력 | collector의 `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · 사람이 적은 선언 | 관측 레인과 선언 레인을 섞지 않는다 |
+| 받는 입력 | collector의 `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · 사람이 적은 선언 | **기계가 본 것과 사람이 적은 것을 한 자리에 섞지 않는다** |
 
 ### 전환 (Provisioning)
 
@@ -165,7 +165,7 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 | **OpenSSL** | 3.5+ (네이티브 PQC) | config 조각만 — 레거시 무터치 |
 | | 3.0–3.4 | provider 모듈 배치 + 그 모듈을 참조하는 config 조각. 모듈 자체는 사용자가 준비한다 |
 | | 1.1.1 이하 | **생성하지 않는다** — 포크 교체가 필요해 수동 단계로 표기 |
-| **JCA**(Java) | **JDK 24+** (네이티브 PQC) | `java.security` 조각만. 고전 그룹을 함께 둔다 — 릴리스 JDK가 아직 하이브리드 그룹을 협상하지 않는다(≤25 실측) |
+| **JCA**(Java) | **JDK 24+** (네이티브 PQC) | `java.security` 조각만. 고전 그룹을 함께 둔다 — 릴리스 JDK가 아직 하이브리드 그룹을 협상하지 않는다(JDK 25까지 재 봤다) |
 | | **JDK 8+** (provider 주입) | provider JAR 배치 + `java.security` 등록 조각. JAR 배치만으로는 로드되지 않아 활성화가 따로 필요하다 |
 | | 그 이하(EOL) | **생성하지 않는다** — JDK 업그레이드가 필요해 수동 단계로 표기 |
 
