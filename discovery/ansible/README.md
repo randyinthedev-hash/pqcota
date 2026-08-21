@@ -11,13 +11,14 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml
 |---|---|
 | [`discover.yml`](discover.yml) | **반입 → 실행 → 회수 → 정리** — collector를 스테이징 디렉터리에 올려 돌리고, 결과 JSON을 컨트롤러로 가져온 뒤 노드에서 지운다 |
 
-**노드 OS로 갈린다.** `gather_facts`가 알려 주는 `os_family`로 리눅스면 collector 셋, Windows면 `pqcota-cngscan`을 돌린다. 어느 쪽도 아니면 아무것도 하지 않는다 — 결과가 없을 뿐, "그 노드에 아무것도 없다"가 아니다.
+**노드 OS로 갈린다.** `gather_facts`가 알려 주는 `os_family`로 리눅스면 collector 셋, Windows면 `pqcota-cngscan`·`pqcota-jvmscan` 둘을 돌린다. 어느 쪽도 아니면 아무것도 하지 않는다 — 결과가 없을 뿐, "그 노드에 아무것도 없다"가 아니다.
 
 **Windows 노드를 돌리려면 둘이 더 필요하다:**
 
 ```bash
 ansible-galaxy collection install ansible.windows            # win_copy·win_command 모듈
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ \
+  ./discovery/cmd/pqcota-cngscan ./discovery/cmd/pqcota-jvmscan
 ```
 
 접속 방법은 `hosts.csv`의 `connection` 열이 정한다(`ssh` 또는 `winrm`) — `targets.ini`는 매 실행 덮어써지므로 손으로 더한 설정은 남지 않는다 → [작성법](../../examples/discovery/README.md). 사이트마다 갈리는 값(WinRM transport·인증서 검증, sshd 기본 셸이 cmd인 경우)만 `group_vars/targets_windows.yml`에 둔다.
