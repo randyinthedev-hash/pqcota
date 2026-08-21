@@ -72,8 +72,8 @@ flowchart TB
 | **Ansible** | **선택.** 여러 노드에 collector를 반입·실행·회수할 때. 참조 플레이북이 리포에 있다 |
 | **Postgres** | **선택.** 쌓아서 이력·변화를 볼 때만. 한 번 훑어보는 정도면 필요 없다 |
 
-노드 쪽 요건은 **커널 3.2 이상**뿐이다 — Go 툴체인이 정하는 하한이고, 정적 링크라 배포판·libc를
-가리지 않는다. collector는 리눅스 전용이다.
+리눅스 노드 요건은 **커널 3.2 이상**뿐이다 — Go 툴체인이 정하는 하한이고, 정적 링크라 배포판·libc를
+가리지 않는다. Windows 노드를 보는 것은 `pqcota-cngscan` 하나다.
 
 ```bash
 make tools && make generate                       # contracts/*.proto → gen/

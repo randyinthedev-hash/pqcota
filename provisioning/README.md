@@ -8,6 +8,8 @@
 
 무엇을 바꿀지·어떻게 되돌릴지는 **생성기가 결정론적으로 정하고**, 만들어진 플레이북을 돌리는 것은 사용자의 Ansible이다. 계획은 **사용자가 작성한다** → [견본·필드](../examples/provisioning/plans/README.md).
 
+> **대상 범위** — 런타임은 **openssl·jca** 둘이다. 그 밖은 아티팩트를 만들지 않고 그렇게 적는다(`# (unknown runtime)`). 생성물이 POSIX 파일 배치(스테이징 + Ansible `copy`·`absent`)를 전제하므로 **노드는 리눅스**다. CNG 프로비저닝은 [v0.7.0 계획](../RELEASE_NOTES.md#로드맵--예정-릴리스-계획)이다.
+
 ## 한눈에
 
 ```mermaid

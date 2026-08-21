@@ -11,6 +11,8 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml
 |---|---|
 | [`discover.yml`](discover.yml) | **반입 → 실행 → 회수 → 정리** — collector 셋을 `/tmp/pqcota-collector`에 올려 돌리고, 결과 JSON을 컨트롤러로 가져온 뒤 노드에서 지운다 |
 
+**리눅스 노드 전용이다.** 리눅스 collector 셋만 돌린다 — `become`·`/tmp` 스테이징·`copy`가 POSIX를 전제한다. Windows 노드(`pqcota-cngscan`)를 이 경로로 돌리는 방법은 아직 없다.
+
 **노드에 아무것도 남기지 않는다.** collector는 상주 에이전트가 아니라 실행 후 종료하는 CLI라 이 일회성 패턴이 맞다.
 
 **JVM 애드온(`collector.jar`)은 모든 노드에 뿌리지 않는다** — `pqcota-jvmscan --recon`으로 그 노드에 JVM이 있는지 먼저 보고, 있는 노드에만 보낸다.

@@ -191,7 +191,7 @@ Including this with a bug report speeds up reproduction:
 
 - what you expected and what happened
 - the command you ran and its output (redact sensitive values)
-- environment — kernel version (`uname -r`), distro, Go version. Collectors are Linux-only and assume **kernel 3.2 or later**
+- environment — OS and Go version (on Linux, `uname -r` and the distro). The Linux collectors assume **kernel 3.2 or later**
 - for observation issues, the target runtime (OpenSSL version, JDK distribution)
 
 **For large changes, open an issue before a PR.** Contracts (`contracts/`) are the single source of truth here, so anything touching the schema or a boundary needs design agreement first — discovering a disagreement after the code is written costs us both.

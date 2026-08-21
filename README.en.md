@@ -112,19 +112,23 @@ make tools && make generate     # contracts/*.proto → gen/
 go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
-**③ The collectors that go on the target nodes** — just three, built statically **for the node's arch**
-→ [deployment design](discovery/collector-deployment.md) (Korean).
+**③ The collectors that go on the target nodes** — built statically **for the node's OS and arch**
+→ [deployment design](discovery/collector-deployment.md) (Korean). Which collector runs on which OS is in
+the [command reference](discovery/cmd/README.en.md#collectors--they-observe-on-the-target-machine).
 
 ```bash
+# Linux nodes
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
   ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
+
+# Windows nodes
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
 
 make build-jar                  # only if you have JVM nodes: attach sidecar → build/collector.jar
 ```
 
-The collectors are **Linux-only**, so `GOOS=linux` and `CGO_ENABLED=0` (static linking — distro/libc
-agnostic) are fixed. The only thing you change per node is `GOARCH`; for the accepted values see the
-[Go documentation](https://go.dev/doc/install/source#environment).
+`CGO_ENABLED=0` (static linking — distro/libc agnostic) is fixed; what you change is `GOOS` and
+`GOARCH`. For the accepted values see the [Go documentation](https://go.dev/doc/install/source#environment).
 
 Privileges and environment variables for running the collectors on a node → [discovery/cmd](discovery/cmd/README.en.md).
 

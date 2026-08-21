@@ -107,20 +107,25 @@ make tools && make generate     # contracts/*.proto → gen/
 go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
-**③ 대상 노드에 올릴 collector** — 셋뿐이고 **노드 arch에 맞춰** 정적으로 만든다
-→ [배포 설계](discovery/collector-deployment.md).
+**③ 대상 노드에 올릴 collector** — **노드 OS·arch에 맞춰** 정적으로 만든다
+→ [배포 설계](discovery/collector-deployment.md). 어느 collector가 어느 OS에서 도는지는
+[커맨드 레퍼런스](discovery/cmd/README.md#collector--대상-머신에서-관측한다).
 
 ```bash
+# 리눅스 노드
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
   ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
+
+# Windows 노드
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
 
 make build-jar                  # JVM 노드가 있을 때만: attach 사이드카 → build/collector.jar
 ```
 
-collector는 **리눅스 전용**이라 `GOOS=linux`와 `CGO_ENABLED=0`(정적 링크 — 배포판·libc 무관)은 고정이다.
-노드에 맞춰 바꾸는 것은 `GOARCH`뿐이며, 값 목록은 [Go 문서](https://go.dev/doc/install/source#environment)를 따른다.
+`CGO_ENABLED=0`(정적 링크 — 배포판·libc 무관)은 고정이고, 바꾸는 것은 `GOOS`·`GOARCH`뿐이다.
+값 목록은 [Go 문서](https://go.dev/doc/install/source#environment)를 따른다.
 
-**노드 커널은 3.2 이상**이면 된다 — Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건--커널권한)에 있다.
+**리눅스 노드의 커널은 3.2 이상**이면 된다 — Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건--커널권한)에 있다.
 
 노드에서 collector를 돌릴 때의 권한·환경변수 → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
 

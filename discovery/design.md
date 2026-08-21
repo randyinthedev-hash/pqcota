@@ -83,11 +83,11 @@
 
 > **용어 규칙**: **Collector = *pqcota가 제공하는* 노드 관측기**(intake 계약 뒤, **런타임**: openssl·jvm·network).
 
-> **플랫폼 제약 (현재 스코프)**: **전 바이너리가 Go**(collector도 운영자 CLI도) — 유일한 비-Go는 jvm-collector의 Java 사이드카뿐이다. 그래서 **Linux 전용 vs 크로스플랫폼 갈림은 언어가 아니라 "무엇을 만지느냐"로 정해진다**:
-> - **리눅스 OS API를 만지는 것 = Linux 전용**. openssl(§2.1)·procs는 `/proc`·ELF, network(§2.3)는 AF_PACKET에 의존(`//go:build linux`, `CAP_NET_RAW`). **관측 대상 = 리눅스 레거시 암호 런타임 서버** 전제. jvm-collector(§2.2)는 JVM 위(순수 Java)라 원리상 이식적이나 대상은 리눅스 서버(현재 검증 범위 Linux). attach 클라이언트는 머신의 기존 JDK를 재사용한다(런타임 미동봉).
-> - **파일·DB만 만지는 것 = 크로스플랫폼**. 중앙/운영자 CLI(ingest·inventory·provision 등)는 OS 프리미티브를 안 만져 macOS·Windows 운영자 머신에서도 돈다.
+> **플랫폼 제약**: **전 바이너리가 Go**(collector도 운영자 CLI도) — 유일한 비-Go는 jvm-collector의 Java 사이드카뿐이다. 그래서 **OS 갈림은 언어가 아니라 "무엇을 만지느냐"로 정해진다**:
+> - **OS API를 만지는 것 = 그 OS 전용**. openssl(§2.1)·procs·jvm(§2.2)은 `/proc`·ELF, network(§2.3)는 AF_PACKET, cng(§2.4)는 `bcrypt.dll`이다. 다른 OS에는 **거부 스텁**을 둬 빈 결과가 아니라 갭을 낸다(§2.6).
+> - **파일·DB만 만지는 것 = 크로스플랫폼**. 중앙·운영자 CLI(ingest·inventory·provision 등)는 OS 프리미티브를 안 만져 어디서든 돈다.
 >
-> **Windows/macOS 서버의 암호 런타임 관측은 별도 collector 구현이 필요**하며 현재 스코프 밖이다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 **Linux × arch(amd64/arm64…)** 교차 컴파일이 자명 — OS 매트릭스가 아니라 arch별.
+> collector별 대응 OS는 [커맨드 레퍼런스](cmd/README.md#collector--대상-머신에서-관측한다)에 있다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 OS×arch 교차 컴파일이 자명하다.
 
 ### 2.1 openssl-collector (Go) — SD-1, SD-3
 
@@ -187,6 +187,18 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 
 > **Phase 1 기능**(관측 병행 + shadow 발견). 이 엣지 관측이 인벤토리 reconciliation의
 > 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/design.md) §12).
+
+### 2.4 cng-collector (Go, `bcrypt.dll`) — CNG 계층
+
+**책임**: Windows에 등록된 CNG provider와 그 머신이 열거하는 알고리즘을 본다. provider 아키텍처라
+jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는다 — `/proc`도 ELF도 attach도 아닌
+열거 API다. 그래서 **자기 계층**(`COLLECTION_LAYER_CNG_INTROSPECTION`)을 갖는다: 무엇을 못 봤는지가
+다른 계층과 다르다.
+
+**외부 도구를 부르지 않는다** — `certutil`·PowerShell·WMI 대신 `bcrypt.dll` 직접 호출(§2.3).
+스크립트 실행이 정책으로 막힌 서버에서 관측 실패가 환경 탓으로 흩어지지 않는다.
+
+관측 축과 API 대응은 → [cng-collector](collectors/cng/README.md).
 
 ---
 
