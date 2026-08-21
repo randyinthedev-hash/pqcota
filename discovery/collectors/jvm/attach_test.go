@@ -128,3 +128,17 @@ func TestDegradedNoteNamesTheJVM(t *testing.T) {
 		t.Errorf("a successful attach must leave no note: %q", n)
 	}
 }
+
+// 강등 사유가 하나뿐인 것처럼 적히면 안 된다. attach가 막혀 대상의 java.security를 읽은 것과,
+// 도는 JVM이 없어 도구가 java를 띄워 본 것은 읽는 사람에게 전혀 다른 이야기다.
+func TestDegradedNoteCarriesItsOwnReason(t *testing.T) {
+	own := jvm.Collected{Degraded: true, Note: "no JVM was running — the launcher was started for this probe"}
+	n := jvm.BuildResultFor("n", own, "").GetCompleteness().GetNote()
+	if n != own.Note {
+		t.Errorf("the given reason was replaced: %q", n)
+	}
+	// 사유를 안 주면 attach 폴백의 기본 사유가 쓰인다.
+	if n := jvm.BuildResultFor("n", jvm.Collected{Degraded: true}, "").GetCompleteness().GetNote(); !strings.HasPrefix(n, "attach unavailable") {
+		t.Errorf("the default reason disappeared: %q", n)
+	}
+}

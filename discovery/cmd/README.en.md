@@ -172,7 +172,7 @@ What you need when running on a node. Insufficient privilege means **the visible
 |---|---|---|
 | `pqcota-nodescan` | its own process works as-is. **Seeing other users' requires root** (or `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
 | `pqcota-netcap` | **`CAP_NET_RAW` required** (`setcap` or root) — without it capture never starts | `NETCAP_IFACE` (default `eth0`) · `NETCAP_WINDOW_SEC` (default 8s) |
-| `pqcota-jvmscan` | **the same UID** as the target JVM (or root). If the target blocks attach it degrades to a static probe | `PQCOTA_JVM_AGENT`=path to collector.jar — given, it takes the attach path; without it, the static probe |
+| `pqcota-jvmscan` | **the same UID** as the target JVM (or root). If the target blocks attach it degrades to reading the target's `java.security` | `PQCOTA_JVM_AGENT`=path to collector.jar — given, it takes the attach path. **Without it, and with no JVM running**, it starts one to see the launcher's default provider chain, recorded as **degraded** (not an observation of a running app) |
 | `pqcota-cngscan` | no special privilege — the `bcrypt.dll` enumeration APIs are read-only queries | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
 
 

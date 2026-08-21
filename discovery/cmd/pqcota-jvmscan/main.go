@@ -112,7 +112,7 @@ func main() {
 	// 그 JVM의 provider 체인(동적 등록 포함)을 관측한다. 정찰→attach 대칭 완성.
 	// 없으면 프로브 경로(정적 등록 체인, 데모 경량)로 폴백한다.
 	if agent := os.Getenv("PQCOTA_JVM_AGENT"); agent != "" && len(jvms) > 0 {
-		emit(*out, node, attachAll(node, jvms, agent), true)
+		emit(*out, node, attachAll(node, jvms, agent), true, fmt.Sprintf("%d JVMs observed", len(jvms)))
 		return
 	}
 
@@ -127,7 +127,8 @@ func main() {
 		}
 		fmt.Fprintf(os.Stderr, "[jvmscan] static fallback pid=%d: %d providers (dynamic registrations are a blind spot — not observed)\n",
 			j.PID, len(c.Providers))
-		emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResultFor(node, c, j.Ident())}, false)
+		emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResultFor(node, c, j.Ident())}, false,
+			fmt.Sprintf("1 JVM observed (pid %d, static path)", j.PID))
 		return
 	}
 
@@ -162,14 +163,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "[jvmscan] warning while running java: %v\n%s\n", err, probeOut)
 	}
 
+	// ★ 이 경로는 **도는 JVM을 본 것이 아니다.** 위에서 java를 하나 띄워 그 JVM에게 물었다.
+	// 그러니 confirmed·runtime-introspection으로 낼 수 없다 — 도구가 만든 것을 관측이라고
+	// 적는 것이 된다. 값은 쓸모가 있다("이 머신의 java는 무엇으로 시작하는가")지만 **그 이름으로**
+	// 적어야 한다. nodescan이 /proc에 로드된 libssl만 보는 것과 같은 규칙이다.
 	c := jvm.ParseProviders(string(probeOut))
-	emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResult(node, c)}, false)
-	fmt.Fprintf(os.Stderr, "[jvmscan] %s: %d providers\n", node, len(c.Providers))
+	c.Degraded = true
+	c.Note = "no JVM was running — the machine's java launcher was started for this probe, so this is its default provider chain, not an observation of a running app (the runtime registrations of real apps are a blind spot)"
+	emit(*out, node, []*discoveryv1.CollectionResult{jvm.BuildResult(node, c)}, false,
+		"0 JVMs observed — probed the machine's java launcher instead")
+	fmt.Fprintf(os.Stderr, "[jvmscan] ⚠ no JVM was running, so one was started to probe the machine's java launcher — this is not an observation of a running app\n")
+	fmt.Fprintf(os.Stderr, "[jvmscan] %s: %d providers (default chain of %s)\n", node, len(c.Providers), javaBin)
 }
 
 // emit — 수집 결과를 요청한 형식으로 낸다. jsonl=true면 한 줄에 하나(여러 JVM), 아니면
 // 들여쓴 단일 객체.
-func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool) {
+func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool, headline string) {
 	if mode == "json" {
 		enc := protojson.MarshalOptions{Multiline: !jsonl, Indent: "  "}
 		for _, r := range results {
@@ -192,7 +201,7 @@ func emit(mode, node string, results []*discoveryv1.CollectionResult, jsonl bool
 			os.Exit(1)
 		}
 		fmt.Fprintf(w, "== pqcota JVM Discovery — %s (read-only; nothing is stored) ==\n", node)
-		fmt.Fprintf(w, "%d JVMs observed\n\n", len(results))
+		fmt.Fprintf(w, "%s\n\n", headline)
 		fmt.Fprint(w, tbl)
 	}
 }

@@ -32,6 +32,13 @@ type Collected struct {
 	Degraded  bool
 	// Raw — 파싱 전 원본 텍스트. raw_capture로 실려 재정규화의 입력이 된다(§2.4 step 1).
 	Raw string
+
+	// Note — 왜 강등인지. 비면 attach 폴백의 기본 사유를 쓴다.
+	//
+	// 강등에도 여러 사유가 있다. attach가 막혀 대상의 java.security를 읽은 것과, **도는 JVM이
+	// 없어 도구가 java를 하나 띄워 본 것**은 읽는 사람에게 전혀 다른 이야기다. 하나로 적으면
+	// 뒤엣것이 앞엣것처럼 읽힌다.
+	Note string
 }
 
 // ParseProviders — Java 사이드카 출력("N|name|version|class" 또는 정적 폴백)을 파싱.
@@ -82,7 +89,10 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 		dmStr = "artifact"
 		covered = nil
 		missing = []commonv1.CollectionLayer{commonv1.CollectionLayer_COLLECTION_LAYER_JVM_INTROSPECTION}
-		note = "attach unavailable — static java.security path (runtime-introspection gap; dynamic registrations are a blind spot)"
+		note = c.Note
+		if note == "" {
+			note = "attach unavailable — static java.security path (runtime-introspection gap; dynamic registrations are a blind spot)"
+		}
 	}
 
 	// 노드에 JVM이 여럿이면 결과가 여럿이고, 노트는 노드 하나로 합쳐져 화면에 나온다.

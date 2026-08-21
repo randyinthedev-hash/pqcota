@@ -168,7 +168,7 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discov
 |---|---|---|
 | `pqcota-nodescan` | 자기 프로세스는 그냥 된다. **다른 사용자 것까지 보려면 root**(또는 `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY` — 있으면 결과에 서명(선택) |
 | `pqcota-netcap` | **`CAP_NET_RAW` 필수**(`setcap` 또는 root) — 없으면 포집이 시작되지 않는다 | `NETCAP_IFACE`(기본 `eth0`) · `NETCAP_WINDOW_SEC`(기본 8초) |
-| `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 정적 프로브로 떨어진다 | `PQCOTA_JVM_AGENT`=collector.jar 경로 — 주면 attach 경로, 없으면 정적 프로브 |
+| `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 대상의 `java.security`를 읽는 정적 폴백으로 떨어진다 | `PQCOTA_JVM_AGENT`=collector.jar 경로 — 주면 attach 경로. **없고 도는 JVM도 없으면** java를 하나 띄워 그 기본 provider 체인을 보되 **강등**으로 적는다(도는 앱의 관측이 아니다) |
 | `pqcota-cngscan` | 특별한 권한이 필요 없다 — `bcrypt.dll`의 열거 API는 읽기 조회다 | `PQCOTA_SIGN_KEY` — 있으면 결과에 서명(선택) |
 
 
