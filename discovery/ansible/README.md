@@ -21,6 +21,8 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ \
   ./discovery/cmd/pqcota-cngscan ./discovery/cmd/pqcota-jvmscan
 ```
 
+Windows 노드는 **관리자 계정으로 접속해야** 다른 사용자로 도는 JVM까지 보인다(실측: 일반 사용자 265개 중 163개를 못 열었다). 리눅스 블록의 `become: true`에 해당하는 자리다.
+
 접속 방법은 `hosts.csv`의 `connection` 열이 정한다(`ssh` 또는 `winrm`) — `targets.ini`는 매 실행 덮어써지므로 손으로 더한 설정은 남지 않는다 → [작성법](../../examples/discovery/README.md). 사이트마다 갈리는 값(WinRM transport·인증서 검증, sshd 기본 셸이 cmd인 경우)만 `group_vars/targets_windows.yml`에 둔다.
 
 > **이 경로는 데모가 덮지 못한다.** 데모는 리눅스 컨테이너뿐이라 Windows 분기는 매 실행 확인되는 게이트가 없다. 리눅스 쪽과 달리 "돌려 봤더니 됐다"는 근거가 얇다.
