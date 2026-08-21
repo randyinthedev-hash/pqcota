@@ -28,7 +28,7 @@ Discovery·Inventory 예제가 함께 쓰는 **회수된 결과**(실물 collect
 - `data/results/node-a-net.json` — 관측 통신 엣지 3개(🟢 MLKEM · 🔴 x25519 · 🟢 SSH sntrup761).
 - `data/results/node-d-cng.json` — Windows CNG provider 9개·알고리즘 50개. **실기에서 관측한 값**이다
   (Windows 11 Pro 25H2 · 빌드 26200). 머신 지문은 뺐고 노드 이름만 예제에 맞췄다.
-- `data/nodes.json` — 관측 IP→노드명 해소(10.0.0.9 → node-c).
+- `data/nodes.json` — 관측 IP를 노드명으로 잇기(10.0.0.9 → node-c).
 
 > `CollectionResult`의 `cbomCyclonedx`는 **base64로 감싼 CycloneDX**(protobuf `bytes`)다. 각 단계 README에 디코드된 내용을 실어 뒀다.
 

@@ -183,7 +183,7 @@ JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입�
 | 자산 성격 | 권장 provider | 근거 |
 |---|---|---|
 | 일반 자산, 구형 JDK(<24) | **BouncyCastle**(bcprov-jdk18on) | 전 JDK 커버, 표준 JCA API, 허용적 라이선스 |
-| **규제 대상 자산** | **BC-FJA (FIPS 140-3)** | 내부 provider FIPS 갭 해소, 감사 대응 |
+| **규제 대상 자산** | **BC-FJA (FIPS 140-3)** | 내부 provider의 FIPS 갭을 메움, 감사 대응 |
 | 신형 JDK(24/25+), SLH-DSA 불필요 | JDK 네이티브 | provider 주입 불필요, config만 |
 | OpenSSL 백엔드 통합 희망 | openssl-jostle | 이원 런타임 provider 수렴 |
 | 특수 알고리즘·HSM·독자 통제 | 내부 PQC provider | 아래 참조 |
@@ -303,7 +303,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 ```
 plan.targetNodeId ─┐
                    ├─(같은 node_id)→  ansible-playbook -i targets.ini provision.yml
-targets.ini 항목 ──┘         (node_id → ip·ssh 접속은 여기서 해소)
+targets.ini 항목 ──┘         (node_id → ip·ssh 접속을 여기서 잇는다)
 ```
 
 그래서 도구는 접속 비밀을 알 필요도, 영속할 필요도 없다 — 플레이북은 `node_id`만 말하고, 그 node를 어떻게 접속할지는 인벤토리가 안다([discovery 예제](../examples/discovery/README.md)의 `pqcota-hosts` 참고).

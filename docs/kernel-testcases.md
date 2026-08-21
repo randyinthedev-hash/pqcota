@@ -69,7 +69,7 @@
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
 | [TK-ATTRIBUTION-1](../pkg/discovery/procs/procs_test.go) | `TestMatch` — `systemd_unit` · `exe_path` · `cmdline_regex`, 그리고 둘을 함께 준 규칙 | 각각 매칭하고, 함께 주면 **둘 다** 만족해야 한다. 다른 유닛은 안 걸린다 | 앱을 잘못 짚으면 스코프 정책이 엉뚱한 자산을 빼고 조치가 엉뚱한 앱에 간다 |
-| [TK-ATTRIBUTION-2](../pkg/discovery/procs/procs_test.go) | `TestResolve` — 가짜 `/proc` 트리(exe·cmdline) | 프로세스에서 앱 키를 해소한다 | 프로세스는 휘발이라 실시간으로만 풀 수 있다. 이 해소가 자산과 앱을 잇는 유일한 다리다 |
+| [TK-ATTRIBUTION-2](../pkg/discovery/procs/procs_test.go) | `TestResolve` — 가짜 `/proc` 트리(exe·cmdline) | 프로세스에서 앱 키를 찾아낸다 | 프로세스는 휘발이라 실시간으로만 풀 수 있다. 그것이 자산과 앱을 잇는 유일한 다리다 |
 
 ### TK-MACHINE. 머신 식별 — 같은 머신을 같은 것으로
 

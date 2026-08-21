@@ -43,7 +43,7 @@ import (
 ```
 
 > **v0.5.0에서 모듈 경로가 바뀌었다** — `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
-> 선언한 경로가 리포 주소와 달라 `go get`이 해소하지 못했고, 소비자는 `replace`로 우회해야 했다.
+> 선언한 경로가 리포 주소와 달라 `go get`이 받아 오지 못했고, 소비자는 `replace`로 우회해야 했다.
 > v0.4.0 이하를 쓰던 쪽은 그 줄을 지우고 import를 새 경로로 옮긴다.
 
 생성 코드는 손으로 고치지 않는다. proto를 고치고 `make generate`를 돌린다 — CI가 둘이

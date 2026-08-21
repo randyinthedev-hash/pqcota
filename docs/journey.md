@@ -86,7 +86,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
 
 ## 2. 접근 준비 — 여러 노드를 훑을 때만
 
-접속 정보는 **직접 쓴 CSV 한 벌**에서 시작한다. 거기서 두 가지가 갈려 나온다.
+접속 정보는 **직접 쓴 CSV 하나**에서 시작한다. 거기서 두 가지가 나온다.
 
 ```bash
 pqcota-hosts --ansible-out targets.ini --dsn "$PQCOTA_DSN" hosts.csv
