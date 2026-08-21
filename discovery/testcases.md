@@ -64,6 +64,8 @@
 | TD-JVM-12 | **실물** — 확인 | 같은 명령을 일반 사용자와 관리자로 | 일반 265개 중 **163개를 못 열고**, 관리자는 264개 중 **3개** | Windows에서 Java 서버는 보통 서비스(SYSTEM)로 돈다 — 권한 없이 돌리면 봐야 할 JVM이 통째로 안 보인다. 숫자만 내면 "JVM 0개"로 읽히므로 화면이 뜻과 넓히는 법을 함께 낸다 |
 | [TD-JVM-13](collectors/jvm/attach_test.go) | unit | `TestDegradedNoteNamesTheJVM`·`TestDegradedNoteCarriesItsOwnReason`·`TestGapResultCarriesTheJVMToTheCentre` | 갭 노트가 **어느 JVM·왜**인지 밝히고, 찾았는데 못 본 JVM은 컴포넌트 없이 갭만 실어 보낸다 | 셋 다 실기에서 드러난 결함을 못 박은 것이다(아래) |
 | TD-JVM-14 | **실물** — 확인 | Windows 11 + JDK 21에서 `pqcota-jvmscan --output table` | ①이 실패하고 **②가 붙는다**(대상 JVM이 `A Java agent has been loaded dynamically`를 찍는다). javapath 런처 심은 `jvm.dll not loaded by target process`로 **갭**이 되고, 그 사유가 화면과 계약에 남는다 | Windows attach 경로의 첫 실물 확인이다. 여기서 결함 셋이 나왔다: ②가 실패 시 **클라이언트 자신의** java.security를 읽어 남의 provider를 대상에 붙였고, 도는 JVM이 없으면 프로브가 **띄운 JVM**을 confirmed로 냈으며, 관측 못 한 JVM이 **중앙에 가지 않았다** |
+| TD-WIN-1 | **실물 종단** — 확인 | 실 Windows 노드(192.168.1.25)에 `ansible-playbook discover.yml` | `os_family`로 리눅스 블록 14개가 건너뛰어지고 Windows 블록이 돈다: 반입 2개 → JVM 정찰 → CNG 관측 → 회수 → 정리. `failed=0`, 노드에 **아무것도 안 남는다**(`Test-Path` false) | 코드 경로가 다 맞아도 앤서블이 그 노드에 닿는 부분은 따로다. 연결은 Win32-OpenSSH + 키(`ansible_shell_type=powershell`) — `pqcota-hosts`가 `hosts.csv`의 `os`·`connection`에서 그 인벤토리를 만든다 |
+| TD-WIN-2 | **실물 종단** — 확인 | 회수한 JSON을 `pqcota-discover-view`로 | `win-01 · CNG providers: 9 · 50 algorithms · PQC native (signature only — no KEM observed) [CONFIRMED]`. 머신 지문에 `hardware_uuid`(SMBIOS)까지 차고 `derived_from=machine-id` | 관측이 화면까지 오지 않으면 적지 않은 것과 같다. 플레이북이 낸 산출물이 그대로 뷰의 입력이 되는지 확인한다 |
 
 ### SD-3. 바이너리 fork 매처 — IP
 
@@ -188,7 +190,7 @@
 | 7 | **서명과 그 커버리지** | TD-SIGN-1–3 |
 | 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–15 |
 | 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-16–18 |
-| 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8·TD-JVM-11·TD-JVM-12·TD-JVM-14 · [데모 2/6](../demo/integration-verification.md) |
+| 10 | **실 호스트 수집**(OpenSSL·JVM attach·Windows 플레이북) | TD-OPENSSL-4·TD-JVM-8·TD-JVM-11·TD-JVM-12·TD-JVM-14·TD-WIN-1·TD-WIN-2 · [데모 2/6](../demo/integration-verification.md) |
 | 11 | **관측하지 못한 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9·TD-JVM-13 · TD-CONTAINER-2 · TD-NETWORK-19 |
 
 **관찰**: 순서 1–7이 전부 **unit** — 핵심 로직(정직한 증거·fork·라우팅·위임경계)이 실물 없이 TDD된다. 실물 의존은 리눅스가 필요하다. **가치 있는 로직을 먼저, 환경 리스크는 조기 PoC로.**
