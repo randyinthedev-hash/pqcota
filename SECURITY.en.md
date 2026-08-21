@@ -10,12 +10,13 @@ English · [한국어](SECURITY.md)
 
 ## Supported versions
 
-Before the first release (v0.1.0). Security fixes land only on **`main` latest**. After the first release, this table will be updated with the supported range.
+Security fixes land on **`main` and the latest release**. They are not backported to earlier tags — a solo project cannot maintain several branches, and pretending to would leave users believing they have a fix that never reached them.
 
 | Version | Security fixes |
 |---|---|
-| `main` (in development) | ✅ |
-| Official release | none yet |
+| `main` | ✅ |
+| the latest release | ✅ — it goes out in the next release; a defect that cannot sit there gets its own patch release |
+| earlier tags | ❌ — upgrade to the latest |
 
 ## Reporting a vulnerability
 
@@ -30,7 +31,7 @@ Including the following speeds up triage: affected component (collector/CLI/libr
 
 ## Response
 
-As a solo project, response is **best-effort** — acknowledge receipt, reproduce and assess, then coordinate a fix plan with the reporter. There is no SLA before release, but valid reports are prioritized.
+As a solo project, response is **best-effort** — acknowledge receipt, reproduce and assess, then coordinate a fix plan with the reporter. There is no SLA, but a valid report goes ahead of other work.
 
 ## Security scope (specific to this project)
 
