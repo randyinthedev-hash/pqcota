@@ -196,9 +196,26 @@ Neither kernel has an **`NSpid` line** in `/proc/<pid>/status`, and the host-PID
 
 > **The PoC/test harness is not here.** The CLI that verifies the openssl collector against real `/proc` and ELF lives co-located with its only consumer, the integration test — [`discovery/collectors/openssl/integration/probe`](../collectors/openssl/integration). This folder (discovery/cmd/) holds **only product discovery entry points**.
 
-## ③ Other — node-side commands that are not collectors
+## ③ Other — commands that are not collectors
 
-They run on the target machine but **are not observation**. They emit no `CollectionResult`, so nothing is ingested centrally.
+**They are not observation.** They emit no `CollectionResult`, so nothing is ingested centrally. They also run in different places — `pqcota-procs` on the target machine, `pqcota-keygen` once, when the keys are set up.
+
+### `pqcota-keygen`
+
+```
+pqcota-keygen
+```
+
+No arguments. It generates an **ed25519 key pair** for signing collector reports and prints it to stdout (§2.6). The two lines it prints go to different places:
+
+| What it prints | Where it goes | Who uses it |
+|---|---|---|
+| `PQCOTA_SIGN_KEY` (private) | on the node, when a collector runs | signs the result — [Privileges · environment variables](#privileges--environment-variables) |
+| `PQCOTA_VERIFY_KEY` (public) | at the centre, when `pqcota-ingest` runs | verifies the signature. Several keys are comma-separated |
+
+**The private key goes to stdout.** Redirect it into a file and the file stays behind; paste it into a shell and it stays in the history.
+
+**Signing is optional.** Without a key nothing is blocked; instead the centre reports *"unverified signatures: N — this does not mean they are wrong, it means they were never checked."* To refuse to ingest at all when there is no key to verify with, set `PQCOTA_REQUIRE_SIGNATURE=1`.
 
 ### `pqcota-procs`
 
