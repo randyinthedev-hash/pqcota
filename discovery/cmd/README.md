@@ -64,8 +64,9 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다** — `
 | `pqcota-nodescan` | `/proc`의 로드된 OpenSSL(libssl/libcrypto) | CollectionResult |
 | `pqcota-jvmscan` | 실 JVM의 JCA provider 체인(`Security.getProviders()`) | CollectionResult |
 | `pqcota-netcap` | TLS/SSH 핸드셰이크(AF_PACKET, linux 전용) | CollectionResult(관측 엣지) |
+| `pqcota-cngscan` | 등록된 CNG provider와 그 머신이 열거하는 알고리즘(`bcrypt.dll`, **Windows 전용**) | CollectionResult |
 
-셋 다 `CollectionResult`를 내고, 루트 README의 빌드가 `dist/linux-<arch>/`로 내는 것도 이 셋이다. 각각 `discovery/collectors/{openssl,jvm,network}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다 — 코어는 그대로다.
+넷 다 `CollectionResult`를 낸다. 다만 **릴리스에 정적 바이너리가 붙는 것은 리눅스 셋뿐**이다 — `pqcota-cngscan`은 Windows 전용이라 쓰는 쪽이 직접 만든다([아래](#pqcota-cngscan)). 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다 — 코어는 그대로다.
 
 여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음--만든-인벤토리로-collector-돌리기).
 
@@ -78,7 +79,7 @@ pqcota-nodescan [--output json|table] [node-id]
 | 인자·옵션 | 하는 일 |
 |---|---|
 | `[node-id]` | CMDB 권위 id. 생략하면 머신 지문에서 결정론적 self-id를 만들고, 그것도 없으면 `host://local` |
-| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscan-공통) |
+| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
 
 `/proc`를 열지 못하면 **빈 결과를 내지 않는다** — "OpenSSL 없음"이 아니라 관측 자체가 불가한 것이라, 완전성 노트에 갭으로 적고 stderr로 알린다.
 
@@ -94,7 +95,7 @@ pqcota-jvmscan --recon
 | `[node-id]` | 생략하면 `host://local` |
 | `--pid N` | 그 PID의 JVM 하나만 관측. 기본은 정찰로 찾은 전부 |
 | `--recon` | 정찰만 하고 발견된 JVM을 JSON으로 낸다(관측 안 함) |
-| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscan-공통) |
+| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
 
 `--pid`가 지목한 PID가 실행 중 JVM에 없으면 **전부 훑기로 갈아타지 않고 실패한다** — 관측하지 못한 것은 갭이지 다른 대상으로 대체할 일이 아니다.
 
@@ -121,7 +122,28 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 
 손으로 돌리면서 실패로 끝내고 싶으면 `--strict`를 준다(갭은 그대로 stdout에 낸다).
 
-### `--output` — nodescan·jvmscan 공통
+### `pqcota-cngscan`
+
+```
+pqcota-cngscan [--output json|table] [node-id]
+```
+
+| 인자·옵션 | 기본값 | 하는 일 |
+|---|---|---|
+| `[node-id]` | 머신 지문에서 뽑은 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
+| `--output` | `json` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
+
+**릴리스에 바이너리가 붙지 않는다** — 노드에 올리는 셋이 리눅스 전용이라 그 묶음에 없다. 쓰려면 직접 만든다:
+
+```bash
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
+```
+
+**Windows가 아닌 곳에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 **0**이다. netcap이 `CAP_NET_RAW` 없을 때 하는 것과 같은 규칙이고, 이유도 같다 — 갭이 중앙까지 가야 "CNG가 없는 노드"와 "CNG를 못 본 노드"가 구별된다(§2.6).
+
+`certutil`·PowerShell·WMI를 부르지 않고 `bcrypt.dll`을 직접 호출한다. 무엇을 어떤 API로 보는지는 → [cng-collector](../collectors/cng/README.md).
+
+### `--output` — nodescan·jvmscan·cngscan 공통
 
 같은 수집이 돌고 **어느 층을 내보내느냐**가 갈린다.
 
@@ -143,6 +165,7 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 | `pqcota-nodescan` | 자기 프로세스는 그냥 된다. **다른 사용자 것까지 보려면 root**(또는 `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY` — 있으면 결과에 서명(선택) |
 | `pqcota-netcap` | **`CAP_NET_RAW` 필수**(`setcap` 또는 root) — 없으면 포집이 시작되지 않는다 | `NETCAP_IFACE`(기본 `eth0`) · `NETCAP_WINDOW_SEC`(기본 8초) |
 | `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 정적 프로브로 떨어진다 | `PQCOTA_JVM_AGENT`=collector.jar 경로 — 주면 attach 경로, 없으면 정적 프로브 |
+| `pqcota-cngscan` | 특별한 권한이 필요 없다 — `bcrypt.dll`의 열거 API는 읽기 조회다 | `PQCOTA_SIGN_KEY` — 있으면 결과에 서명(선택) |
 
 
 ### 실행 요건 — 커널·권한
