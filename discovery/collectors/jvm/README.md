@@ -74,6 +74,8 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다. **Windows에서 특히 크게 갈린다** — 실측(Windows 11 26200)에서 일반 사용자는 265개 중 **163개를 못 열었고** 관리자는 264개 중 **3개**였다. Java 서버가 Windows 서비스(SYSTEM)로 도는 배치가 흔하므로, 권한 없이 돌리면 정작 봐야 할 JVM이 통째로 안 보인다. 그래서 못 연 수가 있으면 화면이 그 뜻과 넓히는 법을 함께 낸다.
 - **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다 — 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 뭉개진다**(리눅스에서는 `cmdline`이 파일이라 그냥 읽는다).
 
+> **Windows에서 실기로 확인한 것과 아닌 것**(Windows 11 26200) — 프로세스 열거·식별·JAVA_HOME 유도·권한 효과까지는 실물에서 봤다(TD-JVM-11·12). **아직 못 본 것**은 `jvm.dll`로 잡는 경로(네이티브 런처)와, 진짜 JDK 배치에서 `attachCapable`이 `true`로 서는 것, 그리고 **Windows에서의 attach ②·③**이다 — JDK가 깔린 Windows 장비가 있어야 한다.
+
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).
 
 - **다중 JVM 구별**: 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이 된다 — 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME→exe. **PID는 안 쓴다**(매 스캔 달라져 이력이 "매번 새 자산"으로 깨진다). 한 JDK에 앱이 여럿이어도 dedup으로 하나가 사라지지 않는다.
