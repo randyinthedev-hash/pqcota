@@ -75,7 +75,9 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다. **Windows에서 특히 크게 갈린다** — 실측(Windows 11 26200)에서 일반 사용자는 265개 중 **163개를 못 열었고** 관리자는 264개 중 **3개**였다. Java 서버가 Windows 서비스(SYSTEM)로 도는 배치가 흔하므로, 권한 없이 돌리면 정작 봐야 할 JVM이 통째로 안 보인다. 그래서 못 연 수가 있으면 화면이 그 뜻과 넓히는 법을 함께 낸다.
 - **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다 — 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 뭉개진다**(리눅스에서는 `cmdline`이 파일이라 그냥 읽는다).
 
-> **Windows에서 실기로 확인한 것과 아닌 것**(Windows 11 26200) — 프로세스 열거·식별·JAVA_HOME 유도·권한 효과까지는 실물에서 봤다(TD-JVM-11·12). **아직 못 본 것**은 `jvm.dll`로 잡는 경로(네이티브 런처)와, 진짜 JDK 배치에서 `attachCapable`이 `true`로 서는 것, 그리고 **Windows에서의 attach ②·③**이다 — JDK가 깔린 Windows 장비가 있어야 한다.
+> **Windows에서 실기로 확인한 것과 아닌 것**(Windows 11 26200 + JDK 21) — 프로세스 열거·식별·JAVA_HOME 유도·권한 효과, 그리고 **attach ②가 실제로 붙는 것**까지 봤다(TD-JVM-11·12·14). ①이 없으니 ②로 내려가고, 붙지 못하면 ③, 그것도 안 되면 갭이다. **아직 못 본 것**은 `jvm.dll`로 잡는 경로(네이티브 런처가 JVM을 품은 경우)다.
+>
+> **정찰은 런처 이름으로 잡는다.** 그래서 Oracle javapath 심처럼 **JVM이 아닌 `java.exe`**도 걸린다 — JDK가 `jvm.dll not loaded by target process`로 알려 준다. 잡아 두고 사유를 적는 쪽을 골랐다: 놓치는 것보다 낫고, 막 뜬 JVM은 아직 `jvm.dll`을 안 올렸을 수 있다.
 
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).
 
