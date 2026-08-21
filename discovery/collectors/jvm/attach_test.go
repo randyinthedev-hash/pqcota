@@ -106,3 +106,25 @@ func TestAttachClient(t *testing.T) {
 		t.Errorf("with no JVM it must be empty: %q", got)
 	}
 }
+
+// 갭 노트는 어느 JVM 이야기인지 밝혀야 한다. 노드에 JVM이 여럿이면 노트가 노드 하나로
+// 합쳐져 나오는데, 그때 이름이 없으면 **노드 전체가 attach 불가로 읽힌다** — 실측에서
+// attach가 성공한 행 바로 아래에 "attach unavailable"이 붙었다.
+func TestDegradedNoteNamesTheJVM(t *testing.T) {
+	degraded := jvm.Collected{Degraded: true}
+	note := jvm.BuildResultFor("n", degraded, "/opt/jdk17").GetCompleteness().GetNote()
+	if !strings.Contains(note, "/opt/jdk17") {
+		t.Errorf("the note does not say which JVM it is about: %q", note)
+	}
+	if !strings.Contains(note, "attach unavailable") {
+		t.Errorf("the reason disappeared from the note: %q", note)
+	}
+	// JVM이 하나뿐이면 붙일 이름이 없다 — 사유만 남는다.
+	if n := jvm.BuildResultFor("n", degraded, "").GetCompleteness().GetNote(); !strings.HasPrefix(n, "attach unavailable") {
+		t.Errorf("a single JVM must keep the plain note: %q", n)
+	}
+	// attach가 됐으면 노트가 없다 — 없는 갭을 지어내지 않는다.
+	if n := jvm.BuildResultFor("n", jvm.Collected{}, "/opt/jdk17").GetCompleteness().GetNote(); n != "" {
+		t.Errorf("a successful attach must leave no note: %q", n)
+	}
+}

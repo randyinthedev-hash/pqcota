@@ -25,10 +25,19 @@ public final class Attacher {
             }
             System.out.println("[attacher] attach succeeded → the real getProviders() (confirmed)");
         } catch (Exception e) {
-            // JEP 451 / DisableAttachMechanism / 권한 → 정적 폴백(설계 §2.2, S2-4).
-            System.out.println("[attacher] attach unavailable (" + e.getClass().getSimpleName()
-                    + ") → static fallback (inferred + gap)");
-            StaticFallback.run(System.getProperty("java.home"), out);
+            // JEP 451 / DisableAttachMechanism / 권한 → **여기서 끝낸다.**
+            //
+            // 예전에는 이 자리에서 `System.getProperty("java.home")`으로 java.security를 읽어
+            // 결과를 냈다. 그 java.home은 **대상이 아니라 이 클라이언트의 것**이다 — 대상이
+            // 자기 JDK가 아닐 때(순수 JRE·런처 심) 남의 provider 목록이 그 자산에 붙는다.
+            // 강등 표시가 함께 붙어도 값이 틀린 것은 그대로다. 빈 결과보다 나쁘다.
+            // 실측(Windows 11): javapath 런처 심에 클라이언트 JDK의 provider 13개가 달렸다.
+            //
+            // 정적 폴백은 Go 쪽(StaticFallbackGo)이 **대상의** JAVA_HOME으로 하고, 모르면
+            // 갭을 낸다. 실패를 실패로 돌려줘야 그 경로로 넘어간다.
+            System.err.println("[attacher] attach unavailable (" + e.getClass().getSimpleName()
+                    + "): " + e.getMessage());
+            System.exit(2);
         }
     }
 
