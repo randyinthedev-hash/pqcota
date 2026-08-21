@@ -22,7 +22,7 @@
    - **선언(declared)**: CMDB/사용자가 채운 것 — `MachineProfile`·스코프 마스터·선언 엣지.
    - **파생(derived)**: core가 관측에서 **재계산**하는 뷰 — `Finding`·`evidence_strength`·`QuantumPosture`. **collector 출력엔 없다.** 원본(raw)에서 항상 재생성 가능(재현성).
    - **행위(action)**: 도구가 한 일의 append-only 이력 — `ProvisioningRecord`·`Decision`.
-2. **식별 모델(§1.4)** — 세 층. **권위** = `node_id`(스코프 마스터/CMDB, 안정·전역 유일). **상관** = `MachineIdentity` 지문(machine-id·hw-uuid·cloud-id·fqdn — node_id 검증·CMDB 없을 때 self-id 파생). **로케이터** = IP(ID 아님, 네트워크 관측을 노드로 해소하는 데만).
+2. **식별 모델(§1.4)** — 세 층. **권위** = `node_id`(스코프 마스터/CMDB, 안정·전역 유일). **상관** = `MachineIdentity` 지문(machine-id·hw-uuid·cloud-id·fqdn — node_id 검증·CMDB 없을 때 self-id 파생). **로케이터** = IP(ID 아님, 네트워크 관측을 노드로 잇는 데만).
 3. **파생 뷰 재현성(§1.2)** — `raw_capture`(불변 원본)에서 강화 규칙으로 파생물을 만든다. 그래서 파생 메시지엔 `derived_from_snapshot_id`·`ruleset_version`이 붙는다(어떤 원본·어떤 규칙으로 재현되는지).
 4. **비밀 미영속(§1.5)** — 접근 비밀(SSH 키·비밀번호·계정)은 **어떤 스키마에도 필드가 없다**. `MachineEndpoint`가 대표 — 타입상 비밀을 담을 수 없어 컴파일 타임에 보장된다.
 
@@ -79,10 +79,10 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 | `ApplicationKind` | 안정 키 출처 | `SYSTEMD_UNIT`(권장)·`EXE_PATH`·`DECLARED` |
 | **`Application`** | 타깃 앱(프로비저닝 1급 단위). 전역 식별=`(node_id, app_key)` | `node_id`·`app_key`·`name`·`kind`·`match` |
 | `ProcessMatch` | app→라이브 프로세스 매칭 규칙(PID 저장 안 함) | `systemd_unit`(cgroup, 정확)>`exe_path`>`cmdline_regex` |
-| `LiveProcess` | 런타임 해소 결과(휘발, 조회 전용) | `pid`·`cmdline`·`started_at` |
+| `LiveProcess` | 런타임에 이어 붙인 결과(휘발, 조회 전용) | `pid`·`cmdline`·`started_at` |
 | `ProcessResolution` | app의 라이브 프로세스 스냅샷 | `node_id`·`app_key`·`processes`·`resolved_at`(즉시 낡음) |
 
-> **Process는 저장하지 않는다** — PID는 휘발. 프로비저닝 직전 `ProcessMatch`로 **실시간 해소**한다.
+> **Process는 저장하지 않는다** — PID는 휘발. 프로비저닝 직전 `ProcessMatch`로 **그때그때 이어 붙인다**.
 
 ### `edge.proto` — 통신 엣지 (노드 간 관계)
 | 메시지/enum | 목적 | 핵심 필드 |
@@ -90,7 +90,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 | `NetworkProtocol` | 관측 프로토콜 | `TLS`·`SSH`·`QUIC`(핸드셰이크 암호화→대개 불명) |
 | `EdgeRole` | src 방향 | `CLIENT`·`SERVER` |
 | `QuantumPosture` | 양자내성(§1.6). **파생 뷰** — core가 `negotiated_group`에서 분류 | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
-| **`ObservedEdge`** | 관측된 통신 엣지 한 건 | `src_node_id`·`dst_node_id`(미해소면 빈값+`dst_addr`)·`protocol`·`role`·**`negotiated_group`**(등급 입력)·`cipher`·`observed_count`·`first/last_seen` |
+| **`ObservedEdge`** | 관측된 통신 엣지 한 건 | `src_node_id`·`dst_node_id`(이어지지 않았으면 빈값 + `dst_addr`)·`protocol`·`role`·**`negotiated_group`**(등급 입력)·`cipher`·`observed_count`·`first/last_seen` |
 
 ---
 

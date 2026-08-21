@@ -239,7 +239,7 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 |---|---|---|
 | **권위 ID** | `node_id` = 스코프 마스터(CMDB) (§1.4) | **주 경로: 사용자가 discovery 시작 시 입력**(Ansible inventory/CMDB). 안정·유일 |
 | **상관 지문** | `Envelope.MachineIdentity`: `machine_id`(/etc/machine-id)·`hardware_uuid`·`cloud_instance_id`·`fqdn` | 사용자 라벨을 **물리 머신에 앵커링·검증**(생성 아님) |
-| **로케이터** | IP | ID 아님 — 네트워크 관측을 노드로 해소만 |
+| **로케이터** | IP | ID 아님 — 네트워크 관측을 노드로 잇기만 |
 
 - **자동 self-id (폴백)**: CMDB 없이 bare 실행 시 지문에서 **결정론적** 파생(`machineid.SelfAssign`: cloud>machine-id>hw>fqdn 우선순위 → `"node:"+sha256[:16]`). 같은 머신→같은 값이라 스캔마다 중복 안 생김. §1.4상 권위 아님 → RegistrationRequest.
 - **사용자 입력 중복/충돌 검증**: 사용자 node_id는 오류 가능 → 지문으로 교차검증(`ingest.CheckIdentity`). 한 물리머신키→여러 node_id=**중복**(한 머신 여러 이름), 한 node_id→여러 키=**충돌**(한 이름 여러 머신·재이미지). 판정 안 하고 surface만(§2.5, 사람/reconcile 몫).
@@ -249,7 +249,7 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 식별 안정성이 계층마다 다르다:
 - **Machine** = node_id (안정).
 - **Application** = `(node_id, app_key)` — app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다 — 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸침**한다(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
-- **Process** = **PID 휘발 → 저장 안 함.** `ProcessMatch`(systemd_unit>exe_path>cmdline_regex)로 **프로비저닝 직전 실시간 해소**(`LiveProcess`) — 저장된 PID는 이미 낡음.
+- **Process** = **PID 휘발 → 저장 안 함.** `ProcessMatch`(systemd_unit>exe_path>cmdline_regex)로 **프로비저닝 직전에 그때그때 이어 붙인다**(`LiveProcess`) — 저장된 PID는 이미 낡음.
 
 ### 4A.3 접근 — 사용자 hosts 파일 → Ansible (비밀 미영속)
 

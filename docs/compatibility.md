@@ -70,7 +70,7 @@ type RejectionStore interface{ ... } // 새로 — PgStore가 함께 만족한�
 실어 **무엇이 어떻게 바뀌는지 적는 것**이 유일한 방법이다.
 
 v0.5.0에서 한 번 했다: `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
-선언한 경로에 해당하는 리포가 없어 `go get`이 아예 해소되지 않았고, 가져다 쓰는 쪽이 `replace`를
+선언한 경로에 해당하는 리포가 없어 `go get`이 아예 받아 오지 못했고, 가져다 쓰는 쪽이 `replace`를
 자기 `go.mod`에 영구히 들고 있어야 했다. **다시 바꾸지 않는다** — 경로가 리포 주소와 같아졌으므로
 같은 이유가 다시 생기지 않는다.
 

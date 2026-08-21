@@ -58,7 +58,7 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 > 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
 >
 > 저장을 가르는 이유는 둘이다 — 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과
-> 달라지고, 원본에서 다시 계산할 때 저장된 값과 갈린다.
+> 달라지고, 원본에서 다시 계산할 때 저장된 값과 달라진다.
 
 ### `pqcota-keygen`
 
@@ -128,7 +128,7 @@ pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 | 인자 | 하는 일 |
 |---|---|
 | `<results-dir>` | 회수된 `CollectionResult` JSON들을 그 자리에서 취합 |
-| `[nodes.json]` | 관측 IP를 노드명으로 해소(`10.0.0.9` → `node-c`) |
+| `[nodes.json]` | 관측 IP를 노드명으로 잇기(`10.0.0.9` → `node-c`) |
 | `[topology-out.dot]` | 통신 토폴로지를 DOT로 쓴다(색=등급) |
 
 발견 자산(OpenSSL·JCA)과 관측 통신 엣지 등급을 낸다. **저장소를 쓰지 않는다** — 휘발성 뷰다.

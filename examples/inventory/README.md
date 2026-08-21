@@ -31,7 +31,7 @@
   grade totals: 🟢 PQC 2 · 🔴 classical 1 · ⚪ unknown 0
 ```
 - **등급**: 🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명. PQC 그룹엔 성숙도(`standard`/`draft`/`experimental`/`broken`)를 함께 적는다.
-- **IP→노드 해소**: `nodes.json`으로 `10.0.0.9` → `node-c`(엣지의 `dstAddr`가 이름으로 표시됨).
+- **IP→노드 잇기**: `nodes.json`으로 `10.0.0.9` → `node-c`(엣지의 `dstAddr`가 이름으로 표시됨).
 - 토폴로지 **DOT**도 함께 생성(색=등급) — `dot -Tsvg`로 SVG 렌더 가능.
 
 > 앱 표시(`@app`)·엔드포인트/프로필 헤더는 **중앙 영속 뷰**(`pqcota-inventory`, Postgres)에서 함께 표시된다. 이 파일-취합 뷰는 자산·엣지 중심이다.
