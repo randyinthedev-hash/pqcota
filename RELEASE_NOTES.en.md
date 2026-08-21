@@ -55,6 +55,49 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.6 — The release bundle had drifted from the playbook (2026-08-21)
+**Goal** — fix what fails when you download it and run it. And make the sentences that could only be
+read with another document open say what they mean where they stand.
+
+### Learned
+
+- **The same list kept in two places drifts apart in silence.** The set of collectors to put on a
+  Windows node lived in both the release workflow and the playbook, and nothing caught it when only
+  one changed. A comment in the workflow now says it must match the playbook — but **that is not a
+  gate.**
+
+### Fixed
+
+- **① `pqcota-jvmscan` was missing from the Windows bundle** (v0.6.3–v0.6.5).
+
+  **What was wrong** — v0.6.3 made the Windows block of `discover.yml` deploy **both**
+  `pqcota-cngscan` and `pqcota-jvmscan`, while the release workflow still built only `cngscan`.
+
+  **What came out wrong** — **download the release, run the playbook, and it fails at deployment.**
+  During the real-hardware run `jvmscan.exe` was built by hand, so this path was never exercised.
+
+  **What changes** — the bundle carries both (`pqcota-windows-amd64.zip`).
+
+- **② Sentences that could only be read with another document open.** The symbols pointed somewhere
+  the document itself never defined.
+
+  | Where | What | Now |
+  |---|---|---|
+  | root README, support table | `layer ① is Linux-only; ② and ③ are OS-independent` | **the path that attaches without a JDK is Linux-only**, spelled out |
+  | 〃 | "the observed lane and the declared lane" | **what a machine saw and what a person wrote down** |
+  | 〃 | `(measured up to 25)` | `measured up to JDK 25` |
+  | [collector deployment](discovery/collector-deployment.md) (Korean) | `①` meant both a **deployment step** and an **attach layer** | the layer is spelled out |
+  | [inventory/cmd](inventory/cmd/README.md) (Korean) | "② signs it" — another document's section number, **and the wrong actor** | the **collector on the node** signs |
+  | [provisioning](provisioning/README.en.md) | `L1/L2/L3` in the first sentence, explained only inside a **collapsed** diagram | the first sentence now says what they are |
+
+- **③ `pqcota-keygen` was documented in two places** (v0.6.3). It now lives with the command, in
+  [discovery/cmd](discovery/cmd/README.en.md), and the `PQCOTA_VERIFY_KEY` row points there.
+
+- **④ The support table wrote down where we measured as if it were the supported range** (v0.6.3).
+  "measured on Windows 11 build 26200" read as **only there**, which is not true — it runs on any
+  Windows with CNG. What the build decides is not *whether* it works but **what you will find**
+  (26200 had ML-DSA and no ML-KEM). The measurement belongs to the test map.
+
 ## v0.6.5 — Unpacking compound loanwords and an English idiom (2026-08-21)
 **Goal** — untangle three words in the Korean documents. **No code changed**, and the English
 documents are untouched; what changes is the Korean vocabulary for things that already worked this way.
