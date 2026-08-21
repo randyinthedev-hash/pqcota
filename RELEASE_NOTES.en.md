@@ -55,6 +55,53 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.7 — One name per thing (2026-08-21)
+**Goal** — make the same thing carry the same name everywhere, and turn what v0.6.6 exposed — "the
+same list in two places drifts apart" — into **a gate**.
+
+> **One value on screen changes** — the top PQC maturity goes from `standard` to **`fips-standard`**
+> (① below). Anything scraping the output has to follow that string.
+
+### Built
+
+- **`make check-collectors`** — checks that the collectors the release workflow **builds** and the
+  ones the reference playbook **deploys** are the same set. They really did drift in v0.6.6. On a
+  mismatch it prints what differs along with both lists. If either file changes shape so that nothing
+  can be read, **that fails too** — passing quietly would leave the gate blind. CI runs it.
+
+### Fixed
+
+- **① The PQC maturity was named one way in the data and another on screen** (v0.6.2–v0.6.6).
+
+  **What was wrong** — the stored value is `fips-standard`, while the display label was just
+  `standard`. The split appeared when the Korean `표준` was translated in v0.6.2; in Korean there was
+  nothing to collide with.
+
+  **What came out wrong** — seeing `X25519MLKEM768 [standard]`, a reader could not tell whether it was
+  the `fips-standard` from the maturity table in the [architecture](docs/architecture.en.md).
+
+  **What changes** — the screen now prints **the value itself** (`[fips-standard]`), returning the
+  constant rather than re-typing the string, so the display follows if the value ever changes. The
+  samples (`discover-view.txt`, `topology.svg`, the README console blocks) were regenerated **by
+  running the demo again**.
+
+- **② `CONFIRMED` lives in two different enums, and one place abbreviated it** (v0.1.0–v0.6.6). The
+  root README's console block said `[CONFIRMED]` where the screen prints
+  `[EVIDENCE_STRENGTH_CONFIRMED]`. Abbreviated, it is indistinguishable from `ReconState.CONFIRMED`.
+  The block now quotes the screen — so a bare `CONFIRMED` in the documents always means `ReconState`.
+
+- **③ Three states were called by three different kinds of name** (v0.1.0–v0.6.6). The demo README
+  wrote `CONFIRMED/shadow/unobserved` — a contract name, a gloss, and a plain word. Nothing told the
+  reader whether `shadow` was `UNDECLARED` or a fourth thing. The names are now
+  `CONFIRMED`/`UNDECLARED`/`UNOBSERVED`, and `shadow` stays only where it **explains** what
+  `UNDECLARED` is.
+
+- **④ The English documents used a different name from the screen** (v0.6.2–v0.6.6). The root
+  `README.en` console block said `quantum posture` and `posture totals`, while the screen prints
+  `quantum-resistance grade` and `grade totals`. The Korean side moved to 등급 in v0.6.2 and the
+  English side did not follow. Four prose sites were aligned as well. Released identifiers such as
+  `pkg/kernel/posture` and `QuantumPosture` are untouched.
+
 ## v0.6.6 — The release bundle had drifted from the playbook (2026-08-21)
 **Goal** — fix what fails when you download it and run it. And make the sentences that could only be
 read with another document open say what they mean where they stand.
