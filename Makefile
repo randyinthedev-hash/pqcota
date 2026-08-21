@@ -3,9 +3,9 @@
 #
 # gen/ (proto 생성 코드)은 gitignore 대상 — 클론 후 `make generate` 필수.
 
-.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs
+.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors
 
-all: generate lint breaking fmt-check check-boundary check-docs vet build build-jar test
+all: generate lint breaking fmt-check check-boundary check-docs check-collectors vet build build-jar test
 
 # 전체 빌드 — Go(호스트 + **리눅스 타깃**) + Java 사이드카.
 #
@@ -130,6 +130,12 @@ check-boundary:
 # go run 대신 빌드해서 실행: go run은 실패 시 "exit status 1"을 덧붙여 게이트 출력이 지저분해진다.
 check-docs:
 	@go build -o build/checkdocs ./tools/checkdocs && ./build/checkdocs
+
+# collector 목록 게이트 — 릴리스 워크플로가 빌드하는 것과 참조 플레이북이 노드로 반입하는 것이
+# 같은지 본다. 같은 목록을 두 곳에 두고 있어서 한쪽만 바뀌면 **받아서 돌릴 때** 드러난다.
+# v0.6.3에서 실제로 갈라졌다(플레이북에 pqcota-jvmscan을 더하고 워크플로를 안 고쳤다).
+check-collectors:
+	@go build -o build/checkcollectors ./tools/checkcollectors && ./build/checkcollectors
 
 vet:
 	go vet ./...
