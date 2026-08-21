@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.6.3** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. **Windows 노드도 같은 디스커버리 경로**로 관측한다(CNG·JCA) — 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
+> **v0.6.4** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. **Windows 노드도 같은 디스커버리 경로**로 관측한다(CNG·JCA) — 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
 
 PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). 레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 **Discovery → Inventory → Provisioning** 3단계로 다룬다.
 

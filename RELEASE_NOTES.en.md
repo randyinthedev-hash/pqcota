@@ -55,6 +55,43 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.4 — The documents catch up with the code (2026-08-21)
+**Goal** — close the stale spots the documents were left with after the screen and the code moved on.
+**Not a line of code changed** — there is nothing to upgrade for.
+
+### Built
+
+- **Observing OpenSSL on Windows is on the roadmap.** What it needs is swapping two pieces: finding
+  the loaded modules (`procmaps.go` → Toolhelp32) and pulling strings out of a binary
+  (`elfstrings.go` → PE). **Fork detection (`registry.MatchFork`) takes only the extracted strings, so
+  it is reused as-is.**
+- **Wherever `pqcota-nodescan` is shown as a command, it now says it is Linux-only.** The per-collector
+  table stays in one place — the command reference — and everywhere else gets a single clause. A table
+  kept in several places drifts apart.
+
+### Learned
+
+- **When the screen changes, quotations in the documents go stale quietly.** `checkdocs` looks at
+  links, anchors and wording, but **not at whether the output a document quotes still matches
+  reality**. Re-running the demo and diffing the quotes against the run surfaced one (④ below). That
+  gate does not exist.
+- **The demo was re-run and both `expected-output` files were unchanged.** What v0.6.3 changed is the
+  path taken **when attach fails**, and the demo's pay-app attaches successfully, so nothing differs on
+  screen.
+
+### Fixed
+
+- **① The openssl collector's "Assumptions" said `//go:build linux`** (v0.1.0–v0.6.3). That collector
+  has **no build tag** (netcap does). It therefore compiles for other systems too, and when run there
+  it emits a gap rather than an empty result. A reader could have taken it to mean the binary does not
+  exist on Windows at all.
+- **② The example's `os` column still said "windows means `pqcota-cngscan`"** (v0.6.3). In that release
+  **`pqcota-jvmscan` goes there too.**
+- **③ The architecture document's list of collectors was missing `pqcota-cngscan`** (v0.6.0). The
+  command reference was filled in during v0.6.3; this one was left behind.
+- **④ The rollback-record quotation in `expected-output` was still Korean** (v0.6.2), where the screen
+  became English. It is `affected apps: …` and `before : …`, not `영향앱=…`.
+
 ## v0.6.3 — Windows nodes join the discovery path (2026-08-21)
 **Goal** — v0.6.0 made CNG observable, but **there was no way to get that collector onto a node and the
 result back.** Reach a real Windows machine with Ansible and run the whole loop.
