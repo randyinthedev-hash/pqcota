@@ -59,6 +59,9 @@
 | [TD-JVM-7](collectors/jvm/jvm_test.go) | unit | `TestParseProviders` · `BuildResult` · `JvmServiceContract` — 사이드카 출력 → 정규화·계약 노출 | provider 순서 보존, 원본(`Raw`) 보관, Describe/Collect 왕복 | 사이드카가 본 것이 순서와 원본을 잃지 않고 코어까지 간다 |
 | TD-JVM-8 | **integration** — [데모 2/6](../demo/integration-verification.md) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
 | [TD-JVM-9](collectors/jvm/disableattach_test.go) | **integration** | `TestDisabledAttachFallsBackToJavaSecurity` — `-XX:+DisableAttachMechanism`으로 띄운 실 JVM | attach 실패가 **갭으로 세어지고**, java.security 폴백이 provider를 읽어낸다(열화 표시 + 원본 보존) | attach가 막혔다고 "provider 없음"이 되면 관측하지 못한 것과 없는 것이 뒤섞인다 |
+| [TD-JVM-10](collectors/jvm/procscan_test.go) | unit | `TestDeriveJavaHomeWindows`·`TestIsJavaExeWindows` — Windows 경로 규칙 | `...\bin\java.exe` → JAVA_HOME, `bin`이 없으면 **빈 값** | 경로 규칙은 순수 문자열 처리라 리눅스 CI에서 검증한다 — 실기 없이 못 잡는 자리를 여기서 못 박는다 |
+| TD-JVM-11 | **실물** — 확인 | Windows 11(26200)에서 `pqcota-jvmscan --recon` | 프로세스 255–261개를 훑고, `\fakejdk\bin\java.exe`로 뜬 프로세스를 잡아 `javaHome`을 `\fakejdk`로 낸다. `attachCapable`=false·`version` 없음 | 교차 컴파일은 API 이름만 보증한다. Toolhelp32가 실제로 무엇을 돌려주는지, 경로 규칙이 실기와 맞는지는 돌려 봐야 안다 |
+| TD-JVM-12 | **실물** — 확인 | 같은 명령을 일반 사용자와 관리자로 | 일반 265개 중 **163개를 못 열고**, 관리자는 264개 중 **3개** | Windows에서 Java 서버는 보통 서비스(SYSTEM)로 돈다 — 권한 없이 돌리면 봐야 할 JVM이 통째로 안 보인다. 숫자만 내면 "JVM 0개"로 읽히므로 화면이 뜻과 넓히는 법을 함께 낸다 |
 
 ### SD-3. 바이너리 fork 매처 — IP
 
@@ -179,11 +182,11 @@
 | 3 | **스코프 게이트·라우터** | TD-SCOPE-1 |
 | 4 | **provider 레지스트리 매핑** | TD-JVM-1 |
 | 5 | `/proc` 파서·경로 병합·intake 계약·결과 조립 | TD-OPENSSL-1–5 |
-| 6 | **JVM 정찰·attach·다중 JVM 구별·정적 폴백** | TD-JVM-2–7 |
+| 6 | **JVM 정찰·attach·다중 JVM 구별·정적 폴백** | TD-JVM-2–7·TD-JVM-10 |
 | 7 | **서명과 그 커버리지** | TD-SIGN-1–3 |
 | 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–15 |
 | 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-16–18 |
-| 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8 · [데모 2/6](../demo/integration-verification.md) |
+| 10 | **실 호스트 수집**(OpenSSL·JVM attach) | TD-OPENSSL-4·TD-JVM-8·TD-JVM-11·TD-JVM-12 · [데모 2/6](../demo/integration-verification.md) |
 | 11 | **관측하지 못한 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9 · TD-CONTAINER-2 · TD-NETWORK-19 |
 
 **관찰**: 순서 1–7이 전부 **unit** — 핵심 로직(정직한 증거·fork·라우팅·위임경계)이 실물 없이 TDD된다. 실물 의존은 리눅스가 필요하다. **가치 있는 로직을 먼저, 환경 리스크는 조기 PoC로.**
