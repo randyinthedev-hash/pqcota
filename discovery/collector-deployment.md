@@ -49,14 +49,14 @@ attach는 Java 기능이 아니라 **OS IPC**다. Go로 직접 구현하면 JDK 
 §1–§2](collectors/jvm/README.md)가 SSOT다. 배포에 미치는 결론은 하나:
 
 - **노드엔 Go 바이너리 + `collector.jar`만 올린다.** 미니 JDK(jlink) 동봉은 계획에 없다 — 순수 JRE·
-  jlink 런타임·최소 컨테이너까지 ①(Go 네이티브)이 덮고, JDK가 있으면 그것을 재사용한다.
+  jlink 런타임·최소 컨테이너까지 **JDK 없이 붙는 경로**가 덮고, JDK가 있으면 그것을 재사용한다.
 - 그래서 번들 크기가 런타임 유무와 무관하게 고정된다(§3 레이아웃).
 
 ### 정찰이 보고하는 것 (구현됨)
 
 `ScanJVMs`가 PID·JavaHome·버전에 더해 **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 →
 `jdk.attach` 있는 JDK인가)을 보고한다. 프로세스를 띄우지 않는 파일 검사라 정찰이 가볍다.
-이 값이 ③의 배포 결정과 위 클라이언트 선택을 모두 정하고, **attach 실패 사유를 미리 설명**해
+이 값이 **애드온 JAR를 보낼지**와 위 클라이언트 선택을 모두 정하고, **attach 실패 사유를 미리 설명**해
 갭 고지의 질도 높인다(§2.6).
 
 ## 3. 번들 레이아웃

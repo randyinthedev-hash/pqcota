@@ -4,7 +4,7 @@ English · [한국어](README.md)
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](README.md) is authoritative.
 
-Takes a **finalized plan** (`FinalizedPlan`) as input and generates PQC migration artifacts — config fragments, Ansible playbooks (L1/L2/L3, **both apply and rollback**), and the basis for undoing (before capture, rollback records).
+Takes a **finalized plan** (`FinalizedPlan`) as input and generates PQC migration artifacts — config fragments, Ansible playbooks (**you choose how far they go** — L1 stages the module, L2 adds the config, L3 activates and restarts; **both apply and rollback**), and the basis for undoing (before capture, rollback records).
 
 > **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](../docs/regulation.en.md).
 

@@ -157,7 +157,7 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 |---|---|---|
 | the ingest and query CLIs | **anywhere** — Linux, macOS, Windows | they touch only files and a database, no OS primitives |
 | the store | **Postgres** (append-only) | only when you want history and changes. For a single look, `pqcota-discover-view` needs no store |
-| accepted input | a collector's `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · a declaration written by a person | the observed lane and the declared lane are never mixed |
+| accepted input | a collector's `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · a declaration written by a person | **what a machine saw and what a person wrote down never share a lane** |
 
 **Migration (provisioning)** — what is generated depends on the remediation kind in the plan.
 
@@ -166,7 +166,7 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 | **OpenSSL** | 3.5+ (native PQC) | a config fragment only — the legacy runtime is untouched |
 | | 3.0–3.4 | provider module staging + a config fragment referencing it. You supply the module |
 | | 1.1.1 and older | **nothing** — a fork replacement is required, so it is marked as a manual step |
-| **JCA** (Java) | **JDK 24+** (native PQC) | a `java.security` fragment only. It keeps a classical group alongside — released JDKs still do not negotiate the hybrid TLS group (measured up to 25) |
+| **JCA** (Java) | **JDK 24+** (native PQC) | a `java.security` fragment only. It keeps a classical group alongside — released JDKs still do not negotiate the hybrid TLS group (measured up to JDK 25) |
 | | **JDK 8+** (provider injection) | provider JAR staging + a `java.security` registration fragment. Staging the JAR alone does not load it, so activation is a separate step |
 | | older (EOL) | **nothing** — a JDK upgrade is required, so it is marked as a manual step |
 
