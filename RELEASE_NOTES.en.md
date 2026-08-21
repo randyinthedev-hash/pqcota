@@ -47,6 +47,102 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.6.3 — Windows nodes join the discovery path (2026-08-21)
+**Goal** — v0.6.0 made CNG observable, but **there was no way to get that collector onto a node and the
+result back.** Reach a real Windows machine with Ansible and run the whole loop.
+
+### Built
+
+- **`os` and `connection` columns in `hosts.csv`** — `pqcota-hosts` emits `[targets_linux]` and
+  `[targets_windows]` groups plus the connection settings (`ansible_connection=winrm`, or
+  `ansible_shell_type=powershell`). `targets` is their **parent**, so playbooks written against
+  `hosts: targets` keep working. **The connection belongs in the CSV** because `targets.ini` is
+  overwritten on every run — anything added there by hand is gone next time.
+- **`discover.yml` branches on the node's OS** — `os_family` from `gather_facts` selects the three
+  Linux collectors or `pqcota-cngscan` and `pqcota-jvmscan`. **Nothing is shipped to a node just to
+  find out what it is.** Deploy → recon → run → fetch → clean is the same shape; only the modules
+  differ (`ansible.windows` required).
+- **The jvm reconnaissance runs on Windows** — Toolhelp32 for processes, and the module list for
+  `jvm.dll` when the launcher is not `java.exe` (the same place as `/proc` and `maps` on Linux). It
+  calls no `certutil`, PowerShell or WMI, for the same reason the cng-collector does not (§2.3). **It
+  also never reads another process's memory (the PEB)** — so the command line, and with it the app
+  name, stays empty. That fact is carried as a value and reported on screen.
+- **`pqcota-windows-amd64.zip` is attached to the release** — until now you had to build it yourself.
+- **The command reference is complete again** — `pqcota-cngscan` (added in v0.6.0 but never listed) and
+  `pqcota-keygen` are in, and the per-collector OS table now lives in **one** place.
+
+> **The contract is unchanged; one more kind of result appears.** Not a line of `.proto` was touched.
+> But the jvm-collector can now emit a `CollectionResult` **carrying only a completeness gap, with no
+> CBOM body** — a JVM that was found but could not be observed (Fixed ③ below). Anything counting
+> components may receive an empty body.
+
+### Learned
+
+- **On Windows, privilege decides more than half of what is visible.** A normal user could not open
+  **163** of 265 processes; an Administrator could not open **3** of 264. Those 3 are the floor. Java
+  servers on Windows commonly run as services under SYSTEM, so running without privilege **hides
+  exactly the JVMs worth looking at**.
+- **The three-layer attach paid off here.** Layer ① (Go native) is Linux-only, but ② and ③ were
+  already OS-independent — **there was nothing to port**. ② attached for real, and the target JVM
+  printed `A Java agent has been loaded dynamically`. Attach on Windows injects a thread; this machine
+  did not block it.
+- **Something can be named `java.exe` and not be a JVM.** Oracle's javapath launcher shim is one. The
+  JDK says so itself: `jvm.dll not loaded by target process`. There is no such shape on Linux, so
+  **only real hardware could surface it**.
+- **Three defects that Linux had been hiding came out on Windows** — because ① usually succeeds first,
+  the client happens to be the target's own JDK, and there are no launcher shims. All three are the
+  same kind: **the tool writing down something it made or borrowed as an observation.**
+- **Even with every code path correct, Ansible reaching the node is its own thing.** That was
+  confirmed last, against a real Windows machine over Win32-OpenSSH with a key (TD-WIN-1, TD-WIN-2).
+  One thing broke, and it was a missing `ssh` client in my container — nothing in the repo.
+
+### Fixed
+
+- **① When the ② JDK client could not attach, it reported its own configuration as the target's**
+  (v0.1.0–v0.6.2).
+
+  **What was wrong** — `Attacher` caught the failure and read `java.security` from
+  `System.getProperty("java.home")`. That `java.home` is **the client's, not the target's**.
+
+  **What came out wrong** — the javapath shim was given **the client JDK's 13 providers**, character
+  for character identical to the JVM that had genuinely been attached. The degraded marks
+  (`inferred_high`, `artifact`) do not make the values right — this is **worse than an empty result**:
+  a plausible answer attached to the wrong asset.
+
+  **What changes** — ② no longer falls back; it ends with the reason. The static fallback belongs to
+  the Go side, which uses **the target's** JAVA_HOME and reports a gap when it does not know it. Some
+  places that used to produce values now produce gaps; what disappears was someone else's data all
+  along. `StaticFallback.java` had no caller left and was removed.
+
+- **② With no JVM running, the tool started one and reported it as an observation** (v0.1.0–v0.6.2).
+
+  **What was wrong** — the probe path ran `java`, read that JVM's provider chain, and emitted it as
+  `confirmed` / `runtime-introspection`. That contradicts `nodescan`, which only sees libssl actually
+  **loaded** in `/proc`.
+
+  **What came out wrong** — the screen contradicted itself: `1 JVMs observed · confirmed` directly
+  below `recon: JVMs 0`.
+
+  **What changes** — the value is kept but named for what it is: degraded, with the reason ("no JVM
+  was running — the machine's java launcher was started for this probe"), and the headline reads
+  `0 JVMs observed`.
+
+- **③ A JVM that was found but not observed never reached the centre** (v0.1.0–v0.6.2).
+
+  **What was wrong** — when every attach path failed, no result was emitted for that JVM at all.
+
+  **What came out wrong** — the failure lived only on stderr, so **the centre did not even know such a
+  JVM existed**. "Not observed" wore the face of "not there" (§2.6). netcap sends its capture failure
+  onward as a gap; only this place did not.
+
+  **What changes** — the gap and its reason travel through the contract. **No component is built** —
+  an empty provider chain would read as "this JVM has no providers".
+
+- **④ The security policy said the project was "before the first release"** (v0.1.0–v0.6.2), and the
+  supported-versions table said "none yet". It now states the actual policy (no backports). For the
+  same reason, sentences pinning already-working features to "as of vN" were removed — that is not an
+  answer to someone asking what works now, and version history belongs to these notes.
+
 ## v0.6.2 — What the program says, in English (2026-08-19)
 **Goal** — set the rule that **code and its output default to English** while the documents stay
 Korean-first, and bring the whole repo in line. A console line ends up in a log and gets pasted into
