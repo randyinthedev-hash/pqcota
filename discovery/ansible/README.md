@@ -20,7 +20,7 @@ ansible-galaxy collection install ansible.windows            # win_copy·win_com
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
 ```
 
-그리고 **연결 설정**은 그 머신이 정한다 — WinRM(`ansible_connection=winrm`)인지 Win32-OpenSSH(`ansible_shell_type=powershell`)인지. `pqcota-hosts`가 생성한 ini의 주석이 무엇을 더해야 하는지 알려 준다. 값은 `group_vars/targets_windows.yml`에 둔다.
+접속 방법은 `hosts.csv`의 `connection` 열이 정한다(`ssh` 또는 `winrm`) — `targets.ini`는 매 실행 덮어써지므로 손으로 더한 설정은 남지 않는다 → [작성법](../../examples/discovery/README.md). 사이트마다 갈리는 값(WinRM transport·인증서 검증, sshd 기본 셸이 cmd인 경우)만 `group_vars/targets_windows.yml`에 둔다.
 
 > **이 경로는 데모가 덮지 못한다.** 데모는 리눅스 컨테이너뿐이라 Windows 분기는 매 실행 확인되는 게이트가 없다. 리눅스 쪽과 달리 "돌려 봤더니 됐다"는 근거가 얇다.
 

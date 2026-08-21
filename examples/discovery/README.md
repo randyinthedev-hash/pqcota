@@ -11,11 +11,11 @@
 ### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§1.5)
 입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
 ```
-node_id,name,ip,port,ssh_user,ssh_key,ssh_pass,os
-node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,,        ← SSH 키 방식(권장)
-node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password,         ← 비밀번호 방식
-node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,,
-node-d,Payments Gateway (Windows),10.0.0.11,22,deploy,/home/me/.ssh/id_ed25519,,windows
+node_id,name,ip,port,ssh_user,ssh_key,ssh_pass,os,connection
+node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,,,            ← SSH 키 방식(권장)
+node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password,,             ← 비밀번호 방식
+node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,,,
+node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,windows,winrm
 ```
 → 두 가지를 낸다:
 - `--ansible-out targets.ini`: 런타임 전용 **Ansible 인벤토리**(접속 비밀이 실려 소유자만 읽을 수 있게 `0600`). 이걸로 각 노드에서 collector를 돌린다. **pqcota 인벤토리엔 영속하지 않는다.**
@@ -32,6 +32,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,22,deploy,/home/me/.ssh/id_ed25519,,
 | `ssh_key` | **미리 만들어둔 SSH 개인키 경로** → `ansible_ssh_private_key_file` (권장) |
 | `ssh_pass` | 비밀번호 → `ansible_ssh_pass` (지원하나 권장 안 함) |
 | `os` | `linux`(기본) 또는 `windows`. 그 노드에서 어느 collector를 돌릴지 가른다 |
+| `connection` | `ssh`(기본) 또는 `winrm`. 그 노드에 **어떻게 붙을지** |
 
 - **키 방식**(node-a·node-c): `ssh_key`에 개인키 경로, `ssh_pass`는 비움.
 - **비밀번호 방식**(node-b): `ssh_pass`에 비밀번호, `ssh_key`는 비움. ⚠️ Ansible이 비밀번호로 접속하려면 컨트롤러에 **`sshpass`가 설치**돼 있어야 한다(`apt install sshpass`). 평문 비밀번호가 targets.ini에 실리니 키 방식을 권한다.
@@ -45,7 +46,18 @@ node-d,Payments Gateway (Windows),10.0.0.11,22,deploy,/home/me/.ssh/id_ed25519,,
 
 `os`가 만드는 것은 인벤토리의 **그룹**이다: `[targets_linux]`·`[targets_windows]`, 그리고 둘의 부모인 `[targets]`. `hosts: targets`로 쓰던 플레이북은 그대로 돈다.
 
-> **Windows 노드는 연결 설정이 하나 더 필요하고, 그 값은 그 머신이 정한다** — WinRM인지 Win32-OpenSSH인지, 기본 셸이 무엇인지에 따라 다르다. `pqcota-hosts`는 **지어내지 않고** 생성된 ini에 무엇을 더해야 하는지만 주석으로 남긴다. 값은 `group_vars/targets_windows.yml`에 둔다.
+#### `connection` — 어떻게 붙을지
+
+**여기 적는 이유는 `targets.ini`가 매 실행 덮어써지기 때문이다.** 손으로 더한 연결 설정은 다음 실행에 지워진다 — 접속 방법은 지워지지 않는 곳, 즉 이 파일에 있어야 한다.
+
+| 값 | 인벤토리에 나가는 것 | 계정·비밀 |
+|---|---|---|
+| `ssh` (기본) | 리눅스면 그대로. **Windows면 `ansible_shell_type=powershell`** — 셸이 sh가 아니다 | `ssh_key`(권장) 또는 `ssh_pass` |
+| `winrm` | `ansible_connection=winrm`, 포트 기본 **5985** | `ssh_pass` → `ansible_password`. **키로는 붙지 않는다** |
+
+`port`를 적었으면 그것이 이긴다(HTTPS면 `5986`). `connection=winrm`인데 `os`가 `windows`가 아니거나 `ssh_key`가 있으면 **오류**다 — 접속 시점에야 드러날 어긋남을 파일 읽는 자리에서 끊는다.
+
+> **사이트마다 갈리는 값 둘은 지어내지 않는다** — SSH의 `ansible_shell_type=cmd`(sshd 기본 셸이 cmd일 때만)와 WinRM의 `ansible_winrm_transport`·인증서 검증이다. 생성된 ini의 주석이 그 자리를 알려 주고, 값은 `group_vars/targets_windows.yml`에 둔다.
 
 #### SSH 키 만들고 타깃에 등록하기
 키 방식을 쓰려면 개인/공개키 쌍을 만들고 **공개키를 타깃의 `authorized_keys`에 등록**한다:

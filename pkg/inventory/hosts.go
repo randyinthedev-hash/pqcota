@@ -27,6 +27,12 @@ type Host struct {
 	// 이미 그 노드에 무언가를 올려야 한다 — 닭과 달걀이다. hosts.csv는 사용자의 CMDB이므로
 	// 대개 이미 알고 있고, 아는 것을 적는 편이 싸고 확실하다.
 	OS string
+
+	// Conn — 어떻게 붙는가. 빈 칸은 [ConnSSH].
+	//
+	// 여기 적는 이유는 **생성된 인벤토리가 매 실행 덮어써지기 때문이다.** 손으로 더한 연결
+	// 설정은 다음 실행에 지워진다 — 접속 방법은 지워지지 않는 곳, 즉 사용자의 CSV에 있어야 한다.
+	Conn string
 }
 
 // 지원하는 노드 OS. 여기 없는 값은 오타로 보고 거절한다 — 조용히 리눅스로 삼키면
@@ -34,6 +40,18 @@ type Host struct {
 const (
 	OSLinux   = "linux"
 	OSWindows = "windows"
+)
+
+// 지원하는 접속 방법.
+const (
+	ConnSSH   = "ssh"
+	ConnWinRM = "winrm"
+)
+
+// 접속 방법별 기본 포트 — CSV에 port를 안 적었을 때만 쓴다.
+const (
+	portSSH   = 22
+	portWinRM = 5985
 )
 
 // ParseHosts — 사용자 관리 CSV hosts 파일을 읽는다. 헤더 필수(node_id 필수, 나머지 선택·순서 자유).
@@ -72,12 +90,6 @@ func ParseHosts(r io.Reader) ([]Host, error) {
 		if nid == "" {
 			continue
 		}
-		port := 22
-		if p := get(row, "port"); p != "" {
-			if v, err := strconv.Atoi(p); err == nil {
-				port = v
-			}
-		}
 		os := strings.ToLower(get(row, "os"))
 		switch os {
 		case "":
@@ -86,10 +98,38 @@ func ParseHosts(r io.Reader) ([]Host, error) {
 		default:
 			return nil, fmt.Errorf("host %q: os must be %s|%s (got %q)", nid, OSLinux, OSWindows, os)
 		}
+		conn := strings.ToLower(get(row, "connection"))
+		switch conn {
+		case "":
+			conn = ConnSSH
+		case ConnSSH, ConnWinRM:
+		default:
+			return nil, fmt.Errorf("host %q: connection must be %s|%s (got %q)", nid, ConnSSH, ConnWinRM, conn)
+		}
+		key := get(row, "ssh_key")
+		if conn == ConnWinRM {
+			// WinRM은 리눅스 노드로 붙는 길이 아니고, 키로 붙지도 않는다. 조용히 흘려보내면
+			// 사용자는 키로 붙는 줄 알고, 실패는 접속 시점에야 난다.
+			if os != OSWindows {
+				return nil, fmt.Errorf("host %q: connection=%s is for %s nodes (os=%q)", nid, ConnWinRM, OSWindows, os)
+			}
+			if key != "" {
+				return nil, fmt.Errorf("host %q: connection=%s does not use ssh_key — use ssh_pass", nid, ConnWinRM)
+			}
+		}
+		port := portSSH
+		if conn == ConnWinRM {
+			port = portWinRM
+		}
+		if p := get(row, "port"); p != "" {
+			if v, err := strconv.Atoi(p); err == nil {
+				port = v
+			}
+		}
 		out = append(out, Host{
 			NodeID: nid, Name: get(row, "name"), IP: get(row, "ip"), Port: port,
-			SSHUser: get(row, "ssh_user"), SSHKey: get(row, "ssh_key"), SSHPass: get(row, "ssh_pass"),
-			OS: os,
+			SSHUser: get(row, "ssh_user"), SSHKey: key, SSHPass: get(row, "ssh_pass"),
+			OS: os, Conn: conn,
 		})
 	}
 	return out, nil
@@ -143,24 +183,35 @@ func RenderAnsibleInventory(hosts []Host) string {
 			if h.SSHUser != "" {
 				fmt.Fprintf(&b, " ansible_user=%s", h.SSHUser)
 			}
-			if h.SSHKey != "" {
-				fmt.Fprintf(&b, " ansible_ssh_private_key_file=%s", h.SSHKey)
-			}
-			if h.SSHPass != "" {
-				fmt.Fprintf(&b, " ansible_ssh_pass=%s", h.SSHPass)
+			if h.Conn == ConnWinRM {
+				b.WriteString(" ansible_connection=winrm")
+				if h.SSHPass != "" {
+					fmt.Fprintf(&b, " ansible_password=%s", h.SSHPass)
+				}
+			} else {
+				if h.SSHKey != "" {
+					fmt.Fprintf(&b, " ansible_ssh_private_key_file=%s", h.SSHKey)
+				}
+				if h.SSHPass != "" {
+					fmt.Fprintf(&b, " ansible_ssh_pass=%s", h.SSHPass)
+				}
+				// SSH로 Windows에 붙으면 셸이 sh가 아니다. 기본값을 powershell로 두되,
+				// sshd의 기본 셸이 cmd면 그쪽으로 바꿔야 한다(아래 주석).
+				if os == OSWindows {
+					b.WriteString(" ansible_shell_type=powershell")
+				}
 			}
 			b.WriteByte('\n')
 		}
 	}
-	// Windows로 어떻게 붙을지는 그 머신이 정한다(WinRM인지 Win32-OpenSSH인지, 기본 셸이
-	// 무엇인지). **지어내지 않고** 무엇을 더해야 하는지만 적어 둔다 — 틀린 값을 넣어 주면
-	// 실패가 "pqcota가 만든 인벤토리 탓"으로 보인다.
+	// 접속 방법은 CSV가 정하지만, 그 안에서 사이트마다 갈리는 값이 둘 남는다. 여기서
+	// 지어내면 틀렸을 때 "pqcota가 만든 인벤토리 탓"으로 보이므로 자리만 알려 준다.
 	if len(byOS[OSWindows]) > 0 {
 		b.WriteString(`
-# Windows targets need one more setting, and it depends on the machine — pqcota does not guess:
-#   Win32-OpenSSH : ansible_shell_type=powershell   (or cmd, matching the sshd default shell)
-#   WinRM         : ansible_connection=winrm ansible_port=5985 ansible_winrm_transport=...
-# Put it in group_vars/targets_windows.yml, or after each host line above.
+# Two Windows settings vary by site and are not written here. Put them in
+# group_vars/targets_windows.yml when the defaults do not fit:
+#   over SSH   : ansible_shell_type=cmd     (only if the sshd default shell is cmd, not PowerShell)
+#   over WinRM : ansible_winrm_transport=... ansible_winrm_server_cert_validation=...
 `)
 	}
 	return b.String()

@@ -70,11 +70,42 @@ func TestParseHostsOSColumn(t *testing.T) {
 	}
 }
 
+// connection 열 — 접속 방법이 CSV에 있어야 하는 이유는 targets.ini가 매 실행 덮어써지기
+// 때문이다. 손으로 더한 설정은 다음 실행에 지워진다.
+func TestParseHostsConnection(t *testing.T) {
+	hosts, err := inventory.ParseHosts(strings.NewReader(
+		"node_id,ip,ssh_pass,os,connection\nwin-01,10.0.0.9,pw,windows,winrm\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hosts[0].Conn != inventory.ConnWinRM {
+		t.Fatalf("connection = %q", hosts[0].Conn)
+	}
+	if hosts[0].Port != 5985 {
+		t.Errorf("port %d — winrm must not fall back to the SSH port", hosts[0].Port)
+	}
+	// port를 적었으면 그것이 이긴다.
+	given, _ := inventory.ParseHosts(strings.NewReader(
+		"node_id,ip,port,os,connection\nwin-01,10.0.0.9,5986,windows,winrm\n"))
+	if given[0].Port != 5986 {
+		t.Errorf("an explicit port must win: %d", given[0].Port)
+	}
+	for _, bad := range []string{
+		"node_id,ip,connection\nx,1.2.3.4,telnet\n",                      // 오타
+		"node_id,ip,connection\nx,1.2.3.4,winrm\n",                       // winrm인데 os=linux
+		"node_id,ip,ssh_key,os,connection\nx,1.2.3.4,/k,windows,winrm\n", // winrm은 키로 안 붙는다
+	} {
+		if _, err := inventory.ParseHosts(strings.NewReader(bad)); err == nil {
+			t.Errorf("must be an error: %q", bad)
+		}
+	}
+}
+
 // OS별 그룹이 나오되 targets는 여전히 전 노드를 가리켜야 한다 —
 // `hosts: targets`로 쓰던 플레이북이 그대로 돌아야 하기 때문이다.
 func TestRenderAnsibleInventoryGroupsByOS(t *testing.T) {
 	hosts, err := inventory.ParseHosts(strings.NewReader(
-		"node_id,ip,ssh_user,os\nweb-01,10.0.0.2,deploy,linux\nwin-01,10.0.0.9,deploy,windows\n"))
+		"node_id,ip,ssh_user,ssh_key,os\nweb-01,10.0.0.2,deploy,/k,linux\nwin-01,10.0.0.9,deploy,/k,windows\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,12 +116,13 @@ func TestRenderAnsibleInventoryGroupsByOS(t *testing.T) {
 			t.Errorf("the inventory does not contain %q:\n%s", want, inv)
 		}
 	}
-	// 연결 설정은 그 머신이 정한다 — 지어내지 않고 무엇이 필요한지만 적는다.
-	if !strings.Contains(inv, "ansible_connection=winrm") || !strings.Contains(inv, "ansible_shell_type=powershell") {
-		t.Errorf("the Windows connection hint is missing:\n%s", inv)
+	// SSH로 Windows에 붙으면 셸이 sh가 아니다.
+	if !strings.Contains(inv, "win-01 ansible_host=10.0.0.9 ansible_port=22 ansible_user=deploy ansible_ssh_private_key_file=/k ansible_shell_type=powershell") {
+		t.Errorf("the Windows-over-SSH line is wrong:\n%s", inv)
 	}
-	if strings.Contains(inv, "\nwin-01 ansible_host=10.0.0.9 ansible_port=22 ansible_user=deploy ansible_connection=") {
-		t.Error("a connection setting was guessed onto the host line — it must stay a hint")
+	// 사이트마다 갈리는 값은 지어내지 않고 자리만 알려 준다.
+	if !strings.Contains(inv, "group_vars/targets_windows.yml") {
+		t.Errorf("the note about site-specific settings is missing:\n%s", inv)
 	}
 	// Windows 노드가 없으면 그 그룹도, 안내도 없다.
 	only, _ := inventory.ParseHosts(strings.NewReader("node_id,ip\nweb-01,10.0.0.2\n"))
