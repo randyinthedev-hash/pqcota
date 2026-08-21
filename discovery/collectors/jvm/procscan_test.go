@@ -114,3 +114,51 @@ func TestAttachCapable(t *testing.T) {
 		t.Error("with JAVA_HOME unknown, attach must not be assumed possible")
 	}
 }
+
+// ── Windows 경로 판별 — 리눅스 CI에서 검증한다. 실기 없이 못 잡는 자리를 여기서 못 박는다.
+
+func TestIsJavaExeWindows(t *testing.T) {
+	for _, ok := range []string{`C:\Program Files\Java\jdk-21\bin\java.exe`, `C:\jdk\bin\JAVAW.EXE`, "C:/jdk/bin/java.exe"} {
+		if !isJavaExeWindows(ok) {
+			t.Errorf("a java launcher must be recognised: %q", ok)
+		}
+	}
+	for _, no := range []string{`C:\Windows\System32\svchost.exe`, `C:\jdk\bin\javac.exe`, `C:\x\java`} {
+		if isJavaExeWindows(no) {
+			t.Errorf("something that is not a launcher was taken for one: %q", no)
+		}
+	}
+}
+
+func TestDeriveJavaHomeWindows(t *testing.T) {
+	if got := deriveJavaHomeWindows(`C:\Program Files\Java\jdk-21\bin\java.exe`, ""); got != `C:\Program Files\Java\jdk-21` {
+		t.Errorf("from the launcher: %q", got)
+	}
+	// 네이티브 런처가 JVM을 품은 경우 — exe로는 못 짚고 jvm.dll 경로로 짚는다.
+	if got := deriveJavaHomeWindows(`C:\app\app.exe`, `C:\jdk-21\bin\server\jvm.dll`); got != `C:\jdk-21` {
+		t.Errorf("from jvm.dll: %q", got)
+	}
+	if got := deriveJavaHomeWindows(`C:\x\java.exe`, ""); got != "" {
+		t.Errorf("without a bin directory it must not be guessed: %q", got)
+	}
+	if got := javaBinForWindows(`C:\jdk-21`, `C:\x\java.exe`); got != `C:\jdk-21\bin\java.exe` {
+		t.Errorf("java bin: %q", got)
+	}
+	if got := javaBinForWindows("", `C:\x\java.exe`); got != `C:\x\java.exe` {
+		t.Errorf("without a home it must fall back to exe: %q", got)
+	}
+}
+
+// Windows JDK의 표식은 리눅스와 파일이 다르다 — 같은 규칙을 쓰면 순수 JRE를 JDK로 본다.
+func TestAttachCapableWindows(t *testing.T) {
+	// 구분자는 돌리는 OS의 filepath가 정한다 — 이 테스트가 보는 것은 **어느 파일을 찾느냐**다.
+	has := func(p string) bool {
+		return strings.ReplaceAll(p, `\`, "/") == "C:/jdk-21/bin/attach.dll"
+	}
+	if !attachCapableAt(`C:\jdk-21`, AttachLibRelWindows, has) {
+		t.Error("with attach.dll present, attach must be possible")
+	}
+	if attachCapableAt(`C:\jre-21`, AttachLibRelWindows, has) {
+		t.Error("a plain JRE must not be a ② client candidate")
+	}
+}

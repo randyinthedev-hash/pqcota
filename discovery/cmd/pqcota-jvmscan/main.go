@@ -83,7 +83,11 @@ func main() {
 	}
 	if st.ProcUnavailable {
 		// "JVM 0개"와 "관측하지 못했다"를 같은 얼굴로 내보내지 않는다(§2.6).
-		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ /proc could not be opened, so processes were not enumerated — no JVM was observed, which is not the same as no JVM existing (run this on Linux)")
+		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ the process list could not be read, so nothing was enumerated — no JVM was observed, which is not the same as no JVM existing")
+	}
+	if st.CmdlineUnavailable && len(jvms) > 0 {
+		// 앱 이름이 빈 이유를 여기서 밝혀야 한다 — 안 밝히면 "이 JVM에 앱이 없다"로 읽힌다.
+		fmt.Fprintln(os.Stderr, "[jvmscan] ⚠ process command lines were not read on this platform, so the app is left empty — several apps on one JDK collapse into one identifier")
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] recon: reachable %d · denied %d (not observed) · JVMs %d\n", st.Accessible, st.Denied, st.WithJVM)
 

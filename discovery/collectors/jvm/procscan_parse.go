@@ -45,9 +45,18 @@ type JVMScanStats struct {
 	Denied     int // 접근 불가(타 사용자·종료) — 갭(≠부재, §2.6)
 	WithJVM    int // JVM으로 식별된 프로세스
 
-	// ProcUnavailable — `/proc`를 열 수 없었나(마운트 안 된 컨테이너·chroot·비-리눅스).
-	// 이때 "JVM 0개"는 **없다가 아니라 관측하지 못했다**이다. 구별하지 않으면 결함이 갭으로 위장된다(§2.6).
+	// ProcUnavailable — 프로세스 목록 자체를 얻지 못했나(마운트 안 된 `/proc`·chroot,
+	// Windows면 스냅샷 실패). 이때 "JVM 0개"는 **없다가 아니라 관측하지 못했다**이다.
+	// 구별하지 않으면 결함이 갭으로 위장된다(§2.6).
 	ProcUnavailable bool
+
+	// CmdlineUnavailable — 이 플랫폼에서 프로세스 **명령줄을 읽지 않았나**.
+	//
+	// Windows에서 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다.
+	// 관측하자고 남의 프로세스 메모리를 읽는 선은 넘지 않는다 — 대신 [JVMProc.App]이 비고,
+	// 한 JDK 위에 앱이 여럿이면 [JVMProc.Ident]가 뭉개진다. **그 사실이 값으로 남아야**
+	// 완전성 노트가 "왜 앱이 안 붙었나"를 설명할 수 있다(§2.6).
+	CmdlineUnavailable bool
 }
 
 func isJavaExe(exe string) bool { return filepath.Base(exe) == "java" }
@@ -63,11 +72,64 @@ const AttachLibRel = "lib/libattach.so"
 // ② attach 실패 사유를 겪기 전에 미리 설명해 준다(§2.6 갭 고지의 질).
 // ★ false라고 attach를 포기하는 뜻은 아니다 — 1순위 Go 네이티브는 JDK 없이 붙는다.
 func attachCapable(javaHome string, exists func(string) bool) bool {
+	return attachCapableAt(javaHome, AttachLibRel, exists)
+}
+
+// attachCapableAt — 표식의 상대 경로가 OS마다 다르다(리눅스 lib/libattach.so, Windows bin/attach.dll).
+func attachCapableAt(javaHome, rel string, exists func(string) bool) bool {
 	if javaHome == "" {
 		return false // JAVA_HOME을 못 짚었으면 모른다 — 가능하다고 단정하지 않는다(§2.5)
 	}
-	return exists(filepath.Join(javaHome, AttachLibRel))
+	return exists(filepath.Join(javaHome, rel))
 }
+
+// ── Windows 판별기 ─────────────────────────────────────────────────────────────
+//
+// 태그를 달지 않는 이유: 경로 규칙은 순수 문자열 처리라 **리눅스 CI에서도 검증**돼야 한다.
+// 그래서 `filepath`에 기대지 않고 구분자를 직접 다룬다(리눅스의 filepath는 `\`를 모른다).
+
+// AttachLibRelWindows — Windows JDK의 jdk.attach 네이티브 라이브러리. 리눅스의 lib/libattach.so에 해당.
+const AttachLibRelWindows = "bin/attach.dll"
+
+// winParts — Windows 경로를 조각으로. `\`와 `/`를 섞어 써도 받는다(윈도 API가 둘 다 받는다).
+func winParts(p string) []string { return strings.Split(strings.ReplaceAll(p, `\`, "/"), "/") }
+
+// isJavaExeWindows — 런처는 둘이다: java.exe(콘솔)와 javaw.exe(콘솔 없음).
+// 파일명 대소문자를 가리지 않는 것은 Windows의 규칙이다.
+func isJavaExeWindows(exe string) bool {
+	p := winParts(exe)
+	b := strings.ToLower(p[len(p)-1])
+	return b == "java.exe" || b == "javaw.exe"
+}
+
+// deriveJavaHomeWindows — 런처 exe 또는 jvm.dll 경로에서 JAVA_HOME(best-effort, 못 짚으면 "").
+// 배치가 리눅스와 다르다: `<home>\bin\java.exe` · `<home>\bin\server\jvm.dll`.
+func deriveJavaHomeWindows(exe, jvmDLL string) string {
+	join := func(parts []string) string { return strings.Join(parts, `\`) }
+	if exe != "" {
+		if p := winParts(exe); len(p) >= 3 && strings.EqualFold(p[len(p)-2], "bin") {
+			return join(p[:len(p)-2])
+		}
+	}
+	if jvmDLL != "" {
+		p := winParts(jvmDLL)
+		for i := len(p) - 1; i > 0; i-- { // .../bin/server/jvm.dll — 가장 안쪽 bin의 부모
+			if strings.EqualFold(p[i], "bin") {
+				return join(p[:i])
+			}
+		}
+	}
+	return ""
+}
+
+func javaBinForWindows(home, exe string) string {
+	if home != "" {
+		return home + `\bin\java.exe`
+	}
+	return exe
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
 
 // deriveJavaHome — 런처 exe 또는 libjvm.so 경로에서 JAVA_HOME을 추정한다(best-effort).
 // 못 짚으면 "" — 추측해 채우지 않는다(§2.5).

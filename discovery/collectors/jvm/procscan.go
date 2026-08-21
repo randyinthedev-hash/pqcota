@@ -74,17 +74,3 @@ func readMainId(pid int) string {
 	}
 	return parseMainId(string(b))
 }
-
-func readReleaseVersion(home string) string {
-	if home == "" {
-		return ""
-	}
-	b, err := os.ReadFile(filepath.Join(home, "release"))
-	if err != nil {
-		return ""
-	}
-	return parseReleaseVersion(string(b))
-}
-
-// fileExists — attachCapable에 주입하는 실물 검사(순수 판별 로직과 I/O를 분리한다).
-func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
