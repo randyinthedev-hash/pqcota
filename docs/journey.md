@@ -113,7 +113,7 @@ pqcota-hosts --ansible-out targets.ini --dsn "$PQCOTA_DSN" hosts.csv
 한 노드를 그 자리에서 보려면 화면으로 바로 받는다. 여러 노드면 참조 플레이북이 반입–실행–회수–정리를 한다.
 
 ```bash
-pqcota-nodescan --output table                                  # 한 노드, 그 자리에서
+pqcota-nodescan --output table                                  # 리눅스 노드 하나, 그 자리에서
 ansible-playbook -i targets.ini discovery/ansible/discover.yml  # 여러 노드
 ```
 

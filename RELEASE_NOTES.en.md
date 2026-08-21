@@ -28,6 +28,14 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **v0.7.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
 
+- **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
+  implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
+  result, but it **cannot observe**. What is needed is swapping two pieces: finding the loaded modules
+  (`procmaps.go` → the Toolhelp32 module list) and pulling strings out of a binary (`elfstrings.go` →
+  PE). **Fork detection (`registry.MatchFork`) takes only the extracted strings, so it is reused
+  as-is** — the same shape the jvm reconnaissance took, per-OS I/O over shared pure matching. Which
+  collector runs on which OS is in the [command reference](discovery/cmd/README.en.md).
+
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is worked out in [Designs under review](docs/under-review.en.md).
 
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector-deployment.md) (Korean). Until then, verify integrity with `sha256sum -c`.
