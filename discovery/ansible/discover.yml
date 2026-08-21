@@ -106,14 +106,26 @@
         - name: "① 스테이징 디렉터리"
           ansible.windows.win_file: { path: "{{ stage_dir_win }}", state: directory }
 
-        - name: "① cngscan 반입 (ctl → 노드)"
+        - name: "① collector 반입 (ctl → 노드)"
           ansible.windows.win_copy:
-            src: "{{ collector_bin_dir_win }}/pqcota-cngscan.exe"
-            dest: "{{ stage_dir_win }}\\pqcota-cngscan.exe"
+            src: "{{ collector_bin_dir_win }}/{{ item }}"
+            dest: "{{ stage_dir_win }}\\{{ item }}"
+          loop: [pqcota-cngscan.exe, pqcota-jvmscan.exe]
 
-        # 정찰이 따로 없다 — 등록된 provider를 묻는 것 자체가 가벼워서, 무엇이 있는지 먼저
-        # 물어볼 필요 없이 그냥 관측한다(JVM은 attach가 무거워 정찰이 필요했다).
-        - name: "② CNG provider·알고리즘 관측 (bcrypt.dll 열거)"
+        # ── ② 정찰이 애드온 배포를 정한다 — 리눅스와 같은 규칙이다 ──
+        - name: "② JVM 정찰 (관측 아님 — 배포 판정용)"
+          ansible.windows.win_command: '{{ stage_dir_win }}\pqcota-jvmscan.exe -recon'
+          register: recon_win
+          changed_when: false
+
+        - name: "② JVM이 있는 노드에만 에이전트 JAR 반입"
+          ansible.windows.win_copy: { src: "{{ collector_agent }}", dest: "{{ stage_dir_win }}\\collector.jar" }
+          when: (recon_win.stdout | from_json | length) > 0
+
+        # ── ③ 실행 + 회수 ──
+        # CNG는 정찰이 없다 — 등록된 provider를 묻는 것 자체가 가벼워서 먼저 물어볼 것이 없다
+        # (JVM은 attach가 무거워 정찰이 필요하다).
+        - name: "③ CNG provider·알고리즘 관측 (bcrypt.dll 열거)"
           ansible.windows.win_command: '{{ stage_dir_win }}\pqcota-cngscan.exe {{ inventory_hostname }}'
           register: scan_cng
           changed_when: false
@@ -123,5 +135,21 @@
           delegate_to: localhost
           become: false
 
-        - name: "③ 노드 정리 — collector 흔적 제거"
+        - name: "③ JCA provider 체인 — 정찰→attach"
+          # ①(Go 네이티브)은 리눅스 전용이라 여기선 ② JDK 클라이언트 → ③ 정적 폴백 순으로 간다.
+          # 머신에 JDK가 없으면 java.security만 읽고 동적 등록은 사각으로 남는다(강등·갭 고지).
+          ansible.windows.win_command: '{{ stage_dir_win }}\pqcota-jvmscan.exe {{ inventory_hostname }}'
+          environment:
+            PQCOTA_JVM_AGENT: '{{ stage_dir_win }}\collector.jar'
+          register: scan_jca_win
+          changed_when: false
+          when: (recon_win.stdout | from_json | length) > 0
+
+        - name: "   → 컨트롤러에 저장"
+          copy: { content: "{{ scan_jca_win.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-jca.json" }
+          delegate_to: localhost
+          become: false
+          when: scan_jca_win is not skipped and scan_jca_win.stdout | default('') | length > 0
+
+        - name: "④ 노드 정리 — collector·에이전트 흔적 제거"
           ansible.windows.win_file: { path: "{{ stage_dir_win }}", state: absent }
