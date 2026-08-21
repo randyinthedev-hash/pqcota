@@ -41,8 +41,7 @@ build-jar:
 	javac --release 8 -nowarn -d build/jvmcls \
 	  $(JVM_COLLECTOR)/src/main/java/pqcota/jvm/IntrospectAgent.java && \
 	javac --release 11 -nowarn -d build/jvmcls \
-	  $(JVM_COLLECTOR)/src/main/java/pqcota/jvm/Attacher.java \
-	  $(JVM_COLLECTOR)/src/main/java/pqcota/jvm/StaticFallback.java && \
+	  $(JVM_COLLECTOR)/src/main/java/pqcota/jvm/Attacher.java && \
 	jar cfm build/collector.jar $(JVM_COLLECTOR)/manifest.mf -C build/jvmcls . && \
 	rm -rf build/jvmcls && \
 	echo "✓ Java 사이드카: build/collector.jar"

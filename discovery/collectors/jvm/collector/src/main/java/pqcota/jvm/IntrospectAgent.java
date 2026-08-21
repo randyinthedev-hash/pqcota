@@ -7,7 +7,7 @@ import java.security.Security;
 
 /**
  * 인트로스펙션 에이전트 (S2). 대상 JVM에 주입되므로 **의존성 없이 JDK 클래스만** 쓴다.
- * 사이드카 전체가 순수 Java(Attacher·StaticFallback·IntrospectAgent) — Kotlin·Gradle 없음.
+ * 사이드카 전체가 순수 Java(Attacher·IntrospectAgent) — Kotlin·Gradle 없음.
  * 대상 JVM에 남의 런타임(kotlin-stdlib 등)을 끌고 들어가지 않는다.
  *
  * <p>★ 이 클래스만 {@code --release 8}로 컴파일한다 — <b>대상 JVM의 하한이 곧 관측 커버리지</b>이고,

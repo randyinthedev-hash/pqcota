@@ -85,6 +85,13 @@ func BuildResultFor(node string, c Collected, ident string) *discoveryv1.Collect
 		note = "attach unavailable — static java.security path (runtime-introspection gap; dynamic registrations are a blind spot)"
 	}
 
+	// 노드에 JVM이 여럿이면 결과가 여럿이고, 노트는 노드 하나로 합쳐져 화면에 나온다.
+	// 그때 **어느 JVM 이야기인지 적지 않으면 노드 전체가 그런 것으로 읽힌다** — 실측에서
+	// attach가 성공한 행 바로 아래에 "attach unavailable"이 붙어 실제보다 나쁘게 보였다.
+	if note != "" && ident != "" {
+		note = ident + ": " + note
+	}
+
 	names := make([]string, 0, len(c.Providers))
 	for _, p := range c.Providers {
 		names = append(names, p.Name)

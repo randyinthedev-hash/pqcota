@@ -34,13 +34,14 @@
 |---|---|---|---|---|
 | **①** | **Go 네이티브** (`NativeAttach`) | Go 바이너리 | **JDK 불필요** — 순수 JRE·jlink 런타임·최소 컨테이너 | **HotSpot 전용** |
 | ② | JDK 클라이언트 (`SubprocessRunner`) | 대상 또는 머신의 JDK | **벤더 무관** — OpenJ9 등 비-HotSpot | 머신에 attach 가능 JDK가 있어야 |
-| ③ | 정적 폴백 (**`StaticFallbackGo`**, Java판도 있음) | Go(또는 대상 JVM) | **어떤 JVM·런타임이어도** — `java.security`는 텍스트 파일 | **동적 등록 사각** → 강등·갭 고지 |
+| ③ | 정적 폴백 (**`StaticFallbackGo`**) | Go | **어떤 JVM·런타임이어도** — `java.security`는 텍스트 파일 | **동적 등록 사각** → 강등·갭 고지 |
 
 - **OS에 따라 커버가 갈린다**: ①은 리눅스 전용이라 Windows에서는 ②·③만 남는다. 즉 **머신에 JDK가 있어야 동적 등록까지 보고**, 없으면 ③으로 내려가 `java.security`만 읽는다. 리눅스에서 ①이 메우던 순수 JRE 구멍이 Windows에서는 열려 있다.
 - **②가 남아 있는 이유**: ①의 소켓 프로토콜은 HotSpot 구현이라 **OpenJ9**(공유 세마포어 + 다른 IPC)엔 안 통한다. ②는 그 JDK 자신의 attach 구현을 쓰므로 벤더를 안 가린다.
 - **②의 클라이언트 선택**: 대상이 순수 JRE여도, 머신에 attach 가능한 JDK가 있으면 **그걸 클라이언트로 재사용**한다(`AttachClient`). 클라이언트는 대상의 java일 필요가 없다.
 - **③으로 내려가는 조건**: `DisableAttachMechanism`, JEP 451(최신 JDK는 동적 에이전트 로딩 기본 차단 — `-XX:+EnableDynamicAgentLoading` 필요), 권한 부족, 비-HotSpot+JDK 없음 등.
-- **③이 Go에도 있는 이유**: 기존엔 `StaticFallback.java`뿐이라 **그걸 돌릴 java가 필요**했고, ②는 `--add-modules jdk.attach`로 떠서 순수 JRE에선 시작조차 못 해 **폴백까지 함께 못 돌았다**(노드가 통째로 갭). `java.security`는 텍스트 파일이라 Go가 직접 읽어 그 구멍을 닫았다.
+- **③이 Go인 이유**: 예전엔 `StaticFallback.java`뿐이라 **그걸 돌릴 java가 필요**했고, ②는 `--add-modules jdk.attach`로 떠서 순수 JRE에선 시작조차 못 해 **폴백까지 함께 못 돌았다**(노드가 통째로 갭). `java.security`는 텍스트 파일이라 Go가 직접 읽어 그 구멍을 닫았다.
+- **②는 폴백하지 않는다**: 붙지 못하면 사유와 함께 실패로 끝내고 ③에 넘긴다. Java 쪽에서 폴백하면 `java.home`이 **클라이언트의 것**이라 남의 provider 목록이 대상 자산에 붙는다 — 강등 표시가 있어도 값이 틀린 것은 그대로다. ③은 **대상의** JAVA_HOME을 쓰고 모르면 갭을 낸다.
 
 ### 배포에 미치는 영향
 
@@ -55,7 +56,7 @@
 | 층 | 언어 | 하는 일 |
 |---|---|---|
 | **에이전트** (`IntrospectAgent.java`) | **Java (불가피)** | 대상 JVM **안에서** `Security.getProviders()` 조회 → 결과 파일 기록 |
-| 정적 폴백 (`StaticFallback.java`) | Java | attach 불가 시 `java.security` 정적 등록만 읽음 |
+| 정적 폴백 (`StaticFallbackGo`) | **Go** | attach 불가 시 **대상의** `java.security` 정적 등록만 읽음 |
 | attach 클라이언트 ①·정찰·정규화 | **Go** | OS IPC로 직접 attach, `/proc` 정찰, 정규화된 CBOM Envelope 변환, intake 계약(§1.6) |
 | attach 클라이언트 ② (`Attacher.java`) | Java | 벤더 무관 폴백 경로에서만 쓰임 |
 
@@ -152,7 +153,7 @@ provider 이름에서 `pqc_readiness`(전 표준 커버 / SLH-DSA 갭 등)를 �
 | `runner.go` | ② JDK 클라이언트 서브프로세스 실행(주입 가능) |
 | `parse.go` | 사이드카 출력 → 정규화된 CBOM Envelope. 순서·갭 보존 |
 | `service.go` | intake 계약(§1.6) 노출 — openssl-collector와 대칭 |
-| `collector/` | **순수 Java 사이드카** — `IntrospectAgent.java`(에이전트) · `Attacher.java`(② 클라이언트) · `StaticFallback.java`(③) |
+| `collector/` | **순수 Java 사이드카** — `IntrospectAgent.java`(에이전트) · `Attacher.java`(② 클라이언트) |
 | `attach-poc/` | attach 가능성 검증용 최소 PoC(설계 근거 자료) |
 
 ## 11. 돌려보기

@@ -14,7 +14,8 @@ import (
 //	               실패했을 때(비-HotSpot JVM 등)뿐이라 벤더 무관성이 존재 이유다.
 //	collectorJar : 제품 jar(Agent-Class=IntrospectAgent + pqcota.jvm.Attacher 포함)
 //
-// 전제: 대상 JVM과 동일 UID(또는 root), attach 미차단. 불가 시 에이전트가 정적 폴백 출력을 낸다(§2.2).
+// 전제: 대상 JVM과 동일 UID(또는 root), attach 미차단. **불가 시 폴백하지 않고 실패로 끝낸다** —
+// 정적 폴백은 대상의 JAVA_HOME을 아는 [StaticFallbackGo]가 맡는다(§2.2).
 func SubprocessRunner(javaBin, collectorJar string) func(node string, opts map[string]string) (Collected, error) {
 	return func(node string, opts map[string]string) (Collected, error) {
 		pid := opts["pid"]
