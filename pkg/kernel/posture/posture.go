@@ -64,7 +64,9 @@ func Grade(negotiatedGroup string) registry.PQCMaturity {
 func GradeLabel(m registry.PQCMaturity) string {
 	switch m {
 	case registry.MaturityFIPS:
-		return "standard"
+		// 값 그대로 낸다 — 저장되는 것이 `fips-standard`인데 화면만 `standard`면
+		// 같은 것인지 읽는 사람이 알 수 없다(architecture §의 성숙도 표와도 어긋났다).
+		return string(registry.MaturityFIPS)
 	case registry.MaturityDraft:
 		return "draft"
 	case registry.MaturityExperimental:

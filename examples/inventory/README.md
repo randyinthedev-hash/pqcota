@@ -24,13 +24,13 @@
     • JCA provider chain: SUN,SunJCE,BC [EVIDENCE_STRENGTH_CONFIRMED]
 
 ──────── ② observed edges + quantum-resistance grade ────────
-  🟢 node-a      → node-b             TLS   X25519MLKEM768 [standard]
+  🟢 node-a      → node-b             TLS   X25519MLKEM768 [fips-standard]
   🔴 node-a      → node-c             TLS   x25519
   🟢 node-a      → node-b             SSH   sntrup761x25519-sha512@openssh.com [experimental]
 
   grade totals: 🟢 PQC 2 · 🔴 classical 1 · ⚪ unknown 0
 ```
-- **등급**: 🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명. PQC 그룹엔 성숙도(`standard`/`draft`/`experimental`/`broken`)를 함께 적는다.
+- **등급**: 🟢 PQC/하이브리드 · 🔴 고전=양자취약 · ⚪ 불명. PQC 그룹엔 성숙도(`fips-standard`/`draft`/`experimental`/`broken`)를 함께 적는다.
 - **IP→노드 잇기**: `nodes.json`으로 `10.0.0.9` → `node-c`(엣지의 `dstAddr`가 이름으로 표시됨).
 - 토폴로지 **DOT**도 함께 생성(색=등급) — `dot -Tsvg`로 SVG 렌더 가능.
 

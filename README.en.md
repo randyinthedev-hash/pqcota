@@ -27,15 +27,15 @@ Observations are tied to nodes and apps, and the **group actually negotiated on 
 ```
 ──────── ① discovered assets (per node) ────────
   pay-app
-    • JCA provider chain: SUN,SunRsaSign,…,BC   [CONFIRMED]
+    • JCA provider chain: SUN,SunRsaSign,…,BC   [EVIDENCE_STRENGTH_CONFIRMED]
         ↑ this BC appears nowhere in java.security (grep: 0 hits).
           The app registered it at runtime — invisible to static scans.
-    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [CONFIRMED]
+    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [EVIDENCE_STRENGTH_CONFIRMED]
   pay-db
-    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
+    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
 
 ──────── ② observed edges + quantum-resistance grade ────────
-  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [standard]
+  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [fips-standard]
   🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw  → pay-db    TLS  x25519
   🔴 web-gw  → pay-db    SSH  curve25519-sha256
