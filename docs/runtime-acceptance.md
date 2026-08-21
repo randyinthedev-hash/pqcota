@@ -41,7 +41,7 @@
 **JCA/JCE — provider 등록 메커니즘과 이원 버전 축이 관건**
 - 등록 층위: (a) `java.security` 정적 순서 목록(JRE 전역), (b) `addProvider()` 런타임 동적 주입(**코드에 숨어 파일 스캔 불가**), (c) `getInstance("...","BC")` 명시 지목(java.security 변경 무효), (d) **우선순위 협상**(목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider 무시)
 - **이원 버전 축**: `{jdk_vendor, jdk_version}` × `{provider_set}`. `pqc_readiness = "JDK 네이티브 지원" ∨ "provider 보강"`의 논리합
-- `jdk.tls.disabledAlgorithms` 등 정책이 실제 등급를 좌우
+- `jdk.tls.disabledAlgorithms` 등 정책이 실제 등급을 좌우
 
 ### 2.3 무엇을 어떻게 보나 (런타임별 탐지 분기)
 

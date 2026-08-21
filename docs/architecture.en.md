@@ -280,7 +280,7 @@ Where §3.3 deals with **a provider's capability** (which algorithms it implemen
 
 **The remediation branch** — `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)` route maturity into a remediation, and `posture.Recommend(group, cipher, regulated)` produces an overall recommendation for a single edge (classical and unobserved included):
 
-| Input posture/maturity | Action | Priority | Rationale |
+| Input grade/maturity | Action | Priority | Rationale |
 |---|---|---|---|
 | PQC standard | `none` | 0 (regulated = 1) | keep — for regulated assets, confirm a FIPS-validated provider (§3.3) |
 | PQC draft | `upgrade` | 2 | move up to the final standard (ML-KEM/ML-DSA) |

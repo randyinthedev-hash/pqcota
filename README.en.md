@@ -34,18 +34,18 @@ Observations are tied to nodes and apps, and the **group actually negotiated on 
   pay-db
     • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [CONFIRMED]
 
-──────── ② observed edges + quantum posture ────────
+──────── ② observed edges + quantum-resistance grade ────────
   🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [standard]
   🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
   🔴 web-gw  → pay-db    TLS  x25519
   🔴 web-gw  → pay-db    SSH  curve25519-sha256
 
-  posture totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
+  grade totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
 ```
 
 The same observation is also rendered as a topology.
 
-![Observed topology — color is posture (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
+![Observed topology — colour is the grade (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
 
 **🔴 is not a verdict of "vulnerable" — it is the observation that a classical algorithm was negotiated.** What to change, and when, is the user's call. Full expected output lives in [demo/expected-output](demo/expected-output/README.md) (Korean).
 

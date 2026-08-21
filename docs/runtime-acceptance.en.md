@@ -42,14 +42,14 @@ The two runtimes are **conceptually isomorphic** in that both inject algorithm c
 **JCA/JCE — the registration mechanism and a two-part version axis are what matter**
 - Registration layers: (a) the static ordered list in `java.security` (JRE-global), (b) runtime dynamic injection via `addProvider()` (**hidden in code, unscannable from files**), (c) explicit designation with `getInstance("...","BC")` (which makes a `java.security` change moot), (d) **priority negotiation** (if a provider earlier in the list services the same algorithm first, the new provider is ignored)
 - **A two-part version axis**: `{jdk_vendor, jdk_version}` × `{provider_set}`. `pqc_readiness = "JDK native support" ∨ "provider augmentation"`, a logical OR
-- Policies such as `jdk.tls.disabledAlgorithms` govern the effective posture
+- Policies such as `jdk.tls.disabledAlgorithms` govern the effective grade
 
 ### 2.3 What is seen, and how (the detection branch per runtime)
 
 **OpenSSL**
 - Filesystem/packages: the actual `libssl`/`libcrypto`, `ldd`/`readelf` NEEDED, package reverse dependencies, **string signatures in static binaries** (to determine fork and version)
 - Process/runtime: `/proc/*/maps`, `lsof`, `ss` (catches dlopen and vendoring; repeated across time windows so nothing is missed in a batch)
-- Network (secondary): local TLS posture
+- Network (secondary): the local TLS grade
 
 **JCA/JCE**
 - Artifacts: provider JARs inside JAR/WAR/EAR (`bcprov-*` and friends) plus parsing the Maven/Gradle **dependency graph**
