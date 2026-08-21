@@ -145,8 +145,8 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 | 무엇을 관측 | 대상 | 왜 |
 |---|---|---|
 | OpenSSL 자산 · 통신 엣지 | **Linux** (amd64·arm64) | `/proc`·ELF·AF_PACKET에 의존 |
-| JVM provider 체인 | **Java 8+** · Linux(전체) · Windows(JDK 있을 때) | ①은 리눅스 전용이고 ②·③은 OS 무관이다 |
-| Windows CNG provider·알고리즘 | **Windows** (amd64·arm64) | `bcrypt.dll` 열거. 실측 범위는 Windows 11 26200 |
+| JVM provider 체인 | **Java 8+** · Linux(전체) · Windows(JDK 있을 때) | **JDK 없이 붙는 경로가 리눅스 전용**이다. Windows는 머신에 JDK가 있어야 런타임 등록까지 보고, 없으면 `java.security`만 읽는다 |
+| Windows CNG provider·알고리즘 | **Windows** (amd64·arm64) | `bcrypt.dll`에 등록된 provider를 직접 묻는다 — WMI·PowerShell을 부르지 않는다 |
 
 ### 인벤토리 (Inventory)
 

@@ -148,8 +148,8 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 | What is observed | Target | Why |
 |---|---|---|
 | OpenSSL assets · communication edges | **Linux** (amd64·arm64) | depends on `/proc`, ELF, AF_PACKET |
-| JVM provider chains | **Java 8+** · Linux (full) · Windows (with a JDK) | layer ① is Linux-only; ② and ③ are OS-independent |
-| Windows CNG providers and algorithms | **Windows** (amd64·arm64) | `bcrypt.dll` enumeration; measured on Windows 11 build 26200 |
+| JVM provider chains | **Java 8+** · Linux (full) · Windows (with a JDK) | **the path that attaches without a JDK is Linux-only**. On Windows the machine needs a JDK to reach runtime registrations; without one only `java.security` is read |
+| Windows CNG providers and algorithms | **Windows** (amd64·arm64) | it asks `bcrypt.dll` directly for the registered providers — no WMI, no PowerShell |
 
 **Inventory**
 
