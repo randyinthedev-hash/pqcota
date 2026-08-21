@@ -8,7 +8,7 @@ English · [한국어](README.md)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.6.2** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) is **observed** as of v0.6.0 — generating its migration artifacts is not there yet → [roadmap](RELEASE_NOTES.en.md)
+> **v0.6.2** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.en.md) applies generated artifacts to real nodes and rolls them back. Windows (CNG) is **observed** — generating its migration artifacts is not there yet → [roadmap](RELEASE_NOTES.en.md)
 
 A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
 
@@ -151,6 +151,14 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 | JVM provider chains | **Java 8+**, wherever a JVM runs | attach is OS-independent (verified on Linux) |
 | Windows CNG providers and algorithms | **Windows** (amd64·arm64) | `bcrypt.dll` enumeration; measured on Windows 11 build 26200 |
 
+**Inventory**
+
+| What | Target | Why |
+|---|---|---|
+| the ingest and query CLIs | **anywhere** — Linux, macOS, Windows | they touch only files and a database, no OS primitives |
+| the store | **Postgres** (append-only) | only when you want history and changes. For a single look, `pqcota-discover-view` needs no store |
+| accepted input | a collector's `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · a declaration written by a person | the observed lane and the declared lane are never mixed |
+
 **Migration (provisioning)** — what is generated depends on the remediation kind in the plan.
 
 | Runtime | Situation | What is generated |
@@ -164,13 +172,13 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 
 Application goes through Ansible playbooks. The generated playbook assumes POSIX paths and modules (`ansible.builtin.copy`, `/opt/pqcota`), so the target nodes are **Linux** — Ansible itself also drives Windows, but this output does not yet.
 
-Windows (CNG) is **observed as of v0.6.0** (`pqcota-cngscan`). Generating its migration artifacts needs the substrate generalization first, so it stays on the [roadmap](RELEASE_NOTES.en.md).
+Windows (CNG) is **observed** (`pqcota-cngscan`). Generating its migration artifacts needs the substrate generalization first, so it stays on the [roadmap](RELEASE_NOTES.en.md).
 
 ---
 
 ## Status · version
 
-**v0.6.1** — per-architecture static binaries and `SHA256SUMS` are attached to the
+**Every release** attaches per-architecture static binaries and `SHA256SUMS` to the
 [releases](https://github.com/randyinthedev-hash/pqcota/releases). Verify what you download with
 `sha256sum -c SHA256SUMS`; signed releases are on the [roadmap](RELEASE_NOTES.en.md).
 Per-version goals and results are in the [release notes](RELEASE_NOTES.en.md).

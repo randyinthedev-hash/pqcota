@@ -263,12 +263,13 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 | 여정 | 어디에 | 상태 |
 |---|---|---|
 | 3 · 관측 — openssl · jvm · network | [`discovery/`](../discovery/README.md) | **끝** — 리눅스 · 커널 3.2+ |
+| 3 · 관측 — Windows CNG | [`cng-collector`](../discovery/collectors/cng/README.md) | **끝** — 실기에서 확인 |
 | 3′ · 위임 수신 — CI가 낸 CycloneDX | [위임 수신 설계](../inventory/cbom-intake.md) | **끝** — 스캐너는 돌리지 않는다 |
 | 4 · 적재 — 관문 다섯 · 거절 이력 · 조직 | [`inventory/cmd`](../inventory/cmd/README.md) | **끝** |
 | 5 · 조회 — 이력 · 스냅샷 · 변화 diff | [`inventory/`](../inventory/README.md) | **끝** |
 | 7 · 생성 — L1/L2/L3 · 롤백 · before 레코드 | [`provisioning/`](../provisioning/README.md) | **끝** |
 | 8 · 적용 | 표준 Ansible 플레이북 | **끝** — 데모가 실제 노드에서 확인 |
-| 3 · Windows(CNG) 관측 | 계약에 스키마만 예약 | [로드맵](../RELEASE_NOTES.md#로드맵--예정-릴리스-계획) |
+| 7 · 생성 — Windows CNG | 관측만 되고 전환물은 아직 | [로드맵](../RELEASE_NOTES.md#로드맵--예정-릴리스-계획) |
 | 6 · 확정 계획을 무엇으로 채우나 | — | **정하지 않는다** — 손으로 쓴 계획으로 돌아간다 |
 | 화면(UI) | — | **없다.** CLI와 생성물이다 |
 

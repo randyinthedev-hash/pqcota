@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.6.2** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. Windows(CNG)는 **관측까지 된다**(v0.6.0) — 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
+> **v0.6.2** — Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. Windows(CNG)는 **관측까지 된다** — 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵--예정-릴리스-계획)
 
 PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). 레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 **Discovery → Inventory → Provisioning** 3단계로 다룬다.
 
@@ -148,6 +148,14 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 | JVM provider 체인 | **Java 8+**, JVM이 도는 곳 | attach는 OS 비의존(검증 범위는 Linux) |
 | Windows CNG provider·알고리즘 | **Windows** (amd64·arm64) | `bcrypt.dll` 열거. 실측 범위는 Windows 11 26200 |
 
+### 인벤토리 (Inventory)
+
+| 무엇을 | 대상 | 왜 |
+|---|---|---|
+| 적재·조회 CLI | **어디서든** — Linux · macOS · Windows | 파일과 DB만 만진다. OS 프리미티브를 안 쓴다 |
+| 저장소 | **Postgres** (append-only) | 이력·변화를 볼 때만. 한 번 훑는 정도면 `pqcota-discover-view`가 저장소 없이 낸다 |
+| 받는 입력 | collector의 `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · 사람이 적은 선언 | 관측 레인과 선언 레인을 섞지 않는다 |
+
 ### 전환 (Provisioning)
 
 확정 계획의 조치 종류에 따라 갈린다.
@@ -163,13 +171,13 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 
 적용은 Ansible 플레이북으로 한다. 생성되는 플레이북이 POSIX 경로·모듈(`ansible.builtin.copy`, `/opt/pqcota`)을 전제하므로 대상 노드는 **Linux**다 — Ansible 자체는 Windows도 다루지만 이 산출물이 아직 그렇지 않다.
 
-Windows(CNG)는 **관측이 v0.6.0부터 된다**(`pqcota-cngscan`). 전환물 생성은 substrate 일반화가 선행이라 [로드맵](RELEASE_NOTES.md)에 있다.
+Windows(CNG)는 **관측된다**(`pqcota-cngscan`). 전환물 생성은 substrate 일반화가 선행이라 [로드맵](RELEASE_NOTES.md)에 있다.
 
 ---
 
 ## 상태 · 버전
 
-**v0.6.1** — arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
+**릴리스마다** arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
 버전별 목표·성과는 [릴리스 노트](RELEASE_NOTES.md).
 

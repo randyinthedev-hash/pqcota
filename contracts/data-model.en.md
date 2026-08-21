@@ -35,7 +35,7 @@ These explain why the fields split the way they do.
 ### Controlled vocabulary (enums) — shared by all stages
 | Enum | Meaning | Values (0=UNSPECIFIED omitted) |
 |---|---|---|
-| `CryptoRuntime` | the crypto runtime — what is accepted is in the [acceptance principles](../docs/runtime-acceptance.en.md). The first-class branch for every finding, asset, and remediation | `OPENSSL` · `JCA` · `WIN_CNG` (**schema reserved** in v0.1.0, unimplemented — the code that fills it comes in v0.5.0+) |
+| `CryptoRuntime` | the crypto runtime — what is accepted is in the [acceptance principles](../docs/runtime-acceptance.en.md). The first-class branch for every finding, asset, and remediation | `OPENSSL` · `JCA` · `WIN_CNG` |
 | `DetectionMethod` | the detection method. Reported by the collector → the basis for deriving evidence | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
 | `EvidenceStrength` | evidence strength. **Derived from detection_method** (only the core fills it) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
 | `UsageContext` | usage context | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
@@ -72,7 +72,7 @@ The typed view the core normalization pipeline derives from the `cbom_cyclonedx`
 |---|---|---|
 | `OpensslAxes` | the OpenSSL branch axis | `lib`·`version`·`fork` (OpenSSL/BoringSSL/…)·`binding_mode` |
 | `JcaAxes` | the JCA branch axis | `jdk_vendor`·`jdk_version`·`provider_set` (**order is meaningful** — priority negotiation)·`registration_mode` |
-| `CngAxes` | the Windows CNG branch axis (**reserved in v0.1.0**, unimplemented) | `provider_set` (KSP/SSP, **order is meaningful**). The remaining fields, which real observation will settle, are added additively in v0.5.0 |
+| `CngAxes` | the Windows CNG branch axis | `provider_set` (KSP/SSP, **in observed order**) · `algorithms` (name, class, and which providers serve it) |
 | **`Finding`** | one crypto asset (a derived view) | `id` (canonical hash)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method` + **`evidence_strength`** (derived) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id` + `ruleset_version` (reproduction) · **`app_keys`** (asset attribution; a shared .so has several) |
 
 ### `asset.proto` — the asset hierarchy (Machine → Application → Process)
@@ -165,13 +165,13 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 **Seen again as lanes**: observed (`CollectionResult`, `ObservedEdge`) → derived (`Finding`, `QuantumPosture`) → declared/metadata (`MachineProfile`, `Decision`) → action (`ProvisioningRecord`). `node_id` is the anchor threading every lane, and `app_key(s)` attributes crypto assets to apps, flowing from discovery all the way to provisioning.
 
 > **`app_key` is not always filled.** `Finding` and `ProvisioningRecord` come straight from the process
-> that was observed, so they always attribute. **`ObservedEdge` reaches the app from v0.3.0 on, but only
+> that was observed, so they always attribute. **`ObservedEdge` also reaches the app, but only
 > while the socket is still open at lookup time** — passive wire observation carries no PID of its own,
 > so the socket inode has to be correlated against `/proc/*/fd` to fill `app_key`.
 >
 > A connection that closed quickly is therefore blank, and so is one whose process could not be read for
 > lack of permission. An **empty `app_key` means "could not attribute", not "this edge has no app"**, and
-> the completeness note says which. From v0.4.0 a person can fill what was missed
+> the completeness note says which. A person can fill what was missed
 > (`pqcota-declare-attribution`) — but that declaration **does not edit the observation**: it lands in its
 > own lane, and the join happens on the inventory screen
 > ([under review §5.2](../docs/under-review.en.md)).
