@@ -38,7 +38,7 @@ flowchart LR
 
 ## 간단히 써보기
 
-**한 노드를 그 자리에서** — 설치할 것도, Ansible도 필요 없다.
+**한 노드를 그 자리에서** — 설치할 것도, Ansible도 필요 없다. (아래는 **리눅스 노드**다. Windows 노드는 `pqcota-cngscan`·`pqcota-jvmscan`이고, 어느 collector가 어느 OS에서 도는지는 [커맨드 레퍼런스](cmd/README.md).)
 
 ```bash
 pqcota-nodescan --output table            # 화면에 표로 (쌓이지 않는다)

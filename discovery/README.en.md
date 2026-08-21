@@ -38,6 +38,8 @@ flowchart LR
 
 **A single node, right where it is** — nothing to install, no Ansible needed.
 
+> The commands below are for a **Linux** node. On Windows it is `pqcota-cngscan` and `pqcota-jvmscan` — which collector runs on which OS is in the [command reference](cmd/README.en.md).
+
 ```bash
 pqcota-nodescan --output table            # a table on screen (nothing is stored)
 pqcota-nodescan node-01 > result.json     # JSON (when accumulating centrally)

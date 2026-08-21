@@ -136,7 +136,7 @@
 
 ### 2.3 Collector 호스트 도달 — 원칙과 경계
 
-**collector는 `CollectionResult`를 emit하는 CLI다**(`pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`). 배포는 표준 substrate(Ansible)로 한다 — 디스커버리 실행 시 관측 대상 노드에 반입·실행·회수하고 잔재를 남기지 않는다([collector 배포 설계](../discovery/collector-deployment.md)). **자체 원격 실행 엔진은 만들지 않는다.**
+**collector는 `CollectionResult`를 emit하는 CLI다**(`pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`·`pqcota-cngscan`). 배포는 표준 substrate(Ansible)로 한다 — 디스커버리 실행 시 관측 대상 노드에 반입·실행·회수하고 잔재를 남기지 않는다([collector 배포 설계](../discovery/collector-deployment.md)). **자체 원격 실행 엔진은 만들지 않는다.**
 
 - **이 리포**: collector CLI + **T1 self-service**(서명된 collector 번들을 사용자가 직접 실행 — 에어갭 포함) + **결과 서명·검증**(ed25519, `pqcota-keygen`·`PQCOTA_VERIFY_KEY`) + **스코프 마스터 게이트**(§1.4, `pqcota-ingest`가 등재 노드만 수용). collector를 사용자 자신의 substrate로 감싸 돌릴 수도 있다. 릴리스·번들 서명(공급망 위생)은 여기 속한다.
 - **원칙(불변)**: 어느 경로든 **스코프 게이트 필수** + **RCE 대칭성**(레거시 호스트에 실행체 투입은 위험하므로 서명검증·최소권한·멱등). 부가가치는 push 채널 소유가 아니라 그 위의 게이트·서명·완전성 맵.

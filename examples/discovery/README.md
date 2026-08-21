@@ -40,7 +40,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 
 #### `os` — 어느 collector를 보낼지 가른다
 
-`linux`면 `pqcota-nodescan`·`pqcota-netcap`·`pqcota-jvmscan`, `windows`면 `pqcota-cngscan`이다. 비우면 `linux`이고, 둘 중 어느 것도 아닌 값은 **오류**다 — 조용히 리눅스로 삼키면 Windows 노드에 리눅스 collector가 올라가고 실패는 한참 뒤에 드러난다.
+`linux`면 `pqcota-nodescan`·`pqcota-netcap`·`pqcota-jvmscan`, `windows`면 `pqcota-cngscan`·`pqcota-jvmscan`이다. 비우면 `linux`이고, 둘 중 어느 것도 아닌 값은 **오류**다 — 조용히 리눅스로 삼키면 Windows 노드에 리눅스 collector가 올라가고 실패는 한참 뒤에 드러난다.
 
 **관측하지 않고 받아 적는다.** OS는 collector를 올리기 *전에* 알아야 하는데 알아내려면 이미 무언가를 올려야 한다. hosts.csv는 사용자가 관리하는 파일이라 대개 이미 알고 있다. (플레이북은 `gather_facts`로 한 번 더 확인한다 — 적힌 것과 다르면 그 노드는 그냥 건너뛴다.)
 
@@ -94,6 +94,6 @@ JCA provider 체인은 **살아있는 JVM에 attach**해야 실체(런타임 `ad
 ## 실제 노드를 스캔하려면 (리눅스)
 샘플 대신 진짜 관측을 내려면 관측 대상에서:
 ```bash
-go run ./discovery/cmd/pqcota-nodescan <node-id>   # /proc의 로드된 OpenSSL(libssl/libcrypto)
+go run ./discovery/cmd/pqcota-nodescan <node-id>   # /proc의 로드된 OpenSSL(libssl/libcrypto) — 리눅스 전용
 ```
 결과 JSON을 모아 그 디렉터리를 `pqcota-ingest`에 준다. JVM은 [jvm/](jvm/README.md) 참고. 커맨드 전체 지도: [discovery/cmd/README](../../discovery/cmd/README.md).

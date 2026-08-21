@@ -28,6 +28,13 @@
   함께 한다(투기적 추상화 금지). seam을 어디에 그을지는 아직 정하지 않았다 —
   [검토 중인 설계 §2.2](docs/under-review.md).
 
+- **Windows OpenSSL 관측 (계획 · 버전 미정)** — 지금 `pqcota-nodescan`은 구현이 하나뿐이고 `/proc`를
+  읽는다. Windows에서 돌리면 빈 결과가 아니라 갭을 내지만, **관측은 못 한다.** 필요한 것은 두 조각을
+  갈아 끼우는 일이다 — 로드된 모듈을 찾는 자리(`procmaps.go` → Toolhelp32 모듈 목록)와 바이너리에서
+  문자열을 뽑는 자리(`elfstrings.go` → PE). **fork 판별(`registry.MatchFork`)은 뽑아낸 문자열만 받으므로
+  그대로 쓴다** — jvm 정찰이 OS별 I/O + 공용 판별로 갈린 것과 같은 모양이다. 어느 collector가 어느
+  OS에서 도는지는 [커맨드 레퍼런스](discovery/cmd/README.md).
+
 - **provider 생태계 수용 (검토 중 · 버전 미정)** — 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다 — provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/under-review.md)에서 다룬다.
 
 - **릴리스 서명 (계획 · 버전 미정)** — **ed25519 서명과 `pqcota-verify-bundle`**. 번들 구성·서명·검증
