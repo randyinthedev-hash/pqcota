@@ -70,6 +70,9 @@ jobs:
       - name: check-docs
         run: make check-docs
 
+      - name: check-collectors
+        run: make check-collectors
+
       # 다른 티어를 지목하는 표현이 새어 들어오지 않게 한다.
       - name: check-boundary
         run: make check-boundary
