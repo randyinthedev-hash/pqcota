@@ -59,14 +59,16 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다** — `
 
 ## ② collector — 대상 머신에서 관측한다
 
-| collector | 관측 대상 | 산출 |
+| collector | 노드 OS | 관측 대상 |
 |---|---|---|
-| `pqcota-nodescan` | `/proc`의 로드된 OpenSSL(libssl/libcrypto) | CollectionResult |
-| `pqcota-jvmscan` | 실 JVM의 JCA provider 체인(`Security.getProviders()`) | CollectionResult |
-| `pqcota-netcap` | TLS/SSH 핸드셰이크(AF_PACKET, linux 전용) | CollectionResult(관측 엣지) |
-| `pqcota-cngscan` | 등록된 CNG provider와 그 머신이 열거하는 알고리즘(`bcrypt.dll`, **Windows 전용**) | CollectionResult |
+| `pqcota-nodescan` | **linux** | `/proc`의 로드된 OpenSSL(libssl/libcrypto) |
+| `pqcota-jvmscan` | **linux** | 실행 중 JVM의 JCA provider 체인(`Security.getProviders()`) — 프로세스 열거가 `/proc`다 |
+| `pqcota-netcap` | **linux** | TLS/SSH 핸드셰이크(AF_PACKET) |
+| `pqcota-cngscan` | **windows** | 등록된 CNG provider와 그 머신이 열거하는 알고리즘(`bcrypt.dll`) |
 
-넷 다 `CollectionResult`를 낸다. 다만 **릴리스에 정적 바이너리가 붙는 것은 리눅스 셋뿐**이다 — `pqcota-cngscan`은 Windows 전용이라 쓰는 쪽이 직접 만든다([아래](#pqcota-cngscan)). 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다 — 코어는 그대로다.
+넷 다 `CollectionResult`를 낸다. **표에 없는 OS에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 0이다 — "그것이 없는 노드"와 "그것을 못 본 노드"가 구별돼야 한다(§2.6).
+
+**릴리스에 정적 바이너리가 붙는 것은 리눅스 셋뿐**이다 — `pqcota-cngscan`은 쓰는 쪽이 직접 만든다([아래](#pqcota-cngscan)). 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다 — 코어는 그대로다.
 
 여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음--만든-인벤토리로-collector-돌리기).
 

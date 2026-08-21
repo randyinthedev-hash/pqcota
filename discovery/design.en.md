@@ -84,11 +84,11 @@ A scenario is a combination of the axes below. The combination is what determine
 
 > **Terminology**: **a collector is a node observer *provided by pqcota*** (behind the intake contract; **runtimes**: openssl, jvm, network).
 
-> **Platform constraint (current scope)**: **every binary is Go** (collectors and operator CLIs alike) — the only non-Go piece is the jvm-collector's Java sidecar. So **the Linux-only vs cross-platform split is decided not by language but by "what it touches"**:
-> - **Touching Linux OS APIs = Linux-only.** openssl (§2.1) and process scanning depend on `/proc` and ELF; network (§2.3) depends on AF_PACKET (`//go:build linux`, `CAP_NET_RAW`). The premise is that **what is observed is a Linux legacy crypto-runtime server.** The jvm-collector (§2.2) runs on the JVM (pure Java) so it is portable in principle, but its target is Linux servers (the verified scope today is Linux). The attach client reuses the machine's existing JDK (no runtime is bundled).
-> - **Touching only files and databases = cross-platform.** The central/operator CLIs (ingest, inventory, provision, and so on) touch no OS primitives, so they run on macOS and Windows operator machines too.
+> **Platform constraint**: **every binary is Go** (collectors and operator CLIs alike) — the only non-Go piece is the jvm-collector's Java sidecar. So **the OS split is decided not by language but by "what it touches"**:
+> - **Touching OS APIs = that OS only.** openssl (§2.1), process scanning and jvm (§2.2) depend on `/proc` and ELF; network (§2.3) on AF_PACKET; cng (§2.4) on `bcrypt.dll`. Every other OS gets a **refusing stub**, so the result is a gap rather than an empty one (§2.6).
+> - **Touching only files and databases = cross-platform.** The central and operator CLIs (ingest, inventory, provision, and so on) touch no OS primitives, so they run anywhere.
 >
-> **Observing crypto runtimes on Windows/macOS servers needs its own collector implementation** and is out of scope today. The distributed binaries are static (`CGO_ENABLED=0`), so cross-compiling across **Linux × arch (amd64/arm64…)** is trivial — the matrix is per arch, not per OS.
+> Which collector runs on which OS is in the [command reference](cmd/README.en.md#collectors--they-observe-on-the-target-machine). The distributed binaries are static (`CGO_ENABLED=0`), so cross-compiling across OS × arch is trivial.
 
 ### 2.1 openssl-collector (Go) — SD-1, SD-3
 
@@ -186,6 +186,20 @@ return  : a CollectionResult (the observed lane). crypto_runtime=UNSPECIFIED (TL
 - **Attribution**: out-of-scope IPs, NAT, and proxies → "a registration decision request" (§5).
 
 > **A Phase 1 capability** (observation in parallel + shadow discovery). This edge observation becomes the observed source for inventory reconciliation and completes the **crypto communication topology** ([inventory design](../inventory/design.en.md) §6).
+
+### 2.4 cng-collector (Go, `bcrypt.dll`) — the CNG layer
+
+**Responsibility**: see the CNG providers registered on Windows and the algorithms that machine
+enumerates. Being a provider architecture it looks at the same axis as jvm (§2.2), but shares no
+collection mechanism with it — not `/proc`, not ELF, not attach, but an enumeration API. That is why
+it has **its own layer** (`COLLECTION_LAYER_CNG_INTROSPECTION`): what it fails to see differs from
+every other layer.
+
+**It calls no external tool** — `bcrypt.dll` directly instead of `certutil`, PowerShell or WMI (§2.3),
+so on a server where script execution is blocked by policy a failed observation does not scatter into
+"something about the environment".
+
+The axes it observes and the API behind each → [cng-collector](collectors/cng/README.md) (Korean).
 
 ---
 

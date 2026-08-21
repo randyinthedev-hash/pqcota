@@ -63,14 +63,16 @@ The node **registration gate** (the scope-master argument to `pqcota-ingest`) is
 
 ## ② Collectors — they observe on the target machine
 
-| Collector | What it observes | Output |
+| Collector | Node OS | What it observes |
 |---|---|---|
-| `pqcota-nodescan` | the loaded OpenSSL in `/proc` (libssl/libcrypto) | CollectionResult |
-| `pqcota-jvmscan` | a live JVM's JCA provider chain (`Security.getProviders()`) | CollectionResult |
-| `pqcota-netcap` | TLS/SSH handshakes (AF_PACKET, Linux only) | CollectionResult (observed edges) |
-| `pqcota-cngscan` | the registered CNG providers and the algorithms the machine enumerates (`bcrypt.dll`, **Windows only**) | CollectionResult |
+| `pqcota-nodescan` | **linux** | the loaded OpenSSL in `/proc` (libssl/libcrypto) |
+| `pqcota-jvmscan` | **linux** | a live JVM's JCA provider chain (`Security.getProviders()`) — process enumeration is `/proc` |
+| `pqcota-netcap` | **linux** | TLS/SSH handshakes (AF_PACKET) |
+| `pqcota-cngscan` | **windows** | the registered CNG providers and the algorithms the machine enumerates (`bcrypt.dll`) |
 
-All four emit a `CollectionResult`. Only the three Linux ones, however, get **static binaries attached to the release** — `pqcota-cngscan` is Windows-only, so whoever needs it builds it ([below](#pqcota-cngscan)). Each is a thin entry point wrapping the `discovery/collectors/{openssl,jvm,network,cng}` package, so when a new observation target appears you add one more collector — the core stays as it is.
+All four emit a `CollectionResult`. **Run one on an OS not in the table and it emits a gap, not an empty result**, with exit code 0 — "a node that has none" and "a node whose state was not seen" must stay apart (§2.6).
+
+Only the three Linux ones get **static binaries attached to the release** — `pqcota-cngscan` is built by whoever needs it ([below](#pqcota-cngscan)). Each is a thin entry point wrapping the `discovery/collectors/{openssl,jvm,network,cng}` package, so when a new observation target appears you add one more collector — the core stays as it is.
 
 How to run them across many nodes at once → [the reference playbook in ①](#then--running-the-collectors-with-the-inventory-you-made).
 
