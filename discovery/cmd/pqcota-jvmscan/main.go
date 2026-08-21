@@ -320,6 +320,5 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) (res []*discoveryv
 	}
 	fmt.Fprintf(os.Stderr, "[jvmscan] attach: found %d · ok %d · failed %d (gap) → emitted %d\n",
 		ast.Discovered, ast.Attached, ast.Failed, len(out))
-	observed = ast.Attached
-	return out
+	return out, ast.Attached
 }
