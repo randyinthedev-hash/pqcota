@@ -186,7 +186,7 @@ return  : a CollectionResult (the observed lane). crypto_runtime=UNSPECIFIED (TL
 - **Coverage dependence**: only connections on the host where the collector runs. An edge with neither side instrumented is invisible without a SPAN or tap.
 - **Attribution**: out-of-scope IPs, NAT, and proxies → "a registration decision request" (§5).
 
-> **A Phase 1 capability** (observation in parallel + shadow discovery). This edge observation becomes the observed source for inventory reconciliation and completes the **crypto communication topology** ([inventory design](../inventory/design.en.md) §6).
+> **A Phase 1 capability** (observation in parallel + finding `UNDECLARED` edges — communication that was never declared). This edge observation becomes the observed source for inventory reconciliation and completes the **crypto communication topology** ([inventory design](../inventory/design.en.md) §6).
 
 ### 2.4 cng-collector (Go, `bcrypt.dll`) — the CNG layer
 

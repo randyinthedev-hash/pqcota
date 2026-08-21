@@ -16,7 +16,7 @@ English · [한국어](README.md)
 > **Boundary**: this demo is complete with this repo (Apache-2.0) alone. Provisioning goes as far as
 > **generation and persistence**, and the demo **actually applies the generated playbook and rolls it back** —
 > checking generation alone lets through a playbook that breaks on a clean node (there really was such a defect).
-> **Declaration reconciliation (shadow/unobserved), review-and-finalize governance, and dynamic provisioning**
+> **Declaration reconciliation (`UNDECLARED`/`UNOBSERVED`), review-and-finalize governance, and dynamic provisioning**
 > are not done by this repo, so they are not in the demo either.
 > (Diffing change between snapshots *is* an observed fact, so it is in this repo — per architecture §6.)
 
@@ -209,4 +209,4 @@ After that it is the same as the demo — hand the collected results to `pqcota-
 **Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.en.md).
 
 ## Beyond discovery
-Discovery shows you as far as "what is actually negotiated" (the posture). **"How well does that match what was declared (CONFIRMED/shadow/unobserved)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.
+Discovery shows you as far as "what is actually negotiated" (the posture). **"How well does that match what was declared (CONFIRMED/UNDECLARED/UNOBSERVED)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.
