@@ -57,7 +57,9 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 
 `port`를 적었으면 그것이 이긴다(HTTPS면 `5986`). `connection=winrm`인데 `os`가 `windows`가 아니거나 `ssh_key`가 있으면 **오류**다 — 접속 시점에야 드러날 어긋남을 파일 읽는 자리에서 끊는다.
 
-> **사이트마다 갈리는 값 둘은 지어내지 않는다** — SSH의 `ansible_shell_type=cmd`(sshd 기본 셸이 cmd일 때만)와 WinRM의 `ansible_winrm_transport`·인증서 검증이다. 생성된 ini의 주석이 그 자리를 알려 주고, 값은 `group_vars/targets_windows.yml`에 둔다.
+> **사이트마다 갈리는 값 둘은 지어내지 않는다** — SSH의 `ansible_shell_type=cmd`(sshd 기본 셸이 cmd일 때만)와 WinRM의 `ansible_winrm_transport`다. 생성된 ini의 주석이 그 자리를 알려 주고, 값은 `group_vars/targets_windows.yml`에 둔다.
+>
+> 인증서 검증처럼 winrm 플러그인이 **선언하지 않은** 설정은 `ansible_winrm_<option>` 꼴로 적으면 pywinrm까지 그대로 넘어간다(`ansible_winrm_server_cert_validation` 등). 앤서블 옵션이 아니라 pywinrm의 이름이라 `ansible-doc`에서는 찾을 수 없다.
 
 #### SSH 키 만들고 타깃에 등록하기
 키 방식을 쓰려면 개인/공개키 쌍을 만들고 **공개키를 타깃의 `authorized_keys`에 등록**한다:

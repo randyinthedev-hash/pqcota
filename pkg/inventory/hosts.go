@@ -211,7 +211,8 @@ func RenderAnsibleInventory(hosts []Host) string {
 # Two Windows settings vary by site and are not written here. Put them in
 # group_vars/targets_windows.yml when the defaults do not fit:
 #   over SSH   : ansible_shell_type=cmd     (only if the sshd default shell is cmd, not PowerShell)
-#   over WinRM : ansible_winrm_transport=... ansible_winrm_server_cert_validation=...
+#   over WinRM : ansible_winrm_transport=...   (any other ansible_winrm_<option> is passed
+#                through to pywinrm, e.g. ansible_winrm_server_cert_validation)
 `)
 	}
 	return b.String()
