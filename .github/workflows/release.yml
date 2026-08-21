@@ -56,15 +56,17 @@ jobs:
             tar -C dist -czf "dist/pqcota-linux-$arch.tar.gz" "pqcota-linux-$arch"
           done
 
-      # Windows 노드가 올리는 것은 cngscan 하나다. 리눅스 셋과 겹치지 않는다 — /proc도 ELF도
-      # AF_PACKET도 Windows에 없다. `file`의 정적 링크 확인은 하지 않는다(PE에는 그 표기가 없다).
+      # Windows 노드가 올리는 것은 이 둘이다 — 플레이북(discovery/ansible/discover.yml)의 Windows
+      # 블록이 반입하는 것과 같아야 한다. 리눅스 셋과는 겹치지 않는다(/proc·ELF·AF_PACKET이 없다).
+      # `file`의 정적 링크 확인은 하지 않는다 — PE에는 그 표기가 없다.
       - name: collector 정적 빌드 (Windows)
         run: |
           set -eu
           out="dist/pqcota-windows-amd64"
           mkdir -p "$out"
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o "$out/" \
-            ./discovery/cmd/pqcota-cngscan
+            ./discovery/cmd/pqcota-cngscan \
+            ./discovery/cmd/pqcota-jvmscan
           (cd dist && zip -qr "pqcota-windows-amd64.zip" "pqcota-windows-amd64")
 
       - name: JVM 사이드카
@@ -95,7 +97,7 @@ jobs:
             echo "| 파일 | 무엇 |"
             echo "|---|---|"
             echo "| \`pqcota-linux-amd64.tar.gz\` · \`pqcota-linux-arm64.tar.gz\` | **리눅스 노드에 올리는 collector 3종** — \`pqcota-nodescan\` · \`pqcota-netcap\` · \`pqcota-jvmscan\` |"
-            echo "| \`pqcota-windows-amd64.zip\` | **Windows 노드에 올리는 collector** — \`pqcota-cngscan\` |"
+            echo "| \`pqcota-windows-amd64.zip\` | **Windows 노드에 올리는 collector 2종** — \`pqcota-cngscan\` · \`pqcota-jvmscan\` |"
             echo "| \`collector.jar\` | JVM attach 경로를 쓸 때만. 실행 중 JVM의 provider 체인을 조회하는 사이드카 |"
             echo "| \`SHA256SUMS\` | 무결성 확인용 — \`sha256sum -c SHA256SUMS\` |"
             echo
