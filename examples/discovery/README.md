@@ -11,10 +11,11 @@
 ### 1) `pqcota-hosts` — 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§1.5)
 입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
 ```
-node_id,name,ip,port,ssh_user,ssh_key,ssh_pass
-node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,      ← SSH 키 방식(권장)
-node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password       ← 비밀번호 방식
-node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,
+node_id,name,ip,port,ssh_user,ssh_key,ssh_pass,os
+node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,,        ← SSH 키 방식(권장)
+node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password,         ← 비밀번호 방식
+node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,,
+node-d,Payments Gateway (Windows),10.0.0.11,22,deploy,/home/me/.ssh/id_ed25519,,windows
 ```
 → 두 가지를 낸다:
 - `--ansible-out targets.ini`: 런타임 전용 **Ansible 인벤토리**(접속 비밀이 실려 소유자만 읽을 수 있게 `0600`). 이걸로 각 노드에서 collector를 돌린다. **pqcota 인벤토리엔 영속하지 않는다.**
@@ -30,10 +31,21 @@ node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,
 | `ssh_user` | 로그인 계정(예: `deploy`, `root`) |
 | `ssh_key` | **미리 만들어둔 SSH 개인키 경로** → `ansible_ssh_private_key_file` (권장) |
 | `ssh_pass` | 비밀번호 → `ansible_ssh_pass` (지원하나 권장 안 함) |
+| `os` | `linux`(기본) 또는 `windows`. 그 노드에서 어느 collector를 돌릴지 가른다 |
 
 - **키 방식**(node-a·node-c): `ssh_key`에 개인키 경로, `ssh_pass`는 비움.
 - **비밀번호 방식**(node-b): `ssh_pass`에 비밀번호, `ssh_key`는 비움. ⚠️ Ansible이 비밀번호로 접속하려면 컨트롤러에 **`sshpass`가 설치**돼 있어야 한다(`apt install sshpass`). 평문 비밀번호가 targets.ini에 실리니 키 방식을 권한다.
 - 섞어 써도 된다(위 예시처럼 노드마다 다르게).
+
+#### `os` — 어느 collector를 보낼지 가른다
+
+`linux`면 `pqcota-nodescan`·`pqcota-netcap`·`pqcota-jvmscan`, `windows`면 `pqcota-cngscan`이다. 비우면 `linux`이고, 둘 중 어느 것도 아닌 값은 **오류**다 — 조용히 리눅스로 삼키면 Windows 노드에 리눅스 collector가 올라가고 실패는 한참 뒤에 드러난다.
+
+**관측하지 않고 받아 적는다.** OS는 collector를 올리기 *전에* 알아야 하는데 알아내려면 이미 무언가를 올려야 한다. hosts.csv는 사용자가 관리하는 파일이라 대개 이미 알고 있다. (플레이북은 `gather_facts`로 한 번 더 확인한다 — 적힌 것과 다르면 그 노드는 그냥 건너뛴다.)
+
+`os`가 만드는 것은 인벤토리의 **그룹**이다: `[targets_linux]`·`[targets_windows]`, 그리고 둘의 부모인 `[targets]`. `hosts: targets`로 쓰던 플레이북은 그대로 돈다.
+
+> **Windows 노드는 연결 설정이 하나 더 필요하고, 그 값은 그 머신이 정한다** — WinRM인지 Win32-OpenSSH인지, 기본 셸이 무엇인지에 따라 다르다. `pqcota-hosts`는 **지어내지 않고** 생성된 ini에 무엇을 더해야 하는지만 주석으로 남긴다. 값은 `group_vars/targets_windows.yml`에 둔다.
 
 #### SSH 키 만들고 타깃에 등록하기
 키 방식을 쓰려면 개인/공개키 쌍을 만들고 **공개키를 타깃의 `authorized_keys`에 등록**한다:

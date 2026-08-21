@@ -50,3 +50,51 @@ func TestParseHostsNoNodeID(t *testing.T) {
 		t.Error("a header without node_id must be an error")
 	}
 }
+
+// os 열 — 빈 칸은 리눅스, 오타는 오류. 조용히 리눅스로 삼키면 Windows 노드에 리눅스
+// collector가 올라가고, 실패는 반입이 아니라 실행에서야 드러난다.
+func TestParseHostsOSColumn(t *testing.T) {
+	hosts, err := inventory.ParseHosts(strings.NewReader(
+		"node_id,ip,os\nweb-01,10.0.0.2,\nwin-01,10.0.0.9,Windows\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hosts[0].OS != inventory.OSLinux {
+		t.Errorf("an empty os must default to linux: %q", hosts[0].OS)
+	}
+	if hosts[1].OS != inventory.OSWindows {
+		t.Errorf("os is matched case-insensitively: %q", hosts[1].OS)
+	}
+	if _, err := inventory.ParseHosts(strings.NewReader("node_id,os\nx,windoze\n")); err == nil {
+		t.Error("a typo in os must be an error")
+	}
+}
+
+// OS별 그룹이 나오되 targets는 여전히 전 노드를 가리켜야 한다 —
+// `hosts: targets`로 쓰던 플레이북이 그대로 돌아야 하기 때문이다.
+func TestRenderAnsibleInventoryGroupsByOS(t *testing.T) {
+	hosts, err := inventory.ParseHosts(strings.NewReader(
+		"node_id,ip,ssh_user,os\nweb-01,10.0.0.2,deploy,linux\nwin-01,10.0.0.9,deploy,windows\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	inv := inventory.RenderAnsibleInventory(hosts)
+	for _, want := range []string{"[targets:children]", "targets_linux", "targets_windows",
+		"[targets_linux]", "[targets_windows]", "win-01 ansible_host=10.0.0.9"} {
+		if !strings.Contains(inv, want) {
+			t.Errorf("the inventory does not contain %q:\n%s", want, inv)
+		}
+	}
+	// 연결 설정은 그 머신이 정한다 — 지어내지 않고 무엇이 필요한지만 적는다.
+	if !strings.Contains(inv, "ansible_connection=winrm") || !strings.Contains(inv, "ansible_shell_type=powershell") {
+		t.Errorf("the Windows connection hint is missing:\n%s", inv)
+	}
+	if strings.Contains(inv, "\nwin-01 ansible_host=10.0.0.9 ansible_port=22 ansible_user=deploy ansible_connection=") {
+		t.Error("a connection setting was guessed onto the host line — it must stay a hint")
+	}
+	// Windows 노드가 없으면 그 그룹도, 안내도 없다.
+	only, _ := inventory.ParseHosts(strings.NewReader("node_id,ip\nweb-01,10.0.0.2\n"))
+	if inv := inventory.RenderAnsibleInventory(only); strings.Contains(inv, "targets_windows") {
+		t.Errorf("an empty group was emitted:\n%s", inv)
+	}
+}
