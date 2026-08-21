@@ -19,7 +19,7 @@ pqcota-hosts [--ansible-out <path>] [--dsn <postgres>] <hosts.csv>
 
 | Argument/option | What it does |
 |---|---|
-| `<hosts.csv>` | the connection file (written by the user) |
+| `<hosts.csv>` | the connection file (written by the user). A header is required, column order is free, and only `node_id` is mandatory — the **column table and a sample you can run as-is** are in [examples/discovery](../../examples/discovery/README.md) (Korean) ([hosts.csv](../../examples/discovery/hosts.csv)) |
 | `--ansible-out <path>` | generates an Ansible inventory (ini) — it holds accounts and keys, so it is written **owner-readable only** (`0600`). You run ② on each node with it |
 | `--dsn <postgres>` | upserts the endpoints into the pqcota inventory — accounts and keys excluded; editable and reusable later |
 
