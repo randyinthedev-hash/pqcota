@@ -100,4 +100,4 @@ collector가 관측하지 않는 소스·빌드 아티팩트는, 사용자 CI에
 - **검증(서명·구조·앵커)은 커맨드 내부에서 강제**: 부적합 CBOM은 거부(저장 안 함). 별도 프리플라이트 불필요.
 - 관측 레인(`detection_method=source/artifact`)으로 붙어 **collector 관측과 같은 인벤토리로 수렴**한다(Postgres 영속 시).
 
-> **샘플 형태 주의**: 현재 정규화는 CBOM의 **`pqcota:` 프로퍼티**를 읽는다([`sample-cbom.json`](sample-cbom.json)이 그 형태: JCA/BouncyCastle을 소스에서 발견한 셈). CBOMkit 표준 출력(`cryptoProperties`)을 pqcota 스키마로 매핑하는 것은 import 어댑터의 **확장 지점**이다. 지금은 pqcota-매핑된 CBOM만 자산으로 파싱된다. 상세: [위임 수신 설계](../../inventory/cbom-intake.md).
+> **샘플 형태 주의**: 현재 정규화는 CBOM의 **`pqcota:` 프로퍼티**를 읽는다([`sample-cbom.json`](sample-cbom.json)이 그 형태이고, JCA/BouncyCastle을 소스에서 발견한 셈이다). CBOMkit 표준 출력(`cryptoProperties`)을 pqcota 스키마로 매핑하는 것은 import 어댑터의 **확장 지점**이다. 지금은 pqcota-매핑된 CBOM만 자산으로 파싱된다. 상세: [위임 수신 설계](../../inventory/cbom-intake.md).

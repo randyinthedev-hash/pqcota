@@ -19,7 +19,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 ```
 → 두 가지를 낸다:
 - `--ansible-out targets.ini`: 런타임 전용 **Ansible 인벤토리**(접속 비밀이 실려 소유자만 읽을 수 있게 `0600`). 이걸로 각 노드에서 collector를 돌린다. **pqcota 인벤토리엔 영속하지 않는다.**
-- stdout: **안전 엔드포인트**(node_id·이름·ip·port: **비밀 제외**). `--dsn`을 주면 이걸 인벤토리(Postgres)에 upsert(재사용·수정 대상).
+- stdout: **안전 엔드포인트**(node_id·이름·ip·port이며 **비밀은 제외**한다). `--dsn`을 주면 이걸 인벤토리(Postgres)에 upsert(재사용·수정 대상).
 
 > 접근 비밀(키·비밀번호·계정)은 **hosts.csv(사용자 파일)와 생성된 targets.ini(런타임)에만** 있고 pqcota 인벤토리엔 적재하지 않는다.
 

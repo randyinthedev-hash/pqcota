@@ -64,7 +64,7 @@ CBOMkit은 GPL 계열이다. pqcota는 **링크·번들하지 않고 파일(Cycl
 - **[pqcota]** **오케스트레이션 안 함.** 제출된 CBOM을 `pqcota-cbom-ingest`로 수신 → (내부) 서명·구조·앵커 검증 → Envelope 부착(`detection_method=source/artifact`) → 정규화·적재. **관측 레인**, `confirmed`–`inferred-high`.
 - **결과**: 관측 계열(소스/아티팩트) 확보. *collector를 만들지 않는 대표 케이스(§1.1 위임).*
 
-> **메커니즘: CBOM 임포트 어댑터**: SV-2(사용자 CI 산출)와 SD-7(에어갭 오프라인 산출)이 공용하는 파일 기반 intake. 시나리오 아님. 미리 생성된 CycloneDX를 서명검증 후 관측 레인으로 수신. "CBOMkit을 pqcota가 돌린다"가 아니라 "결과를 받는다".
+> **메커니즘은 CBOM 임포트 어댑터다.** SV-2(사용자 CI 산출)와 SD-7(에어갭 오프라인 산출)이 공용하는 파일 기반 intake. 시나리오 아님. 미리 생성된 CycloneDX를 서명검증 후 관측 레인으로 수신. "CBOMkit을 pqcota가 돌린다"가 아니라 "결과를 받는다".
 
 ---
 
@@ -81,5 +81,5 @@ CBOMkit은 GPL 계열이다. pqcota는 **링크·번들하지 않고 파일(Cycl
 Envelope   : detection_method=source|artifact 부착, collected_at, 서명 있으면 검증
 반환   : CollectionResult(관측 레인) → 정규화 파이프라인 공용 진입
 ```
-- **`pqcota-cbom-ingest <cbom.json> <node-id>`**: CBOM **수신·검증·적재** 종단 CLI. 검증(서명·구조·앵커)은 `ImportCBOM` 내부에서 강제: 부적합은 거부(저장 안 함). 런북(문서)을 실행 가능하게 하는 진입점.
+- **`pqcota-cbom-ingest <cbom.json> <node-id>`**: CBOM **수신·검증·적재** 종단 CLI. 검증(서명·구조·앵커)은 `ImportCBOM` 내부에서 강제한다. 부적합은 거부(저장 안 함). 런북(문서)을 실행 가능하게 하는 진입점.
 - SD-7(에어갭)은 이 어댑터 + T1 오프라인 번들을 조합.
