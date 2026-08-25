@@ -36,7 +36,7 @@
 - 3.0+ : provider API 존재 → 파일 배치 + `openssl.cnf` 활성화로 재빌드 없이 주입
 - 3.5+ : ML-KEM/ML-DSA/SLH-DSA 네이티브 + TLS 하이브리드(X25519MLKEM768) 기본 → config만
 - 1.1.1 / 1.0.2 : **provider 아키텍처 없음**(ENGINE만) → 로더블 모듈로 TLS PQC 불가, 포크 교체 또는 프록시
-- 버전 축: `lib + version + fork`(OpenSSL/BoringSSL/LibreSSL/AWS-LC: 동일 soname 문제)
+- 버전 축: `lib + version + fork`(OpenSSL/BoringSSL/LibreSSL/AWS-LC이며, 동일 soname 문제가 여기서 나온다)
 
 **JCA/JCE: provider 등록 메커니즘과 이원 버전 축이 관건**
 - 등록 층위: (a) `java.security` 정적 순서 목록(JRE 전역), (b) `addProvider()` 런타임 동적 주입(**코드에 숨어 파일 스캔 불가**), (c) `getInstance("...","BC")` 명시 지목(java.security 변경 무효), (d) **우선순위 협상**(목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider 무시)

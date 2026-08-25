@@ -13,7 +13,7 @@
 
 ## 산출은 노드 자산이 아니라 **통신 엣지**다
 
-다른 두 collector는 노드 *내부* 자산(`Finding`)을 낸다. 이쪽은 **노드 사이**의 관계: `ObservedEdge`: 를 낸다. TLS를 쓴다고 그 노드에 OpenSSL이 있다고 붙이지 않는다(TLS ≠ OpenSSL). 이 엣지들이 인벤토리 [§6 통신 토폴로지](../../../inventory/design.md)의 입력이 된다.
+다른 두 collector는 노드 *내부* 자산(`Finding`)을 낸다. 이쪽은 **노드 사이**의 관계인 `ObservedEdge`를 낸다. TLS를 쓴다고 그 노드에 OpenSSL이 있다고 붙이지 않는다(TLS ≠ OpenSSL). 이 엣지들이 인벤토리 [§6 통신 토폴로지](../../../inventory/design.md)의 입력이 된다.
 
 ## 경계: 등급은 코어가 판정한다
 
