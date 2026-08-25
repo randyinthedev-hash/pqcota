@@ -269,7 +269,7 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 | 5 · 조회(이력 · 스냅샷 · 변화 diff) | [`inventory/`](../inventory/README.md) | **끝** |
 | 7 · 생성(L1/L2/L3 · 롤백 · before 레코드) | [`provisioning/`](../provisioning/README.md) | **끝** |
 | 8 · 적용 | 표준 Ansible 플레이북 | **끝.** 데모가 실제 노드에서 확인한다 |
-| 7 · 생성(Windows CNG) | 관측만 되고 전환물은 아직 | [로드맵](../RELEASE_NOTES.md#로드맵--예정-릴리스-계획) |
+| 7 · 생성(Windows CNG) | 관측만 되고 전환물은 아직 | [로드맵](../RELEASE_NOTES.md#로드맵-예정-릴리스-계획) |
 | 6 · 확정 계획을 무엇으로 채우나 |: | **정하지 않는다.** 손으로 쓴 계획으로 돌아간다 |
 | 화면(UI) |: | **없다.** CLI와 생성물이다 |
 

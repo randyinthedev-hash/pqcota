@@ -52,7 +52,7 @@ agg take.cast take.gif \
 ffmpeg -i take.gif -movflags faststart -pix_fmt yuv420p take.mp4
 ```
 
-**폰트 순서가 중요하다.** CJK 폰트를 앞에 두면 `agg`가 셀 폭을 잘못 계산해 공백을 먹는다 —
+**폰트 순서가 중요하다.** CJK 폰트를 앞에 두면 `agg`가 셀 폭을 잘못 계산해 공백을 먹는다.
 `0 → 14 → 0`이 `0 →14 →0`으로 나온다. 진짜 고정폭(DejaVu Sans Mono)을 앞에 두고 한글만
 폴백시킨다. 테마 값은 이 리포의 [구조도](../../docs/architectures/platform-structure.html) 팔레트다.
 
@@ -78,7 +78,7 @@ ffmpeg -i take.gif -movflags faststart -pix_fmt yuv420p take.mp4
 
 ## 템플릿: 복사해서 고쳐 쓴다
 
-이 폴더의 나머지 파일은 **뼈대**다. 그대로 쓰지 말고 자기 작업 폴더로 복사한 뒤 내용을 바꾼다 —
+이 폴더의 나머지 파일은 **뼈대**다. 그대로 쓰지 말고 자기 작업 폴더로 복사한 뒤 내용을 바꾼다.
 다음 사람도 처음부터 시작하지 않게 하려고 남긴 것이다.
 
 ```bash
