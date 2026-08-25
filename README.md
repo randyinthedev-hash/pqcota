@@ -180,6 +180,7 @@ Windows(CNG)는 **관측된다**(`pqcota-cngscan`). 전환물 생성은 substrat
 **릴리스마다** arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
 버전별 목표·성과는 [릴리스 노트](RELEASE_NOTES.md)에 있다.
+이 리포를 어떻게 관리하는지(게이트·기록·수명)는 [관리체계](docs/governance.md)에 모아 두었다.
 
 ## 라이선스
 

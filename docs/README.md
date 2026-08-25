@@ -57,6 +57,7 @@
 | [커널 테스트케이스](kernel-testcases.md) | 단계를 가로지르는 **파생 규칙**이다. 증거 강도·정규화·등급·조치 taxonomy·앱 표시를 다룬다 |
 | [디스커버리 테스트케이스](../discovery/testcases.md) · [인벤토리 테스트케이스](../inventory/testcases.md) · [프로비저닝 테스트케이스](../provisioning/testcases.md) | 상황별 인수 기준 + 구현 순서 (TDD) |
 | [데모가 검증하는 것](../demo/integration-verification.md) | 실물이 필요한 케이스를 데모 6단계가 맡는다. 덮지 않는 것도 적어 둔다 |
+| [**관리체계**](governance.md) | 게이트·기록·수명을 한자리에. 무엇이 자동으로 막히고, 무엇을 기록하며, 결정이 어떻게 사는지 |
 
 ## 계약·데이터 모델
 | 문서 | 내용 |
