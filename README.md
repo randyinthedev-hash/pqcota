@@ -16,6 +16,8 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 [시연영상 (2분 55초)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ): 관측부터 전환물 적용·되돌림까지, 실제 노드에서 ML-KEM이 **0개 → 14개 → 0개**로 바뀐다.
 
+**더 볼 곳** → [설계 문서](docs/README.md) · [이 리포를 어떻게 관리하나](docs/governance.md) · [로드맵](RELEASE_NOTES.md#로드맵-예정-릴리스-계획) · [기여](CONTRIBUTING.md)
+
 ---
 
 ## 무엇이 나오나
@@ -180,7 +182,6 @@ Windows(CNG)는 **관측된다**(`pqcota-cngscan`). 전환물 생성은 substrat
 **릴리스마다** arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
 버전별 목표·성과는 [릴리스 노트](RELEASE_NOTES.md)에 있다.
-이 리포를 어떻게 관리하는지(게이트·기록·수명)는 [관리체계](docs/governance.md)에 모아 두었다.
 
 ## 라이선스
 
