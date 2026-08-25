@@ -1,7 +1,9 @@
 # pqcota — 빌드·테스트
 # 전제: go(go.mod의 toolchain 이상 — 지금은 1.26.4), buf, protoc-gen-go 설치. PATH에 $GOPATH/bin 포함(`make tools`).
 #
-# gen/ (proto 생성 코드)은 gitignore 대상 — 클론 후 `make generate` 필수.
+# gen/ (proto 생성 코드)은 **커밋돼 있다** — 소비자가 `go get`만으로 계약 타입을 쓰게 하려는 것이다
+# (.gitignore 머리말). 그래서 클론 직후 바로 빌드된다. proto를 고쳤을 때만 `make generate`로 다시
+# 만들어 함께 커밋한다.
 
 .PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors
 
@@ -56,7 +58,9 @@ fmt-check:
 	echo "✓ gofmt 통과"
 
 # proto SSOT → Go 코드 생성 (gen/pqcota/{common,discovery,provisioning}/v1/*.pb.go)
-# gen/은 커밋하지 않으므로 클론 직후 필수다. buf가 없으면 무엇을 설치해야 하는지 알려준다 —
+# gen/은 커밋돼 있으므로 클론 직후에 돌릴 일은 없고, **proto를 고쳤을 때** 다시 만들어 함께
+# 커밋한다. 어긋난 채로 올리면 CI의 generate 드리프트 검사가 끊는다(.github/workflows/ci.yml).
+# buf가 없으면 무엇을 설치해야 하는지 알려준다 —
 # "command not found"만 보이면 원인이 컨트랙트인지 도구인지 알 수 없다.
 generate:
 	@command -v buf >/dev/null || { \
@@ -148,8 +152,9 @@ test:
 # 없으면 다음 단계인 make generate가 "플러그인 없음"으로 넘어져 원인이 설치처럼 보인다.
 #
 # **버전을 고정한다.** `@latest`면 언제 깔았느냐로 생성 코드가 달라져, 같은 커밋에서 사람마다
-# 다른 gen/이 나온다(gen/은 커밋하지 않으므로 더 드러나지 않는다). PROTOC_GEN_GO는 go.mod의
-# google.golang.org/protobuf와 **같은 버전**이어야 한다 — 생성 코드가 그 런타임을 부른다.
+# 다른 gen/이 나온다(gen/이 커밋돼 있어 그 차이가 diff로 드러나고 CI 드리프트 검사에 걸린다).
+# PROTOC_GEN_GO는 go.mod의 google.golang.org/protobuf와 **같은 버전**이어야 한다 — 생성 코드가
+# 그 런타임을 부른다.
 # 데모의 ctl 이미지도 같은 값으로 깐다(demo/Dockerfile).
 PROTOC_GEN_GO      := v1.36.11
 PROTOC_GEN_GO_GRPC := v1.5.1
