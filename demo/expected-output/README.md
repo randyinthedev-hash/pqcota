@@ -34,7 +34,7 @@ attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README
   `@/usr/bin/openssl(exe-path)`, **못 잡으면 `@?`**다. 이 데모에서는 네 엣지 중 셋이 `@?`로 나오고
   사유가 함께 찍힌다. *"socket closed between capture and lookup: short-lived connections are missed(3)"*. 데모 트래픽이
   전부 짧은 연결이라 그렇다. 그중 하나를 `pqcota-declare-attribution`으로 지정하면
-  `@batch-runner.service(declared)`로 바뀌고, **관측이 이미 잡은 자리는 그대로다.**
+  `@batch-runner.service(declared)`로 바뀌고, **관측이 이미 잡은 칸은 그대로다.**
 - **프로비저닝(6)**: 확정 계획→L2 플레이북 + 롤백 레코드: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
 
 ## 실제 실행 시 달라질 수 있는 점 (그리고 이유)

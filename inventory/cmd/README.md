@@ -45,7 +45,7 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 
 네트워크 관측은 **캡처하는 순간 소켓이 살아 있어야** 앱을 알아낸다. 짧게 붙었다 끊기는
 연결(배치·헬스체크·cron·SSH)은 그 구간을 벗어나므로 `app_key`가 빈다. 조회 화면에서 `@?`로 보이는
-자리다. 그 자리를 운영자가 메우는 길이다.
+빈칸이다. 그 빈칸을 운영자가 메우는 길이다.
 
 | | |
 |---|---|
@@ -56,7 +56,7 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 **그대로 돌려볼 수 있는 샘플**은 [examples/inventory](../../examples/inventory/README.md#pqcota-declare-attribution-관측이-못-짚은-엣지의-앱을-사람이-적는다)에 있다([attribution.csv](../../examples/inventory/attribution.csv)).
 
 > **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,
-> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 짚은 앱은 덮지 않고 **빈 자리만**
+> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 짚은 앱은 덮지 않고 **빈칸만**
 > 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
 >
 > 저장을 가르는 이유는 둘이다. 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과

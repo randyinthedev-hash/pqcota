@@ -93,7 +93,7 @@
 | [TP-PLAYBOOK-4](../pkg/provisioning/rollback_test.go) | `TestRollbackPlaybookL2`: 롤백 L2 | forward 역방향: `state: absent`. 재시작 없음 | 되돌림이 배치와 어긋나면 흔적이 남거나 필요한 것까지 지운다 |
 | [TP-PLAYBOOK-5](../pkg/provisioning/rollback_test.go) | `TestRollbackPlaybookL1`: 롤백 L1 | 스테이지 모듈만 제거 | L1 롤백이 놓지도 않은 config를 지우려 하지 않게 |
 | [TP-PLAYBOOK-6](../pkg/provisioning/stage_test.go) | `TestL3ActivationOrder`: 훅 4개 → L3 | pre → 배치 → activate → restart. 롤백은 정확한 역순. L2엔 새지 않음 | 순서가 곧 안전성이다. 내리고, 바꾸고, 참조되게 하고, 새로 로드한다 |
-| [TP-PLAYBOOK-7](../pkg/provisioning/stage_test.go) | `TestL3MissingHooksWarnButDoNotGuess`: 훅이 빈 계획 | shell 태스크 0개 + `ActivationWarnings`로 무엇이 안 일어나는지 고지 | 빈 자리에 그럴듯한 명령을 채우면 도구가 모르는 것을 아는 척한다(§2.5) |
+| [TP-PLAYBOOK-7](../pkg/provisioning/stage_test.go) | `TestL3MissingHooksWarnButDoNotGuess`: 훅이 빈 계획 | shell 태스크 0개 + `ActivationWarnings`로 무엇이 안 일어나는지 고지 | 빈칸에 그럴듯한 명령을 채우면 도구가 모르는 것을 아는 척한다(§2.5) |
 | [TP-PLAYBOOK-8](../pkg/provisioning/stage_test.go) | `TestL3HooksGroupedAndDeduped`: 한 노드에 조치 여럿, 같은 재시작 | 단계별로 모으고 **같은 명령은 한 번만** | 조치별로 내면 서비스를 n번 흔들고, 활성화 사이에 재시작이 끼어 일부만 반영된 채 뜬다 |
 | [TP-PLAYBOOK-9](../pkg/provisioning/stage_test.go) | `TestConfigFragmentsNeverOverwriteEachOther`: 내용이 다른 조각 2개 | 조치별 경로로 분리 + `ConfigConflictWarnings`. 같으면 한 경로 | 같은 경로에 두 번 쓰면 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다 |
 | [TP-PLAYBOOK-10](../pkg/provisioning/stage_test.go) | `TestJCAClasspathHintInHeader`: JCA 주입이 섞인 계획 | classpath·`--module-path` 함정과 `activation.activate` 안내가 헤더에. openssl 전용엔 **안 뜸** | JAR 배치만으로는 provider가 로드되지 않는다. 먼저 짚되 무관한 노트로 어지럽히지 않는다 |
