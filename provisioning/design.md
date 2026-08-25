@@ -10,7 +10,7 @@
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
 
-**어느 규정을 구현하나** — 규정이 바뀌면 이 표로 고칠 절을 찾는다.
+**어느 규정을 구현하나.** 규정이 바뀌면 이 표로 고칠 절을 찾는다.
 
 | 이 문서 | 규정서 |
 |---|---|
@@ -53,17 +53,17 @@
 | 아티팩트 생성기 (`Render`·OpenSSL·JCA) | `pkg/provisioning/{render,openssl,jca}.go` | **OSS** | taxonomy(§4.3/§4.4) → config 조각 |
 | L1/L2/L3 배포 플레이북 | `pkg/provisioning/ansible.go`·`stage.go`·`rollback.go` | **OSS** | 표준 substrate stage/install + 계획의 activation 훅(§4.3·§4.3) |
 
-**왜 생성기가 OSS인가**: §4.3/§4.4 taxonomy는 결정론적 매핑(자산 상태 → 조치 → config 조각)이라 파생 규칙(§1.2)이다. 강화 파이프라인·등급 분류와 같은 층위다 — 규칙은 한 곳(코어)에, 재계산 가능해야 한다.
+**왜 생성기가 OSS인가**: §4.3/§4.4 taxonomy는 결정론적 매핑(자산 상태 → 조치 → config 조각)이라 파생 규칙(§1.2)이다. 강화 파이프라인·등급 분류와 같은 층위다. 규칙은 한 곳(코어)에 있어야 하고 재계산할 수 있어야 한다.
 
 ---
 
 ## 2. 데이터 모델 (`contracts/.../provisioning/v1/plan.proto`)
 
-### 2.1 계획 lifecycle — `PlanStatus`
+### 2.1 계획 lifecycle: `PlanStatus`
 
 `draft → in-review → finalized`. **FINALIZED만 프로비저닝 실행 근거**(§3.7 최강 게이트). 링/도메인 단위 부분 확정 허용.
 
-### 2.2 조치 taxonomy — `RemediationKind`
+### 2.2 조치 taxonomy: `RemediationKind`
 
 리뷰어가 자산 상태에서 판정하는 "무엇을"(계획 레이어). 생성기가 이 값으로 분기한다.
 
@@ -78,34 +78,34 @@
 | `APP_RECONFIG` | 그룹 고정·명시 지목 앱 | ❌ 앱 코드 변경 |
 | `DECOMMISSION` | EOL·저가치 | ❌ 폐기·수용 |
 
-### 2.3 조치 한 건 — `RemediationAction`
+### 2.3 조치 한 건: `RemediationAction`
 
 `target_node_id`(§1.4 앵커) · `finding_id`(근거) · `crypto_runtime`(openssl/jca 분기) · `kind` · `automation_level`(L1/L2/L3) · `target_algorithm`(posture.Remediate 산출) · `provider_choice`(§4.4 라우팅) · `config_artifact`(생성기 산출) · `activation`(L3 훅) · `rollback_note` · `priority`.
 
-### 2.4 확정 계획 — `FinalizedPlan`
+### 2.4 확정 계획: `FinalizedPlan`
 
 `status` · `scope`(링/도메인) · `actions`(**순서 의미 있음** §4.1) · `approval_signatures`(§3.3③) · `derived_from_snapshot_id`·`ruleset_version`(§1.2 재현).
 
-> `DeployAutomationLevel` enum 주석의 "확정 계획 소관"은 *워크플로 소유*를 뜻한다. *타입 정의*는 SSOT라 OSS(인벤토리 설계 §2 명시). 충돌 아님 — 타입은 계약에, 저작 워크플로는 계획 쪽에 있다.
+> `DeployAutomationLevel` enum 주석의 "확정 계획 소관"은 *워크플로 소유*를 뜻한다. *타입 정의*는 SSOT라 OSS(인벤토리 설계 §2 명시). 충돌하지 않는다. 타입은 계약에 있고 저작 워크플로는 계획 쪽에 있다.
 
 ---
 
 ## 3. 실행 게이트 (`pkg/provisioning/plan.go`)
 
-`Executable(plan) error` — 확정 계획이 실행 근거로 유효한지 검증하는 **공유 계약 규칙**:
+`Executable(plan) error`는 확정 계획이 실행 근거로 유효한지 검증하는 **공유 계약 규칙**이다:
 - `status == FINALIZED` (아니면 거부)
 - `approval_signatures` 최소 1건(§3.3③ finalize 전제)
 - `actions` 최소 1건
 
-파생이 아니라 실행 직전 관문이다. 이 함수가 통과시킨다고 실행되는 게 아니라 — "무엇이 실행 근거인가"라는 규칙만 정한다.
+파생이 아니라 실행 직전 관문이다. 이 함수가 통과시킨다고 실행되는 것이 아니라, "무엇이 실행 근거인가"라는 규칙만 정한다.
 
 ---
 
 ## 4. 아티팩트 생성기
 
-`Render(action) string` — `crypto_runtime`으로 분기, `FillPlan(plan)`이 전 조치 `config_artifact`를 채운다(리뷰 대상 diff 실체화). **핵심 전략(§4.2)**: 버전을 올리지 않고 provider 주입으로 알고리즘 능력만 대체한다. 그래서 조치가 "라이브러리 교체"에서 "provider 배치+활성화+검증"으로 축소된다(원자적·가역적).
+`Render(action) string`은 `crypto_runtime`으로 분기하고, `FillPlan(plan)`이 전 조치 `config_artifact`를 채운다(리뷰 대상 diff 실체화). **핵심 전략(§4.2)**: 버전을 올리지 않고 provider 주입으로 알고리즘 능력만 대체한다. 그래서 조치가 "라이브러리 교체"에서 "provider 배치+활성화+검증"으로 축소된다(원자적·가역적).
 
-### 4.1 OpenSSL 브랜치 (`openssl.go`) — 버전이 `kind`를 결정한다
+### 4.1 OpenSSL 브랜치 (`openssl.go`): 버전이 `kind`를 결정한다
 
 **자산 상태 → 조치.**
 
@@ -127,10 +127,10 @@ flowchart LR
     A -- "1.1.1 · 1.0.2" --> C3["FORK_REPLACE<br/>provider API 없음"]
     C1 --> R1["Groups 한 줄"]
     C2 --> R2["provider 로드 + Groups"]
-    C3 --> R3["주석: 수동 — 레거시를 건드려야 함"]
+    C3 --> R3["주석: 수동. 레거시를 건드려야 함"]
 ```
 
-**`CONFIG_ONLY` (3.5+)** — 레거시·provider를 건드리지 않고 그룹만 켠다:
+**`CONFIG_ONLY` (3.5+)** 은 레거시·provider를 건드리지 않고 그룹만 켠다:
 
 ```ini
 # pqcota 생성: OpenSSL 3.5+ config-only — ML-KEM (FIPS 203) 하이브리드 활성화(§4.3)
@@ -144,11 +144,11 @@ ssl_conf = ssl_sect
 Groups = X25519MLKEM768:x25519
 ```
 
-첫 줄은 섹션보다 앞에 온다. 이 줄이 없으면 OpenSSL은 `[openssl_init]`을 **읽지 않는다** — 조각을
+첫 줄은 섹션보다 앞에 온다. 이 줄이 없으면 OpenSSL은 `[openssl_init]`을 **읽지 않는다.** 조각을
 `OPENSSL_CONF`로 직접 가리키는 환경에서 배치도 되고 sha256 게이트도 통과하는데 능력만 그대로인
 상태가 된다. 시스템 cnf에서 `.include` 하는 환경에서는 같은 값이 한 번 더 대입될 뿐이라 무해하다.
 
-**`PROVIDER_INJECT` (3.0–3.4)** — **버전은 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
+**`PROVIDER_INJECT` (3.0–3.4)** 은 **버전을 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
 
 ```ini
 [provider_sect]
@@ -164,7 +164,7 @@ Groups = X25519MLKEM768:x25519
 
 > **`Groups`의 `:x25519` 꼬리**는 고전 폴백이다. PQC를 우선하되 상대가 지원하지 않으면 접속이 끊기지 않게 한다.
 
-### 4.2 JCA 브랜치 (`jca.go`) — JDK 세대와 provider가 `kind`를 결정한다
+### 4.2 JCA 브랜치 (`jca.go`): JDK 세대와 provider가 `kind`를 결정한다
 
 **자산 상태 → 조치.**
 
@@ -178,7 +178,7 @@ Groups = X25519MLKEM768:x25519
 
 JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입했는가**(우선순위 앞선 provider가 가로채지 않는가), `getInstance("...","BC")` 명시 지목 앱은 config가 무효이고, **전역 `java.security` 변경의 영향 범위**를 산출한다.
 
-**provider 후보 및 선택 기준** — Java에서 주입할 provider는 자산 성격에 따라 라우팅한다.
+**provider 후보 및 선택 기준.** Java에서 주입할 provider는 자산 성격에 따라 라우팅한다.
 
 | 자산 성격 | 권장 provider | 근거 |
 |---|---|---|
@@ -207,14 +207,14 @@ flowchart LR
     C5 --> R3
 ```
 
-**`CONFIG_ONLY`** — provider 등록 없이 협상 그룹만:
+**`CONFIG_ONLY`** 은 provider를 등록하지 않고 협상 그룹만 낸다:
 
 ```properties
 # pqcota 생성: JDK 네이티브 PQC config-only — ML-KEM (FIPS 203)(§4.4)
 jdk.tls.namedGroups=X25519MLKEM768,x25519
 ```
 
-**`PROVIDER_INJECT`** — JAR 배치 + `java.security` 등록. `providerChoice`가 클래스명을 정한다:
+**`PROVIDER_INJECT`** 는 JAR 배치와 `java.security` 등록을 낸다. `providerChoice`가 클래스명을 정한다:
 
 | `providerChoice` | 등록되는 클래스 |
 |---|---|
@@ -224,10 +224,10 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 > placeholder가 조각 안에만 있으면 놓치기 쉬우므로, `pqcota-provision`은 이런 조치를 만나면
 > **stderr에 ⚠를 찍는다**(`조치 …: provider_class 미확정 …`). 계획은 유효하고 플레이북도 정상
-> 생성되니 실행을 막지는 않는다 — "생성 → 사람이 FQCN 기입 → 적용" 경로를 살리되, 불완전 산출물이
+> 생성되니 실행을 막지는 않는다. "생성 → 사람이 FQCN 기입 → 적용" 경로를 살리되, 불완전 산출물이
 > **조용히** 지나가지 않게 할 뿐이다.
 
-**커스텀 provider는 `providerClass`에 FQCN을 적는다** — 그러면 placeholder도 경고도 없이 완결된다:
+**커스텀 provider는 `providerClass`에 FQCN을 적는다.** 그러면 placeholder도 경고도 없이 완결된다:
 
 ```json
 {"providerChoice": "acme-jce", "providerClass": "com.acme.jce.AcmeProvider"}
@@ -236,7 +236,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 OpenSSL엔 이 필드가 없다. 거기선 **경로**만 알면 되고 그 경로는 생성기가 정하지만, JCA는 java.security에 **FQCN**을 적어야 하는데 벤더마다 패키지 구조가 달라 provider 이름에서 유도할 수 없기 때문이다.
 
-**JAR을 JVM이 찾게 하려면** classpath에 얹어야 한다 — 확장 메커니즘(`$JAVA_HOME/jre/lib/ext`)은 **JDK 9에서 제거**됐으므로 9+에서는 classpath나 `--module-path`를 쓴다. 생성된 조각이 실제 배치 경로와 함께 둘 다 안내한다. 이 배선은 **JAR 배치≠로드**인 흔한 함정이라, JCA 주입이 있으면 **플레이북 헤더 상단에도** 경고를 올려(조각을 안 열어봐도 보이게) 짚는다. 그 배선 자체는 앱 기동 방식에 달렸으므로 계획의 `activation.activate` 훅에 적는다(L3) — 도구가 기동 방식을 추측하지 않는다.
+**JAR을 JVM이 찾게 하려면** classpath에 얹어야 한다. 확장 메커니즘(`$JAVA_HOME/jre/lib/ext`)은 **JDK 9에서 제거**됐으므로 9+에서는 classpath나 `--module-path`를 쓴다. 생성된 조각이 실제 배치 경로와 함께 둘 다 안내한다. 이 배선은 **JAR 배치≠로드**인 흔한 함정이라, JCA 주입이 있으면 **플레이북 헤더 상단에도** 경고를 올려(조각을 안 열어봐도 보이게) 짚는다. 그 배선 자체는 앱 기동 방식에 달렸으므로 계획의 `activation.activate` 훅에 적는다(L3). 도구가 기동 방식을 추측하지 않는다.
 
 ```properties
 security.provider.2=org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -250,7 +250,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 >
 > **대신 그 자리를 차지한다**: 실측(JDK 21)으로 `security.provider.2`를 이 값으로 두면 provider 목록이 12개 그대로이고 `SunRsaSign`만 사라진다. 밀어내지 않으려면 대상의 `java.security`에서 뒤 번호를 한 칸씩 미룬 뒤 넣어야 하는데, 그러려면 그 노드의 원본을 알아야 하므로 도구가 대신 하지 않는다. 직접 확인: [`verify-registration.sh`](../examples/provisioning/files/README.md).
 >
-> **폴백 그룹은 장식이 아니다**: `jdk.tls.namedGroups`에 **미지 그룹만** 주면 JSSE가 초기화 자체에 실패한다(실측: JDK 21·25 모두 `ExceptionInInitializerError` — 릴리스 JDK는 아직 이 그룹을 모른다). 그래서 항상 고전 그룹을 함께 둔다.
+> **폴백 그룹은 장식이 아니다**: `jdk.tls.namedGroups`에 **미지 그룹만** 주면 JSSE가 초기화 자체에 실패한다(실측: JDK 21·25 모두 `ExceptionInInitializerError`가 났고, 릴리스 JDK는 아직 이 그룹을 모른다). 그래서 항상 고전 그룹을 함께 둔다.
 
 
 ### 4.3 `targetAlgorithm`이 그룹 이름을 만든다
@@ -261,7 +261,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 |---|---|
 | `ML-KEM (FIPS 203)`, `MLKEM768` | `X25519MLKEM768` |
 | `Kyber768` | `X25519Kyber768Draft00` (전신·초안) |
-| `ML-DSA (FIPS 204)` 등 **서명** 알고리즘 | **없음** — 그룹은 KEM에만 해당 |
+| `ML-DSA (FIPS 204)` 등 **서명** 알고리즘 | **없다.** 그룹은 KEM에만 해당한다 |
 | 인식 안 되는 문자열 | **없음** |
 
 그룹을 못 만들면 **추측하지 않고** 조각에 이렇게 적는다:
@@ -273,13 +273,13 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 ### 4.4 하위호환·정직성 규정
 
-- **하이브리드 그룹에 고전 폴백 병기**(`X25519MLKEM768:x25519`) — 구 클라이언트 접속 유지(§4.3 검증 매트릭스).
+- **하이브리드 그룹에 고전 폴백 병기**(`X25519MLKEM768:x25519`)한다. 구 클라이언트의 접속을 유지하기 위해서다(§4.3 검증 매트릭스).
 - 목표 wire 그룹명은 `registry.MatchPQC`로 파생(ML-KEM→`X25519MLKEM768`). 서명 알고리즘·미상이면 KEM 그룹 없음을 주석으로 명시.
 - 확정 못 하는 provider 클래스는 placeholder + "정식 클래스명 확인" 경고(추정 주입 금지).
 
 ---
 
-## 5. 단계적 배포 — L1/L2/L3
+## 5. 단계적 배포: L1/L2/L3
 
 ### 5.1 머신에는 무엇이 놓이나
 
@@ -287,18 +287,18 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 | 무엇 | 어디에 | 조건 |
 |---|---|---|
-| provider 모듈 | `/opt/pqcota/<provider>.so` (JCA는 `.jar`) | `PROVIDER_INJECT` — 소스는 [컨트롤러에서 푸시](#커스텀-provider를-컨트롤러에서-타깃으로) |
+| provider 모듈 | `/opt/pqcota/<provider>.so` (JCA는 `.jar`) | `PROVIDER_INJECT`일 때. 소스는 [컨트롤러에서 푸시](#커스텀-provider를-컨트롤러에서-타깃으로) |
 | OpenSSL config 조각 | `/etc/pqcota/openssl-pqc.cnf` | L2 |
 | JCA config 조각 | `/etc/pqcota/java.security.pqcota` | L2 |
 | (조각이 여럿일 때) | `…/openssl-pqc.<조치id>.cnf` 처럼 조치별로 분리 | 한 노드·같은 런타임에 **내용이 다른** 조각이 둘 이상 |
 
-한 경로에 두 번 배치하면 뒤가 앞을 덮어써 앞 조치가 조용히 사라지므로, 그럴 때는 경로를 나누고 그 사실을 알린다. 한 파일로 합치지는 않는다 — 섹션이 충돌할 수 있어 병합 순서를 도구가 정하면 판단이 된다. 어느 조각을 참조할지는 `activation.activate`가 정한다.
+한 경로에 두 번 배치하면 뒤가 앞을 덮어써 앞 조치가 조용히 사라지므로, 그럴 때는 경로를 나누고 그 사실을 알린다. 한 파일로 합치지는 않는다. 섹션이 충돌할 수 있어 병합 순서를 도구가 정하면 판단이 된다. 어느 조각을 참조할지는 `activation.activate`가 정한다.
 
-**전부 새 파일이다.** 기존 `openssl.cnf`·`java.security`를 덮어쓰지 않는다 — 그래서 되돌리기가 **파일 제거**로 끝난다.
+**전부 새 파일이다.** 기존 `openssl.cnf`·`java.security`를 덮어쓰지 않는다. 그래서 되돌리기가 **파일 제거**로 끝난다.
 
-#### 어느 머신에 놓이나 — `node_id`가 곧 Ansible 인벤토리 호스트
+#### 어느 머신에 놓이나: `node_id`가 곧 Ansible 인벤토리 호스트
 
-계획의 `targetNodeId`가 그대로 플레이북의 대상이 된다 — 생성물은 `hosts: ["<node_id>"]`로 나온다(계획 문자열은 항상 인용해 낸다 — 이름에 `:`가 있어도 YAML이 깨지지 않게). `node_id`는 **식별 앵커**이고 IP가 아니므로(§1.3 — IP는 로케이터일 뿐), 그 이름을 실제 접속(IP·SSH 사용자·키)으로 잇는 건 **사용자의 Ansible 인벤토리**다. 그 인벤토리는 `pqcota-hosts`가 `hosts.csv`에서 생성한 `targets.ini`(런타임 전용·0600)로, 각 `node_id`를 `ansible_host`·`ansible_user`·키로 매핑한다. 즉:
+계획의 `targetNodeId`가 그대로 플레이북의 대상이 된다. 생성물은 `hosts: ["<node_id>"]`로 나온다(계획 문자열은 항상 인용해 내므로 이름에 `:`가 있어도 YAML이 깨지지 않는다). `node_id`는 **식별 앵커**이고 IP가 아니므로(§1.3에서 IP는 로케이터일 뿐이다), 그 이름을 실제 접속(IP·SSH 사용자·키)으로 잇는 건 **사용자의 Ansible 인벤토리**다. 그 인벤토리는 `pqcota-hosts`가 `hosts.csv`에서 생성한 `targets.ini`(런타임 전용·0600)로, 각 `node_id`를 `ansible_host`·`ansible_user`·키로 매핑한다. 즉:
 
 ```
 plan.targetNodeId ─┐
@@ -306,33 +306,33 @@ plan.targetNodeId ─┐
 targets.ini 항목 ──┘         (node_id → ip·ssh 접속을 여기서 잇는다)
 ```
 
-그래서 도구는 접속 비밀을 알 필요도, 영속할 필요도 없다 — 플레이북은 `node_id`만 말하고, 그 node를 어떻게 접속할지는 인벤토리가 안다([discovery 예제](../examples/discovery/README.md)의 `pqcota-hosts` 참고).
+그래서 도구는 접속 비밀을 알 필요도, 영속할 필요도 없다. 플레이북은 `node_id`만 말하고, 그 node를 어떻게 접속할지는 인벤토리가 안다([discovery 예제](../examples/discovery/README.md)의 `pqcota-hosts` 참고).
 
 
-### 5.2 활성화 — L2에서 멈추거나, L3로 끝내거나
+### 5.2 활성화: L2에서 멈추거나, L3로 끝내거나
 
 파일이 놓여도 **아직 아무것도 바뀌지 않는다.** 조각을 실제 설정에서 참조하고 서비스를 재시작해야 효력이 생긴다. 어디까지 갈지는 `--level`이 정한다.
 
-**L2에서 멈추면** 모든 산출물이 **완전히 가역**이다 — 원본을 덮은 적이 없으니 놓은 파일을 지우면 그만이고, 서비스는 건드리지 않았다. 위험한 단계를 미루고 배치만 먼저 확인하고 싶을 때 쓴다.
+**L2에서 멈추면** 모든 산출물이 **완전히 가역**이다. 원본을 덮은 적이 없으니 놓은 파일을 지우면 그만이고, 서비스는 건드리지 않았다. 위험한 단계를 미루고 배치만 먼저 확인하고 싶을 때 쓴다.
 
-**L3는 끝까지 간다.** 활성화·재시작 명령은 계획의 `activation` 훅에 **적힌 것**을 쓴다 — 활성화 지점은 환경마다 다르므로(systemd 드롭인·include 디렉터리·사내 기동 스크립트) 도구가 추측하지 않는다. 생성기가 하는 일은 그것을 **의미 순서**로 놓는 것이다:
+**L3는 끝까지 간다.** 활성화·재시작 명령은 계획의 `activation` 훅에 **적힌 것**을 쓴다. 활성화 지점은 환경마다 다르므로(systemd 드롭인·include 디렉터리·사내 기동 스크립트) 도구가 추측하지 않는다. 생성기가 하는 일은 그것을 **의미 순서**로 놓는 것이다:
 
 ```
 forward : pre → 모듈·config 배치 → activate → restart
 rollback: pre → deactivate → 배치 파일 제거 → restart
 ```
 
-훅이 비어 있으면 그 단계를 만들지 않고, 무엇이 일어나지 *않는지*를 stderr로 알린다. 한 노드에 조치가 여러 개여도 같은 명령은 한 번만 나간다 — 조치마다 재시작하면 서비스를 여러 번 흔들고, 활성화 사이에 재시작이 끼어 일부만 반영된 채 뜬다.
+훅이 비어 있으면 그 단계를 만들지 않고, 무엇이 일어나지 *않는지*를 stderr로 알린다. 한 노드에 조치가 여러 개여도 같은 명령은 한 번만 나간다. 조치마다 재시작하면 서비스를 여러 번 흔들고, 활성화 사이에 재시작이 끼어 일부만 반영된 채 뜬다.
 
 ```bash
 pqcota-provision --level l3 plan.json > provision.yml
 pqcota-provision --level l3 --rollback plan.json > provision-rollback.yml
 ```
 
-가용성을 지키며 **여러 노드를 순차 전환**하는 일(drain·rolling·헬스체크 게이트·자동 롤백 판정)은 하지 않는다 — L3는 한 노드까지다.
+가용성을 지키며 **여러 노드를 순차 전환**하는 일(drain·rolling·헬스체크 게이트·자동 롤백 판정)은 하지 않는다. L3는 한 노드까지다.
 
 
-**단계 경계가 곧 게이트이자 롤백 지점이다.** L3는 한 노드의 활성화·재시작까지다 — 여러 노드를 가용성을 지키며 순차 전환하는 일(drain·rolling·헬스체크)은 사용자의 오케스트레이션 층에서 한다.
+**단계 경계가 곧 게이트이자 롤백 지점이다.** L3는 한 노드의 활성화·재시작까지다. 여러 노드를 가용성을 지키며 순차 전환하는 일(drain·rolling·헬스체크)은 사용자의 오케스트레이션 층에서 한다.
 
 ---
 
@@ -346,12 +346,12 @@ L3 후에는 **재스캔으로 상태 변경을 확인한다**(§4.3). Deploy가
 
 프로비저닝 *전* 상태를 보존해 **롤백**을 가능케 한다(§1.3 행위 계열·§4.3 단계경계=롤백지점).
 
-- **`CryptoState`**(before/after) — 특정 시점 애플리케이션의 암호 상태: `modules`(모듈+버전, 예 `libcrypto.so.3@3.0.13`·`oqsprovider@0.6`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 config 원문 참조).
-- **`ProvisioningRecord`** — 프로비저닝 행위 1건의 **append-only 히스토리**: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수 — 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
+- **`CryptoState`**(before/after)는 특정 시점 애플리케이션의 암호 상태다: `modules`(모듈+버전, 예 `libcrypto.so.3@3.0.13`·`oqsprovider@0.6`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 config 원문 참조).
+- **`ProvisioningRecord`**는 프로비저닝 행위 1건의 **append-only 히스토리**다: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수다. 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
 - **롤백** = `before` 복원(구 모듈·config 배치) + **통제된 재시작**. 부팅 검증에 실패했거나 사용자가 요청할 때 한다. 단계 경계마다 롤백 지점(§4.3).
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).
-- **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다 — before 원문 재생성 불필요. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.
-- **대칭**: forward가 놓은 것을 롤백이 지운다. L3면 활성화도 되돌린다 — `deactivate` 훅이 없으면 파일만 지워지므로 그 사실을 경고한다(§2.5).
+- **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다. before 원문을 다시 만들 필요가 없다. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.
+- **대칭**: forward가 놓은 것을 롤백이 지운다. L3면 활성화도 되돌린다. `deactivate` 훅이 없으면 파일만 지워지므로 그 사실을 경고한다(§2.5).
 - **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 부착 → 레코드를 영속한다.
 
 ---
@@ -392,10 +392,10 @@ module = /opt/pqcota/acme-pqc.so
 | taxonomy → config 조각 | ✅ 생성기 |
 | L1/L2/L3 아티팩트 | ✅ 플레이북(적용·롤백 양방향) |
 | 계획 저작·리뷰-확정 | ❌ 하지 않는다 |
-| 플릿 오케스트레이션(drain·rolling·헬스게이트) | ❌ 하지 않는다 — 한 노드의 활성화까지가 이 리포다(§5.2) |
+| 플릿 오케스트레이션(drain·rolling·헬스게이트) | ❌ 하지 않는다. 한 노드의 활성화까지가 이 리포다(§5.2) |
 | 서명 provenance | 형식·검증 함수까지. 등록 키 대조·거부는 하지 않는다 |
 
-> 계획 저작·리뷰-확정·선언 대조와 플릿 오케스트레이션은 하지 않는다 — 계약(`plan.proto`)으로만 잇는다.
+> 계획 저작·리뷰-확정·선언 대조와 플릿 오케스트레이션은 하지 않는다. 계약(`plan.proto`)으로만 잇는다.
 
 **주의**: BouncyCastle 표준판(MIT계열)은 GPL 격리 대상 아님(번들 가능). BC-FJA(FIPS)는 별도 계약 조건 확인(§4.4).
 
@@ -403,7 +403,7 @@ module = /opt/pqcota/acme-pqc.so
 
 ## 8. 열린 설계 질문
 
-- **config_artifact 저장 vs 재생성**: 지금은 `FillPlan`이 실체화(리뷰 편의). 파생이므로 저장은 캐시일 뿐 — 규칙 개선 시 재생성 정책 필요(§1.2).
+- **config_artifact 저장 vs 재생성**: 지금은 `FillPlan`이 실체화(리뷰 편의). 파생이므로 저장은 캐시일 뿐이고, 규칙이 개선되면 재생성 정책이 필요하다(§1.2).
 - **provider 클래스 레지스트리**: BC/BCFIPS 외 provider(jostle·내부)의 정식 클래스명을 `pkg/kernel/registry`에 등재할지(현재 placeholder+경고).
 - **L2/L3 경계의 검증 아티팩트**: 부팅 검증(새 provider 로드·디스패치 진입)을 core 재스캔 규칙으로 어디까지 표현할지.
 
