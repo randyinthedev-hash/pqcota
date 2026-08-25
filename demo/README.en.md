@@ -47,7 +47,7 @@ What gets built is **the source as currently checked out**, including uncommitte
 | Folder/file | What it is | Run it directly? |
 |---|---|---|
 | [`scripts/`](scripts) | what **the user runs** — `up.sh` (install) · `demo.sh` (run) · `down.sh` (remove) | ✅ these three |
-| [`scripts/ansible/`](scripts/ansible) | the discovery **orchestration** demo.sh drives — SSH inventory and playbook (`discover.yml`) | ❌ |
+| [`scripts/ansible/`](scripts/ansible) | the discovery **orchestration** demo.sh drives — SSH inventory and playbooks (`discover.yml`, `discover_traffic.yml`) | ❌ |
 | [`integration-verification.md`](integration-verification.md) | **the integration cases this demo verifies**, and what it does not cover (Korean) | ❌ |
 | [`scripts/internal/`](scripts/internal) | helpers that run **inside** the containers (node boot, service start/stop, traffic generation, observation). `ssl-apps.sh` is the service management point the L3 hook points at | ❌ |
 | [`workloads/`](workloads) | the **demo crypto workloads** deployed to nodes (the things being scanned and observed): `CryptoApp.java` (JCA/BouncyCastle) · `pqc-echo/` (a PQC TLS traffic generator, in Go) | ❌ |
@@ -192,13 +192,13 @@ It does not end at `hosts.csv`:
 | # | What you prepare | Required? | What it is |
 |---|---|---|---|
 | 1 | **`hosts.csv`** | required for remote multi-node | node_id, ip, port, account, key → `pqcota-hosts` generates the Ansible inventory (`targets.ini`, 0600, not persisted). With `--dsn` it also upserts the endpoint (secrets excluded). **Not needed** if you are scanning one host in place |
-| 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbook ships them for you** (`discover.yml` ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.en.md#build) (signed prebuilt releases are on the [roadmap](../RELEASE_NOTES.en.md) — until then, building from source is the rule) |
-| 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](../discovery/ansible/discover.yml) is the **reference implementation** |
+| 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbooks ship them for you** (`discover.yml` for assets, `discover_traffic.yml` for edges; each ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.en.md#build) (signed prebuilt releases are on the [roadmap](../RELEASE_NOTES.en.md) — until then, building from source is the rule) |
+| 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](../discovery/ansible/discover.yml) and [`discover_traffic.yml`](../discovery/ansible/discover_traffic.yml) are the **reference implementation** |
 
 After that it is the same as the demo — hand the collected results to `pqcota-ingest` and they are normalized and stored; view them with `pqcota-inventory`.
 
-> **✅ You can copy the demo's collector deployment as-is.** The node images contain **no** collector; `discover.yml`
-> ships them from ctl, runs them, retrieves the results, and cleans up (zero residue on the nodes afterward). The JVM
+> **✅ You can copy the demo's collector deployment as-is.** The node images contain **no** collector; the two playbooks
+> ship them from ctl, run them, retrieve the results, and clean up (zero residue on the nodes afterward). The JVM
 > add-on goes **only to nodes that have a JVM**, via `-recon`. Porting it to a real environment is just pointing
 > `collector_bin_dir` at your own build output (per arch).
 >

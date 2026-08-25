@@ -100,7 +100,8 @@ COPY . /src
 COPY demo/scripts/ansible/ /work/ansible/
 # 참조 플레이북은 데모 것이 아니라 제품 산출물이다 — 실환경에 그대로 이식하라고 만든 것이라
 # discovery/ 아래 두고, 데모는 그걸 가져다 쓴다.
-COPY discovery/ansible/discover.yml /work/ansible/discover.yml
+COPY discovery/ansible/discover.yml         /work/ansible/discover.yml
+COPY discovery/ansible/discover_traffic.yml /work/ansible/discover_traffic.yml
 WORKDIR /work
 RUN mkdir -p /work/results
 CMD ["sleep", "infinity"]
