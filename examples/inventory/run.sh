@@ -25,6 +25,7 @@ go run ./inventory/cmd/pqcota-declare-attribution --out "$TMP/declared-attr" "$H
 echo
 echo "the declared-lane result (the observed edges themselves are untouched):"
 sed 's/^/   /' "$TMP/declared-attr/attribution-000.json"
+echo
 
 echo
 echo "▶ pqcota-cbom-ingest — validate and ingest a CBOM produced by an external tool"
@@ -32,6 +33,6 @@ echo "   (source and build artifacts, which no collector observes, arrive as sta
 go run ./inventory/cmd/pqcota-cbom-ingest "$HERE/sample-cbom.json" node-b
 
 echo
-echo "✅ ran the file-collation view (ephemeral) and the external CBOM intake."
+echo "✅ ran the file-collation view (ephemeral), the declared-lane import, and the external CBOM intake."
 echo "   • central persistent query (with endpoint and profile headers): PQCOTA_DSN=<postgres> go run ./inventory/cmd/pqcota-inventory"
 echo "     (ingest into the same DSN with pqcota-ingest first — see demo/)"

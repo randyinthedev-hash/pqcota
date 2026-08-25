@@ -53,6 +53,8 @@ pqcota-ingest <dir>                                          # 선언 레인으�
 | `dst` | 상대. 엣지에 찍힌 주소 그대로 — `pqcota-inventory -snapshot`에서 보인다. **포트를 따로 적지 않는다**: 계약이 `dst_addr`를 `"ip:port"`로 정해 이미 들어 있고, 두 곳에 적으면 한쪽만 틀렸을 때 조용히 안 맞는다 |
 | `app_key` | 이 엣지를 연 앱 |
 
+**그대로 돌려볼 수 있는 샘플**은 [examples/inventory](../../examples/inventory/README.md#pqcota-declare-attribution--관측이-못-짚은-엣지의-앱을-사람이-적는다)에 있다([attribution.csv](../../examples/inventory/attribution.csv)).
+
 > **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,
 > 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 짚은 앱은 덮지 않고 **빈 자리만**
 > 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
