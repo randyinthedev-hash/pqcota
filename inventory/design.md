@@ -132,7 +132,7 @@ type PlanItem struct {
 
 | 산출물 | 성격 | 핸드오프 |
 |---|---|---|
-| 리컨실리에이션 뷰 | 파생(엣지별 state+confidence+provenance), 읽기전용 뷰 | — |
+| 리컨실리에이션 뷰 | 파생(엣지별 state+confidence+provenance), 읽기전용 뷰 |: |
 | **finalized 확정 계획** | 프로비저닝 **유일 실행 근거** | **Inventory→Deploy(§5): finalized 아니면 실행 거부** |
 | 결정·계획 히스토리 | provenance 판단·의도 계열 | §1.3 |
 

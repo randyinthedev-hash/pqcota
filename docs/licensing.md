@@ -25,7 +25,7 @@
 **이 리포(`pqcota`)는 Apache-2.0**이다. 배포되는 산출물(Go 바이너리·Java 사이드카)에 링크·번들되는
 서드파티는 전부 허용적 라이선스뿐이다(§2 표).
 
-GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다** — 그 도구가 낸 CycloneDX 파일을
+GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다**. 그 도구가 낸 CycloneDX 파일을
 받기만 한다(`pqcota-cbom-ingest`). 파일 교환이라 전염 경로가 없다 → [위임 수신 설계](../inventory/cbom-intake.md).
 
 ## 2. 빌드 산출물에 링크되는 런타임 의존성 (Go)
@@ -46,7 +46,7 @@ GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다** 
 | `golang.org/x/sync` | v0.21.0 | BSD-3-Clause | 간접 |
 | `golang.org/x/text` | v0.39.0 | BSD-3-Clause | 간접 |
 
-`gopkg.in/yaml.v3`(MIT)는 위 목록에 없다 — 데모 토폴로지 생성기와 테스트에서만 쓰여 collector·CLI에 링크되지 않는다.
+`gopkg.in/yaml.v3`(MIT)는 위 목록에 없다. 데모 토폴로지 생성기와 테스트에서만 쓰여 collector·CLI에 링크되지 않는다.
 
 **정리**: 링크되는 카피레프트 **없음**. Apache-2.0/MIT/BSD-3은 상호 호환이며 Apache-2.0 배포에 문제 없다.
 (BSD-3·MIT는 저작권 고지 유지 의무만 있음 → 배포물에 `THIRD-PARTY-NOTICES` 동봉 권장, §6.)
@@ -66,7 +66,7 @@ GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다** 
 
 ---
 
-## 4. 데모 환경 구성요소 (`demo/`) — 별도 프로세스/컨테이너, 링크 안 됨
+## 4. 데모 환경 구성요소 (`demo/`): 별도 프로세스/컨테이너, 링크 안 됨
 
 > 아래 구성요소는 디스커버리 데모(`demo/`)에서 SSH·서브프로세스·컨테이너로 돌며 pqcota 바이너리에 링크되지 않는다.
 
@@ -81,8 +81,8 @@ SSH·서브프로세스·컨테이너 프로세스 경계 너머에서 실행된
 | OpenSSH (server/client) | 9.x | **BSD 계열**(+일부 public domain) | sshd·ssh(Ansible 전송·SSH 엣지 관측 대상) |
 | Ansible | (배포판) | **GPL-3.0-or-later** | 컨트롤러에서 실행되는 **독립 실행 파일**. pqcota와 링크 없음(오케스트레이션 도구) |
 | Graphviz (`dot`) | (배포판) | **CPL-1.0**(Common Public License) | 토폴로지 SVG 렌더(별도 프로세스). 산출물(SVG)은 데이터 |
-| Ubuntu 24.04 base image | — | 집합(주로 GPL/LGPL/MIT/BSD 등 다수 패키지) | 컨테이너 베이스 |
-| `golang:1.26` base image | — | 집합(Go=BSD-3 + Debian 베이스) | 빌더 스테이지 |
+| Ubuntu 24.04 base image |: | 집합(주로 GPL/LGPL/MIT/BSD 등 다수 패키지) | 컨테이너 베이스 |
+| `golang:1.26` base image |: | 집합(Go=BSD-3 + Debian 베이스) | 빌더 스테이지 |
 
 > **GPL 도구(Ansible·Temurin) 취급**: 이들은 pqcota가 **호출**하는 별도 프로그램이지 링크 대상이 아니다.
 > Ansible은 플레이북을 실행하는 오케스트레이터, Temurin은 타깃 노드의 런타임일 뿐이다. GPL은
@@ -91,22 +91,22 @@ SSH·서브프로세스·컨테이너 프로세스 경계 너머에서 실행된
 
 ---
 
-## 5. 카피레프트 격리 — 무엇이 그것을 강제하나
+## 5. 카피레프트 격리: 무엇이 그것을 강제하나
 
 **GPL copyleft 전염을 구조로 차단한다.** 원칙 셋:
 
-1. **프로세스 분리** — GPL 컴포넌트를 라이브러리 링크가 아니라 독립 바이너리로 호출한다.
-2. **표준 데이터 경계** — 프로세스 간 교환은 CycloneDX CBOM(표준)으로만. 코어 내부 API를 넘기지 않는다.
-3. **배포 분리** — GPL 코드를 이 리포·배포물에 번들·정적 링크·소스 포함하지 않는다.
+1. **프로세스 분리**: GPL 컴포넌트를 라이브러리 링크가 아니라 독립 바이너리로 호출한다.
+2. **표준 데이터 경계**: 프로세스 간 교환은 CycloneDX CBOM(표준)으로만. 코어 내부 API를 넘기지 않는다.
+3. **배포 분리**: GPL 코드를 이 리포·배포물에 번들·정적 링크·소스 포함하지 않는다.
 
 자체 GPL collector를 만들더라도 같은 경계를 적용한다. 컴포넌트별 정확한 라이선스(GPL vs AGPL,
-or-later)와 SaaS 배포 시 AGPL 함의는 **실사가 필요하다** — 이 문서는 법률 자문이 아니다.
+or-later)와 SaaS 배포 시 AGPL 함의는 **실사가 필요하다**. 이 문서는 법률 자문이 아니다.
 
 무엇이 그 원칙을 강제하는지는 아래 표다.
 
 | 원칙 | 무엇이 강제하나 |
 |---|---|
-| 별도 프로세스 | `contracts/.../collector.proto`의 intake 계약(§1.6) — GPL collector는 gRPC/CLI 뒤에 선다 |
+| 별도 프로세스 | `contracts/.../collector.proto`의 intake 계약(§1.6): GPL collector는 gRPC/CLI 뒤에 선다 |
 | 표준 데이터만 교환 | 그 계약이 주고받는 것은 CycloneDX + Envelope뿐. 코어 내부 타입은 넘지 않는다 |
 | 배포 분리 | GPL 어댑터는 **별도 리포**이고 `go.mod`에 없다. CI 라이선스 스캐너가 교차 의존을 막는다 |
 
@@ -119,7 +119,7 @@ or-later)와 SaaS 배포 시 AGPL 함의는 **실사가 필요하다** — 이 �
 |---|---|---|
 | **이 리포** | **Apache-2.0** | 계약·정규화·인벤토리·프로비저닝 생성 + 레퍼런스 collector |
 | **GPL 어댑터**(선택) | GPL-3.0, 별도 리포 | CipherIQ/CBOMkit 서브프로세스 래퍼 |
-| **PQC provider 라이브러리** | 자산별 상이 | BouncyCastle(허용적) · BC-FJA(FIPS, 별도 계약) — 사용자가 조달 |
+| **PQC provider 라이브러리** | 자산별 상이 | BouncyCastle(허용적) · BC-FJA(FIPS, 별도 계약): 사용자가 조달 |
 
 **사용자가 고를 때 함의를 보인다.** collector 선택 UI는 `CollectorCapabilities.license`로
 *"이 백엔드는 GPL 컴포넌트 별도 설치"* 인지 *"레퍼런스 = Apache-2.0 포함"* 인지 밝힌다.

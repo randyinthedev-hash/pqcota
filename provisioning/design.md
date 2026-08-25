@@ -369,7 +369,7 @@ flowchart LR
     T --> C["config가 이 절대 경로를 참조<br/>module = /opt/pqcota/acme-pqc.so"]
 ```
 
-모듈 위치를 알려주는 세 가지 방법(`files/` 관례·provider별 변수·전역 변수)과 sha256 무결성 게이트는 [provisioning/cmd § 적용하기](cmd/README.md#적용하기)에 있다. `providerChoice`에 어떤 이름을 쓸 수 있는지는 [견본 · 필드](../examples/provisioning/plans/README.md#providerchoice--이름이-파일명이-된다).
+모듈 위치를 알려주는 세 가지 방법(`files/` 관례·provider별 변수·전역 변수)과 sha256 무결성 게이트는 [provisioning/cmd § 적용하기](cmd/README.md#적용하기)에 있다. `providerChoice`에 어떤 이름을 쓸 수 있는지는 [견본 · 필드](../examples/provisioning/plans/README.md#providerchoice-이름이-파일명이-된다).
 
 **config는 절대 경로를 참조한다.**
 
