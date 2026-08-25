@@ -42,7 +42,7 @@ FIPS 검증본 확인은 사용자가 한다(검증서는 빌드 단위라 파�
 
 **남은 후보의 실물 확인도 같은 방법으로 한다.** 실물을 배치·활성화하고 능력이 생겼는지 `openssl list`로
 전후를 잰 뒤 되돌린다. oqsprovider가 그 경로를 밟았고, 데모의 `DEMO_REAL_PROVIDER=1`이 그것을
-그대로 돌린다([데모 README](../demo/README.md#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)).
+그대로 돌린다([데모 README](../demo/README.md#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)).
 
 **정해야 하는 것은 config 어휘를 어떻게 여느냐다.** provider별 조각을 코드에 하나씩 넣을지, 계획에 config
 조각을 실을 자리(`extraConfig` 류)를 열지를 아직 정하지 않았다. 후자는 코드를 고치지 않고 후보 전부를 받지만 "지어내지

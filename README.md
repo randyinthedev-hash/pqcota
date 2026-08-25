@@ -125,7 +125,7 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 `CGO_ENABLED=0`(정적 링크라 배포판·libc를 가리지 않는다)은 고정이고, 바꾸는 것은 `GOOS`·`GOARCH`뿐이다.
 값 목록은 [Go 문서](https://go.dev/doc/install/source#environment)를 따른다.
 
-**리눅스 노드의 커널은 3.2 이상**이면 된다. 이는 Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건--커널권한)에 있다.
+**리눅스 노드의 커널은 3.2 이상**이면 된다. 이는 Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건-커널권한)에 있다.
 
 노드에서 collector를 돌릴 때의 권한·환경변수 → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
 

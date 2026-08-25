@@ -22,7 +22,7 @@
 > ./examples/provisioning/files/verify-registration.sh      # 조각 적용 전후 provider 목록 대조
 > ```
 >
-> **OpenSSL 쪽 같은 확인**은 데모의 선택 단계가 한다 — `DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh`. 실물 oqsprovider를 빌드해 3.0–3.4 노드에 배치·활성화하고 `openssl list`로 전후를 잰다([데모 README](../../demo/README.md#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)).
+> **OpenSSL 쪽 같은 확인**은 데모의 선택 단계가 한다 — `DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh`. 실물 oqsprovider를 빌드해 3.0–3.4 노드에 배치·활성화하고 `openssl list`로 전후를 잰다([데모 README](../../demo/README.md#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)).
 
 ## OpenSSL — 버전이 조치를 정한다
 
