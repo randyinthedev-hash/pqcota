@@ -31,7 +31,7 @@
 - **관측 레인 vs 선언 레인** — collector가 *본 것*(observed)과 사용자가 *신고한 것*(declared/CMDB)을 Envelope의 `detection_method`로 구분해 라벨한다. 그 라벨이 인벤토리에서 둘을 가르는 근거가 된다.
 - **`evidence_strength`** — `confirmed`(실행 중 실체) → `inferred`(정적 추정) → `unknown`. 관측 방법에 따라 결정론적으로 부착된다.
 - **완전성 맵 (갭 ≠ 부재)** — 관측하지 못한 계층은 "없음"으로 단정하지 않고 **갭**으로 명시한다. 이 정직성이 감사 무결성·재현성의 근거다.
-- **provider 시그니처 레지스트리** — provider·모듈 시그니처 → PQC 성숙도·FIPS·알고리즘 커버리지를 자동 판정.
+- **provider 시그니처 레지스트리** — provider·모듈 시그니처 → PQC 성숙도·FIPS·알고리즘 커버리지를 자동으로 판정한다.
 
 ---
 
@@ -131,7 +131,7 @@ type ForkSignature struct {
 4. detach     : 원상 복귀 (읽기 전용, 상태 변경 없음)
 ```
 
-**정찰이 선행한다 — openssl(§2.1)과 대칭.** openssl의 `ScanHost`가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, jvm도 `ScanJVMs`가 실행 중 JVM을 **직접 조사한다**(호출자가 PID·JDK를 미리 알아 넘기던 비대칭 제거). 접근 불가 프로세스는 `Denied`로 세어 완전성 갭의 원천으로(§2.5). `AttachAll`이 발견한 각 JVM에 attach하고, **attach 실패도 조용히 버리지 않고 갭으로** 센다(openssl의 프로세스별 탐지 합산과 대칭). 구현: `collectors/jvm/{procscan,attach}.go`.
+**정찰이 선행한다 — openssl(§2.1)과 대칭.** openssl의 `ScanHost`가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, jvm도 `ScanJVMs`가 실행 중 JVM을 **직접 조사한다**(호출자가 PID·JDK를 미리 알아 넘기던 비대칭 제거). 접근 불가 프로세스는 `Denied`로 세어 완전성 갭의 원천으로 삼는다(§2.5). `AttachAll`이 발견한 각 JVM에 attach하고, **attach 실패도 조용히 버리지 않고 갭으로** 센다(openssl의 프로세스별 탐지 합산과 대칭). 구현: `collectors/jvm/{procscan,attach}.go`.
 
 **다중 JVM 식별 — 앱 단위, PID 아님.** 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이어야 한다(하나가 dedup으로 사라지면 §2.6 정직성 위반 — 실제 자산 은폐). 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME. **PID는 쓰지 않는다** — 매 스캔 달라져 finding id가 흔들리고 이력이 "매번 새 자산"으로 깨진다(같은 JDK의 두 앱도 앱 키로 갈린다).
 **동봉물**: `introspect-agent.jar`(attach 사이드카)뿐. **런타임은 동봉하지 않는다** — attach 클라이언트는 대상의 java일 필요가 없어 **머신에 있는 JDK를 재사용**한다(대상이 JRE여도 무방). attach 가능 JDK가 전무하면 정적 폴백으로 정직히 강등 → [collector 배포 설계](collector-deployment.md).
@@ -154,7 +154,7 @@ attach를 기본 차단** — 3단 전략으로 대응한다:
    플랫폼이 강제하지 않는다 — 사용자 자산 기동 방식은 사용자 소유([[deploy-script-boundary]] 대칭).
 
 > 비-agent 경로(JMX/JVMTI)는 후속 검토. JMX도 대개 비활성이고 JVMTI 네이티브 agent도 기동 플래그가
-> 필요해 "레거시 지배 케이스"를 완전히 풀지 못한다. 그래서 **이 리포의 보장 폴백은 정적 열화**로 확정.
+> 필요해 "레거시 지배 케이스"를 완전히 풀지 못한다. 그래서 **이 리포의 보장 폴백은 정적 열화**로 확정했다.
 
 **provider 레지스트리 매핑** → `pqc_readiness`·`fips_validation`·알고리즘 커버리지. **SLH-DSA는 JDK 네이티브에 없음 → BC/jostle 의존 태깅**(§2.3).
 
@@ -162,7 +162,7 @@ attach를 기본 차단** — 3단 전략으로 대응한다:
 
 **책임**: 실제 TLS/SSH 핸드셰이크를 **수동 관측**해 협상된 크립토와 통신 엣지를 잡는다(§2.2 네트워크 계층).
 다른 collector가 노드의 **능력**(로드된 lib=PQC 가능 여부)을 본다면, network-collector는 **실제 등급**
-(그 연결이 실제로 PQC 하이브리드로 협상됐나)를 본다. 이 둘의 대조가 핵심 가치.
+(그 연결이 실제로 PQC 하이브리드로 협상됐나)를 본다. 이 둘의 대조가 핵심 가치다.
 
 **기술적 근거 — 복호화 없이 관측**: 핸드셰이크의 알고리즘 협상은 **평문**이다.
 - **TLS**: ClientHello `supported_groups`·`key_share`, ServerHello 선택 그룹 → KEX 그룹(X25519MLKEM768 등)·cipher·버전 관측.
@@ -205,7 +205,7 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 
 ## 3. 정규화 파이프라인 6단계 (전 시나리오 관통)
 
-규정서 §2.4를 인터페이스로 고정. **강화·검증·동일성·영속화가 코어 단독**(§1.2 재계산 위해).
+규정서 §2.4를 인터페이스로 고정한다. **강화·검증·동일성·영속화가 코어 단독**(§1.2 재계산 위해).
 
 | 단계 | 입력→출력 | 핵심 로직 | 시나리오 |
 |---|---|---|---|
@@ -216,7 +216,7 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 | ⑤동일성/dedup | 노드=스코프 마스터 앵커, finding=정규화 해시 | 재수집 병합 | 전 |
 | ⑥영속화 | → 디스커버리 히스토리 append | `derived_from_snapshot_id`+`ruleset_version` | §1.2 |
 
-강화의 유일 소스는 코어. Collector가 같은 로직을 중복 구현하지 않는다 → 규칙 개선 시 원본에서 재계산(§1.2).
+강화의 유일 소스는 코어다. Collector가 같은 로직을 중복 구현하지 않는다 → 규칙 개선 시 원본에서 재계산(§1.2).
 
 ---
 
@@ -224,7 +224,7 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 
 - **사전 게이트**: `CollectRequest.target_node_ids`는 코어가 스코프 마스터로 **이미 필터**한 것만(§1.4). Collector는 받은 것만 수집.
 - **사후 라우팅**: 수집 중 관측된 스코프 밖 노드(통신 상대 등) → **수집 대상 아님** → "등재/제외 **판정 요청**" 큐로(PROPOSE). 자동 수집 금지.
-- 산출: 신규 리뷰 항목(사용자 MANUAL 판정 대상). 스코프 마스터 정합성 격차는 서비스.
+- 산출: 신규 리뷰 항목(사용자 MANUAL 판정 대상). 스코프 마스터의 정합성 격차를 드러내는 것 자체가 서비스다.
 
 ## 4A. 머신 식별·UID 체계·자산 계층 (계약: `discovery/asset.proto`·`common.proto MachineIdentity`)
 
@@ -241,14 +241,14 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 | **상관 지문** | `Envelope.MachineIdentity`: `machine_id`(/etc/machine-id)·`hardware_uuid`·`cloud_instance_id`·`fqdn` | 사용자 라벨을 **물리 머신에 앵커링·검증**(생성 아님) |
 | **로케이터** | IP | ID 아님 — 네트워크 관측을 노드로 잇기만 |
 
-- **자동 self-id (폴백)**: CMDB 없이 bare 실행 시 지문에서 **결정론적** 파생(`machineid.SelfAssign`: cloud>machine-id>hw>fqdn 우선순위 → `"node:"+sha256[:16]`). 같은 머신→같은 값이라 스캔마다 중복 안 생김. §1.4상 권위 아님 → RegistrationRequest.
-- **사용자 입력 중복/충돌 검증**: 사용자 node_id는 오류 가능 → 지문으로 교차검증(`ingest.CheckIdentity`). 한 물리머신키→여러 node_id=**중복**(한 머신 여러 이름), 한 node_id→여러 키=**충돌**(한 이름 여러 머신·재이미지). 판정 안 하고 surface만(§2.5, 사람/reconcile 몫).
+- **자동 self-id (폴백)**: CMDB 없이 bare 실행 시 지문에서 **결정론적** 파생(`machineid.SelfAssign`: cloud>machine-id>hw>fqdn 우선순위 → `"node:"+sha256[:16]`). 같은 머신이면 같은 값이 나오므로 스캔마다 중복이 생기지 않는다. §1.4에 따르면 권위 ID가 아니므로 RegistrationRequest로 간다.
+- **사용자 입력 중복/충돌 검증**: 사용자 node_id는 오류 가능 → 지문으로 교차검증(`ingest.CheckIdentity`). 한 물리머신키→여러 node_id=**중복**(한 머신 여러 이름), 한 node_id→여러 키=**충돌**(한 이름 여러 머신·재이미지). 판정하지 않고 드러내기만 한다(§2.5, 사람·reconcile 몫).
 
 ### 4A.2 자산 계층 Machine → Application → Process
 
 식별 안정성이 계층마다 다르다:
 - **Machine** = node_id (안정).
-- **Application** = `(node_id, app_key)` — app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다 — 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸침**한다(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
+- **Application** = `(node_id, app_key)` — app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다 — 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸친다**(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
 - **Process** = **PID 휘발 → 저장 안 함.** `ProcessMatch`(systemd_unit>exe_path>cmdline_regex)로 **프로비저닝 직전에 그때그때 이어 붙인다**(`LiveProcess`) — 저장된 PID는 이미 낡음.
 
 ### 4A.3 접근 — 사용자 hosts 파일 → Ansible (비밀 미영속)
@@ -261,11 +261,11 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 
 - Collector `Describe`(커버 가능 계층) vs `Collect`(실제 커버) **차이 = 갭**(`Completeness.layers_missing`).
 - **배치/간헐 노드**: 수집 시점 미실행 → **갭 기록, 자동 "부재" 금지**(§2.5). 시간대별 반복 수집(§2.3)으로 dlopen·배치 누락 방지.
-- 이 구분이 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 관측하지 못함"을 가르는 근거(§2.6).
+- 이 구분이 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 관측하지 못함"을 가르는 근거다(§2.6).
 
 ## 6. Collector 배포 (호스트 도달) — 시나리오별
 
-아키텍처 §2.3 원칙을 시나리오에 매핑. **이 리포는 collector CLI + 결과 서명 + 스코프 게이트만; 자체 push 엔진 없음**(§4.4).
+아키텍처 §2.3 원칙을 시나리오에 매핑한다. **이 리포는 collector CLI와 결과 서명, 스코프 게이트만 두고 자체 push 엔진은 만들지 않는다**(§4.4).
 
 | 시나리오 | 배포(호스트 도달) | 실체 |
 |---|---|---|
@@ -277,15 +277,15 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 
 ### 6.1 collector 배포 저작권 ≠ remediation 저작권 (경계 원칙)
 
-collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/design.md)(§4.5) "스크립트 저작·서명=사용자"과 다르다 — 그건 *앱 재시작 로직이 사용자 도메인 지식·liability*라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
+collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/design.md)(§4.5) "스크립트 저작·서명은 사용자 몫"과 다르다 — 그건 *앱 재시작 로직이 사용자의 도메인 지식이자 책임*이라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
 
-**T1 가드레일(self-service)**: ① 최소 caps — root 아님, `CAP_NET_RAW`(network-collector)·`CAP_SYS_PTRACE`(/proc)만. ② 번들 digest 핀 + 서명 검증 + 멱등(포크 가능한 투명 아티팩트). 번들이 올바른 호출(caps·co-location·버전 핀·재시도)을 1회 인코딩. ③ 대상은 사용자 스코프 마스터(§1.4). 실행 주체가 pqcota가 되면 T3(상주 에이전트)가 되는데, 그건 만들지 않는다.
+**T1 가드레일(self-service)**: ① 최소 caps — root 아님, `CAP_NET_RAW`(network-collector)·`CAP_SYS_PTRACE`(/proc)만. ② 번들 digest 핀 + 서명 검증 + 멱등(포크 가능한 투명 아티팩트). 번들이 올바른 호출(caps·co-location·버전 핀·재시도)을 한 번 인코딩한다. ③ 대상은 사용자 스코프 마스터(§1.4). 실행 주체가 pqcota가 되면 T3(상주 에이전트)가 되는데, 그건 만들지 않는다.
 
 ---
 
 ## 7. 시나리오 → 설계 요소 추적성 (satisfaction matrix)
 
-**각 시나리오가 어느 컴포넌트로 만족되는가** — 이 표가 설계 완결성의 증명.
+**각 시나리오를 어느 컴포넌트가 만족시키는가** — 이 표가 설계 완결성의 증명이다.
 
 | 시나리오 | 만족시키는 설계 요소 | 증거 결과 |
 |---|---|---|
@@ -297,7 +297,7 @@ collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립�
 | **SD-6** 배치 노드 | 완전성 맵(§5) + 시간대별 반복 | 갭 기록(≠부재) |
 | **SD-7** 에어갭 | T1 오프라인 번들 | T1 배치 수집 |
 
-**미스 없음 확인**: SD-1–SD-7 전부 최소 하나의 컴포넌트에 담기고, 새로 만드는 건 §2.1–2.4(런타임 collector 3) + §3 파이프라인 + §4·§5 코어뿐.
+**빠진 것 없음 확인**: SD-1–SD-7 전부 최소 하나의 컴포넌트에 담기고, 새로 만드는 것은 §2.1–2.4(런타임 collector 3) + §3 파이프라인 + §4·§5 코어뿐이다.
 
 ---
 
@@ -313,7 +313,7 @@ collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립�
 
 ## 부록 A. build vs reuse — 무엇을 새로 만들고 무엇을 쓰나
 
-각 시나리오가 요구하는 능력을 "새로 만든다 / 기존 래핑 / 코어(신규)"로 판정. **이 표가 곧 개발 우선순위.**
+각 시나리오가 요구하는 능력을 "새로 만든다 / 기존 래핑 / 코어(신규)"로 판정한다. **이 표가 곧 개발 우선순위다.**
 
 | 시나리오 | 필요 능력 | 기존 도구 | 새로 만들 것 | 신규성 |
 |---|---|---|---|---|

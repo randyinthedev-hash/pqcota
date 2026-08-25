@@ -64,7 +64,7 @@
 | [TP-GATE-2](../pkg/provisioning/plan_test.go) | `TestProviderClassWarnings` — placeholder를 낳는 조치 | 경고 1건(provider 이름·해결책 포함). `Executable`은 **여전히 통과** | 조각 안 주석은 열어봐야 보이므로 경고로도 띄운다. 미확정과 실행 거부는 별개다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)
-조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 건 정직하게 비-config임을 명시.
+조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 것은 정직하게 비-config임을 명시한다.
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|

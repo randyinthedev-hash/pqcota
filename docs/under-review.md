@@ -33,7 +33,7 @@ provider는 **사용자가 선택하고 준비한다.** 그 provider를 받는 �
 | **config 어휘** | 도구가 **그 provider가 요구하는 설정 조각**을 만든다 | ⚠ 지금은 `activate = 1` + `module = 경로` 한 모양뿐 |
 | **실물 확인** | 후보를 추가할 때 실물로 종단(배치→활성→관측)까지 확인해 후보 표에 적는다 | ◐ oqsprovider만 확인됨 — 나머지 후보는 미확인 |
 
-**"wolfProvider를 지원한다" = config 어휘가 그 provider의 모양을 아는 것 + 실물 확인.** 후보별로
+**"wolfProvider를 지원한다"는 config 어휘가 그 provider의 모양을 아는 것과 실물 확인을 함께 뜻한다.** 후보별로
 무엇이 더 필요한지는 [plans README](../examples/provisioning/plans/README.md#어떤-provider를-넣을-수-있나)에
 표로 있다 — 계획을 쓰면서 `providerChoice`를 고르는 자리가 거기다.
 
@@ -45,7 +45,7 @@ FIPS 검증본 확인은 사용자가 한다(검증서는 빌드 단위라 파�
 그대로 돌린다([데모 README](../demo/README.md#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)).
 
 **정해야 하는 것 — config 어휘를 어떻게 여나.** provider별 조각을 코드에 하나씩 넣을지, 계획에 config
-조각을 실을 자리(`extraConfig` 류)를 열지. 후자는 코드를 고치지 않고 후보 전부를 받지만 "지어내지
+조각을 실을 자리(`extraConfig` 류)를 열지를 아직 정하지 않았다. 후자는 코드를 고치지 않고 후보 전부를 받지만 "지어내지
 않는다" 원칙과 저울질이 필요하다.
 
 ---

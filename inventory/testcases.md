@@ -99,7 +99,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-SCOPE-3](../pkg/kernel/scope/asset_test.go) | `TestIncludeOverridesExclude` — `exclude` **뒤에** `include` | **뒤 규칙이 이긴다**(순서 기반) | "계열 전부 빼되 이것만 예외"를 쓸 수 있어야 한다 |
 | [TV-SCOPE-4](../pkg/kernel/scope/asset_test.go) | `TestMultiAppAttribution` — 공유 `.so`(쓰는 앱 여럿) 중 하나만 매치 | 매치로 판정 | 공유 `.so`는 쓰는 앱이 여럿이라 하나만 걸려도 규칙이 걸린다 |
 | [TV-SCOPE-5](../pkg/kernel/scope/asset_test.go) | `TestBadAction` — `action`에 오타(`drop` 등) | 오류 | 조용히 무시하면 정책이 안 먹은 걸 모른다 |
-| [TV-SCOPE-6](../pkg/kernel/scope/asset_test.go) | `TestSharedLibExcludeRescuedByTrailingInclude` — 공유 `.so`를 한 앱만 겨냥해 exclude | 그 `.so`를 함께 쓰는 **운영 앱까지 제외됨**. 운영 앱 `include`를 뒤에 두어 구제 | 겨냥한 앱만 빠질 것 같지만 영향 반경이 넓다는 것을 드러낸다 |
+| [TV-SCOPE-6](../pkg/kernel/scope/asset_test.go) | `TestSharedLibExcludeRescuedByTrailingInclude` — 공유 `.so`를 한 앱만 겨냥해 exclude | 그 `.so`를 함께 쓰는 **운영 앱까지 제외됨**. 운영 앱 `include`를 뒤에 두어 구제 | 겨냥한 앱만 빠질 것 같지만 영향 범위가 넓다는 것을 드러낸다 |
 | [TV-SCOPE-7](../pkg/inventory/ingest/central_test.go) | `TestIngestReportsScopeExclusions` — 정책이 자산을 뺀 적재 | 적재 요약·스냅샷·인벤토리 뷰 **셋 다** 건수 고지, 제외한 자산은 남지 않음 | 스코프가 조용히 자산을 지우면 인벤토리가 거짓말을 한다(§2.6·§8.3) |
 
 ## 2. 구현 순서 (unit 먼저)

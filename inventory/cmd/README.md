@@ -71,7 +71,7 @@ exclude,openssl,libcrypto.so.*,*,이 계열은 전부 제외
 include,openssl,libcrypto.so.3,/opt/apps/payment-gw,결제 게이트웨이만 예외
 ```
 
-- 빈 칸과 `*`는 "모두". 패턴은 glob. 규칙이 없으면 **전부 관리 대상**(기본 포함).
+- 빈 칸과 `*`는 "모두"를 뜻한다. 패턴은 glob이다. 규칙이 없으면 **전부 관리 대상**이다(기본 포함).
 - 판정: 기본 포함 → `exclude`로 빼고 → `include`로 되돌린다. **include가 exclude를 이기므로** "이 계열은 전부 빼되 이것만 예외"를 쓸 수 있다.
 - 공유 `.so`는 쓰는 앱이 여럿이라, **하나만 맞아도** 규칙이 걸린다.
 - **제외는 "없음"이 아니다** — 뺀 건수를 적재 요약과 인벤토리 뷰가 고지한다. 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다.
@@ -131,7 +131,7 @@ pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <과거id>,<최신id>]
 ```
 
-인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다 — `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)이 붙는다. `env PQCOTA_DSN` 필수(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
+인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다 — `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)이 붙는다. `env PQCOTA_DSN`가 있어야 한다(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
 
 | 플래그 | 하는 일 |
 |---|---|
