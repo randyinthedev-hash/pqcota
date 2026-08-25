@@ -8,7 +8,7 @@ import (
 )
 
 // renderOpenSSL — OpenSSL remediation taxonomy(프로비저닝 설계 §4.1) → openssl.cnf 조각.
-//   - CONFIG_ONLY (3.5+ 네이티브)   : 하이브리드 그룹 활성화만. 레거시·provider 무터치.
+//   - CONFIG_ONLY (3.5+ 네이티브)   : 하이브리드 그룹 활성화만. 레거시·provider를 건드리지 않는다.
 //   - PROVIDER_INJECT (3.0–3.4)     : provider 모듈 로드 + 활성화 + 그룹. cnf 롤백 가역.
 //   - 그 외(포크교체·프록시·재빌드·폐기): config로 안 되는 조치 → 주석 블록으로 정직하게.
 func renderOpenSSL(a *provisioningv1.RemediationAction) string {
@@ -81,7 +81,7 @@ func opensslProviderInject(group, target, provider string) string {
 	return b.String()
 }
 
-// opensslNonConfig — config 주입으로 해결 불가한 조치. 무엇을·왜 수동인지 명시(프로비저닝 설계 §4.1 "레거시 터치").
+// opensslNonConfig — config 주입으로 해결 불가한 조치. 무엇을·왜 수동인지 명시(프로비저닝 설계 §4.1 "레거시를 건드리나").
 func opensslNonConfig(a *provisioningv1.RemediationAction) string {
 	var reason string
 	switch a.GetKind() {

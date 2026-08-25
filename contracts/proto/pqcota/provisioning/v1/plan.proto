@@ -42,10 +42,10 @@ enum PlanStatus {
 // 리뷰어가 자산 상태에서 판정하는 "무엇을"(§4.1 계획 레이어). core 생성기가 이 값으로 아티팩트를 분기.
 enum RemediationKind {
   REMEDIATION_KIND_UNSPECIFIED = 0;
-  REMEDIATION_KIND_CONFIG_ONLY = 1;     // config만 (OpenSSL 3.5+ / JDK 네이티브) — 레거시 무터치
+  REMEDIATION_KIND_CONFIG_ONLY = 1;     // config만 (OpenSSL 3.5+ / JDK 네이티브) — 레거시를 건드리지 않는다
   REMEDIATION_KIND_PROVIDER_INJECT = 2; // provider 배치 + config (OpenSSL 3.0–3.4 / JCA provider JAR)
   REMEDIATION_KIND_FORK_REPLACE = 3;    // 포크 교체 (OpenSSL 1.1.1·1.0.2)
-  REMEDIATION_KIND_PROXY_FRONT = 4;     // 프록시 프론팅 (레거시 무터치 대안)
+  REMEDIATION_KIND_PROXY_FRONT = 4;     // 프록시 프론팅 (레거시를 건드리지 않는 대안)
   REMEDIATION_KIND_REBUILD = 5;         // 재빌드(CI) — 정적·벤더링·셰이딩
   REMEDIATION_KIND_JDK_UPGRADE = 6;     // JDK 업그레이드 (EOL JDK)
   REMEDIATION_KIND_APP_RECONFIG = 7;    // 앱 코드·설정 변경 (그룹 고정·명시 지목 앱)
@@ -89,7 +89,7 @@ message RemediationAction {
   // 비우면 OpenSSL은 "provider", JCA는 "BC"로 본다. kind=PROVIDER_INJECT가 아니면 쓰이지 않는다.
   string provider_choice = 8;
   string config_artifact = 9;  // core 생성기 산출: openssl.cnf provider 섹션 / java.security 라인
-  string rollback_note = 10;   // 가역성(프로비저닝 설계 §4.1 "레거시 터치"·롤백 방법). 예 "cnf 한 줄 삭제"
+  string rollback_note = 10;   // 가역성(프로비저닝 설계 §4.1 "레거시를 건드리나"·롤백 방법). 예 "cnf 한 줄 삭제"
   int32 priority = 11;         // 조치 우선순위. posture.Remediation.Priority (0 없음 ~ 4 즉시)
 
   // JCA provider의 정식 클래스명(FQCN). 예 "com.acme.jce.AcmeProvider".

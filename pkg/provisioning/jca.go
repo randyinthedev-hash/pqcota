@@ -103,7 +103,7 @@ func jcaProviderInject(group, target, choice, explicitClass string) string {
 	return b.String()
 }
 
-// jcaNonConfig — java.security 조각으로 해결 불가한 조치(프로비저닝 설계 §4.2 "레거시 터치").
+// jcaNonConfig — java.security 조각으로 해결 불가한 조치(프로비저닝 설계 §4.2 "레거시를 건드리나").
 func jcaNonConfig(a *provisioningv1.RemediationAction) string {
 	var reason string
 	switch a.GetKind() {

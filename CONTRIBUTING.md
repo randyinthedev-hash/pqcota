@@ -110,7 +110,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 **순수 함수로 테스트 가능하게.** 파싱·판정 로직을 I/O에서 떼어 실물(프로세스·DB·네트워크) 없이 단위 테스트되게 쓴다 — 예: `ParseProcMaps(reader)`는 `/proc` 없이 돈다. **테스트는 동작만이 아니라 "왜 이 불변식인지"를 못박는다**(회귀 테스트엔 그 버그의 본질을 주석으로).
 
-**외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지·발자국, §2.3). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
+**외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지 대응 · 노드에 남는 것 최소화, §2.3). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
 
 **계약을 바꾸면 딸린 것도.** collector가 주장하는 필드는 전부 `sign.Canonical`에 들어가야 한다(서명 사각 금지). oneof arm은 **메시지 전체에서 안 쓰인** 필드 번호를 쓴다(oneof는 메시지의 번호 공간을 공유한다). 상세 체크리스트: [contracts/README](contracts/README.md).
 

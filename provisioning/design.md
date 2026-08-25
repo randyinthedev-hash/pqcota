@@ -72,7 +72,7 @@
 | `CONFIG_ONLY` | OpenSSL 3.5+ / JDK 네이티브 | ✅ 그룹 활성화만 |
 | `PROVIDER_INJECT` | OpenSSL 3.0–3.4 / JCA provider JAR | ✅ provider 로드+활성화 |
 | `FORK_REPLACE` | OpenSSL 1.1.1·1.0.2 | ❌ 비-config(교체) |
-| `PROXY_FRONT` | 레거시 무터치 대안 | ❌ 별도 프록시 |
+| `PROXY_FRONT` | 레거시를 건드리지 않는 대안 | ❌ 별도 프록시 |
 | `REBUILD` | 정적·벤더링·셰이딩 | ❌ CI 재빌드 |
 | `JDK_UPGRADE` | EOL JDK | ❌ 업그레이드 |
 | `APP_RECONFIG` | 그룹 고정·명시 지목 앱 | ❌ 앱 코드 변경 |
@@ -109,7 +109,7 @@
 
 **자산 상태 → 조치.**
 
-| 자산 상태 | 조치 | 레거시 터치 |
+| 자산 상태 | 조치 | 레거시를 건드리나 |
 |---|---|---|
 | 3.5+ / 동적 | config만(하이브리드 활성화) | 불필요 |
 | 3.0–3.4 / 동적 | **내부 provider 주입 + config** | 불필요(cnf 한 줄 롤백) |
@@ -127,14 +127,14 @@ flowchart LR
     A -- "1.1.1 · 1.0.2" --> C3["FORK_REPLACE<br/>provider API 없음"]
     C1 --> R1["Groups 한 줄"]
     C2 --> R2["provider 로드 + Groups"]
-    C3 --> R3["주석: 수동 — 레거시 터치 필요"]
+    C3 --> R3["주석: 수동 — 레거시를 건드려야 함"]
 ```
 
 **`CONFIG_ONLY` (3.5+)** — 레거시·provider를 건드리지 않고 그룹만 켠다:
 
 ```ini
 # pqcota 생성: OpenSSL 3.5+ config-only — ML-KEM (FIPS 203) 하이브리드 활성화(§4.3)
-# 레거시·provider 무터치. 롤백=이 조각 제거.
+# 레거시·provider를 건드리지 않는다. 롤백=이 조각 제거.
 openssl_conf = openssl_init
 
 [openssl_init]
@@ -168,7 +168,7 @@ Groups = X25519MLKEM768:x25519
 
 **자산 상태 → 조치.**
 
-| 자산 상태 | 조치 | 레거시 터치 | 대응 OpenSSL |
+| 자산 상태 | 조치 | 레거시를 건드리나 | 대응 OpenSSL |
 |---|---|---|---|
 | JDK 네이티브 PQC 지원 | `java.security` 순서·`jdk.tls.*` config만 | 불필요 | 3.5 config-only |
 | 미지원 JDK + provider 주입 가능 | **provider JAR 배치 + java.security 등록** | 불필요(재배포 없이) | 3.x provider 주입 |

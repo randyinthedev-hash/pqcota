@@ -58,7 +58,7 @@
 
 ### 1.3 왜 Go 코어인가 (Rust 대비)
 
-- **레거시 호스트에 발자국을 남기지 않는다**: `CGO_ENABLED=0` 단일 정적 바이너리라 런타임 의존이 없다.
+- **레거시 호스트에 아무것도 남기지 않는다**: `CGO_ENABLED=0` 단일 정적 바이너리라 런타임 의존이 없다.
   관측 대상이 소스도 패키지 관리도 기대할 수 없는 구형 서버다 — 복사해서 실행하고 지우면 끝이어야 한다.
   Go 툴체인이 정하는 커널 하한(3.2)이 곧 이 리포의 하한이 되는 것도 여기서 온다(§4.4 자기잠금 회피).
 - **교차 컴파일이 빌드 인프라 없이 된다**: `GOOS=linux GOARCH=arm64`만으로 arch별 산출물이 나온다.
@@ -141,7 +141,7 @@
 - **이 리포**: collector CLI + **T1 self-service**(서명된 collector 번들을 사용자가 직접 실행 — 에어갭 포함) + **결과 서명·검증**(ed25519, `pqcota-keygen`·`PQCOTA_VERIFY_KEY`) + **스코프 마스터 게이트**(§1.4, `pqcota-ingest`가 등재 노드만 수용). collector를 사용자 자신의 substrate로 감싸 돌릴 수도 있다. 릴리스·번들 서명(공급망 위생)은 여기 속한다.
 - **원칙(불변)**: 어느 경로든 **스코프 게이트 필수** + **RCE 대칭성**(레거시 호스트에 실행체 투입은 위험하므로 서명검증·최소권한·멱등). 부가가치는 push 채널 소유가 아니라 그 위의 게이트·서명·완전성 맵.
 
-**호스트 발자국 (Phase 0 최소)** — [수용 원칙 §2.2 스택] 근거와 직결:
+**호스트에 올라가는 것 (Phase 0 최소)** — [수용 원칙 §2.2 스택] 근거와 직결:
 - **OpenSSL 노드**: Go 정적 바이너리 1개 + root/`CAP_SYS_PTRACE` + mTLS 자격. 그 외 의존 0(ELF·/proc 자립 파싱, `ldd`/`lsof`/`ss`/`readelf` 비의존 설계).
 - **Java 노드**: **Go 바이너리 + 인트로스펙션 agent JAR**만 올리면 된다 — attach는 OS IPC(트리거 파일+SIGQUIT+유닉스 소켓)라 **JDK 없이 직접** 붙는다(대상이 순수 JRE·jlink 런타임이어도). **동일 UID/root** 필요. HotSpot이 아니면(OpenJ9) 머신의 JDK를 클라이언트로 쓰는 경로로, 그마저 막히면(`DisableAttachMechanism`·JEP 451) 정적 경로로 열화 → `evidence_strength` 하향(§2.3). 3계층 상세: [jvm-collector README](../discovery/collectors/jvm/README.md).
 - **컨테이너 주의**: `/proc`·JVM attach는 **같은 PID/마운트 네임스페이스**에서만 → host PID namespace 또는 사이드카 주입 필요(실배포 최대 함정).

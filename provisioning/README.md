@@ -85,7 +85,7 @@ ansible-playbook -i targets.ini provision-rollback.yml
 활성화·재시작 명령은 계획의 `activation` 훅에서 온다. 훅이 없으면 L3이어도 그 단계는 생성되지 않는다.
 
 ```
-    # 조치 a2(REMEDIATION_KIND_FORK_REPLACE): config로 배포 불가 — 수동 단계(§4.3 레거시 터치)
+    # 조치 a2(REMEDIATION_KIND_FORK_REPLACE): config로 배포 불가 — 수동 단계(§4.3 레거시를 건드리는 조치)
 ```
 
 
