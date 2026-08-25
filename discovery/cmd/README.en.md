@@ -36,16 +36,13 @@ Run with no options and it just summarizes the safe endpoints (`node_id`, name, 
 
 ### Then — running the collectors with the inventory you made
 
-A `targets.ini` existing does not start any observation. It is only **a means of reach**; actually running the collectors on each node is your Ansible's job. There are **two reference playbooks** in the repo.
+A `targets.ini` existing does not start any observation. It is only **a means of reach**; actually running the collectors on each node is your Ansible's job. A **reference playbook** showing how is in the repo → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
 
 ```bash
-ansible-playbook -i targets.ini discovery/ansible/discover.yml           # assets: nodescan · jvmscan · cngscan
-ansible-playbook -i targets.ini discovery/ansible/discover_traffic.yml   # communication edges: netcap
+ansible-playbook -i targets.ini discovery/ansible/discover.yml
 ```
 
-Both do the same four things — **ship** → **run** → **retrieve** (the result JSON back to the controller) → **clean up** (by default nothing is left on the node). A collector is not a resident agent but a CLI that exits when done, so this one-shot pattern fits.
-
-**They are split because the two have different observation cadences.** Loaded libraries and provider chains rarely change, so seeing them once per cycle is enough; a communication edge, however, is only caught **if it flows during the capture window**. Edges therefore need to be observed more often and for longer, and while both lived in one playbook that meant re-walking `/proc` and re-attaching to every JVM just to see more edges. `discover_traffic.yml` takes the run count, the window, the interval between runs, an overall budget, and whether to clean up as variables → [deployment design §4B](../collector-deployment.md) (Korean).
+It does four things — **ship** (the three collectors into `/tmp/pqcota-collector`) → **run** → **retrieve** (the result JSON back to the controller) → **clean up** (nothing is left on the node). A collector is not a resident agent but a CLI that exits when done, so this one-shot pattern fits.
 
 The JVM add-on (`collector.jar`) is **not sprayed onto every node** — `pqcota-jvmscan --recon` first checks whether that node has a JVM, and it is sent only to those that do.
 

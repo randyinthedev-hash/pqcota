@@ -65,7 +65,7 @@ docker exec pqcota-ctl bash -lc "pqcota-profile --dsn '$DSN' /work/profiles.csv"
 echo "▶ 1/6 controller → target SSH check (Ansible ping, using the inventory pqcota-hosts generated)…"
 docker exec pqcota-ctl bash -lc "$ANS $INV -m ping targets"
 
-echo "▶ 2/6 running discovery — assets once (discover.yml), then traffic (discover_traffic.yml)…"
+echo "▶ 2/6 running discovery (OpenSSL /proc · JCA providers · network handshakes)…"
 # 목표 엣지 수에 못 미치면 재수집한다. 관측 구간 안에 트래픽이 안 흐를 수 있는 것은 실환경에서도
 # 참이라(유휴 링크) 이 backstop은 남긴다. 다만 예전에 이 루프가 자주 돌던 진짜 이유는 타이밍이
 # 아니라 **collector 결함**이었다 — 원시 syscall의 EINTR을 치명적으로 다뤄 관측 구간이 무작위로
@@ -73,13 +73,10 @@ echo "▶ 2/6 running discovery — assets once (discover.yml), then traffic (di
 TARGET_EDGES="${DEMO_TARGET_EDGES:-${EDGE_COUNT:-3}}"
 MAX_ATTEMPTS="${DEMO_MAX_ATTEMPTS:-4}"
 edge_count() {
-  docker exec pqcota-ctl bash -lc 'grep -oh srcNodeId /work/results/*-net-*.json 2>/dev/null | wc -l' | tr -d '[:space:]'
+  docker exec pqcota-ctl bash -lc 'grep -oh srcNodeId /work/results/*-net.json 2>/dev/null | wc -l' | tr -d '[:space:]'
 }
-# 자산 스캔은 한 번이면 된다 — 로드된 lib과 provider 체인은 재수집으로 달라지지 않는다.
-# 다시 도는 것은 통신 관측뿐이고, 그것이 두 플레이북을 가른 이유다.
-docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
 for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-  docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover_traffic.yml" >/dev/null
+  docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
   cnt="$(edge_count)"; cnt="${cnt:-0}"
   echo "   attempt $attempt/$MAX_ATTEMPTS — ${cnt} observed edges (target ${TARGET_EDGES}+)"
   if [ "$cnt" -ge "$TARGET_EDGES" ]; then break; fi
@@ -329,7 +326,6 @@ fi
 echo "   ── after re-observing (discovery again → ingest), does the inventory see this change ──"
 RPRE=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
-docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover_traffic.yml" >/dev/null
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
 RPOST=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 if [ -n "$RPRE" ] && [ -n "$RPOST" ] && [ "$RPRE" != "$RPOST" ]; then

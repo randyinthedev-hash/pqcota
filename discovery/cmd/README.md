@@ -32,16 +32,13 @@ host=localhost port=5432 user=postgres dbname=pqcota
 
 ### 그다음. 만든 인벤토리로 collector 돌리기
 
-`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그건 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보이는 **참조 플레이북**이 리포에 둘 있다.
+`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그건 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보이는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
 
 ```bash
-ansible-playbook -i targets.ini discovery/ansible/discover.yml           # 자산: nodescan · jvmscan · cngscan
-ansible-playbook -i targets.ini discovery/ansible/discover_traffic.yml   # 통신 엣지: netcap
+ansible-playbook -i targets.ini discovery/ansible/discover.yml
 ```
 
-하는 일은 넷으로 같다. **반입** → **실행** → **회수**(결과 JSON을 컨트롤러로) → **정리**(기본값은 노드에 아무것도 남기지 않는다). collector는 상주 에이전트가 아니라 실행 후 종료하는 CLI라 이 일회성 패턴이 맞다.
-
-**둘로 가른 이유는 관측 주기가 다르기 때문이다.** 로드된 라이브러리와 provider 체인은 좀처럼 바뀌지 않아 정기적으로 한 번 보면 되지만, 통신 엣지는 **캡처하는 구간에 흐른 것만** 잡힌다. 그래서 엣지는 더 자주·더 길게 봐야 채워지는데, 한 플레이북에 묶여 있으면 그러려고 `/proc` 훑기와 JVM attach까지 함께 다시 돌려야 했다. `discover_traffic.yml`은 회차와 구간, 회차 사이 간격, 전체 상한, 정리 여부를 변수로 받는다 → [배포 설계 §4B](../collector-deployment.md).
+하는 일은 넷이다. **반입**(collector 셋을 `/tmp/pqcota-collector`로) → **실행** → **회수**(결과 JSON을 컨트롤러로) → **정리**(노드에 아무것도 남기지 않는다). collector는 상주 에이전트가 아니라 실행 후 종료하는 CLI라 이 일회성 패턴이 맞다.
 
 JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다**. `pqcota-jvmscan --recon`으로 그 노드에 JVM이 있는지 먼저 보고, 있는 노드에만 보낸다.
 
