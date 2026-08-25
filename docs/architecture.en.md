@@ -78,7 +78,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 ### 2.1 The module map — the regulation's three stages plus cross-cutting principles, projected into code
 
-> **This map is the platform as a whole; the scope of this repository is [§6](#6-scope-boundary).**
+> **This map is the platform as a whole; the scope of this repository is set by [§6](#6-the-no-judgment-principle).**
 > Of the boxes below, the Reconciliation Engine, Confidence Scoring, the Review Queue and the Decision
 > Service are **not in this repository** — the contracts (`contracts/`) merely hold their place. §6.2 is
 > decisive on what is built and what is not.
@@ -350,7 +350,7 @@ This gRPC/CLI boundary *is* the **GPL contagion barrier**. A GPL collector (Ciph
 pqcota/            # Apache-2.0 · public · the whole scope (Discovery, inventory, provisioning generation)
   # ── top level = kind of output / the stage sits inside it (contracts and pkg group by stage; discovery/… are execution entry points) ──
   ├─ contracts/proto/pqcota/{common,discovery,inventory,provisioning}/v1/  # the contract SSOT — namespace = stage
-  ├─ gen/               # protobuf-generated code (gitignored — produced by make generate)
+  ├─ gen/               # protobuf-generated code (committed · regenerate with make generate when a proto changes)
   ├─ pkg/               # library logic — grouped by stage:
   │    ├─ discovery/    #   the observed lane: normalize (§2.4), history (§2.4⑥ the snapshot store)
   │    ├─ inventory/    #   ingest (ingestion, CBOM intake SV-2), the central view (§5), the machine metadata store (endpoint/profile upsert), the hosts parser + declaration (the declared lane). There is no reconciliation or verdict engine
