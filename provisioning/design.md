@@ -287,7 +287,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 | 무엇 | 어디에 | 조건 |
 |---|---|---|
-| provider 모듈 | `/opt/pqcota/<provider>.so` (JCA는 `.jar`) | `PROVIDER_INJECT`일 때. 소스는 [컨트롤러에서 푸시](#커스텀-provider를-컨트롤러에서-타깃으로) |
+| provider 모듈 | `/opt/pqcota/<provider>.so` (JCA는 `.jar`) | `PROVIDER_INJECT`일 때. 소스는 [컨트롤러에서 푸시](#6b-커스텀-provider) |
 | OpenSSL config 조각 | `/etc/pqcota/openssl-pqc.cnf` | L2 |
 | JCA config 조각 | `/etc/pqcota/java.security.pqcota` | L2 |
 | (조각이 여럿일 때) | `…/openssl-pqc.<조치id>.cnf` 처럼 조치별로 분리 | 한 노드·같은 런타임에 **내용이 다른** 조각이 둘 이상 |
