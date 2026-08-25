@@ -46,7 +46,7 @@
 |---|---|---|
 | [`scripts/`](scripts) | **사용자가 실행**하는 것 — `up.sh`(설치) · `demo.sh`(수행) · `down.sh`(제거) | ✅ 이 3개 |
 | [`scripts/ansible/`](scripts/ansible) | demo.sh가 구동하는 디스커버리 **오케스트레이션** — SSH 인벤토리·플레이북(`discover.yml`) | ❌ |
-| [`integration-verification.md`](integration-verification.md) | **이 데모가 검증하는 통합 케이스**와 커버하지 않는 것 |
+| [`integration-verification.md`](integration-verification.md) | **이 데모가 검증하는 통합 케이스**와 커버하지 않는 것 | ❌ |
 | [`scripts/internal/`](scripts/internal) | 컨테이너 **안에서** 도는 헬퍼(노드 부팅·서비스 기동/정지·트래픽 생성·관측). `ssl-apps.sh`는 L3 훅이 가리키는 서비스 관리 지점 | ❌ |
 | [`workloads/`](workloads) | 노드에 배포되는 **데모 크립토 워크로드**(스캔·관측 대상): `CryptoApp.java`(JCA/BouncyCastle) · `pqc-echo/`(PQC TLS 트래픽 생성기, Go) | ❌ |
 | [`expected-output/`](expected-output) | 실행 전 **예상 결과** 미리보기(콘솔·토폴로지 SVG) | ❌ |
