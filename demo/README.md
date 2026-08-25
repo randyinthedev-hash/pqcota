@@ -141,6 +141,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 ## 중앙 인벤토리 (엔드포인트·프로필·앱 표시·이력·변화)
 `pqcota-ingest`가 회수 결과를 append-only 히스토리에 적재하고, `pqcota-inventory`가 조회한다:
 - **▸ 머신 헤더**: `pqcota-hosts`가 upsert한 **엔드포인트**(이름·ip:port, 비밀 없음) + **프로필**(display_name·env·role·owner, CMDB 선언 레인).
+- **같은 장비가 여러 이름으로 등재되면 고지한다**: 적재 결과에 `⚠ duplicate: physical machine … → [pay-db web-gw]`가 나오는데 이것은 오류가 아니다. 데모의 타깃들은 한 호스트 위의 컨테이너라 `pay-db`와 `web-gw`가 같은 물리 장비 지문을 갖고, 플랫폼은 그 사실을 감추지 않고 그대로 알린다(TK-MACHINE). 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시가 이것이다.
 - **@앱 표시**: 각 크립토 자산이 어느 앱 것인지(`app_keys`). pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` **둘 다**에 걸린다(그 .so 교체는 두 앱 모두 영향).
 - **이력·변화**: 같은 회수 결과를 한 번 더 적재해(실운용의 "다음 회차 스캔"에 해당) `-history`(변화 지점 + 관측 횟수) · `-snapshot`(자산 + 관측 엣지) · `-diff`(`added`·`removed`·`changed`)를 보인다. 같은 관측이므로 diff는 **"변화 없음"** 이 정답이다. 도구는 없는 변화를 지어내지 않는다. 실제로 버전이 바뀌면 finding id가 유지되어 **같은 자산의 `changed`** 로 잡힌다.<br>스냅샷은 **내용이 바뀔 때만** 쌓이고, 반복 관측은 가벼운 관측 기록으로만 남는다. 저장은 변화 횟수만큼만 자라되 "매번 스캔했다"는 증거는 보존된다.
 - **자산 스코프**: 노드는 등재됐어도 그 안의 자산 전부가 관리 대상은 아니다. `sshd`·패키지 python 런타임 같은 잡음을 규칙으로 빼면 **앱이 실제로 쓰는 자산만** 남는다. 뺀 건수는 반드시 고지된다. **제외는 부재가 아니다**(§2.6).
