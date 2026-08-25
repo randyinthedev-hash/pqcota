@@ -152,7 +152,7 @@ type ForkSignature struct {
    absence). **Dynamic registration (`addProvider`) is a blind spot in that case**, and that fact itself is stated as a gap.
 3. **An operational option**: for high-value assets that need confirmed evidence, **recommend** (through operational
    agreement) that the target JVM be started with `-XX:+EnableDynamicAgentLoading` (or `-XX:+StartAttachListener`).
-   The platform does not force it — how the user's assets start is the user's own ([[deploy-script-boundary]] symmetry).
+   The platform does not force it — how the user's assets start is the user's own, symmetric with Deploy's script boundary (§6.1).
 
 > Non-agent paths (JMX/JVMTI) are for later review. JMX is usually disabled too, and a native JVMTI agent also needs
 > a startup flag, so neither fully solves the "legacy dominant case". Hence **this repo's guaranteed fallback is fixed
