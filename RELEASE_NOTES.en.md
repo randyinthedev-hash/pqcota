@@ -11,8 +11,14 @@ Records the **goals** and **results** per version. Updated as versions advance, 
 Sections are split by the **kind** of content — **What was built** · **What was learned** ·
 **What was fixed**. A defect is not dressed up as a feature; it gets its own section, which states
 three things: **what was wrong · which version it entered in · what came out wrong** (if nothing came
-out wrong, it says so). Sections of already-published versions are not edited — a defect is recorded
-in the version that fixed it, naming where it started.
+out wrong, it says so). **Sections of already-published versions do not have their facts changed.**
+What happened when, and which version a defect entered in, are not rewritten later; a defect is
+recorded in the version that fixed it, naming where it started.
+
+**Wording and length, however, may be revised** — bringing prose in line with a later style, or
+shortening a section that runs long for its weight (this is what happened to v0.6.4 and v0.6.5, which
+changed nothing but wording). One test decides it: **what the reader learns must not change; how it is
+said may.**
 
 **Whether to cut a separate patch release is a distinct call.** The criterion is not a version-number
 rule but *how long a known defect would sit in the latest release*. If the next minor is far off, cut the
