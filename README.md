@@ -73,6 +73,8 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 구성·예상 결과·자기 호스트에 적용하는 법 → **[demo/](demo/README.md)**
 
+컨테이너 없이 **실제 인프라에서 어떤 순서로 무엇이 나오는지** 한 번에 따라가려면 → **[여정](docs/journey.md)**
+
 ---
 
 ## 사전 요구
