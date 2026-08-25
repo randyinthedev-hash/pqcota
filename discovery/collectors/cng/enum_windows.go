@@ -11,7 +11,7 @@ import (
 )
 
 // bcrypt.dll — CNG의 열거 API. 외부 도구(`certutil`·PowerShell)를 부르지 않고 직접 호출한다:
-// 최소 발자국이고, 도구가 없거나 정책으로 막힌 서버에서도 관측 실패가 환경 탓으로 흩어지지
+// 노드에 남는 것이 적고, 도구가 없거나 정책으로 막힌 서버에서도 관측 실패가 환경 탓으로 흩어지지
 // 않는다(§2.3, openssl collector가 `ldd` 없이 ELF를 직접 읽는 것과 같은 원칙).
 var (
 	bcrypt = windows.NewLazySystemDLL("bcrypt.dll")

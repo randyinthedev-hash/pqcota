@@ -68,7 +68,7 @@ func TestRenderOpenSSLConfigIsUsableStandalone(t *testing.T) {
 	}
 }
 
-// config로 주입 불가한 조치(포크 교체 등)는 정직하게 비-config 조치임을 명시(프로비저닝 설계 §4.1 "레거시 터치").
+// config로 주입 불가한 조치(포크 교체 등)는 정직하게 비-config 조치임을 명시(프로비저닝 설계 §4.1 "레거시를 건드리나").
 func TestRenderOpenSSLNonConfig(t *testing.T) {
 	art := provisioning.Render(action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE, "ML-KEM (FIPS 203)", ""))

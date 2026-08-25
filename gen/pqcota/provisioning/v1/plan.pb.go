@@ -151,10 +151,10 @@ type RemediationKind int32
 
 const (
 	RemediationKind_REMEDIATION_KIND_UNSPECIFIED     RemediationKind = 0
-	RemediationKind_REMEDIATION_KIND_CONFIG_ONLY     RemediationKind = 1 // config만 (OpenSSL 3.5+ / JDK 네이티브) — 레거시 무터치
+	RemediationKind_REMEDIATION_KIND_CONFIG_ONLY     RemediationKind = 1 // config만 (OpenSSL 3.5+ / JDK 네이티브) — 레거시를 건드리지 않는다
 	RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT RemediationKind = 2 // provider 배치 + config (OpenSSL 3.0–3.4 / JCA provider JAR)
 	RemediationKind_REMEDIATION_KIND_FORK_REPLACE    RemediationKind = 3 // 포크 교체 (OpenSSL 1.1.1·1.0.2)
-	RemediationKind_REMEDIATION_KIND_PROXY_FRONT     RemediationKind = 4 // 프록시 프론팅 (레거시 무터치 대안)
+	RemediationKind_REMEDIATION_KIND_PROXY_FRONT     RemediationKind = 4 // 프록시 프론팅 (레거시를 건드리지 않는 대안)
 	RemediationKind_REMEDIATION_KIND_REBUILD         RemediationKind = 5 // 재빌드(CI) — 정적·벤더링·셰이딩
 	RemediationKind_REMEDIATION_KIND_JDK_UPGRADE     RemediationKind = 6 // JDK 업그레이드 (EOL JDK)
 	RemediationKind_REMEDIATION_KIND_APP_RECONFIG    RemediationKind = 7 // 앱 코드·설정 변경 (그룹 고정·명시 지목 앱)
@@ -311,7 +311,7 @@ type RemediationAction struct {
 	// 비우면 OpenSSL은 "provider", JCA는 "BC"로 본다. kind=PROVIDER_INJECT가 아니면 쓰이지 않는다.
 	ProviderChoice string `protobuf:"bytes,8,opt,name=provider_choice,json=providerChoice,proto3" json:"provider_choice,omitempty"`
 	ConfigArtifact string `protobuf:"bytes,9,opt,name=config_artifact,json=configArtifact,proto3" json:"config_artifact,omitempty"` // core 생성기 산출: openssl.cnf provider 섹션 / java.security 라인
-	RollbackNote   string `protobuf:"bytes,10,opt,name=rollback_note,json=rollbackNote,proto3" json:"rollback_note,omitempty"`      // 가역성(프로비저닝 설계 §4.1 "레거시 터치"·롤백 방법). 예 "cnf 한 줄 삭제"
+	RollbackNote   string `protobuf:"bytes,10,opt,name=rollback_note,json=rollbackNote,proto3" json:"rollback_note,omitempty"`      // 가역성(프로비저닝 설계 §4.1 "레거시를 건드리나"·롤백 방법). 예 "cnf 한 줄 삭제"
 	Priority       int32  `protobuf:"varint,11,opt,name=priority,proto3" json:"priority,omitempty"`                                 // 조치 우선순위. posture.Remediation.Priority (0 없음 ~ 4 즉시)
 	// JCA provider의 정식 클래스명(FQCN). 예 "com.acme.jce.AcmeProvider".
 	// 왜 별도 필드인가: OpenSSL은 모듈 **경로**만 알면 되고 그 경로는 생성기가 정하지만, JCA는
