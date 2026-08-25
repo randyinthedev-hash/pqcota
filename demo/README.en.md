@@ -48,7 +48,7 @@ What gets built is **the source as currently checked out**, including uncommitte
 |---|---|---|
 | [`scripts/`](scripts) | what **the user runs** — `up.sh` (install) · `demo.sh` (run) · `down.sh` (remove) | ✅ these three |
 | [`scripts/ansible/`](scripts/ansible) | the discovery **orchestration** demo.sh drives — SSH inventory and playbook (`discover.yml`) | ❌ |
-| [`integration-verification.md`](integration-verification.md) | **the integration cases this demo verifies**, and what it does not cover (Korean) |
+| [`integration-verification.md`](integration-verification.md) | **the integration cases this demo verifies**, and what it does not cover (Korean) | ❌ |
 | [`scripts/internal/`](scripts/internal) | helpers that run **inside** the containers (node boot, service start/stop, traffic generation, observation). `ssl-apps.sh` is the service management point the L3 hook points at | ❌ |
 | [`workloads/`](workloads) | the **demo crypto workloads** deployed to nodes (the things being scanned and observed): `CryptoApp.java` (JCA/BouncyCastle) · `pqc-echo/` (a PQC TLS traffic generator, in Go) | ❌ |
 | [`expected-output/`](expected-output) | a preview of the **expected results** before you run | ❌ |
