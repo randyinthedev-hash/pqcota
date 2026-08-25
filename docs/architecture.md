@@ -37,7 +37,7 @@
 | Ansible/Salt substrate 오케스트레이션 (§4.4) | 서브프로세스·SSH. 언어 무관, Go 편함 |
 | 리뷰 큐·인벤토리 대시보드 UI (§3.7) | TypeScript/React다. **이 리포에 없다**(§6.2) |
 
-> **폐기된 요구가 하나 있다.** 동적 추적(eBPF·ltrace)은 침습적이라 하지 않기로 했다([RELEASE_NOTES](../RELEASE_NOTES.md#로드맵에-없는-것--안-만든다)).
+> **폐기된 요구가 하나 있다.** 동적 추적(eBPF·ltrace)은 침습적이라 하지 않기로 했다([RELEASE_NOTES](../RELEASE_NOTES.md#로드맵에-없는-것-안-만든다)).
 > 회선에서 실제 협상을 관측하는 쪽을 택했으므로 이 표에서 내렸다. 규정서 §2.5의 탐지 방법 분류에는
 > `dynamic-trace`가 남아 있다. 어휘는 계약이고, 구현 여부와 별개다.
 

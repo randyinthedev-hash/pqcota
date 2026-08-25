@@ -23,7 +23,7 @@
 그리고 `pay-app`에서 **BouncyCastle 포함 JCA provider 체인**(런타임 `addProvider`: 정적 스캔으론 안 보이는 것)을
 attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README.md)이 정의하며, 고치면 이 결과도 바뀝니다.
 
-> **등급은 관측 결과이지 설정이 아닙니다.** SSH 등급은 **양쪽 KEXINIT의 교집합**(RFC 4253)으로 계산합니다 —
+> **등급은 관측 결과이지 설정이 아닙니다.** SSH 등급은 **양쪽 KEXINIT의 교집합**(RFC 4253)으로 계산합니다.
 > 클라이언트가 sntrup761을 제안해도 서버가 지원하지 않으면 🔴입니다. 한쪽만 관측되면 협상을 지어내지 않고
 > ⚪ 불명으로 둡니다(§2.5).
 

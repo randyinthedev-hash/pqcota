@@ -1,7 +1,7 @@
 # collector 배포 설계 (T1 self-service)
 
 > **성격**: 설계 문서 + 일부 구현. **반입 방식(§4B)은 구현됐다**. Ansible 참조 플레이북이 collector를
-> 반입→실행→회수→정리하고, 데모가 매번 그 경로로 돌아 상시 검증된다. **아직인 것은 서명**(`pqcota-verify-bundle`)이며 [로드맵](../RELEASE_NOTES.md)에 있다 —
+> 반입→실행→회수→정리하고, 데모가 매번 그 경로로 돌아 상시 검증된다. **아직인 것은 서명**(`pqcota-verify-bundle`)이며 [로드맵](../RELEASE_NOTES.md)에 있다.
 > 릴리스에는 arch별 정적 바이너리와 `SHA256SUMS`가 붙으므로 그때까지 무결성 확인은 `sha256sum -c`로 한다.
 
 collector를 **관측 대상 호스트에 어떻게 올리고, 그것이 진짜 이 리포가 낸 것인지 어떻게 확인하나**를 정한다.
@@ -12,7 +12,7 @@ collector를 **관측 대상 호스트에 어떻게 올리고, 그것이 진짜 
 
 - **collector는 기존 substrate(Ansible·Salt 등)에 얹혀 돈다**. 노드 도달은 이미 그쪽이 푸는
   문제라 자체 원격 실행 엔진을 두지 않는다 ([아키텍처 §2.3](../docs/architecture.md)).
-- **여기서 만드는 것은 서명된 번들**(T1 self-service)이다. 사용자가 그것을 직접 실행한다 —
+- **여기서 만드는 것은 서명된 번들**(T1 self-service)이다. 사용자가 그것을 직접 실행한다.
   에어갭에서도 성립하는 유일한 채널이다.
 
 ## 1. 노드엔 collector만 올린다
@@ -145,7 +145,7 @@ CLI이므로, 관측이 끝나면 노드는 원래 상태로 돌아간다.
 - **②가 이 설계의 핵심**(§2)을 오케스트레이션에서 실현한다. JVM 없는 노드엔 Java 애드온이 가지 않는다.
   `-recon`은 관측이 아니라 **배포 판정용**이라 JSON만 내고 끝난다.
 - **`become: true`**: `netcap`의 `CAP_NET_RAW`와 `/proc` 전 프로세스 커버리지 때문이다.
-- **실환경 이식**: `collector_bin_dir`를 자기 빌드 산출로 바꾸면 된다(arch별 `dist/linux-amd64` 등 —
+- **실환경 이식**: `collector_bin_dir`를 자기 빌드 산출로 바꾸면 된다(arch별 `dist/linux-amd64` 등:
   [루트 README · 빌드](../README.md#빌드)). 데모 전용은
   트래픽 생성 헬퍼뿐이고, 실환경은 진짜 트래픽을 관측만 하면 된다.
 
