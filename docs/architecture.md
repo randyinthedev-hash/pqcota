@@ -1,20 +1,20 @@
 한국어 · [English](architecture.en.md)
 
-# PQC 마이그레이션 플랫폼 — 아키텍처 설계
+# PQC 마이그레이션 플랫폼: 아키텍처 설계
 
 [규정서](regulation.md)가 정한 규칙을 **어떤 모듈·인터페이스·스키마로**
 구현할지 확정한다.
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
 
-**범위**: 3단계 종단 — Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 표시) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(아래 [§6 무판단 원칙](#6-무판단-원칙)).
+**범위**: 3단계 종단이다. Discovery(collector·정규화·history) → 중앙 인벤토리(뷰·엔드포인트·프로필·앱 표시) → 프로비저닝 생성(L1/L2/L3 적용·롤백 플레이북·활성화 훅·롤백 레코드). 선언 대조·거버넌스와 플릿 오케스트레이션은 하지 않는다(아래 [§6 무판단 원칙](#6-무판단-원칙)).
 
 > **규정서 핵심의 아키텍처 영향**:
 > - **§4.3 단계적 배포 모델** = 위임 레벨 L1/L2/L3. **Ansible `copy` + sha256 게이트**로 구현한다
 >   (모듈 파일은 사용자가 준비해 반입).
 > - **수용 원칙 §2.3 provider 시그니처** = 디스커버리 강화 단계 입력. 살아 있는 출처는 `pkg/kernel/registry`.
 > - **FIPS 라우팅** = `fips_validation` 요구가 FIPS 검증 provider **권고**로 나온다
->   (도구가 계획의 provider 선택을 막지는 않는다 — 검증서는 빌드 단위라 파일만 봐서 모른다).
+>   (도구가 계획의 provider 선택을 막지는 않는다. 검증서는 빌드 단위라 파일만 봐서 모른다).
 
 > 설계 원칙: 규정서 §1(관통 원칙)은 코드에서도 불변 계약이다. 특히
 > **원본 불변 + 파생 뷰**(§1.2), **Provenance Chain 4계열**(§1.3), **AUTO/PROPOSE/MANUAL 삼분**(§1.1),
@@ -32,34 +32,34 @@
 |---|---|
 | `/proc/*/maps`·`lsof`·`ss`, `ldd`/`readelf` (§2.3 OpenSSL) | 시스템 콜·네이티브 툴링. Go/Rust/C 계열 |
 | 정적 ELF 심볼·문자열 시그니처로 fork·version 판별 (§2.3, §2.3) | ELF 파서. Go(`debug/elf`)·Rust(`goblin`) 둘 다 강함 |
-| **JVM attach → `Security.getProviders()` 실체 조회 (§2.2, §2.3)** | **JVM 내부에서만 가능 — JVM 강제(플랫폼 언어 Java). 우회 불가** |
+| **JVM attach → `Security.getProviders()` 실체 조회 (§2.2, §2.3)** | **JVM 내부에서만 가능하다. JVM이 강제된다(플랫폼 언어 Java). 우회할 수 없다** |
 | CycloneDX CBOM(ECMA-424) 입출력 (§2.4, §3.2) | 성숙 라이브러리 필요. JVM·JS·Go 순으로 성숙 |
 | Ansible/Salt substrate 오케스트레이션 (§4.4) | 서브프로세스·SSH. 언어 무관, Go 편함 |
-| 리뷰 큐·인벤토리 대시보드 UI (§3.7) | TypeScript/React — **이 리포에 없다**(§6.2) |
+| 리뷰 큐·인벤토리 대시보드 UI (§3.7) | TypeScript/React다. **이 리포에 없다**(§6.2) |
 
-> **폐기된 요구 하나** — 동적 추적(eBPF·ltrace)은 침습적이라 하지 않기로 했다([RELEASE_NOTES](../RELEASE_NOTES.md#로드맵에-없는-것--안-만든다)).
+> **폐기된 요구가 하나 있다.** 동적 추적(eBPF·ltrace)은 침습적이라 하지 않기로 했다([RELEASE_NOTES](../RELEASE_NOTES.md#로드맵에-없는-것--안-만든다)).
 > 회선에서 실제 협상을 관측하는 쪽을 택했으므로 이 표에서 내렸다. 규정서 §2.5의 탐지 방법 분류에는
-> `dynamic-trace`가 남아 있다 — 어휘는 계약이고, 구현 여부와 별개다.
+> `dynamic-trace`가 남아 있다. 어휘는 계약이고, 구현 여부와 별개다.
 
-**핵심 관찰**: JVM 인트로스펙션(§2.2 "자체 구현 공백 영역")은 **어떤 언어로도 우회 불가 — 반드시 JVM 안에서 실행**되어야 한다. 이것이 폴리글랏을 불가피하게 만든다. 나머지 시스템 수집은 Go 하나로 전부 커버된다.
+**핵심 관찰**: JVM 인트로스펙션(§2.2 "자체 구현 공백 영역")은 **어떤 언어로도 우회할 수 없고 반드시 JVM 안에서 실행**되어야 한다. 이것이 폴리글랏을 불가피하게 만든다. 나머지 시스템 수집은 Go 하나로 전부 커버된다.
 
 ### 1.2 추천 조합
 
 | 레이어 | 언어/기술 | 근거 |
 |---|---|---|
 | **코어 서비스** (정규화·리뷰 큐·인벤토리·API) | **Go** | 단일 정적 바이너리 배포, gRPC, 동시성, 시스템 툴링, 허용적 라이선스(전염 없음) |
-| **OpenSSL/시스템 Collector** | **Go** | 코어와 동일 언어. `/proc`·ELF(`debug/elf`) 자체 파싱 — `ldd`·`readelf` 같은 외부 도구에 의존하지 않는다 |
-| **JVM Collector** (별도 사이드카) | **Java**(순수) | JVM Attach API(JVMTI/Attach)로 살아있는 JVM에 붙어 `getProviders()` 조회. **불가피한 폴리글랏 지점은 JVM**(언어 아님) — 플랫폼 언어 Java로, Kotlin·Gradle 없이 `javac` 빌드 |
+| **OpenSSL/시스템 Collector** | **Go** | 코어와 동일 언어. `/proc`·ELF(`debug/elf`) 자체 파싱한다. `ldd`·`readelf` 같은 외부 도구에 의존하지 않는다 |
+| **JVM Collector** (별도 사이드카) | **Java**(순수) | JVM Attach API(JVMTI/Attach)로 살아있는 JVM에 붙어 `getProviders()` 조회. **불가피한 폴리글랏 지점은 JVM**이다(언어가 아니다). 플랫폼 언어 Java로 쓰고, Kotlin·Gradle 없이 `javac`로 빌드한다 |
 | ~~**UI**~~ | ~~TypeScript + React~~ | **이 리포에 없다**(§6.2). 리뷰 큐·확정 거버넌스가 범위 밖이라 그 UI도 없다 |
 | **저장소** | **PostgreSQL** (JSONB) | append-only 히스토리 4계열 + CBOM JSONB. 이벤트소싱 친화 |
 | **런타임 간 계약** | **gRPC + Protobuf** (+ CLI/stdout 폴백) | intake 계약(라이선스 정리)·서브프로세스 격리(라이선스 정리)를 동일 메커니즘으로 |
 
-**한 줄 요약**: **Go 코어 + Go 시스템 Collector + JVM Collector 사이드카(순수 Java) + Postgres.** — 강제되는 건 *JVM*이지 특정 언어가 아니다(폴리글랏 지점=JVM). 사이드카는 플랫폼 언어 Java로 쓰고 Kotlin·Gradle 의존이 없다.
+**한 줄 요약**: **Go 코어 + Go 시스템 Collector + JVM Collector 사이드카(순수 Java) + Postgres.** 강제되는 것은 *JVM*이지 특정 언어가 아니다(폴리글랏 지점=JVM). 사이드카는 플랫폼 언어 Java로 쓰고 Kotlin·Gradle 의존이 없다.
 
 ### 1.3 왜 Go 코어인가 (Rust 대비)
 
 - **레거시 호스트에 아무것도 남기지 않는다**: `CGO_ENABLED=0` 단일 정적 바이너리라 런타임 의존이 없다.
-  관측 대상이 소스도 패키지 관리도 기대할 수 없는 구형 서버다 — 복사해서 실행하고 지우면 끝이어야 한다.
+  관측 대상이 소스도 패키지 관리도 기대할 수 없는 구형 서버다. 복사해서 실행하고 지우면 끝이어야 한다.
   Go 툴체인이 정하는 커널 하한(3.2)이 곧 이 리포의 하한이 되는 것도 여기서 온다(§4.4 자기잠금 회피).
 - **교차 컴파일이 빌드 인프라 없이 된다**: `GOOS=linux GOARCH=arm64`만으로 arch별 산출물이 나온다.
   CI가 arch마다 정적 링크 여부까지 검증한다.
@@ -72,11 +72,11 @@
 
 ## 2. 시스템 아키텍처
 
-### 2.1 모듈 맵 — 규정서 3단계 + 관통 원칙의 코드 투영
+### 2.1 모듈 맵: 규정서 3단계 + 관통 원칙의 코드 투영
 
 > **이 맵은 플랫폼 전체의 구상이고, 이 리포의 범위는 [§6](#6-범위-경계)다.**
 > 아래 상자 중 Reconciliation Engine · Confidence Scoring · Review Queue · Decision Service는
-> **이 리포에 없다** — 계약(`contracts/`)으로 자리만 잡아 두었다. 무엇을 만들고 무엇을 만들지
+> **이 리포에 없다.** 계약(`contracts/`)에 들어올 곳만 정해 두었다. 무엇을 만들고 무엇을 만들지
 > 않았는지는 §6.2가 결정적이다.
 
 ```
@@ -131,25 +131,25 @@
 ### 2.2 데이터 흐름의 불변식 (§1.2 강제)
 
 - **원본은 append-only.** `raw_capture`(collector 네이티브 출력)와 3개 히스토리는 절대 in-place 수정 금지.
-- **정규화 결과·리컨실리에이션·확정 계획은 전부 파생 뷰** — 원본에서 재계산 가능해야 한다. 강화 규칙이 바뀌면 `raw_capture`에서 다시 실행한다.
+- **정규화 결과·리컨실리에이션·확정 계획은 전부 파생 뷰다.** 원본에서 재계산 가능해야 한다. 강화 규칙이 바뀌면 `raw_capture`에서 다시 실행한다.
 - 코드에서: 파생 테이블은 `derived_from_snapshot_id` + `ruleset_version`을 항상 보유 → 재현 가능성 보장.
 
-### 2.3 Collector 호스트 도달 — 원칙과 경계
+### 2.3 Collector 호스트 도달: 원칙과 경계
 
-**collector는 `CollectionResult`를 emit하는 CLI다**(`pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`·`pqcota-cngscan`). 배포는 표준 substrate(Ansible)로 한다 — 디스커버리 실행 시 관측 대상 노드에 반입·실행·회수하고 잔재를 남기지 않는다([collector 배포 설계](../discovery/collector-deployment.md)). **자체 원격 실행 엔진은 만들지 않는다.**
+**collector는 `CollectionResult`를 emit하는 CLI다**(`pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`·`pqcota-cngscan`). 배포는 표준 substrate(Ansible)로 한다. 디스커버리 실행 시 관측 대상 노드에 반입·실행·회수하고 잔재를 남기지 않는다([collector 배포 설계](../discovery/collector-deployment.md)). **자체 원격 실행 엔진은 만들지 않는다.**
 
-- **이 리포**: collector CLI + **T1 self-service**(서명된 collector 번들을 사용자가 직접 실행 — 에어갭 포함) + **결과 서명·검증**(ed25519, `pqcota-keygen`·`PQCOTA_VERIFY_KEY`) + **스코프 마스터 게이트**(§1.4, `pqcota-ingest`가 등재 노드만 수용). collector를 사용자 자신의 substrate로 감싸 돌릴 수도 있다. 릴리스·번들 서명(공급망 위생)은 여기 속한다.
+- **이 리포**: collector CLI + **T1 self-service**(서명된 collector 번들을 사용자가 직접 실행하며, 에어갭도 포함한다) + **결과 서명·검증**(ed25519, `pqcota-keygen`·`PQCOTA_VERIFY_KEY`) + **스코프 마스터 게이트**(§1.4, `pqcota-ingest`가 등재 노드만 수용). collector를 사용자 자신의 substrate로 감싸 돌릴 수도 있다. 릴리스·번들 서명(공급망 위생)은 여기 속한다.
 - **원칙(불변)**: 어느 경로든 **스코프 게이트 필수** + **RCE 대칭성**(레거시 호스트에 실행체 투입은 위험하므로 서명검증·최소권한·멱등). 부가가치는 push 채널 소유가 아니라 그 위의 게이트·서명·완전성 맵.
 
-**호스트에 올라가는 것 (Phase 0 최소)** — [수용 원칙 §2.2 스택] 근거와 직결:
+**호스트에 올라가는 것 (Phase 0 최소).** [수용 원칙 §2.2 스택] 근거와 직결된다:
 - **OpenSSL 노드**: Go 정적 바이너리 1개 + root/`CAP_SYS_PTRACE` + mTLS 자격. 그 외 의존 0(ELF·/proc 자립 파싱, `ldd`/`lsof`/`ss`/`readelf` 비의존 설계).
-- **Java 노드**: **Go 바이너리 + 인트로스펙션 agent JAR**만 올리면 된다 — attach는 OS IPC(트리거 파일+SIGQUIT+유닉스 소켓)라 **JDK 없이 직접** 붙는다(대상이 순수 JRE·jlink 런타임이어도). **동일 UID/root** 필요. HotSpot이 아니면(OpenJ9) 머신의 JDK를 클라이언트로 쓰는 경로로, 그마저 막히면(`DisableAttachMechanism`·JEP 451) 정적 경로로 열화 → `evidence_strength` 하향(§2.3). 3계층 상세: [jvm-collector README](../discovery/collectors/jvm/README.md).
+- **Java 노드**: **Go 바이너리 + 인트로스펙션 agent JAR**만 올리면 된다. attach는 OS IPC(트리거 파일+SIGQUIT+유닉스 소켓)라 **JDK 없이 직접** 붙는다(대상이 순수 JRE·jlink 런타임이어도). **동일 UID/root** 필요. HotSpot이 아니면(OpenJ9) 머신의 JDK를 클라이언트로 쓰는 경로로, 그마저 막히면(`DisableAttachMechanism`·JEP 451) 정적 경로로 열화 → `evidence_strength` 하향(§2.3). 3계층 상세: [jvm-collector README](../discovery/collectors/jvm/README.md).
 - **컨테이너 주의**: `/proc`·JVM attach는 **같은 PID/마운트 네임스페이스**에서만 → host PID namespace 또는 사이드카 주입 필요(실배포 최대 함정).
 - **오프호스트로 미룰 것**: 네트워크 스캔(중앙 원격), 아티팩트/소스 스캔(CI·리포), eBPF dynamic-trace(PROPOSE·Phase 0 제외).
 
 ---
 
-## 3. 핵심 데이터 모델 — 정규화된 CBOM Envelope
+## 3. 핵심 데이터 모델: 정규화된 CBOM Envelope
 
 규정서 §3.2가 확정한 **"CycloneDX CBOM(표준 본문) + Envelope(provenance) + evidence 메타데이터(확장)"** 를 코드 스키마로 고정한다.
 
@@ -177,7 +177,7 @@
 }
 ```
 
-### 3.2 Finding 스키마 (런타임 추상 — 수용 원칙 §2.4, §2.4)
+### 3.2 Finding 스키마 (런타임 추상, 수용 원칙 §2.4, §2.4)
 
 ```go
 // 런타임 무관 1급 필드 + 런타임별 분기 필드
@@ -236,11 +236,11 @@ func EvidenceStrength(method string) string {
 
 **스키마 반영 (필드가 어느 단계에 속하는가)**
 
-- **`FipsValidation`는 이미 있음** — 규제 자산 FIPS 라우팅에서 이 필드가 **provider 선택을 강제**한다. Discovery는 값을 채우기만 하고(강화 단계), 라우팅 판정은 하지 않는다. `JCAAxes.ProviderSet`을 crypto-registry(§2.3)와 대조해 `pqc_readiness`·`fips_validation`을 파생한다.
+- **`FipsValidation`는 이미 있다.** 규제 자산 FIPS 라우팅에서 이 필드가 **provider 선택을 강제**한다. Discovery는 값을 채우기만 하고(강화 단계), 라우팅 판정은 하지 않는다. `JCAAxes.ProviderSet`을 crypto-registry(§2.3)와 대조해 `pqc_readiness`·`fips_validation`을 파생한다.
 - **`ProviderSet` → provider 시그니처 레지스트리 매핑**: 강화 단계에서 `bcprov-jdk18on`/`BC-FJA`/`JDK-native`/`openssl-jostle`/내부를 식별해 알고리즘 커버리지(특히 **SLH-DSA는 JDK 네이티브에 없음**)를 태깅. → §3.3 신규.
-- **`deploy_automation_level`(L1/L2/L3)은 Finding 필드가 아니다** — Discovery 산출물이 아니라 **리뷰어가 자산별로 정하는 계획·자산 속성**(§4.3, MANUAL). 확정 계획(plan) 엔티티에 속한다. 단, 통제 어휘로서 SSOT(contracts)에는 등재한다(§3.3·contracts 참조).
+- **`deploy_automation_level`(L1/L2/L3)은 Finding 필드가 아니다.** Discovery 산출물이 아니라 **리뷰어가 자산별로 정하는 계획·자산 속성**(§4.3, MANUAL). 확정 계획(plan) 엔티티에 속한다. 단, 통제 어휘로서 SSOT(contracts)에는 등재한다(§3.3·contracts 참조).
 
-### 3.3 provider 시그니처 레지스트리 (§2.3) — 강화 단계 참조 데이터
+### 3.3 provider 시그니처 레지스트리 (§2.3): 강화 단계 참조 데이터
 
 Discovery 강화(§2.4 step 3)가 참조하는 결정론적 매핑 테이블. **파생 규칙이므로 개선 시 원본에서 재계산**(§1.2), `ruleset_version`으로 버전 고정.
 
@@ -257,11 +257,11 @@ type ProviderSignature struct {
 // LicenseClass="permissive"(BouncyCastle 표준판, MIT계열)는 GPL 격리 대상 아님 (프로비저닝 설계 §4.2).
 ```
 
-### 3.4 PQC 알고리즘 성숙도 레지스트리 (§2.3 참조 데이터) — remediation 라우팅 입력
+### 3.4 PQC 알고리즘 성숙도 레지스트리 (§2.3 참조 데이터): remediation 라우팅 입력
 
 §3.3이 **provider의 능력**(어떤 알고리즘을 구현하는가)을 다룬다면, 이 절은 **알고리즘 자체의 표준화 성숙도**(그 알고리즘을 써도 되는가)를 다룬다. 관측된 협상 그룹(`negotiated_group`, network-collector)·provider 알고리즘 이름을 이 표와 대조해 성숙도를 파생하고, remediation 분기의 입력으로 쓴다. **파생 규칙**(§1.2)이며 이 리포의 공개 참조 데이터(`pkg/kernel/registry`).
 
-`pkg/kernel/registry/pqc.go` — 4단계 성숙도(§NIST PQC 표준화 현황 기준):
+`pkg/kernel/registry/pqc.go`가 4단계 성숙도를 담는다(§NIST PQC 표준화 현황 기준):
 
 | 성숙도 | 의미 | 예 | `FIPSValidatable()` |
 |---|---|---|---|
@@ -272,24 +272,24 @@ type ProviderSignature struct {
 
 `MatchPQC(name)`은 협상 그룹/알고리즘명을 정규화(대문자·구분자 제거)해 부분문자열 매칭 → `(PQCAlgorithm, ok)`. 예: `X25519MLKEM768`→ML-KEM(fips), `sntrup761x25519-sha512@openssh.com`→NTRU-Prime(experimental), `x25519`→(false, 고전).
 
-**성숙도 축은 등급 축과 직교한다** — `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §1.6) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(등급→registry).
+**성숙도 축은 등급 축과 직교한다.** `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §1.6) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(등급→registry).
 
-**remediation 분기** — `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)`가 성숙도를 조치로 라우팅하고, `posture.Recommend(group, cipher, regulated)`가 엣지 하나에 대한 종합 권고를 낸다(고전·미관측 포함):
+**remediation 분기.** `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)`가 성숙도를 조치로 라우팅하고, `posture.Recommend(group, cipher, regulated)`가 엣지 하나에 대한 종합 권고를 낸다(고전·미관측 포함):
 
 | 입력 등급/성숙도 | Action | Priority | 근거 |
 |---|---|---|---|
-| PQC 표준 | `none` | 0 (규제=1) | 유지 — 규제 자산은 FIPS 검증 provider 확인(§3.3) |
+| PQC 표준 | `none` | 0 (규제=1) | 유지한다. 규제 자산은 FIPS 검증 provider를 확인한다(§3.3) |
 | PQC 초안 | `upgrade` | 2 | 최종 표준(ML-KEM/ML-DSA)으로 상향 |
 | PQC 실험 | `replace` | 3 | 표준으로 교체 |
 | PQC 파훼 | `replace` | 4 | 즉시 교체 |
-| 고전(🔴) | `migrate` | 3 (규제=4) | 양자취약(HNDL) — PQC 하이브리드 도입 |
-| 미관측(⚪) | `none` | 0 | 판단 보류(인벤토리 설계 §6.2 정직성 — 안 본 걸 단정 안 함) |
+| 고전(🔴) | `migrate` | 3 (규제=4) | 양자취약(HNDL)이다. PQC 하이브리드를 도입한다 |
+| 미관측(⚪) | `none` | 0 | 판단을 보류한다(인벤토리 설계 §6.2 정직성: 안 본 것을 단정하지 않는다) |
 
-목표 표준은 종류별로 갈린다 — KEM→ML-KEM(FIPS 203), 서명→ML-DSA(FIPS 204). 이 권고는 파생일 뿐 실행이 아니다.
+목표 표준은 종류별로 갈린다. KEM은 ML-KEM(FIPS 203), 서명은 ML-DSA(FIPS 204)다. 이 권고는 파생일 뿐 실행이 아니다.
 
 ---
 
-## 4. Collector Intake 계약 (§1.6 — 플러그형 인터페이스)
+## 4. Collector Intake 계약 (§1.6, 플러그형 인터페이스)
 
 코어의 유일한 Collector 의존성. **"노드를 주면 정규화된 CBOM Envelope를 반환한다"** 만 안다. 백엔드가 자체 collector/CipherIQ/CBOMkit인지 **몰라야 한다.**
 
@@ -328,9 +328,9 @@ message CollectionResult {
 
 ### 4.2 계약의 3대 불변식
 
-1. **출력은 항상 정규화된 CBOM Envelope** — 어느 백엔드든 downstream(reconcile·리뷰·프로비저닝)이 백엔드 무관하게 동일 동작(라이선스 정리).
-2. **스코프 마스터 게이트는 코어 책임** — Collector에 넘기기 전 코어가 대상 노드를 필터(§1.4). Collector는 받은 노드만 수집.
-3. **완전성은 계층별로 신고** — Collector가 `Describe`로 커버 계층을 선언하고 `Collect`로 실제 커버를 보고. "관측하지 못한 것"을 코어가 갭으로 기록(§2.6).
+1. **출력은 항상 정규화된 CBOM Envelope다.** 어느 백엔드든 downstream(reconcile·리뷰·프로비저닝)이 백엔드 무관하게 동일 동작(라이선스 정리).
+2. **스코프 마스터 게이트는 코어 책임이다.** Collector에 넘기기 전 코어가 대상 노드를 필터(§1.4). Collector는 받은 노드만 수집.
+3. **완전성은 계층별로 신고한다.** Collector가 `Describe`로 커버 계층을 선언하고 `Collect`로 실제 커버를 보고. "관측하지 못한 것"을 코어가 갭으로 기록(§2.6).
 
 ### 4.3 GPL 격리와 동일 메커니즘
 
@@ -346,7 +346,7 @@ message CollectionResult {
 pqcota/            # Apache-2.0 · 공개 · 전 범위(Discovery·인벤토리·프로비저닝 생성)
   # ── 최상위 = 산출물 종류(kind) / 단계는 그 안에서 (contracts·pkg는 단계 그룹, discovery/·… 는 실행 진입점) ──
   ├─ contracts/proto/pqcota/{common,discovery,inventory,provisioning}/v1/  # 계약 SSOT — 네임스페이스=단계
-  ├─ gen/               # protobuf 생성 코드 (gitignore — make generate로 만든다)
+  ├─ gen/               # protobuf 생성 코드 (커밋한다 · proto를 고치면 make generate)
   ├─ pkg/               # 라이브러리 로직 — 단계 그룹:
   │    ├─ discovery/    #   관측 레인: normalize(§2.4)·history(§2.4⑥ 스냅샷 스토어)
   │    ├─ inventory/    #   ingest(적재·CBOM 수신 SV-2)·중앙 뷰(§5)·머신 메타데이터 저장소(엔드포인트·프로필 upsert)·hosts 파서 + declaration(선언 레인). 대조·판정 엔진은 없다
@@ -368,11 +368,11 @@ pqcota-collectors-gpl/  # GPL-3.0 · 별도 리포 · 절대 번들·링크 금�
 
 ## 6. 무판단 원칙
 
-이 리포는 **관측·정규화·영속·생성**을 한다 — 사실을 수집하고, 그로부터 파생하고, 산출물을 만든다.
+이 리포는 **관측·정규화·영속·생성**을 한다. 사실을 수집하고, 그로부터 파생하고, 산출물을 만든다.
 **판정은 하지 않는다**(§2.1): 무엇을 이관할지, 언제 실행할지는 사람이 정한다.
 
 그 실무적 귀결이 **diff와 reconcile의 구분**이다. **스냅샷 간 변화(diff)는 관측 사실의 서술**이라
-여기서 낸다 — "libssl 3.0.13 → 3.5.0으로 바뀜"은 판정이 아니다. 반면 **선언(CMDB) 대조**(3-상태·
+여기서 낸다. "libssl 3.0.13 → 3.5.0으로 바뀜"은 판정이 아니다. 반면 **선언(CMDB) 대조**(3-상태·
 confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 
 ### 6.1 핵심 구성요소
@@ -386,10 +386,10 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 | 정규화 파이프라인 6단계 + `evidence_strength` 부착 | §2.4, §2.3 | AUTO |
 | **provider 시그니처 레지스트리 강화**(JCA provider_set → pqc_readiness·fips·알고리즘, SLH-DSA 갭 태깅) | §2.3 v3 | AUTO |
 | 완전성 맵(계층별) | §2.6 | AUTO |
-| 디스커버리 히스토리(append-only) + **이력 열람·스냅샷 간 변화 diff**(관측 사실 서술이지 판정 아님 — §6 기준) | §2.4-6 | AUTO |
-| **관측 기록/스냅샷 2층 분리** — 스냅샷은 실질 내용이 바뀔 때만, 관측 기록은 적재마다. 같은 상태 반복 관측이 저장을 늘리지 않되 "언제 봤나"는 보존 | §2.4-6, §1.2 | AUTO |
-| **보존 정책 절단**(`pqcota-prune`) — 오래된 변화 지점 절단. 최신 불가침, 절단 사실을 기록으로 남겨 이력의 구멍을 고지 | §2.6 | — (사용자 지시) |
-| **자산 스코프 게이트**(`scope.AssetPolicy`) — 노드 게이트(§1.4)를 자산 단위로. 사용자가 선언한 관리 대상만 적재, 제외 건수는 고지 | §1.4, §2.6 | AUTO(집행) |
+| 디스커버리 히스토리(append-only) + **이력 열람·스냅샷 간 변화 diff**(관측 사실 서술이지 판정이 아니다, §6 기준) | §2.4-6 | AUTO |
+| **관측 기록/스냅샷 2층 분리.** 스냅샷은 실질 내용이 바뀔 때만, 관측 기록은 적재마다. 같은 상태 반복 관측이 저장을 늘리지 않되 "언제 봤나"는 보존 | §2.4-6, §1.2 | AUTO |
+| **보존 정책 절단**(`pqcota-prune`)이다. 오래된 변화 지점을 자른다. 최신 불가침, 절단 사실을 기록으로 남겨 이력의 구멍을 고지 | §2.6 | — (사용자 지시) |
+| **자산 스코프 게이트**(`scope.AssetPolicy`)는 노드 게이트(§1.4)를 자산 단위로 적용한다. 사용자가 선언한 관리 대상만 적재, 제외 건수는 고지 | §1.4, §2.6 | AUTO(집행) |
 | 중앙 인벤토리 뷰 (CLI+UI) + 머신 메타데이터(엔드포인트·프로필)·**앱 표시** | §6 | — |
 | 프로비저닝 생성 (확정계획 게이트 → L1/L2 플레이북 + before·**롤백 레코드**) | 프로비저닝 설계 §4.1·§4.2 | — (생성만) |
 
@@ -397,11 +397,11 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 
 이 리포는 **생성까지**다. 그 다음은 셋으로 갈린다:
 
-- **사용자가 직접 (이 리포의 산출물로)** — 생성된 L1/L2·롤백 플레이북을 사용자 Ansible로 **실행**(적용·롤백). 도구는 무엇을·어떻게 되돌릴지 생성하고, 실행·판단은 사용자다(§2.1 무판단).
-- **이 리포에 없음 (다른 엔진, 공개 계약 `contracts/`로 연동)** — **선언(CMDB) 대조** 3-상태 reconciliation·confidence 스코어링, 리뷰-확정 거버넌스, 단계적 배포 오케스트레이션·안전 레일(L3 drain·rolling·fleet), 동적 프로비저닝, 배포 채널. *단, 스냅샷 간 변화 diff는 대조가 아니라 관측 사실이므로 이 리포다(§6 기준).*
-- **PROPOSE 기본 비활성** — dynamic-trace(eBPF 침습, §2.5).
+- **사용자가 직접 (이 리포의 산출물로) 한다.** 생성된 L1/L2·롤백 플레이북을 사용자 Ansible로 **실행**(적용·롤백). 도구는 무엇을·어떻게 되돌릴지 생성하고, 실행·판단은 사용자다(§2.1 무판단).
+- **이 리포에 없다 (다른 엔진과 공개 계약 `contracts/`로 연동한다).** **선언(CMDB) 대조** 3-상태 reconciliation·confidence 스코어링, 리뷰-확정 거버넌스, 단계적 배포 오케스트레이션·안전 레일(L3 drain·rolling·fleet), 동적 프로비저닝, 배포 채널. *단, 스냅샷 간 변화 diff는 대조가 아니라 관측 사실이므로 이 리포다(§6 기준).*
+- **PROPOSE는 기본으로 비활성이다.** dynamic-trace(eBPF 침습, §2.5)가 그것이다.
 
-> **기능은 이 순서로 늘어난다** — ① Discovery MVP → ② 중앙 인벤토리(적재·영속·조회 + 머신 메타데이터[엔드포인트·프로필]·**앱 표시**) → ③ Provisioning 생성(L1/L2 플레이북 + before·**롤백 레코드**). 바깥과는 `contracts/` 하나로만 이어진다. 이 리포는 관측 결과를 내놓을 뿐이고, 그것을 가져다 쓰는 쪽은 계약 너머에 있다 — 위에서 뺀 것들이 바로 거기다.
+> **기능은 이 순서로 늘어난다.** ① Discovery MVP → ② 중앙 인벤토리(적재·영속·조회 + 머신 메타데이터[엔드포인트·프로필]·**앱 표시**) → ③ Provisioning 생성(L1/L2 플레이북 + before·**롤백 레코드**). 바깥과는 `contracts/` 하나로만 이어진다. 이 리포는 관측 결과를 내놓을 뿐이고, 그것을 가져다 쓰는 쪽은 계약 너머에 있다. 위에서 뺀 것들이 바로 거기다.
 
 ### 6.3 "동작"의 정의 (Definition of Done)
 
@@ -416,7 +416,7 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 
 ## 7. 지금 어디까지 왔나
 
-§1–§6이 정한 것 중 무엇이 서 있고 무엇이 남았는지는 한 곳에서만 관리한다 —
+§1–§6이 정한 것 중 무엇이 서 있고 무엇이 남았는지는 한 곳에서만 관리한다. 그곳은
 [RELEASE_NOTES](../RELEASE_NOTES.md)의 「만든 것」·「알아낸 것」·「로드맵에 없는 것」·「로드맵」이다.
 설계가 끝난 일을 "다음 조치"로 들고 있으면 구현이 앞서고 문서가 뒤처지는 그 상태가 된다.
 
