@@ -19,6 +19,14 @@ echo
 echo "head of the generated topology DOT (colour = grade):"
 head -6 "$TMP/topology.dot" | sed 's/^/   /'
 echo
+echo "▶ pqcota-declare-attribution — a person names the app for an edge the capture missed"
+echo "   (a short-lived connection is gone by lookup time, so app_key stays empty — see attribution.csv)"
+go run ./inventory/cmd/pqcota-declare-attribution --out "$TMP/declared-attr" "$HERE/attribution.csv"
+echo
+echo "the declared-lane result (the observed edges themselves are untouched):"
+sed 's/^/   /' "$TMP/declared-attr/attribution-000.json"
+
+echo
 echo "▶ pqcota-cbom-ingest — validate and ingest a CBOM produced by an external tool"
 echo "   (source and build artifacts, which no collector observes, arrive as standard CycloneDX from your CI)"
 go run ./inventory/cmd/pqcota-cbom-ingest "$HERE/sample-cbom.json" node-b
