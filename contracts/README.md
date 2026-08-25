@@ -61,9 +61,9 @@ Collector  →  §2.4 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 - Collector 출력(`CollectionResult`)에는 **`Finding`이 없다.** 표준 CycloneDX + Envelope만 반환한다.
 - `evidence_strength`·`pqc_readiness`·`fork 판별` 등 **해석적 강화는 코어가 단독 수행**한다.
   이유(규정서 §1.2·§2.4): 강화 규칙(매핑 테이블)이 개선되면 **원본에서 재계산**해야 하는데,
-  강화가 collector마다 흩어져 있으면 재계산이 불가능하고 규칙이 어긋난다. 강화는 한 곳에.
+  강화가 collector마다 흩어져 있으면 재계산이 불가능하고 규칙이 어긋난다. 강화는 한 곳에 있어야 한다.
 - 그래서 `Finding.derived_from_snapshot_id` + `ruleset_version`이 필수 — 어떤 원본·어떤 규칙으로
-  파생됐는지 항상 추적되어 재현 가능(§1.2 감사 무결성).
+  파생됐는지 항상 추적되므로 재현할 수 있다(§1.2 감사 무결성).
 
 ### 2. `unknown`은 1급 값 (규정서 §2.5)
 
@@ -76,15 +76,15 @@ Collector  →  §2.4 step 1~2 : 원시 포집(raw_capture) + 표준 CycloneDX �
 `JcaAxes.provider_set`(등록 순서 포함)은 Collector가 관측한 **원본**이다.
 코어 강화 단계가 이 값을 provider 시그니처 레지스트리와 대조해 `pqc_readiness`·`fips_validation`·
 알고리즘 커버리지를 **파생**한다(BouncyCastle/BC-FJA/JDK-native/openssl-jostle/내부 식별).
-- **SLH-DSA는 JDK 네이티브에 없다** → 필요 자산은 JDK 버전 무관하게 BC/jostle 의존으로 태깅.
+- **SLH-DSA는 JDK 네이티브에 없다** → 필요 자산은 JDK 버전과 무관하게 BC/jostle 의존으로 태깅한다.
 - `fips_validation` 요구는 Deploy 단계에서 **FIPS 검증 provider를 쓰라는 권고로 나온다**(FIPS 라우팅). 계획이 고른 provider를 도구가 막지는 않는다 — 검증서는 빌드 단위라 파일만 봐서 알 수 없다.
-- 레지스트리는 파생 규칙이므로 `ruleset_version`으로 고정, 개선 시 원본에서 재계산(§1.2).
+- 레지스트리는 파생 규칙이므로 `ruleset_version`으로 고정하고, 개선되면 원본에서 재계산한다(§1.2).
 
 ### 4. `deploy_automation_level`은 Discovery가 아니라 계획 속성 (규정서 §4.3 v4)
 
 `DeployAutomationLevel`(L1/L2/L3)은 통제 어휘로 여기 등재하되 **Collector가 채우지 않는다.**
 리뷰어가 자산별로 판정하는 계획·자산 속성(MANUAL)이며 확정 계획(plan) 엔티티에 실린다(워크플로는 계획 쪽에 있다).
-Discovery `Finding`에는 이 필드가 없다 — 단계 혼선을 막기 위한 의도적 분리.
+Discovery `Finding`에는 이 필드가 없다 — 단계 혼선을 막으려고 의도적으로 분리한 것이다.
 
 ### 5. gRPC 경계 = GPL 전염 차단 경계 ([라이선스 정리](../docs/licensing.md))
 
@@ -96,10 +96,10 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 ### 6. 계획 스키마는 공개 계약 (규정서 §4.1)
 
 `plan.proto`(`FinalizedPlan`·`RemediationAction`·`RemediationKind`)는 SSOT라 **OSS**다 — 프로비저닝의
-아티팩트 생성기(`pkg/provisioning`)와 실행 채널이 같은 어휘를 써야 하기 때문.
+아티팩트 생성기(`pkg/provisioning`)와 실행 채널이 같은 어휘를 써야 하기 때문이다.
 - **`Executable()` 게이트**(§3.7 "finalized만 실행 근거")는 공유 계약 규칙 → OSS `pkg/provisioning`.
 - **계획 저작·리뷰-확정**(§3.3③)과 **플릿 오케스트레이션**(§4.3)은 하지 않는다.
-- taxonomy(`RemediationKind`) → config 조각 생성은 결정론적 파생(§1.2)이라 OSS 생성기가 담당.
+- taxonomy(`RemediationKind`) → config 조각 생성은 결정론적 파생(§1.2)이라 OSS 생성기가 담당한다.
 > `DeployAutomationLevel`·계획 엔티티의 소관은 *워크플로 소유*를 뜻하며 *스키마 위치*가 아니다.
 > 상세: [프로비저닝 설계](../provisioning/design.md).
 
@@ -132,8 +132,8 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 ## 버전·호환성 규칙
 
 - 패키지 `pqcota.{common,discovery,inventory,provisioning}.v1`. **호환 파괴 변경은 `v2` 신설** — `v1` 필드 재사용/의미 변경 금지.
-- 필드 삭제 시 번호를 `reserved` 처리. enum 값 추가는 하위호환(항상 끝에 추가).
-- 이 계약은 이 리포(Apache-2.0)에 속한다 — 정규화된 CBOM 스키마·프로파일은 공개(§5.1).
+- 필드를 삭제하면 그 번호를 `reserved`로 처리한다. enum 값 추가는 하위호환이다(항상 끝에 추가한다).
+- 이 계약은 이 리포(Apache-2.0)에 속한다 — 정규화된 CBOM 스키마·프로파일은 공개다(§5.1).
 
 ## 계약을 바꿀 때 — 파급 점검
 

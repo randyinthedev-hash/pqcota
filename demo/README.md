@@ -34,7 +34,7 @@
 ./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
 ```
 
-`./demo/scripts/demo.sh --help` 이 조정 지점을 전부 적는다 — 그중 하나가 아래 [선택 단계](#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
+`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적는다 — 그중 하나가 아래 [선택 단계](#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
 
 > **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
 > (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가
@@ -134,7 +134,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 2. **JCA provider 체인** — `pqcota-jvmscan`: **정찰→attach**. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 본다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡는다 — java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
 3. **통신 엣지** — `pqcota-netcap`: AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측.
 
-`pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**를 낸다:
+`pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**을 낸다:
 - 🟢 **PQC/하이브리드**(`X25519MLKEM768`, `sntrup761x25519`) · 🔴 **고전=양자취약**(`x25519`, `ECDHE`) · ⚪ **불명**
 - 예: `web-gw → pay-app` 🟢 MLKEM · `web-gw → pay-db` 🔴 고전 · SSH도 같은 갈림(`→pay-app` 🟢 sntrup761 · `→pay-db` 🔴 — 레거시 OS의 OpenSSH엔 PQC KEX가 없다)
 

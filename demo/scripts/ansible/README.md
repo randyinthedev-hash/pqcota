@@ -18,7 +18,7 @@
 실제 호스트 대상으로 바꾸는 진입점은 **사용자 관리 hosts 파일**이다:
 - `hosts.csv`(헤더 `node_id,name,ip,port,ssh_user,ssh_key`)의 IP·사용자·키를 실 인프라로 교체 → `pqcota-hosts`가 `targets.ini`(접속 비밀 포함·런타임 전용) + 엔드포인트(비밀 제외) 인벤토리 upsert를 만든다.
 - `groups.ini`의 `traffic="pqc:host:port ssl:host:port ssh:host:port"` — 관측 구간 동안 생성할 핸드셰이크 대상(없으면 `traffic=""`).
-- **노드 ID는 plain 이름**(`web-gw`)을 쓴다 — `node://...` 같은 접두어 금지. 인벤토리 대조가 스코프 마스터의 노드 ID와 정확히 일치해야 하기 때문.
+- **노드 ID는 plain 이름**(`web-gw`)을 쓴다 — `node://...` 같은 접두어 금지. 인벤토리 대조가 스코프 마스터의 노드 ID와 정확히 일치해야 하기 때문이다.
 - **접근 비밀(키·계정)은 `hosts.csv`(사용자 파일)에만** — pqcota 인벤토리엔 적재하지 않는다. discovery 실행 시마다 사용자가 이 파일을 지정한다.
 
 ## 알려진 요구사항 (gotcha)

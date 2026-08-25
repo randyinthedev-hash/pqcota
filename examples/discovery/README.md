@@ -24,7 +24,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 > 접근 비밀(키·비밀번호·계정)은 **hosts.csv(사용자 파일)와 생성된 targets.ini(런타임)에만** 있고 pqcota 인벤토리엔 적재하지 않는다.
 
 #### 인증 방식 — SSH 키(권장) 또는 비밀번호
-컬럼은 헤더 필수·순서 자유이며, **호스트마다 독립**이다. `node_id`만 필수.
+컬럼은 헤더 필수·순서 자유이며, **호스트마다 독립**이다. `node_id`만 필수다.
 
 | 컬럼 | 뜻 |
 |---|---|
@@ -34,7 +34,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 | `os` | `linux`(기본) 또는 `windows`. 그 노드에서 어느 collector를 돌릴지 가른다 |
 | `connection` | `ssh`(기본) 또는 `winrm`. 그 노드에 **어떻게 붙을지** |
 
-- **키 방식**(node-a·node-c): `ssh_key`에 개인키 경로, `ssh_pass`는 비움.
+- **키 방식**(node-a·node-c): `ssh_key`에 개인키 경로를 적고 `ssh_pass`는 비운다.
 - **비밀번호 방식**(node-b): `ssh_pass`에 비밀번호, `ssh_key`는 비움. ⚠️ Ansible이 비밀번호로 접속하려면 컨트롤러에 **`sshpass`가 설치**돼 있어야 한다(`apt install sshpass`). 평문 비밀번호가 targets.ini에 실리니 키 방식을 권한다.
 - 섞어 써도 된다(위 예시처럼 노드마다 다르게).
 

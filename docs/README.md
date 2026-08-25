@@ -66,7 +66,7 @@
 | [검토 중인 설계](under-review.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계 — provider 수용(만들 config 어휘)·provider 관측·HSM 축. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
 | [암호 런타임 수용 원칙](runtime-acceptance.md) | 무엇을 1급 암호 런타임으로 받나 — 수용된 둘(OpenSSL·JCA)이 왜 동형인지, 축 넷이 말하지 않는 수용 조건 셋, 새 후보를 만났을 때의 결정 트리 |
 
-[`contracts/`](../contracts/) — protobuf SSOT. 네임스페이스가 곧 단계.
+[`contracts/`](../contracts/) — protobuf SSOT다. 네임스페이스가 곧 단계다.
 
 ---
 빌드·테스트·기여 워크플로: [CONTRIBUTING.md](../CONTRIBUTING.md).

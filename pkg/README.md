@@ -30,6 +30,6 @@
 
 ## 방향 규칙
 
-의존은 **단계 → kernel** 한 방향이다. kernel은 단계 패키지를 import하지 않는다 — 순환을 막고, 단계를 떼어내도 kernel이 따라오지 않게.
+의존은 **단계 → kernel** 한 방향이다. kernel은 단계 패키지를 import하지 않는다 — 순환을 막고, 단계를 떼어내도 kernel이 따라오지 않게 하려는 것이다.
 
 파생값(`evidence_strength`·`pqc_readiness`·등급)은 **collector가 아니라 코어가** 채운다. 규칙이 한 곳에 있어야 원본에서 재계산으로 재현된다(§1.2). collector 쪽 경계는 [`discovery/collectors`](../discovery/collectors) 각 README 참조.

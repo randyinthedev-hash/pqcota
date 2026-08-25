@@ -53,7 +53,7 @@
 | 아티팩트 생성기 (`Render`·OpenSSL·JCA) | `pkg/provisioning/{render,openssl,jca}.go` | **OSS** | taxonomy(§4.3/§4.4) → config 조각 |
 | L1/L2/L3 배포 플레이북 | `pkg/provisioning/ansible.go`·`stage.go`·`rollback.go` | **OSS** | 표준 substrate stage/install + 계획의 activation 훅(§4.3·§4.3) |
 
-**왜 생성기가 OSS인가**: §4.3/§4.4 taxonomy는 결정론적 매핑(자산 상태 → 조치 → config 조각)이라 파생 규칙(§1.2)이다. 강화 파이프라인·등급 분류와 같은 층위 — 규칙은 한 곳(코어)에, 재계산 가능해야 한다.
+**왜 생성기가 OSS인가**: §4.3/§4.4 taxonomy는 결정론적 매핑(자산 상태 → 조치 → config 조각)이라 파생 규칙(§1.2)이다. 강화 파이프라인·등급 분류와 같은 층위다 — 규칙은 한 곳(코어)에, 재계산 가능해야 한다.
 
 ---
 
@@ -103,7 +103,7 @@
 
 ## 4. 아티팩트 생성기
 
-`Render(action) string` — `crypto_runtime`으로 분기, `FillPlan(plan)`이 전 조치 `config_artifact`를 채운다(리뷰 대상 diff 실체화). **핵심 전략(§4.2)**: 버전을 올리지 않고 provider 주입으로 알고리즘 능력만 대체 → 조치가 "라이브러리 교체"에서 "provider 배치+활성화+검증"으로 축소(원자적·가역적).
+`Render(action) string` — `crypto_runtime`으로 분기, `FillPlan(plan)`이 전 조치 `config_artifact`를 채운다(리뷰 대상 diff 실체화). **핵심 전략(§4.2)**: 버전을 올리지 않고 provider 주입으로 알고리즘 능력만 대체한다. 그래서 조치가 "라이브러리 교체"에서 "provider 배치+활성화+검증"으로 축소된다(원자적·가역적).
 
 ### 4.1 OpenSSL 브랜치 (`openssl.go`) — 버전이 `kind`를 결정한다
 
@@ -117,7 +117,7 @@
 | 정적·벤더링 | 재빌드(CI) **또는** 프록시 | 재빌드=필요 |
 | EOL·저가치 | 폐기 또는 리스크 수용 | 불필요 |
 
-검증 매트릭스: provider가 `OSSL_CAPABILITY_TLS_GROUP` 광고하는가, 앱이 그룹/TLS버전 고정 안 하는가, 3.5 호스트는 중복 회피(config만).
+검증 매트릭스: provider가 `OSSL_CAPABILITY_TLS_GROUP` 광고하는가, 앱이 그룹/TLS버전 고정 안 하는가, 3.5 호스트는 중복을 피하는가(config만).
 
 ```mermaid
 flowchart LR
@@ -176,7 +176,7 @@ Groups = X25519MLKEM768:x25519
 | EOL JDK | JDK 업그레이드 또는 프록시 프론팅 | 업그레이드=필요 | 1.1.1 포크교체/프록시 |
 | 셰이딩(shaded) 크립토 | 재빌드 | 필요 | 정적/벤더링 재빌드 |
 
-JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입했는가**(우선순위 앞선 provider가 가로채지 않는가), `getInstance("...","BC")` 명시 지목 앱은 config 무효, **전역 `java.security` 변경 blast radius** 산출.
+JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입했는가**(우선순위 앞선 provider가 가로채지 않는가), `getInstance("...","BC")` 명시 지목 앱은 config가 무효이고, **전역 `java.security` 변경의 영향 범위**를 산출한다.
 
 **provider 후보 및 선택 기준** — Java에서 주입할 provider는 자산 성격에 따라 라우팅한다.
 
@@ -332,13 +332,13 @@ pqcota-provision --level l3 --rollback plan.json > provision-rollback.yml
 가용성을 지키며 **여러 노드를 순차 전환**하는 일(drain·rolling·헬스체크 게이트·자동 롤백 판정)은 하지 않는다 — L3는 한 노드까지다.
 
 
-**단계 경계 = 게이트·롤백 지점.** L3는 한 노드의 활성화·재시작까지다 — 여러 노드를 가용성을 지키며 순차 전환하는 일(drain·rolling·헬스체크)은 사용자의 오케스트레이션 층에서 한다.
+**단계 경계가 곧 게이트이자 롤백 지점이다.** L3는 한 노드의 활성화·재시작까지다 — 여러 노드를 가용성을 지키며 순차 전환하는 일(drain·rolling·헬스체크)은 사용자의 오케스트레이션 층에서 한다.
 
 ---
 
 ## 6. 폐루프 (Deploy → Discovery)
 
-L3 후 **재스캔으로 상태 변경 확인**(§4.3). Deploy가 만든 변화(새 provider 로드·그룹 협상)를 network-collector·openssl/jvm-collector가 다시 관측 → 인벤토리 reconcile이 CONFIRMED로 갱신, 드리프트 시 신규 리뷰 항목 생성. 즉 **Deploy의 검증은 Discovery 재실행**이며, 이 폐루프 자체는 이미 있는 core 디스커버리·인벤토리로 성립한다.
+L3 후에는 **재스캔으로 상태 변경을 확인한다**(§4.3). Deploy가 만든 변화(새 provider 로드·그룹 협상)를 network-collector·openssl/jvm-collector가 다시 관측하면 인벤토리 reconcile이 CONFIRMED로 갱신하고, 드리프트가 있으면 신규 리뷰 항목을 만든다. 즉 **Deploy의 검증은 Discovery 재실행**이며, 이 폐루프 자체는 이미 있는 core 디스커버리·인벤토리로 성립한다.
 
 ---
 
@@ -347,12 +347,12 @@ L3 후 **재스캔으로 상태 변경 확인**(§4.3). Deploy가 만든 변화(
 프로비저닝 *전* 상태를 보존해 **롤백**을 가능케 한다(§1.3 행위 계열·§4.3 단계경계=롤백지점).
 
 - **`CryptoState`**(before/after) — 특정 시점 애플리케이션의 암호 상태: `modules`(모듈+버전, 예 `libcrypto.so.3@3.0.13`·`oqsprovider@0.6`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 config 원문 참조).
-- **`ProvisioningRecord`** — 프로비저닝 행위 1건의 **append-only 히스토리**: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수 — 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 반경을 온전히 기록(Finding.app_keys 유래).
-- **롤백** = `before` 복원(구 모듈·config 배치) + **통제된 재시작**. 실패(부팅검증 실패 등)나 사용자 요청 시. 단계 경계마다 롤백 지점(§4.3).
+- **`ProvisioningRecord`** — 프로비저닝 행위 1건의 **append-only 히스토리**: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수 — 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
+- **롤백** = `before` 복원(구 모듈·config 배치) + **통제된 재시작**. 부팅 검증에 실패했거나 사용자가 요청할 때 한다. 단계 경계마다 롤백 지점(§4.3).
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).
 - **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다 — before 원문 재생성 불필요. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.
 - **대칭**: forward가 놓은 것을 롤백이 지운다. L3면 활성화도 되돌린다 — `deactivate` 훅이 없으면 파일만 지워지므로 그 사실을 경고한다(§2.5).
-- **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 부착 → 레코드 영속.
+- **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 부착 → 레코드를 영속한다.
 
 ---
 
