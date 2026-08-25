@@ -8,10 +8,10 @@
 
 | 파일 | 내용 |
 |---|---|
-| [discover-view.txt](discover-view.txt) | 콘솔 출력 — 발견 자산(OpenSSL·JCA/BouncyCastle) + 관측 통신 엣지 등급 |
+| [discover-view.txt](discover-view.txt) | 콘솔 출력: 발견 자산(OpenSSL·JCA/BouncyCastle) + 관측 통신 엣지 등급 |
 | [topology.svg](topology.svg) | 관측 토폴로지 (색=등급: 🟢 PQC / 🔴 고전 / ⚪ 불명, 실선=관측) |
 
-**핵심 서사 — 현대 스택과 레거시가 TLS·SSH 양쪽에서 갈린다:**
+**핵심 서사: 현대 스택과 레거시가 TLS·SSH 양쪽에서 갈린다:**
 
 | 엣지 | 등급 | 왜 |
 |---|---|---|
@@ -20,7 +20,7 @@
 | `web-gw→pay-db` TLS | 🔴 x25519 | **OpenSSL 1.1.1**엔 PQC 그룹이 없다 |
 | `web-gw→pay-db` SSH | 🔴 curve25519 | 레거시 OS의 **OpenSSH 8.2**엔 PQC KEX가 없다 |
 
-그리고 `pay-app`에서 **BouncyCastle 포함 JCA provider 체인**(런타임 `addProvider` — 정적 스캔으론 안 보이는 것)을
+그리고 `pay-app`에서 **BouncyCastle 포함 JCA provider 체인**(런타임 `addProvider`: 정적 스캔으론 안 보이는 것)을
 attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README.md)이 정의하며, 고치면 이 결과도 바뀝니다.
 
 > **등급은 관측 결과이지 설정이 아닙니다.** SSH 등급은 **양쪽 KEXINIT의 교집합**(RFC 4253)으로 계산합니다 —
@@ -28,14 +28,14 @@ attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README
 > ⚪ 불명으로 둡니다(§2.5).
 
 이후 단계에서 추가로 보게 되는 것:
-- **접근준비(0)** — `pqcota-hosts`가 hosts.csv→Ansible 인벤토리(접속 키·런타임 전용) + 엔드포인트 upsert. 인벤토리엔 **비밀 0건**.
-- **중앙 인벤토리(5)** — `▸ Payments DB (ip:22) │ Payments DB · production · db · owner=DBA team` 처럼 **엔드포인트·프로필 헤더** + `@앱` 표시. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 모두에 걸림**.
-- **엣지의 앱(5)** — 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
+- **접근준비(0)**: `pqcota-hosts`가 hosts.csv→Ansible 인벤토리(접속 키·런타임 전용) + 엔드포인트 upsert. 인벤토리엔 **비밀 0건**.
+- **중앙 인벤토리(5)**: `▸ Payments DB (ip:22) │ Payments DB · production · db · owner=DBA team` 처럼 **엔드포인트·프로필 헤더** + `@앱` 표시. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 모두에 걸림**.
+- **엣지의 앱(5)**: 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
   `@/usr/bin/openssl(exe-path)`, **못 잡으면 `@?`**다. 이 데모에서는 네 엣지 중 셋이 `@?`로 나오고
-  사유가 함께 찍힌다 — *"socket closed between capture and lookup — short-lived connections are missed(3)"*. 데모 트래픽이
+  사유가 함께 찍힌다. *"socket closed between capture and lookup: short-lived connections are missed(3)"*. 데모 트래픽이
   전부 짧은 연결이라 그렇다. 그중 하나를 `pqcota-declare-attribution`으로 지정하면
   `@batch-runner.service(declared)`로 바뀌고, **관측이 이미 잡은 자리는 그대로다.**
-- **프로비저닝(6)** — 확정 계획→L2 플레이북 + 롤백 레코드: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
+- **프로비저닝(6)**: 확정 계획→L2 플레이북 + 롤백 레코드: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
 
 ## 실제 실행 시 달라질 수 있는 점 (그리고 이유)
 
@@ -47,8 +47,8 @@ attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README
   문자열이 태그 갱신에도 대체로 **동일**합니다(배포판 보안 업데이트 시 마이너 갱신 가능).
 
 여전히 다를 수 있는 것:
-- **컨테이너 IP**(172.18.0.x): 매 실행 동적 — 서사엔 무관(노드명으로 이어 붙인다).
-- **토폴로지를 고치면** 노드·엣지·등급이 그대로 달라집니다 — 이 샘플은 **기본 구성** 기준입니다.
+- **컨테이너 IP**(172.18.0.x): 매 실행 동적: 서사엔 무관(노드명으로 이어 붙인다).
+- **토폴로지를 고치면** 노드·엣지·등급이 그대로 달라집니다. 이 샘플은 **기본 구성** 기준입니다.
 
 ## 결정론
 

@@ -72,7 +72,7 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다**. `pqc
 
 **릴리스에 정적 바이너리가 붙는 것은 리눅스 셋뿐**이다. `pqcota-cngscan`은 쓰는 쪽이 직접 만든다([아래](#pqcota-cngscan)). 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다. 코어는 그대로다.
 
-여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음--만든-인벤토리로-collector-돌리기).
+여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음-만든-인벤토리로-collector-돌리기).
 
 ### `pqcota-nodescan`
 
@@ -83,7 +83,7 @@ pqcota-nodescan [--output json|table] [node-id]
 | 인자·옵션 | 하는 일 |
 |---|---|
 | `[node-id]` | CMDB 권위 id. 생략하면 머신 지문에서 결정론적 self-id를 만들고, 그것도 없으면 `host://local` |
-| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
+| `--output` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
 `/proc`를 열지 못하면 **빈 결과를 내지 않는다**. "OpenSSL 없음"이 아니라 관측 자체가 불가한 것이라, 완전성 노트에 갭으로 적고 stderr로 알린다.
 
@@ -99,7 +99,7 @@ pqcota-jvmscan --recon
 | `[node-id]` | 생략하면 `host://local` |
 | `--pid N` | 그 PID의 JVM 하나만 관측. 기본은 정찰로 찾은 전부 |
 | `--recon` | 정찰만 하고 발견된 JVM을 JSON으로 낸다(관측 안 함) |
-| `--output` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
+| `--output` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
 `--pid`가 지목한 PID가 실행 중 JVM에 없으면 **전부 훑기로 갈아타지 않고 실패한다**. 관측하지 못한 것은 갭이지 다른 대상으로 대체할 일이 아니다.
 
@@ -135,7 +135,7 @@ pqcota-cngscan [--output json|table] [node-id]
 | 인자·옵션 | 기본값 | 하는 일 |
 |---|---|---|
 | `[node-id]` | 머신 지문에서 뽑은 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
-| `--output` | `json` | 출력 형식 → [아래 공통](#--output--nodescanjvmscancngscan-공통) |
+| `--output` | `json` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
 **릴리스에 바이너리가 붙지 않는다**. 노드에 올리는 셋이 리눅스 전용이라 그 묶음에 없다. 쓰려면 직접 만든다:
 
