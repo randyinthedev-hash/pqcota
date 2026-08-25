@@ -37,6 +37,12 @@
 
 - **provider 생태계 수용 (검토 중 · 버전 미정).** 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다. provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/under-review.md)에서 다룬다.
 
+- **서버 역할 엣지 관측 (계획 · 버전 미정).** 지금 netcap은 **관측 노드가 연결을 건 엣지만** 낸다.
+  그래서 그 노드에서 **서버로 도는 프로세스는 엣지를 하나도 얻지 못하고**, nodescan이 찾은 「이 앱이
+  어느 라이브러리를 로드했다」와 「실제로 무엇으로 협상했다」를 `app_key`로 잇는 대조가 서버 쪽에만
+  통째로 비어 있다. 계약은 이미 `EdgeRole.SERVER`로 이것을 담을 수 있고, 막고 있는 것은 값 규약과
+  중복 제거다. 설계는 [검토 중인 설계 §6](docs/under-review.md).
+
 - **릴리스 서명 (계획 · 버전 미정).** **ed25519 서명과 `pqcota-verify-bundle`**을 넣는다. 번들 구성·서명·검증
   절차는 [collector 배포 설계](discovery/collector-deployment.md)에서 정해 뒀고, 그때까지 무결성 확인은
   `sha256sum -c`로 한다.
