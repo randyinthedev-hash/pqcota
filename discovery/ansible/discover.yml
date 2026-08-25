@@ -1,4 +1,7 @@
-# pqcota 디스커버리 — collector를 **반입 → 실행 → 회수 → 정리**한다.
+# pqcota 디스커버리 — 자산 collector를 **반입 → 실행 → 회수 → 정리**한다.
+#
+# ★ 통신 엣지 관측(`pqcota-netcap`)은 여기 없다. 관측 주기가 달라 갈라 두었다 —
+#   [discover_traffic.yml](discover_traffic.yml)이 그것만 맡는다(배포 설계 §4B).
 #
 # 컨트롤러(ctl)가 빌드한 collector 바이너리를 각 타깃에 SSH로 밀어 넣고, 그 자리에서 돌린 뒤
 # 결과를 회수하고 **노드에 아무것도 남기지 않는다.** collector는 상주 에이전트가 아니라 실행 후
@@ -15,7 +18,7 @@
 #
 # 실환경에서 쓰려면 collector_bin_dir를 자기 빌드 산출 경로로 바꾸면 된다
 # (CONTRIBUTING "배포용 빌드" — arch별 dist/linux-amd64 등).
-- name: pqcota discovery over SSH (deploy → run → fetch → clean)
+- name: pqcota asset discovery over SSH (deploy → run → fetch → clean)
   hosts: targets
   gather_facts: true # ansible_env.PATH, 그리고 os_family로 노드를 가른다
   vars:
@@ -30,7 +33,7 @@
     # ── 리눅스 노드 — openssl · jvm · network ──
     - name: "리눅스 노드"
       when: ansible_facts['os_family'] | default('') != 'Windows' # 못 알아냈으면 리눅스로 — 지금까지의 동작이다
-      become: true # netcap의 CAP_NET_RAW, /proc 전 프로세스 커버리지
+      become: true # /proc 전 프로세스 커버리지
       block:
         # ── ① 반입 — 관측 대상에 collector만 올린다(중앙 CLI는 보내지 않는다) ──
         - name: "① 스테이징 디렉터리"
@@ -41,7 +44,7 @@
             src: "{{ collector_bin_dir }}/{{ item }}"
             dest: "{{ stage_dir }}/{{ item }}"
             mode: "0755"
-          loop: [pqcota-nodescan, pqcota-netcap, pqcota-jvmscan]
+          loop: [pqcota-nodescan, pqcota-jvmscan]
 
         # ── ② 정찰이 애드온 배포를 정한다 ──
         - name: "② JVM 정찰 (관측 아님 — 배포 판정용)"
@@ -79,21 +82,6 @@
           delegate_to: localhost
           become: false
           when: scan_jca is not skipped and scan_jca.stdout | default('') | length > 0
-
-        - name: "③ 네트워크 관측 + 핸드셰이크 (AF_PACKET, co-located {{ window }}s)"
-          # pqcota-observe.sh는 **데모 전용 헬퍼**(관측 구간에 트래픽을 만들어 준다) — 노드 이미지에 있다.
-          # PATH에 스테이징을 앞세워 방금 반입한 pqcota-netcap을 쓰게 한다.
-          # 실환경엔 진짜 트래픽이 흐르므로 `{{ stage_dir }}/pqcota-netcap <node> <iface> <구간초>`만 돌리면 된다.
-          command: /usr/local/bin/pqcota-observe.sh "{{ inventory_hostname }}" {{ window }} {{ traffic }}
-          environment:
-            PATH: "{{ stage_dir }}:{{ ansible_env.PATH }}"
-          register: netobs
-          changed_when: false
-
-        - name: "   → 컨트롤러에 저장"
-          copy: { content: "{{ netobs.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-net.json" }
-          delegate_to: localhost
-          become: false
 
         # ── ④ 정리 — 상주하지 않는다(§5). 관측이 끝나면 노드는 원래 상태로. ──
         - name: "④ 노드 정리 — collector·에이전트 흔적 제거"
