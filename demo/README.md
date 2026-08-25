@@ -11,7 +11,7 @@
 
 > **①은 이 데모의 구성 때문에 필요한 것이지, 관측의 전제가 아닙니다.** 데모는 컨트롤러에서 **여러 노드에
 > SSH로** 스캐너를 돌리므로 접속 인벤토리가 필요합니다. 한 노드를 그 자리에서 훑거나 결과 파일을 모아
-> 적재하는 경로는 ①이 아예 없어도 됩니다. 무엇이 필수·선택인지는 [discovery/cmd README](../discovery/cmd/README.md#필수인가--아니다-원격으로-여러-노드를-훑을-때만-필요하다).
+> 적재하는 경로는 ①이 아예 없어도 됩니다. 무엇이 필수·선택인지는 [discovery/cmd README](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다).
 
 > **경계**: 이 데모는 이 리포(Apache-2.0)만으로 완결됩니다. 프로비저닝은 **생성·영속**까지이고,
 > 데모는 생성한 플레이북을 **실제로 적용하고 되돌립니다**. 생성만 확인하면 깨끗한 노드에서 깨지는 플레이북도 통과합니다(실제로 그런 결함이 있었습니다).
@@ -34,7 +34,7 @@
 ./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
 ```
 
-`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적는다. 그중 하나가 아래 [선택 단계](#선택-단계--실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
+`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적는다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
 
 > **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
 > (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가
@@ -210,7 +210,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 > - **트래픽 생성**(`groups.ini`의 `traffic=`·`pqcota-gen-traffic.sh`): 데모는 관측할 핸드셰이크가 없어 **일부러 만들어 냅니다.** 실제 환경엔 진짜 트래픽이 흐르므로 `pqcota-netcap <node> <iface> <구간초>`로 **관측만** 하면 됩니다.
 > - **그룹 멤버십**(`groups.ini`의 `[java]`): 어느 노드에 `pqcota-jvmscan`을 돌릴지 고르는 데모의 방식일 뿐, 자기 인벤토리 방식대로 하면 됩니다.
 
-**선택 사항**: 노드 등재 게이트(`pqcota-ingest <dir> <scope-file>`) · 자산 스코프(`-scope-assets`) · CMDB 프로필(`pqcota-profile`) · Postgres 영속(`PQCOTA_DSN`) · 서명 검증(`PQCOTA_VERIFY_KEY`). 무엇이 필수·선택인지: [discovery/cmd README](../discovery/cmd/README.md#필수인가--아니다-원격으로-여러-노드를-훑을-때만-필요하다).
+**선택 사항**: 노드 등재 게이트(`pqcota-ingest <dir> <scope-file>`) · 자산 스코프(`-scope-assets`) · CMDB 프로필(`pqcota-profile`) · Postgres 영속(`PQCOTA_DSN`) · 서명 검증(`PQCOTA_VERIFY_KEY`). 무엇이 필수·선택인지: [discovery/cmd README](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다).
 
 ## 디스커버리 그 다음
 디스커버리는 "무엇이 실제로 협상되는가"(등급)까지 보여줍니다. **"선언한 것과 얼마나 일치하는가

@@ -98,7 +98,7 @@ pqcota-hosts --ansible-out targets.ini --dsn "$PQCOTA_DSN" hosts.csv
 | 엔드포인트 upsert | `node_id`·이름·ip·port**만**. 계정·키는 빠진다. 조회 화면의 `▸`머신 헤더가 여기서 나온다 |
 
 **이 단계는 관측의 전제가 아니다.** 무엇이 필수이고 무엇이 선택인지는
-[discovery/cmd의 「필수인가」](../discovery/cmd/README.md#필수인가--아니다-원격으로-여러-노드를-훑을-때만-필요하다)에 표로 있다.
+[discovery/cmd의 「필수인가」](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다)에 표로 있다.
 
 ---
 
