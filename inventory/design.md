@@ -146,7 +146,7 @@ type PlanItem struct {
 
 ## 6. 크립토 통신 토폴로지 그래프 (Phase 1): 자동 완성 지도
 
-사용자가 준 레거시 IP 목록을 스코프 마스터로 구축한 뒤, 각 머신의 [network-collector](../discovery/design.md#23-network-collector-go-af_packet--네트워크-계층-phase-1) 관측을 집계해 **크립토 통신 지도를 자동 생성**한다. reconciliation 뷰(§3.7)를 그래프로 렌더링한 것이다.
+사용자가 준 레거시 IP 목록을 스코프 마스터로 구축한 뒤, 각 머신의 [network-collector](../discovery/design.md#23-network-collector-go-af_packet-네트워크-계층-phase-1) 관측을 집계해 **크립토 통신 지도를 자동 생성**한다. reconciliation 뷰(§3.7)를 그래프로 렌더링한 것이다.
 
 ### 6.1 구성
 
