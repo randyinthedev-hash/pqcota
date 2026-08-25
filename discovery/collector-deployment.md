@@ -132,29 +132,19 @@ pqcota-verify-bundle SHA256SUMS SHA256SUMS.sig <pubkey>   # 진정성(로드맵)
 **collector는 영구 설치가 아니라 일회성 반입이다.** 상주 에이전트가 아니라 실행 후 종료하는
 CLI이므로, 관측이 끝나면 노드는 원래 상태로 돌아간다.
 
-참조 구현은 **둘로 갈려 있고** 데모가 매번 이 경로로 돈다(즉 상시 검증된다).
-[`discover.yml`](ansible/discover.yml)이 자산을, [`discover_traffic.yml`](ansible/discover_traffic.yml)이
-통신 엣지를 맡는다. 네 단계는 같다:
+[`discovery/ansible/discover.yml`](ansible/discover.yml)이 **참조 구현**이고 데모가
+매번 이 경로로 돈다(즉 상시 검증된다). 4단계다:
 
 ```
-① 반입    ctl의 collector → 노드 /tmp/pqcota-collector/   (중앙 CLI는 보내지 않는다)
-             discover.yml: nodescan·jvmscan   ·   discover_traffic.yml: netcap 하나
+① 반입    ctl의 collector 3종 → 노드 /tmp/pqcota-collector/   (중앙 CLI는 보내지 않는다)
 ② 정찰    pqcota-jvmscan -recon → "JVM 있나?" → **있는 노드에만** collector.jar 추가 반입
-             (자산 쪽만. 통신 관측은 정찰할 것이 없다)
-③ 실행·회수  collector 실행 → stdout을 컨트롤러에 저장 (노드에 결과 파일도 남기지 않는다)
-             discover_traffic.yml은 이 단계를 **회차만큼 반복**하고 회차마다 한 파일을 낸다
+③ 실행·회수  각 collector 실행 → stdout을 컨트롤러에 저장 (노드에 결과 파일도 남기지 않는다)
 ④ 정리    스테이징 디렉터리 삭제 — 노드 잔존물 0
-             통신 관측은 `netcap_cleanup=false`로 이 단계를 끌 수 있다(무엇이 남는지 고지한다)
 ```
 
 - **②가 이 설계의 핵심**(§2)을 오케스트레이션에서 실현한다. JVM 없는 노드엔 Java 애드온이 가지 않는다.
   `-recon`은 관측이 아니라 **배포 판정용**이라 JSON만 내고 끝난다.
-- **`become: true`**: 자산 쪽은 `/proc` 전 프로세스 커버리지, 통신 쪽은 `netcap`의 `CAP_NET_RAW` 때문이다.
-- **주기를 가른 이유**: 자산은 좀처럼 바뀌지 않지만 통신 엣지는 **캡처하는 구간에 흐른 것만** 잡힌다
-  (collectors/network/README). 그래서 엣지는 더 자주·더 길게 봐야 채워지는데, 한 플레이북에 묶여
-  있으면 그러려고 `/proc` 훑기와 JVM attach까지 다시 돌려야 했다. `discover_traffic.yml`은 회차
-  (`netcap_runs`)·구간(`netcap_window`)·간격(`netcap_interval`)·상한(`netcap_budget`)·정리 여부
-  (`netcap_cleanup`)를 변수로 받는다. 상한에 걸려 돌지 않은 회차는 **갭으로 고지한다**(§2.6).
+- **`become: true`**: `netcap`의 `CAP_NET_RAW`와 `/proc` 전 프로세스 커버리지 때문이다.
 - **실환경 이식**: `collector_bin_dir`를 자기 빌드 산출로 바꾸면 된다(arch별 `dist/linux-amd64` 등:
   [루트 README · 빌드](../README.md#빌드)). 데모 전용은
   트래픽 생성 헬퍼뿐이고, 실환경은 진짜 트래픽을 관측만 하면 된다.
@@ -165,14 +155,9 @@ CLI이므로, 관측이 끝나면 노드는 원래 상태로 돌아간다.
 ## 5. 놓이는 위치·권한
 
 - 실행 파일: 일회성이면 `/tmp/pqcota-collector/`(참조 플레이북 기본), 상시 두려면 `/opt/pqcota/bin/` 등 사용자 정책대로 둔다.
-  통신 관측은 `netcap_cleanup=false`로 바이너리를 남겨 다음 회차의 반입을 건너뛸 수 있다. 다만
-  `CAP_NET_RAW`를 `setcap`으로 박아 두면 남는 것과 공격면이 함께 커지므로(§1), 호출 시점에
-  권한을 주는 쪽(root로 도는 타이머·플레이북)을 권한다.
 - **`pqcota-netcap`은 `CAP_NET_RAW`** 필요(`setcap` 또는 root). 나머지는 일반 권한으로 동작하되,
   `/proc` 커버리지는 UID에 달렸다(root면 전 프로세스, 아니면 자기 것만: §2.6로 고지).
 - **상주하지 않는다.** 실행 후 종료하는 CLI이지 에이전트가 아니다(상주형은 만들지 않는다).
-  정리를 꺼서 바이너리를 남기더라도 **상주하는 것은 파일이지 프로세스가 아니고**, 언제 부를지는
-  사용자의 substrate가 정한다. pqcota가 스스로 깨어나는 것은 여전히 만들지 않는다.
 
 ## 6. 버전·계약 호환
 

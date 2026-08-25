@@ -197,7 +197,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | # | 준비물 | 필수? | 무엇 |
 |---|---|---|---|
 | 1 | **`hosts.csv`** | 원격 다중 노드면 필수 | node_id·ip·port·계정·키 → `pqcota-hosts`가 Ansible 인벤토리(`targets.ini`, 0600·미영속) 생성. `--dsn`이면 엔드포인트도 upsert(비밀 제외). 한 호스트에서 그 자리에 훑는다면 **불필요** |
-| 2 | **각 노드에 collector 바이너리** | 필수 | `pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`을 ctl에서 빌드해 두면 됩니다. **반입은 데모의 플레이북이 그대로 해줍니다**(`discover.yml`이 자산을, `discover_traffic.yml`이 통신 엣지를 맡아 반입→실행→회수→정리). 빌드 명령은 [루트 README · 빌드](../README.md#빌드)(서명된 사전빌드 릴리스는 [로드맵](../RELEASE_NOTES.md)에 있다. 그때까지는 소스 빌드가 원칙) |
+| 2 | **각 노드에 collector 바이너리** | 필수 | `pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`을 ctl에서 빌드해 두면 됩니다. **반입은 데모의 플레이북이 그대로 해줍니다**(`discover.yml`이 반입→실행→회수→정리). 빌드 명령은 [루트 README · 빌드](../README.md#빌드)(서명된 사전빌드 릴리스는 [로드맵](../RELEASE_NOTES.md)에 있다. 그때까지는 소스 빌드가 원칙) |
 | 3 | **실행 수단** | 필수 | Ansible이든 손이든 각 노드에서 collector를 돌리고 결과 JSON을 회수. 데모의 [`discover.yml`](../discovery/ansible/discover.yml)이 **참조 구현**입니다 |
 
 그다음은 데모와 같습니다. 모은 결과를 `pqcota-ingest`에 주면 정규화·적재되고 `pqcota-inventory`로 봅니다.

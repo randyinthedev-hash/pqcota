@@ -111,12 +111,10 @@ pqcota-hosts --ansible-out targets.ini --dsn "$PQCOTA_DSN" hosts.csv
 | **netcap** | 핸드셰이크에서 협상된 키교환 그룹 | AF_PACKET(`CAP_NET_RAW`). 복호화하지 않는다 |
 
 한 노드를 그 자리에서 보려면 화면으로 바로 받는다. 여러 노드면 참조 플레이북이 반입–실행–회수–정리를 한다.
-자산과 통신 엣지는 관측 주기가 달라 플레이북이 갈려 있다.
 
 ```bash
-pqcota-nodescan --output table                                          # 리눅스 노드 하나, 그 자리에서
-ansible-playbook -i targets.ini discovery/ansible/discover.yml          # 여러 노드의 자산
-ansible-playbook -i targets.ini discovery/ansible/discover_traffic.yml  # 여러 노드의 통신 엣지
+pqcota-nodescan --output table                                  # 리눅스 노드 하나, 그 자리에서
+ansible-playbook -i targets.ini discovery/ansible/discover.yml  # 여러 노드
 ```
 
 산출은 `results/*.json`(`CollectionResult`)이고, **관측하지 못한 것이 함께 나온다.** `CAP_NET_RAW`가
