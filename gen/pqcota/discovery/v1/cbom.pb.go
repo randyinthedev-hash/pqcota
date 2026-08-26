@@ -167,10 +167,10 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 	return v1.JcaRegistrationMode(0)
 }
 
-// CngAxes — Windows CNG 분기축. **v0.1.0에서 스키마로만 예약**한다(단계적 도입):
-// 이 축을 채우는 콜렉터·정규화는 디스커버리 릴리스에서 온다. 지금은 어떤 코드도 이 축을 생성·소비하지
-// 않는다. 필드는 provider 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정할 나머지(OS 빌드·
-// 등록 방식 등)는 그때 **번호를 새로 부여해 추가**한다(proto3 additive — 하위호환). 상세: docs/런타임_확장_계약.md
+// CngAxes — Windows CNG 분기축. v0.1.0에서 스키마로만 예약했고 **v0.6.0에서 채워졌다**:
+// pqcota-cngscan이 관측하고 정규화(pkg/discovery/normalize)가 이 축을 파생한다. 필드는 provider
+// 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정한 나머지(algorithms)는 그때
+// **번호를 새로 부여해 더했다**(proto3 additive — 하위호환). 상세: docs/runtime-acceptance.md
 type CngAxes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// provider_set: 등록된 CNG provider(KSP/SSP) 목록. **관측된 순서 그대로** 담는다 — 정렬하지
@@ -495,7 +495,7 @@ type Finding_Jca struct {
 type Finding_Cng struct {
 	// oneof arm은 Finding의 필드 번호 공간을 공유한다 — 7·8 다음 빈 번호가 아니라 메시지 전체에서
 	// 안 쓰인 번호(15)를 쓴다. 9~14는 아래 공통 축이 이미 점유.
-	Cng *CngAxes `protobuf:"bytes,15,opt,name=cng,proto3,oneof"` // v0.1.0 스키마 예약 — 채우는 코드는 디스커버리 릴리스
+	Cng *CngAxes `protobuf:"bytes,15,opt,name=cng,proto3,oneof"` // v0.1.0 예약 · v0.6.0부터 정규화가 채운다
 }
 
 func (*Finding_Openssl) isFinding_RuntimeAxes() {}
