@@ -72,7 +72,12 @@ provisioning (generate, apply, roll back), against nodes it stands up as contain
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh   # tear down: ./demo/scripts/down.sh
 ```
 
-Setup, expected output, and how to point it at your own hosts → **[demo/](demo/README.en.md)**
+**Pick where to start.**
+
+- **The whole scope at once, with Docker** → the two lines above. Setup, expected output, and how to point it at your own hosts are in [demo/](demo/README.en.md)
+- **One command at a time, minimal setup** → [examples/](examples/README.md) (Korean). Go is all you need — no Postgres, no target nodes
+- **What comes out in what order on real infrastructure** → [the journey](docs/journey.md) (Korean). No containers; it walks the order only
+- **Working on the repo** → [CONTRIBUTING](CONTRIBUTING.en.md), and the design documents in [docs/](docs/README.en.md)
 
 ---
 
@@ -80,7 +85,7 @@ Setup, expected output, and how to point it at your own hosts → **[demo/](demo
 
 **To build**
 - Go 1.26.4+
-- buf (+`protoc-gen-go`·`protoc-gen-go-grpc`)
+- buf (+`protoc-gen-go`, `protoc-gen-go-grpc`) — **only when you change a proto**. `gen/` is committed, so a plain build does not need it
 - JDK 11+ — **optional**, only to build the JVM attach sidecar; without it that step is skipped
 
 **To run**
