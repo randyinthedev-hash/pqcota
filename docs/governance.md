@@ -45,7 +45,7 @@
 | `check-collectors` | 릴리스가 **빌드하는** collector와 플레이북이 **반입하는** collector가 갈리는 것 |
 | `build` | 호스트뿐 아니라 **linux/amd64·windows/amd64 교차**가 깨지는 것 |
 | `build-jar` | JVM 사이드카 빌드 |
-| `test` | 225개 |
+| `test` | 단위·통합 테스트 전부 |
 
 **게이트는 실제로 겪은 문제에서 나왔다.** `check-collectors`는 v0.6.6에서 Windows 번들에
 `pqcota-jvmscan`이 빠져 릴리스만 받아 돌리면 실패하던 문제를 겪은 뒤에 만들었다. `check-docs`가 Go로 쓰인 것도 셸 `grep`이
@@ -55,11 +55,9 @@ Mac과 리눅스에서 한글 문장을 다르게 세어 같은 게이트가 서
 
 케이스는 명세에 적히고, **그 번호가 곧 테스트 파일 링크**다. 그래서 테스트가 없는 항목은 감출 곳이 없다.
 
-| 레벨 | 수 | 어디서 도나 |
-|---|---|---|
-| unit | 214 | 어디서나. 입력은 테스트 내부 상수 |
-| integration | 11 | 리눅스 필요. 실 crypto/tls · 실물 sshd · `CAP_NET_RAW` · 실 JVM · Postgres |
-| e2e | 1 | [데모](../demo/README.md) 6단계. 생성물을 실제 노드에 적용하고 되돌리는 데까지 간다 |
+**레벨별로 몇 개가 어디서 도는지는 [테스트 맵](test-map.md)이 혼자 들고 있다.** 한때 같은 표가
+여기에도 있었는데, 같은 숫자를 두 곳에 적으면 한쪽만 고쳐진다. 그 표도 「리포에서 센 값」이라고
+밝히므로 `check-docs`가 unit과 integration을 직접 세어 대조한다.
 
 **스킵은 통과가 아니다.** `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스를, JDK가 없으면 attach
 케이스를 건너뛴다. 그 사실을 통과로 세지 않는다. 어느 케이스를 건너뛰면 무엇을 확인하지 못한
