@@ -61,6 +61,12 @@
   운영자가 등재하지 못한 노드를 관측으로 드러내는 유일한 자동 수단인데 지금은 이어지지 않는다.
   설계는 [검토 중인 설계 §6](docs/under-review.md).
 
+- **서명을 collector에 묶는다 (계획 · 버전 미정).** 지금 적재는 **「누군가 서명했다」까지만** 본다.
+  `PQCOTA_VERIFY_KEY`가 키 목록이라 `envelope.collector_id`를 대조할 방법이 없고, 그래서 키 하나를
+  가진 쪽이 **아무 collector 이름이나 달고** 들어올 수 있다. 묶어서 검증하는 `sign.VerifyFrom`은
+  이미 있고 **부르는 곳이 없다.** 막고 있는 것은 환경변수 형식이라 한 줄로 끝나지 않는다.
+  설계는 [검토 중인 설계 §8](docs/under-review.md).
+
 - **릴리스 서명 (계획 · 버전 미정).** **ed25519 서명과 `pqcota-verify-bundle`**을 넣는다. 번들 구성·서명·검증
   절차는 [collector 배포 설계](discovery/collector-deployment.md)에서 정해 뒀고, 그때까지 무결성 확인은
   `sha256sum -c`로 한다.
