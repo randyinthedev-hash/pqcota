@@ -174,7 +174,7 @@ The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is f
 > the completeness note says which. A person can fill what was missed
 > (`pqcota-declare-attribution`) — but that declaration **does not edit the observation**: it lands in its
 > own lane, and the join happens on the inventory screen
-> ([under review §5.2](../docs/under-review.en.md)).
+> ([inventory design §2](../inventory/design.en.md#2-data-model)).
 
 ---
 

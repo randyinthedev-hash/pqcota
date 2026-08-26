@@ -117,6 +117,31 @@ type PlanItem struct {
     ProviderChoice  string                 // the FIPS routing result: BC-FJA / in-house / …
 }
 ```
+**An edge's empty `app_key` is filled by declaration, without rewriting the observation** (v0.4.0). netcap
+cannot always pin the app (discovery design §2.3), so an operator can supply it by CSV. Having the ingest
+fill the observed edge's empty field on the spot looks simpler, but **it is blocked in two places.**
+
+- **Signing.** `sign.Canonical` covers `ObservedEdge` down to `app_key`. If the ingest fills that field,
+  **what is stored differs from what the collector signed.** A declaration is not the collector's claim, so
+  it has no standing inside that signature.
+- **Re-normalization** ([process regulation](../docs/regulation.en.md) §1.2). When the enrichment rules
+  improve, results are recomputed from `raw_capture`. If the ingest has rewritten the observation, the
+  recomputed value and the stored one diverge and there is no telling which is the original.
+
+**So the storage is split and the merge happens in the view.** The declaration enters its own
+`CollectionResult` on the `detection_method=UNSPECIFIED` lane, the observed edge is left untouched, and the
+view lays the declaration over the empty field as `@payment-gw(declared)`, with the basis visible. This is
+also why `pqcota_edge_attribution` lives **outside the node's snapshot timeline**.
+
+**The contract is not touched.** `app_key_kind` is already where "what does this key rest on" is answered,
+so `declared` simply joins `systemd-unit` and `exe-path`. `ObservedEdge.detection_method` must not be used:
+it says **how the edge itself was observed**, not where the key came from, and putting `UNSPECIFIED` there
+would blur the fact that this communication really was seen.
+
+**Nothing is overwritten.** Fields the observation filled are left alone and only the empty ones are laid
+over. Allowing overwrites mixes what a person wrote with what the machine saw, and the reason for keeping a
+separate declaration lane disappears.
+
 > `DeployAutomationLevel` and `RemediationClass` are already controlled vocabulary in the contracts. **They are filled in here** (not in Discovery; a MANUAL reviewer act). The `Decision` and `FinalizedPlan` schemas live in the contracts (public schemas).
 
 ---

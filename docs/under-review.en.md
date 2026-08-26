@@ -146,175 +146,14 @@ reason [CNG was deferred](#2-runtime-candidates-not-yet-accepted).
 
 ---
 
-## 5. Attributing edges to apps (done — automatic in v0.3.0, declared in v0.4.0)
-
-> **Decided to do it.** It is v0.3.0 on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned).
-> What remains here is **how** — the three paths below, and what was ruled out.
-
-The two observations **meet only at the node** today.
-
-| Observation | Attributed to |
-|---|---|
-| `Finding` from the openssl and jvm collectors | `app_keys` — **per app (process)** |
-| `ObservedEdge` from netcap | `src_node_id`, `dst_node_id`, `port` — **per node** |
-
-`ObservedEdge` has no `app_key`. So when two server processes on one node use the same libcrypto and one
-edge is observed, **the inventory does not know which process opened that connection.**
-
-There is a reason in principle. netcap observes the wire passively through `AF_PACKET`, and packets carry
-no PID for the socket that opened them. The port allows a guess, and this repository does not write
-guesses down as facts.
-
-**What that costs today** — you cannot tell in advance which edge will follow when one app is moved to
-PQC. It has to be confirmed by observing again afterwards. The closed loop is what covers that gap.
-
-### 5.1 The automatic path — one more observation
-
-Correlating socket inodes from `/proc/net/tcp` (and `tcp6`) against `/proc/*/fd` at capture time yields
-the PID that opened the connection. netcap already runs on that node, so the place is right, and the
-contract change is purely additive — one `app_key` field on `ObservedEdge`, no existing field numbers or
-types touched.
-
-The limit is clear: **the socket has to be alive at the moment of capture.** Short-lived connections are
-missed. What is missed stays blank with a lower `evidence_strength` — as long as it is not written down
-as absent.
-
-#### What measuring it revealed
-
-The correlation was tried against real TCP connections on Linux hardware. **It works** — an inode yields
-a PID and its cgroup. But three things the design did not mention came out.
-
-**① Several processes hold one socket.** File descriptors are inherited, so children keep a connection
-their parent opened. The measurement found **three PIDs** on one inode (`bash` plus its two `sleep`
-children). Reading `comm` off the first hit answers `sleep`, but **the process that opened the connection
-was `bash`.** Taking the first PID found attributes the edge to the wrong app.
-
-→ A rule is needed: among the PIDs holding the same inode, take **the shallowest one up the parent
-chain.** If an ancestor is in the set, that is the side that opened the socket.
-
-**② The race is worse than assumed.** Right after opening and immediately closing three connections,
-`/proc/net/tcp` held **zero** of them. "Correlate at capture time" was the plan, but the socket can
-already be gone between seeing the handshake on the wire and reading `/proc`. **Attribution is
-best-effort** — an implementation can narrow that window, not close it.
-
-→ So **what is missed must not be written as "no app".** An empty `app_key` means "could not attribute",
-not "this edge has no app", and drawing that line is what the completeness map already does. The rule
-this repo keeps for observation gaps applies unchanged to attribution.
-
-**③ Another user's file descriptors are not readable.** As an ordinary user, `/proc/1/fd` is denied.
-netcap already requires `CAP_NET_RAW`, and **that is not enough here.** Missing something for lack of
-permission is also "could not attribute", not "no app" — and since the reason differs from ②, it is
-worth recording separately.
-
-**What the app key comes from** — the contract defines `app_key` as a *"machine-scoped stable key
-(systemd unit name, exe path, …)"*. In the measurement `comm` gave `sleep` (unstable), `exe` gave
-`/usr/bin/sleep` (a path, but not an app), and **`cgroup` gave the systemd unit**. cgroup is closest to
-what the contract describes — and `procs.AppKey` already derives exactly that.
-
-### 5.2 The manual path — reuse the declared lane
-
-For what the automatic path misses, an operator supplies it. This has the same shape as something that
-already exists: `pqcota-declare` imports CMDB declarations as `detection_method=UNSPECIFIED`, keeping them
-distinguishable from observations. An attribution a person entered can arrive through the same lane and
-never mix with what was observed. A CSV line is enough.
-
-#### Ingest must not patch the observed edge
-
-Filling the blank `app_key` during ingest looks simpler. **Two things block it.**
-
-**① The signature.** `sign.Canonical` covers `ObservedEdge` including `app_key` (v0.3.0). If ingest
-fills that field, **what is stored differs from what the collector signed.** A declaration is not the
-collector's claim, so it has no place inside that signature.
-
-**② Re-normalization** ([process regulation](regulation.en.md) §1.2). When the enrichment rules improve, results are recomputed from
-`raw_capture`. If ingest has edited the observation, the recomputed value and the stored one diverge —
-and it stops being clear which is the original.
-
-**So storage stays separate and the screen joins them.**
-
-| | |
-|---|---|
-| Declaration | its own `CollectionResult` — `detection_method=UNSPECIFIED`, the lane `pqcota-declare` already uses |
-| Observed edge | **untouched.** The signature and re-normalization still hold |
-| Screen | the declaration is laid over the blank as `@payment-gw(declared)` — the basis stays visible |
-
-**The contract is not touched.** `app_key_kind`, added in v0.3.0, already answers "what does this key
-rest on" — `declared` simply joins `systemd-unit` and `exe-path`. `ObservedEdge.detection_method` must
-not be used for this: it says **how the edge itself was observed**, not where the key came from, so
-putting `UNSPECIFIED` there would blur the fact that the communication really was seen.
-
-#### What the demo measured — the automatic path is not enough on its own
-
-From the v0.3.0 demo (six stages):
-
-```
-3 of 4 edges could not be attributed to an app.
-Reason: the socket closed between capture and lookup (3)
-
-  web-gw → 172.18.0.3:8443  tls  X25519MLKEM768  @?
-  web-gw → 172.18.0.4:4433  tls  x25519          @/usr/bin/openssl(exe-path)
-  web-gw → 172.18.0.3:22    ssh  sntrup761x25519 @?
-  web-gw → 172.18.0.4:22    ssh  curve25519      @?
-```
-
-**A caveat comes first** — this demo's traffic is **short-lived by construction**
-(`echo Q | openssl s_client`, `ssh … true`). So 75% is not an average but close to a worst case; a
-long-running service is caught far more often. The one that was caught was the relatively long-lived
-`s_client`.
-
-The conclusion still holds. **Short-lived connections are not the exception** — batch jobs, health
-checks, cron, and SSH itself are exactly that. There is a place the automatic path cannot see by
-construction, and a way to fill it is needed.
-
-**Decision: build the declared lane. It is v0.4.0.** With a measurement behind it, this is no longer
-speculative abstraction — the road for filling gaps is being laid after counting how many are left.
-
-### 5.3 No admin UI
-
-Facts entered by people already arrive as files here — `hosts.csv`, `scope-assets.csv`, machine profiles,
-the finalized plan JSON, `pqcota-declare`. Five formats already work that way. **A UI would add
-convenience, not capability.**
-
-The real reason to leave it out is elsewhere. Build a screen and **the review queue and the sign-off
-button follow.** Both are [explicitly excluded](architecture.en.md#62-explicit-exclusions--boundaries),
-and on a screen "let people approve it here too" is the natural next step. At that moment an observation
-tool becomes a judgment tool.
-
-### 5.4 Why it came ahead of CNG
-
-This work once sat behind CNG. The reason given was **"settle the attribution model after seeing both a
-file substrate and a registry one"** — on a second look, that reason does not hold.
-
-**Different axes.** Substrate is a provisioning concept: where generated artifacts land (`/opt/pqcota`
-file staging vs. the registry/GPO). Attribution is discovery: matching a socket inode to a process. What
-changes on Windows is the *collection method* (`GetExtendedTcpTable`), not the attribution model.
-
-**App identity is already settled.** v0.1.0 already separates multiple JVMs per app through `app_key`.
-What 5.1 does is carry that key onto `ObservedEdge` — using something that exists in one more place,
-not standing up a new model.
-
-**The materials are already here.** `/proc/net/tcp` and `/proc/*/fd`, and netcap already runs on that
-node. CNG, by contrast, needs real Windows hardware — doing it first without that would add one more
-place like the v0.1.0 `CngAxes` reservation, **schema present, never run**.
-
-**It makes what already ships more correct.** Singling out communication that no declaration covers is
-the first value of this observation, and an edge that stops at the node stops at "somewhere on this
-server". What a person acts on is an app, not a server.
-
-**Then why was it not folded into v0.2.0** — v0.2.0 (the ingest path) was work a consumer of the
-contract was **blocked on and waiting for**, and it was mechanical. Nothing waits on this. Releases are
-cut by who is waiting.
-
----
-
-## 6. Edges where the observing node is the server
+## 5. Edges where the observing node is the server
 
 Today netcap emits **only the edges the observing node initiated**. [`edgeFor`](../discovery/collectors/network/capture_linux.go)
 treats the lower port as the server side and emits nothing when the local end is not the client. The point
 was to remove duplication and direction confusion, since the same handshake is visible at both ends, and
 the assumption was that whatever the server side saw would be reported by the peer node.
 
-### 6.1 What is missing
+### 5.1 What is missing
 
 **A process serving on that node gets no edge at all.** The observing node plainly sees that handshake on
 the wire and even parses it, then drops it just before emitting. Two things are blocked together.
@@ -334,7 +173,7 @@ more dangerous one, and yet there is no path to see what my own server negotiate
 
 "Not observed" and "observed and then dropped" are different things. This is the second.
 
-### 6.2 The contract can already carry it
+### 5.2 The contract can already carry it
 
 [`edge.proto`](../contracts/proto/pqcota/discovery/v1/edge.proto) modelled direction from the start.
 
@@ -348,7 +187,7 @@ EDGE_ROLE_SERVER = 2;     // src received it
 new field and no contract change is needed. `edgeRole` already knows how to emit `SERVER`; only the path
 that fills it is missing.
 
-### 6.3 Two value conventions to settle
+### 5.3 Two value conventions to settle
 
 **`dst_addr` is emitted as `peerIP:0`.** In the server role the peer is a client, and its port is an ephemeral
 one that changes per connection. Carrying it verbatim makes [`edgeKey`](../pkg/discovery/normalize/pipeline.go)
@@ -368,9 +207,9 @@ exactly what has to be changed, so it must not be lost.
 
 **App pinning uses the real value.** At capture time the peer's ephemeral port is known, so the `/proc/net/tcp`
 lookup uses it and only the emitted edge carries `:0`. In the server role the app that gets pinned is the
-**listening process**, and that is one side of the comparison from §6.1.
+**listening process**, and that is one side of the comparison from §5.1.
 
-### 6.4 Two things that must be fixed along with it
+### 5.4 Two things that must be fixed along with it
 
 **The SSH client/server decision inverts.** `sshPending.add` in [`capture_linux.go`](../discovery/collectors/network/capture_linux.go)
 splits its lists on the premise that "a KEXINIT leaving my own IP is the client's". That premise held because
@@ -383,7 +222,7 @@ emits `src=A · dst=B · role=SERVER` and B emits `src=B · dst=A · role=CLIENT
 the core must fold it into the canonical client-to-server direction and see one. Today `edgeKey` leaves the
 direction as it is. Deduplication is step 5 of normalization, so that is the right place (§2.4⑤).
 
-### 6.5 Off by default, switched on per node
+### 5.5 Off by default, switched on per node
 
 **Server-role observation is not on by default.** What happens when it is switched on differs sharply with
 the character of the node. Switching it on for a public web service that anyone can reach makes three things
@@ -391,8 +230,8 @@ worse at once.
 
 | What | Why |
 |---|---|
-| **Registration requests flood** | An unregistered peer has to go to a registration request (§1.4). That wiring does not exist yet (§7), so there is no queue to flood today; connect §7 and thousands of internet clients become registration requests. It becomes a list no person can read |
-| **The snapshot changes every time** | Client IPs keep changing, so the fingerprint never settles. The two-layer split from §7.2 stops helping |
+| **Registration requests flood** | An unregistered peer has to go to a registration request (§1.4). That wiring does not exist yet (§6), so there is no queue to flood today; connect §6 and thousands of internet clients become registration requests. It becomes a list no person can read |
+| **The snapshot changes every time** | Client IPs keep changing, so the fingerprint never settles. The two-layer split from [inventory design §7.2](../inventory/design.en.md) stops helping |
 | **Client IPs accumulate** | These are not like internal infrastructure IPs. A repo that removed access secrets from its types would start collecting something close to personal data at the other end |
 
 So **a person picks which nodes get it.** The value is high on internal services with a fixed set of peers,
@@ -409,7 +248,7 @@ said on the spot. The text goes to stderr and carries three things.
 **Not switching it on is recorded in the completeness note.** Without that it reads as "there is no inbound
 traffic on that server". A gap is not an absence (§2.6).
 
-### 6.6 Not settled
+### 5.6 Not settled
 
 **Where the switch lives.** Whether it is a collector flag (something like `--observe-inbound`) or a playbook
 variable is not settled. A flag makes it something the collector knows for itself; a playbook variable makes
@@ -420,13 +259,13 @@ it something orchestration decides. Either way, **the collector must not be told
 `(service port, protocol, negotiated group)` and only counted. Writing "1,204 of the connections to my 443
 were x25519" answers exactly what a migration asks, with no cardinality problem and no IPs stored. But
 `ObservedEdge` is a model that requires a peer, so the contract would have to widen. Settle it after running
-§6.5 on an internal network produces a reason to say "we need to see public services too". Building it now
+§5.5 on an internal network produces a reason to say "we need to see public services too". Building it now
 would be speculative abstraction.
 
-**An IP-range filter** (record private ranges only, say) overlaps heavily with §6.5 and adds one more concept.
+**An IP-range filter** (record private ranges only, say) overlaps heavily with §5.5 and adds one more concept.
 Layer it on top if it becomes necessary.
 
-### 6.7 What it touches on the reading side
+### 5.7 What it touches on the reading side
 
 | Where | What |
 |---|---|
@@ -439,7 +278,7 @@ Layer it on top if it becomes necessary.
 
 ---
 
-## 7. Scope classification for the edge peer
+## 6. Scope classification for the edge peer
 
 What to do when an observation meets a node that is not in the scope master is already settled. Regulation
 §1.4 and §2.5 say to send it to a **registration request**; [discovery design §4](../discovery/design.en.md)
@@ -449,7 +288,7 @@ for instance) goes not to the collection set but to the registration/exclusion r
 the registration queue" as an acceptance criterion. It is the path where the tool does not decide on its own
 what to manage, and hands it to a person instead.
 
-### 7.1 The classifier exists; the wiring does not
+### 6.1 The classifier exists; the wiring does not
 
 [`scope.ClassifyObserved`](../pkg/kernel/scope/gate.go) classifies an unregistered node as a
 `RegistrationRequest`. It has unit tests. **And nothing calls it.** Leave the tests aside and there is not
@@ -469,21 +308,21 @@ netcap observes a connection to 172.18.0.9:443
 unfamiliar address by eye. The value of this path is that observation surfaces a node the operator failed to
 register, and there is no code collecting what it surfaced.
 
-### 7.2 Why it is missed now
+### 6.2 Why it is missed now
 
 This path is **the only automatic way to find a node the operator did not know about**. A person maintains
 the list of observation targets, and a person leaves things out: an old batch job, a workload somebody stood
 up, a DR route that is in no document. Those leave traces on the wire, so netcap meets them.
 
 Two things raise that value. **Observing periodically** catches the nightly batch and the intermittent link
-that one short window misses. **Emitting server-role edges** (§6) widens discovery from destinations to
+that one short window misses. **Emitting server-role edges** (§5) widens discovery from destinations to
 sources. An unknown node is usually on the "something is connecting to my server" side, and that side is
 entirely invisible right now.
 
-So §6 and the cadence split supply this path with material, and this path is where that material gets used.
+So §5 and the cadence split supply this path with material, and this path is where that material gets used.
 The three interlock.
 
-### 7.3 Where it happens
+### 6.3 Where it happens
 
 **In the core.** The collector does not know the scope master (§1.6). While the ingest normalizes, it checks
 an edge's `dst_addr` against the master, fills `dst_node_id` when it resolves and sends a registration request
@@ -492,14 +331,14 @@ when it does not. `ClassifyObserved` already makes that call, so it only has to 
 **There is no automatic registration.** A person decides (MANUAL). Neither swallowing the discovery nor
 registering it unilaterally — those are the two prohibitions §1.4 set.
 
-### 7.4 Not settled
+### 6.4 Not settled
 
 **Emit a count, or emit the addresses.** A count gets as far as "there are three unknown nodes" and no
 further. Addresses let a person look straight at them, but then where they are kept follows.
 `IngestReport` is the summary of one run and disappears when the run ends.
 
 **Where they are kept.** A registration request is not a state of a node, so it must not go on the snapshot
-timeline — the same reason app declarations were split off (§5.2 of this document). One approach is a separate
+timeline — the same reason app declarations were split off ([inventory design §2](../inventory/design.en.md#2-data-model)). One approach is a separate
 store, like the rejection history (`AppendRejection`), and then the names have to separate so that "what was
 not accepted" and "what is asking to be registered" do not sit in one place.
 
@@ -511,17 +350,17 @@ in regulation §3.6 — except that one is about plan decisions, so it cannot be
 **How it appears on screen.** Mixing it into the query view puts the observed fact and the registration
 request in one place. Emitting it separately looks right, but which command emits it is not settled.
 
-### 7.5 Where it meshes with §6
+### 6.5 Where it meshes with §5
 
-Connect §7 and the situation §6.5 warned about becomes real. Switch server observation on for a public web
+Connect §6 and the situation §5.5 warned about becomes real. Switch server observation on for a public web
 service and internet clients become registration requests directly, putting the list beyond a person's reach.
-So the two designs have an order. **Server observation from §6 must not be on by default before §7 settles
-"when the same address repeats" and "where they are kept".** §6 choosing to stay off by default and be
+So the two designs have an order. **Server observation from §5 must not be on by default before §6 settles
+"when the same address repeats" and "where they are kept".** §5 choosing to stay off by default and be
 switched on per node is also the device that holds that order.
 
 ---
 
-## 8. Separating the traffic-observation cadence from asset scanning
+## 7. Separating the traffic-observation cadence from asset scanning
 
 Assets and communication edges are observed on different cadences. Loaded libraries and provider chains
 rarely change, so looking once on a regular schedule is enough; a communication edge, on the other hand, is
@@ -533,7 +372,7 @@ along with it.
 **Only one direction hurts.** Carrying eight seconds of netcap along with an asset scan is bearable; re-running
 an expensive asset scan just to see more edges is not.
 
-### 8.1 The existing playbook is left alone
+### 7.1 The existing playbook is left alone
 
 `discover.yml` stays as it is, and a playbook that runs netcap in rounds is **added**. This matches "do not
 delete, do not change — add" from [compatibility policy §3](compatibility.md) (Korean), and it leaves the demo
@@ -545,7 +384,7 @@ place a timer on the node. The collector is still a CLI that runs and exits, and
 invocation, not a process (collector deployment design §5). Putting a timer on the node would first require
 settling result retrieval, retention, and privileges, so it is not covered here.
 
-### 8.2 The values it takes
+### 7.2 The values it takes
 
 | Variable | What |
 |---|---|
@@ -556,7 +395,7 @@ settling result retrieval, retention, and privileges, so it is not covered here.
 | `netcap_cleanup` | whether to restore the node afterwards. Turn it off and **what is left behind is reported** |
 
 **They live in `vars:` so they can be overridden per node.** That opens both paths at once: `-e` overrides
-everything, and `host_vars` gives different values per node. Even when §6 arrives and "the receiving side
+everything, and `host_vars` gives different values per node. Even when §5 arrives and "the receiving side
 needs frequent looks too" becomes true, the cadence can still be tuned per node.
 
 **One long window and several short ones buy different things.** A long window is better for collecting many
@@ -564,7 +403,7 @@ edges; several short ones are better for pinning apps, because an app is only ca
 alive between the moment the handshake is seen and the moment `/proc` is read. That is why keeping rounds and
 window as separate values genuinely matters.
 
-### 8.3 Each round emits its own result file
+### 7.3 Each round emits its own result file
 
 Each round emits its own file, like `<node>-net-01.json`, so it does not collide with the `<node>-net.json`
 that `discover.yml` emits. `pqcota-ingest` reads the directory whole and groups by node, so when one node has
@@ -579,7 +418,7 @@ holds **one row per node per ingest**. Ingest six rounds at once and "we looked 
 line; ingest per round and it is six. That is not for the playbook to decide but for whoever calls it, so the
 fact is recorded here.
 
-### 8.4 Merging repeated observations
+### 7.4 Merging repeated observations
 
 Raise the cadence and the same edge is seen many times. **Repeated observations of the same target have to be
 merged into one.** Today they are not.
@@ -648,31 +487,31 @@ return src + "|" + dst + "|" + protocol + "|" + group   // no port
 While `dst_addr` is used, that string happens to contain the port and separates them by accident; but once the
 peer resolves to a node and `dst_node_id` is filled, **the port disappears from the key**. Then 443 and 8443
 on the same node collapse into one edge whenever the group matches. What disappears is which service has to be
-changed, which is the same ground on which §6.3 pinned `port` to "the service port of that connection".
+changed, which is the same ground on which §5.3 pinned `port` to "the service port of that connection".
 Aligning identity with the fingerprint resolves both.
 
 **Storage does not grow.** [Inventory design §7.3](../inventory/design.en.md) already took `observed_count`,
 `first_seen`, and `last_seen` out of the fingerprint, so an observation that differs only in count and
-timestamps makes no new snapshot. That is why this design does not collide with the two-layer split in §7.2.
+timestamps makes no new snapshot. That is why this design does not collide with the two-layer split in [inventory design §7.2](../inventory/design.en.md).
 
 **Neither the originals nor the history are removed.** Merging is "seeing observations that point at the same
 target as one", not erasing the past. The append-only history stays, and so do the per-round result files
 (§1.2). The rows in `pqcota_observations` are not deleted either: they are **the evidence that we looked every
 time**, and deleting them makes them indistinguishable from a period with no observation at all (the same
-reason as the truncation rule in §7.4, which is §2.6 moved onto the time axis).
+reason as the truncation rule in [inventory design §7.4](../inventory/design.en.md), which is §2.6 moved onto the time axis).
 
-### 8.5 Where the merge meshes with signing
+### 7.5 Where the merge meshes with signing
 
 This is the place in the design to be most careful about. [`sign.Canonical`](../pkg/kernel/sign/sign.go) puts
 an edge's `observed_count`, `first_seen`, and `last_seen` **inside the signature scope**. So if the core
 rewrites those values on a stored edge, **what is stored differs from what the collector signed**.
 
-This repo has met the same problem once already. §5.2 caught the ingest at the same spot when it tried to fill
+This repo has met the same problem once already. The ingest was caught at the same spot when it tried to fill
 an observed edge's empty `app_key`, and the answer was **to split the storage and merge in the view**. There
 are three options.
 
 **㉠ Merge in the view.** Leave the stored per-round edges as they are and, on query, group them by the
-canonical key and compute the count and the timestamps for display. Being the same answer as §5.2, it stays
+canonical key and compute the count and the timestamps for display. Being the same answer [inventory design §2](../inventory/design.en.md#2-data-model) took for the declaration lane, it stays
 in this repo's grain, and both the signature and the immutability of the originals hold. The cost is that the
 query computes every time and the same edge remains in the snapshot once per round.
 
@@ -688,7 +527,7 @@ recomputed, so a whole release would go to that work.
 originals together, and it is easy to reverse. If edges ever grow numerous enough for the query cost to
 matter, ㉡ and ㉢ get looked at again then, with evidence.
 
-### 8.6 The view shows a round ratio
+### 7.6 The view shows a round ratio
 
 What `observed_count` counts is **handshakes**. netcap increments it every time it sees the same edge within
 its window, so a link connected fifty times in eight seconds is 50 and one connected once is 1. Added across
@@ -705,11 +544,11 @@ four of six rounds or four of a hundred, and that is the same reason exclusions 
 
 **The contract's meaning does not change.** `observed_count` remains observation frequency as the proto states,
 and an input to §3.5 confidence. The round ratio does not replace it; it is **a value the view derives
-separately**. Since §8.5 settled on splitting the storage and merging in the view, per-round observations stay
+separately**. Since §7.5 settled on splitting the storage and merging in the view, per-round observations stay
 in the snapshot as they are, and the view only counts how many collection results that edge appeared in. Where
 the handshake total is wanted, it is emitted alongside on the detail view.
 
-### 8.7 netcap fills the timestamps
+### 7.7 netcap fills the timestamps
 
 `first_seen` and `last_seen` are **observed facts, not derivations**. On the §1.2 divide between the collector
 emitting what it saw and the core deriving from it, these are on the near side. So netcap fills them: the
@@ -718,7 +557,7 @@ seen once.
 
 Deriving them from `Envelope.collected_at` is possible but not chosen. One round has one timestamp, so **the
 longer the window, the coarser the approximation.** At an eight-second window there is no difference; at a
-300-second window it flattens five minutes. Making long observation windows possible is the point of §8, so
+300-second window it flattens five minutes. Making long observation windows possible is the point of §7, so
 that direction works against it.
 
 **Signing and the fingerprint are not affected.** [Compatibility policy §2](compatibility.md) (Korean) records
@@ -728,13 +567,13 @@ still canonicalize to the same bytes even once a previously empty field starts b
 differing per round make no new snapshot.
 
 **On merge, `first_seen` takes the earliest and `last_seen` the latest.** That is where "keep what is known,
-but record its age" from §8.4 holds.
+but record its age" from §7.4 holds.
 
 > **Implementation note**: the capture loop does not record a timestamp per packet today. The timestamp has to
 > be carried from where the frame is read, and for testability it uses the same approach as the `now` variable
 > in `edge.go`.
 
-### 8.8 Ordering against §6 and §7
+### 7.8 Ordering against §5 and §6
 
-This design is independent of both and can go first. But once §6 arrives, the answer to "which nodes should run
-often" changes, so keeping the per-node variables of §8.2 open is enough to keep it from being shaken later.
+This design is independent of both and can go first. But once §5 arrives, the answer to "which nodes should run
+often" changes, so keeping the per-node variables of §7.2 open is enough to keep it from being shaken later.
