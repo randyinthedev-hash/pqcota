@@ -143,7 +143,7 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 
 ## Supported scope
 
-**Observation**
+### Observation (Discovery)
 
 | What is observed | Target | Why |
 |---|---|---|
@@ -151,7 +151,7 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 | JVM provider chains | **Java 8+** · Linux (full) · Windows (with a JDK) | **the path that attaches without a JDK is Linux-only**. On Windows the machine needs a JDK to reach runtime registrations; without one only `java.security` is read |
 | Windows CNG providers and algorithms | **Windows** (amd64·arm64) | it asks `bcrypt.dll` directly for the registered providers — no WMI, no PowerShell |
 
-**Inventory**
+### Inventory
 
 | What | Target | Why |
 |---|---|---|
@@ -159,7 +159,9 @@ Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CON
 | the store | **Postgres** (append-only) | only when you want history and changes. For a single look, `pqcota-discover-view` needs no store |
 | accepted input | a collector's `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · a declaration written by a person | **what a machine saw and what a person wrote down never share a lane** |
 
-**Migration (provisioning)** — what is generated depends on the remediation kind in the plan.
+### Migration (Provisioning)
+
+What is generated depends on the remediation kind in the plan.
 
 | Runtime | Situation | What is generated |
 |---|---|---|
