@@ -181,6 +181,30 @@ return  : a CollectionResult (the observed lane). crypto_runtime=UNSPECIFIED (TL
 
 **Privilege and invasiveness**: `CAP_NET_RAW` (on par with the openssl collector's `CAP_SYS_PTRACE`). Being **passive and non-invasive**, it is lighter than eBPF dynamic-trace (PROPOSE). It does touch the data plane, though, so: a handshake-only filter plus avoiding self-reference (§2.6).
 
+**Which app opened this connection** (v0.3.0). At capture time the socket inode (`/proc/net/tcp`, `tcp6`)
+is matched against `/proc/*/fd` to fill `ObservedEdge.app_key`. An edge that stops at the node stops at
+"somewhere on this server", and what a person acts on is an app, not a server. Measuring on real hardware
+settled three rules.
+
+- **Several processes hold one socket.** File descriptors are inherited, so children keep holding a
+  connection the parent opened. Taking the first PID found pins the inheritor rather than the opener. From
+  the set of PIDs holding the same inode, take **the shallowest one up the parent chain**.
+- **It cannot always be pinned.** Between the moment the handshake is seen on the wire and the moment
+  `/proc` is read, the socket may already be closed. The race can be reduced by implementation but not
+  removed, so this is **best-effort**. That is why app pinning happens **right where the edge is seen**
+  rather than in a batch after the capture ends.
+- **Another process's file descriptors cannot be read.** `CAP_NET_RAW` is not enough for app pinning.
+
+**An empty `app_key` means "which app could not be determined", not "there is no app".** The reason is
+split four ways in the completeness note (socket closed, no permission, no stable key could be derived,
+ambiguous). The reasons are emitted sorted: if the order wavers, the same observation becomes a different
+snapshot through a content-fingerprint difference, and history grows with no change behind it. **When it is
+ambiguous, nothing is chosen.** If two apps are talking to the same peer, the machine does not pick one.
+Pinning the wrong app changes what gets acted on, which is worse than leaving it empty (§2.6).
+
+Where the automatic path cannot reach in principle, a person fills it in by declaration →
+[inventory design §2](../inventory/design.en.md#2-data-model).
+
 **Limits (always stated as gaps)**:
 - **The observation window**: only traffic that flowed during the capture — idle, batch, and DR links go unobserved → a gap (≠ absence, §2.6). Repeat across time windows (§2.3).
 - **Coverage dependence**: only connections on the host where the collector runs. An edge with neither side instrumented is invisible without a SPAN or tap.

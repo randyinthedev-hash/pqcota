@@ -116,6 +116,28 @@ type PlanItem struct {
     ProviderChoice  string                 // FIPS 라우팅 결과: BC-FJA/내부/…
 }
 ```
+**엣지의 빈 `app_key`는 선언으로 메우되, 관측을 고쳐 쓰지 않는다**(v0.4.0). netcap이 앱을 늘
+짚어내지는 못하므로(디스커버리 설계 §2.3) 운영자가 CSV로 넣는 길이 있다. 그때 적재가 그 자리에서
+관측 엣지의 빈 칸을 메우는 쪽이 간단해 보이지만 **두 곳에서 막힌다.**
+
+- **서명.** `sign.Canonical`이 `ObservedEdge`를 `app_key`까지 덮는다. 적재가 그 필드를 채우면
+  **저장된 것이 collector가 서명한 것과 달라진다.** 선언은 collector의 주장이 아니므로 그 서명 안에
+  들어갈 자격이 없다.
+- **재정규화**([규정서](../docs/regulation.md) §1.2). 강화 규칙이 좋아지면 `raw_capture`에서 다시
+  계산한다. 적재가 관측을 고쳐 뒀으면 그때 나온 값과 저장된 값이 달라져 무엇이 원본인지 알 수 없다.
+
+**그래서 저장은 가르고 화면에서 합친다.** 선언은 자기 `CollectionResult`로 `detection_method=UNSPECIFIED`
+레인에 들어가고, 관측 엣지는 손대지 않으며, 화면이 빈 칸에 선언을 얹어 `@payment-gw(declared)`로 낸다.
+근거가 함께 보인다. 이 갈래는 `pqcota_edge_attribution`이 **노드의 스냅샷 타임라인 밖에** 사는 이유이기도 하다.
+
+**계약은 건드리지 않는다.** `app_key_kind`가 이미 「이 키가 무엇에 기대고 있나」를 답하는 곳이라
+`systemd-unit`·`exe-path` 옆에 `declared`가 하나 더 붙을 뿐이다. `ObservedEdge.detection_method`를
+쓰면 안 된다. 그것은 **엣지 자체를 어떻게 관측했나**이지 키의 출처가 아니어서, 거기에 `UNSPECIFIED`를
+넣으면 「이 통신을 실제로 봤다」는 사실까지 흐려진다.
+
+**덮어쓰지 않는다.** 관측이 채운 칸은 그대로 두고 빈 칸만 얹는다. 덮게 두면 사람이 적은 것과 기계가
+본 것이 섞여 선언 레인을 따로 둔 이유가 사라진다.
+
 > `DeployAutomationLevel`·`RemediationClass`는 이미 contracts가 정한 통제 어휘다. **여기서 채워진다**(Discovery 아님, MANUAL 리뷰어). `Decision`·`FinalizedPlan` 스키마는 contracts에 있다(공개 스키마).
 
 ---

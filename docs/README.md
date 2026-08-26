@@ -65,7 +65,7 @@
 |---|---|
 | [**데이터 모델 스키마**](../contracts/data-model.md) | 규격한 전 메시지·enum의 사람용 지도다. 목적·핵심 필드·관계·provenance 레인을 적는다. contracts SSOT 레퍼런스다 |
 | [contracts/README](../contracts/README.md) | protobuf 파일·네임스페이스 목록 + CycloneDX property 매핑 |
-| [검토 중인 설계](under-review.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계다. provider 수용(만들 config 어휘)·provider 관측·HSM 축을 다룬다. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
+| [검토 중인 설계](under-review.md) | 로드맵에 있으나 **구현을 확정하지 않은 것**의 설계다. provider 수용(만들 config 어휘)·provider 관측·HSM 축, 그리고 netcap 설계 셋(서버 역할 엣지·엣지 상대의 스코프 판정·통신 관측 주기)을 다룬다. 확정되면 본 설계 문서로 옮기고 여기서 지운다 |
 | [암호 런타임 수용 원칙](runtime-acceptance.md) | 무엇을 1급 암호 런타임으로 받나. 수용된 둘(OpenSSL·JCA)이 왜 동형인지, 축 넷이 말하지 않는 수용 조건 셋, 새 후보를 만났을 때의 결정 트리를 담는다 |
 
 [`contracts/`](../contracts/)는 protobuf SSOT다. 네임스페이스가 곧 단계다.

@@ -57,6 +57,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Source / artifact CBOM scanner** | CI already has the source. CycloneDX from CBOMkit and friends is **ingested** instead |
 | **Dynamic tracing** (eBPF · ltrace) | Invasive, so it isn't done. Observing the actual negotiation on the wire was chosen instead |
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
+| **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are [explicitly excluded by the architecture](docs/architecture.en.md#62-explicit-exclusions--boundaries). At that moment an observation tool becomes an adjudication tool |
 
 
 ---
