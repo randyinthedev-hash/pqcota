@@ -93,26 +93,18 @@ pqcota consists of one **central controller node** and the **target nodes** it r
 Ansible/SSH. **You build on the controller** — both the CLIs you run there and the collectors you
 ship to the target nodes are produced here.
 
-**① Generate the contract code** — Go code is generated from the contracts (`contracts/*.proto`).
-`make tools` installs the generator plugins (`protoc-gen-go`, `-grpc`) and `make generate` does the
-conversion. The generated `gen/` is **committed** — so that consumers can use the contract types with `go get` alone. When a proto changes, regenerate and commit it along with the change.
+**It builds straight from a clone.** The `gen/` produced from the contracts is committed, so you need
+no code-generation tooling of your own; it is kept that way so consumers can use the contract types
+with `go get` alone. It is regenerated only when a proto changes, and that procedure is at the end of
+this section.
 
-```bash
-make tools && make generate     # contracts/*.proto → gen/
-```
-
-> `make tools` puts the plugins in `$(go env GOPATH)/bin`. If that directory isn't on your `PATH`,
-> `make generate` fails with "plugin not found" — which looks like a failed install but really means
-> **it just isn't visible**. Both targets call that case out, but adding it to your shell profile
-> saves you from hitting it every time: `export PATH="$PATH:$(go env GOPATH)/bin"`.
-
-**② The CLIs you run on the controller** — ingest and query observations, generate playbooks.
+**① The CLIs you run on the controller** — ingest and query observations, generate playbooks.
 
 ```bash
 go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
-**③ The collectors that go on the target nodes** — built statically **for the node's OS and arch**
+**② The collectors that go on the target nodes** — built statically **for the node's OS and arch**
 → [deployment design](discovery/collector-deployment.md) (Korean). Which collector runs on which OS is in
 the [command reference](discovery/cmd/README.en.md).
 
@@ -130,7 +122,25 @@ make build-jar                  # only if you have JVM nodes: attach sidecar →
 `CGO_ENABLED=0` (static linking — distro/libc agnostic) is fixed; what you change is `GOOS` and
 `GOARCH`. For the accepted values see the [Go documentation](https://go.dev/doc/install/source#environment).
 
+**Linux nodes need kernel 3.2 or newer.** That is the floor the Go toolchain sets, and this repo asks
+for nothing newer. CentOS 7 (3.10) and Debian 8 (3.16) are above it; RHEL 6 (2.6.32) is below. What
+individual features additionally require is in the [supported scope](discovery/cmd/README.en.md).
+
 Privileges and environment variables for running the collectors on a node → [discovery/cmd](discovery/cmd/README.en.md).
+
+**If you changed a proto, regenerate the contract code.** From here on this is the procedure for
+someone working on the repo. `make tools` installs the generator plugins (`protoc-gen-go`, `-grpc`)
+and `make generate` does the conversion. Put the resulting `gen/` in **the same commit** as the proto
+you changed.
+
+```bash
+make tools && make generate     # contracts/*.proto → gen/
+```
+
+> `make tools` puts the plugins in `$(go env GOPATH)/bin`. If that directory isn't on your `PATH`,
+> `make generate` fails with "plugin not found" — which looks like a failed install but really means
+> **it just isn't visible**. Both targets call that case out, but adding it to your shell profile
+> saves you from hitting it every time: `export PATH="$PATH:$(go env GOPATH)/bin"`.
 
 Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CONTRIBUTING.en.md).
 
