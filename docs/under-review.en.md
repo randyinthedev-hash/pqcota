@@ -100,7 +100,7 @@ repository leans on to claim coverage is left to human hands.** The counts in th
 | Case ID → test file link | present in the case tables, but only the generic link check sees it |
 | Case ID → test **function** name | written in the case tables, **never verified** |
 | Test file → its own case ID | **absent** |
-| Per-level counts (unit/integration) | written by hand in the docs |
+| Per-level counts (unit/integration) | **checked.** `check-docs` counts them and compares against the table in the [test map](test-map.md) (Korean) |
 
 One rule would cover it — scrape `TD-`, `TV-`, `TP-`, `TK-` IDs with their links and function names out
 of the case tables, then check that the file really contains that function. Whether to force the reverse
