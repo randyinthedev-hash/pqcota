@@ -57,6 +57,13 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   blocks it is the environment-variable format, so it is not a one-line change. The design is in
   [Designs under review §8](docs/under-review.en.md).
 
+- **Observing communication on Windows (planned · version TBD)** — `pqcota-netcap` is Linux-only, so on
+  Windows **no binary is produced at all**. That node's completeness map therefore never records "NETWORK
+  layer not observed", and on screen it looks like a node with no communication. The dissection layer
+  knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
+  because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). The
+  design is in [Designs under review §9](docs/under-review.en.md).
+
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector-deployment.md) (Korean). Until then, verify integrity with `sha256sum -c`.
 
 ### Not on the roadmap — deliberately
