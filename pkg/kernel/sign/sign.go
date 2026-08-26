@@ -127,6 +127,9 @@ func Sign(privB64 string, res *discoveryv1.CollectionResult) (string, error) {
 //
 // keys는 collector_id → base64 공개키. 그 collector에 등록된 키가 없으면 거절한다 — 모르는
 // collector의 주장을 받지 않는다.
+//
+// GATE: 보류 — PQCOTA_VERIFY_KEY가 키 목록이라 collector에 묶을 수 없다. 환경변수 형식을 바꿔야
+// 한다(검토 중인 설계 §8).
 func VerifyFrom(keys map[string]string, res *discoveryv1.CollectionResult) bool {
 	pub, ok := keys[res.GetEnvelope().GetCollectorId()]
 	if !ok {

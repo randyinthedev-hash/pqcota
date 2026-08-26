@@ -5,9 +5,9 @@
 # (.gitignore 머리말). 그래서 클론 직후 바로 빌드된다. proto를 고쳤을 때만 `make generate`로 다시
 # 만들어 함께 커밋한다.
 
-.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors
+.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors check-gates
 
-all: generate lint breaking fmt-check check-boundary check-docs check-collectors vet build build-jar test
+all: generate lint breaking fmt-check check-boundary check-docs check-collectors check-gates vet build build-jar test
 
 # 전체 빌드 — Go(호스트 + **리눅스 타깃**) + Java 사이드카.
 #
@@ -140,6 +140,12 @@ check-docs:
 # v0.6.3에서 실제로 갈라졌다(플레이북에 pqcota-jvmscan을 더하고 워크플로를 안 고쳤다).
 check-collectors:
 	@go build -o build/checkcollectors ./tools/checkcollectors && ./build/checkcollectors
+
+# 게이트 배선 검사 — 규칙을 적어 두고 제품이 부르지 않으면 보장이 아니다. 실제로 pqcota-provision이
+# provisioning.Executable을 부르지 않는 동안 승인 서명이 빈 계획이 통과했다. 테스트는 규칙이 옳은지
+# 보지, 그 규칙이 쓰이는지 보지 않는다.
+check-gates:
+	@go build -o build/checkgates ./tools/checkgates && ./build/checkgates
 
 vet:
 	go vet ./...

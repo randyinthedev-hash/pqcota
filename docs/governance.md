@@ -14,8 +14,8 @@
 |---|---|---|
 | 커밋 | 253 (2026-08-05 이후, 2026-08-26 기준) | `git log --oneline \| wc -l` |
 | 릴리스 | 16 | `gh release list` |
-| 자동 게이트 | 11 | `Makefile`의 `all` 타깃 |
-| 테스트 함수 | 227 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
+| 자동 게이트 | 12 | `Makefile`의 `all` 타깃 |
+| 테스트 함수 | 233 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
 | 케이스 그룹 | 4 (`TD`·`TV`·`TP`·`TK`) | [테스트 맵](test-map.md) |
 | 설계 문서 | 규정서 · 아키텍처 · 단계별 셋 · 수용 원칙 · 호환성 · 검토 중 | [docs/](README.md) |
 
@@ -29,7 +29,7 @@
 
 ## 무엇이 자동으로 막히나
 
-`make` 하나가 열한 가지를 돌리고 **CI가 그 전부를 다시 돌린다**([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+`make` 하나가 열두 가지를 돌리고 **CI가 그 전부를 다시 돌린다**([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
 게이트를 건너뛰고 올리는 길이 없다.
 
 | 게이트 | 막는 것 |
@@ -44,9 +44,14 @@
 | `check-collectors` | 릴리스가 **빌드하는** collector와 플레이북이 **반입하는** collector가 갈리는 것 |
 | `build` | 호스트뿐 아니라 **linux/amd64·windows/amd64 교차**가 깨지는 것 |
 | `build-jar` | JVM 사이드카 빌드 |
+| `check-gates` | **규칙은 적어 뒀는데 제품이 부르지 않는 게이트.** 배선을 미뤘다면 왜 미뤘는지를 함수 자리에 적어야 통과한다. 미룬 것은 통과시키되 화면에 낸다 |
 | `test` | 단위·통합 테스트 전부 |
 
-**게이트는 실제로 겪은 문제에서 나왔다.** `check-collectors`는 v0.6.6에서 Windows 번들에
+**게이트는 실제로 겪은 문제에서 나왔다.** `check-gates`는 `pqcota-provision`이 `provisioning.Executable`을
+부르지 않는 동안 승인 서명이 빈 확정 계획이 플레이북을 받아 가던 것을 겪은 뒤에 만들었다. 규칙에는
+테스트가 있었고 문서는 그 규칙을 약속했는데 게이트는 전부 초록이었다 — **테스트는 규칙이 옳은지
+보지, 그 규칙이 쓰이는지 보지 않는다.** 다만 이 검사가 보지 못하는 것도 있다. 리시버에 붙은 메서드는
+호출부의 좌변이 변수라 패키지로 가릴 수 없어 대상이 아니고, 그런 것은 검토 중인 설계가 계속 들고 간다. `check-collectors`는 v0.6.6에서 Windows 번들에
 `pqcota-jvmscan`이 빠져 릴리스만 받아 돌리면 실패하던 문제를 겪은 뒤에 만들었다. `check-docs`가 Go로 쓰인 것도 셸 `grep`이
 Mac과 리눅스에서 한글 문장을 다르게 세어 같은 게이트가 서로 다르게 판정했기 때문이다.
 
@@ -122,7 +127,7 @@ Mac과 리눅스에서 한글 문장을 다르게 세어 같은 게이트가 서
 | **OS 프리미티브** | `golang.org/x/sys` | AF_PACKET 원시 소켓. 표준 라이브러리가 덮지 않는 유일한 부분이다 |
 | **오케스트레이션** | Ansible | 노드 도달은 이미 풀린 문제다. 자체 원격 실행 엔진을 만들지 않는다(§4.4) |
 | **코드 생성** | `buf` · `protoc-gen-go` · `protoc-gen-go-grpc` | 생성 결과가 사람마다 달라지지 않게 **버전을 고정**한다 |
-| **CI** | GitHub Actions · dependabot | 게이트 열한 가지를 건너뛸 수 없게 만드는 곳이다 |
+| **CI** | GitHub Actions · dependabot | 게이트 열두 가지를 건너뛸 수 없게 만드는 곳이다 |
 | **그림** | Graphviz | 토폴로지를 DOT로 내고 렌더는 밖에 맡긴다. 산출물(SVG)은 데이터다 |
 | **관측 대상 런타임** | OpenSSL · JDK/JCA · Windows CNG · BouncyCastle · oqsprovider | 만드는 것이 아니라 **보는 대상**이다. 각각의 열거 API를 그대로 쓴다 |
 | **표준·규격** | NIST FIPS 203/204/205 · RFC 4253 · IANA TLS 코드포인트 | 이름과 판정 기준을 스스로 정하지 않는다 |
