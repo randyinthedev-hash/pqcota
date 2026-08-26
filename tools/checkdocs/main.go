@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -225,6 +226,16 @@ func main() {
 	if dep := checkLicenseTable(); len(dep) > 0 {
 		hits = append(hits, dep)
 		titles = append(titles, "the licensing document disagrees with the actual dependencies — fix docs/licensing.md §2")
+	} else {
+		hits = append(hits, nil)
+		titles = append(titles, "")
+	}
+
+	// (9) 관리체계의 숫자 ↔ 실제로 센 값. 표가 스스로 "리포에서 센 값"이라고 밝히므로,
+	//     그 말이 참인지 세는 것도 게이트의 일이다.
+	if num := checkGovernanceNumbers(); len(num) > 0 {
+		hits = append(hits, num)
+		titles = append(titles, "the governance numbers disagree with the repo — fix the 「숫자」 table in docs/governance.md")
 	} else {
 		hits = append(hits, nil)
 		titles = append(titles, "")
@@ -442,4 +453,134 @@ func tildeRanges(doc string, ls []string) []string {
 		}
 	}
 	return out
+}
+
+// checkGovernanceNumbers — 「관리체계」의 숫자 표가 실제와 맞나.
+//
+// 그 표는 스스로 "손으로 적은 값이 아니다. 리포에서 센 값"이라고 밝힌다. 그렇다면 그 말이 참인지
+// 세는 것까지가 게이트의 일이다. 실제로 커밋 수가 246에 굳은 채 253이 될 때까지 아무도 알아채지
+// 못했고, 게이트 수는 `all` 타깃이 열하나인데 열로 적혀 있었다. 세는 법을 옆에 적어 두는 것만으로는
+// 아무도 다시 세지 않는다.
+//
+// 릴리스 수는 세지 않는다. `gh`와 네트워크·인증에 기대는데, 그것이 없는 자리에서 조용히 건너뛰면
+// **검사하지 못한 것을 통과로 읽게 된다**(§2.6 갭 ≠ 부재). 세지 않는다는 사실을 문서에 밝혀 두고
+// 릴리스할 때 손으로 맞추는 편이 정직하다.
+func checkGovernanceNumbers() []string {
+	const doc = "docs/governance.md"
+	ls, _, err := lines(doc)
+	if err != nil {
+		return nil // 문서가 없으면 이 검사 대상이 아니다
+	}
+	stated := statedNumbers(ls)
+
+	var miss []string
+	check := func(label string, actual int) {
+		if actual < 0 {
+			return // 셀 수 없었다 — 세는 쪽에서 이미 그 사실을 남겼다
+		}
+		got, ok := stated[label]
+		if !ok {
+			miss = append(miss, fmt.Sprintf("%s: the 「숫자」 table has no `%s` row, so the gate has nothing to compare its count (%d) against", doc, label, actual))
+			return
+		}
+		// 커밋 수만 폭을 둔다. 커밋마다 정확히 맞기를 요구하면 이 게이트는 매 커밋 깨지고,
+		// 그러면 숫자가 아니라 게이트를 지우게 된다.
+		if label == "커밋" {
+			switch {
+			case got > actual:
+				miss = append(miss, fmt.Sprintf("%s: `커밋` says %d but the repo has only %d — the table cannot be ahead of the repo", doc, got, actual))
+			case actual-got > commitDrift:
+				miss = append(miss, fmt.Sprintf("%s: `커밋` says %d but the repo has %d (%d behind, over the %d allowed) — update the number and the date beside it", doc, got, actual, actual-got, commitDrift))
+			}
+			return
+		}
+		if got != actual {
+			miss = append(miss, fmt.Sprintf("%s: `%s` says %d but the repo has %d — the table says it was counted, so count it again", doc, label, got, actual))
+		}
+	}
+	check("커밋", gitCommits())
+	check("자동 게이트", makeAllTargets())
+	check("테스트 함수", testFuncs())
+	return miss
+}
+
+// commitDrift — 커밋 수가 뒤처져도 넘어가 주는 폭. 넘으면 갱신하라고 막는다.
+const commitDrift = 20
+
+// numberRow — `| 라벨 | 253 (2026-08-26 기준) | 세는 법 |`의 둘째 칸 맨 앞 숫자를 읽는다.
+// 괄호 안 단서는 사람이 읽는 자리라 건드리지 않는다.
+var numberRow = regexp.MustCompile(`^\|\s*([^|]+?)\s*\|\s*([0-9]+)`)
+
+// statedNumbers — 「숫자」 절의 표에 적힌 값. 다른 절의 표에도 숫자가 있으므로 절을 가려서 읽는다.
+func statedNumbers(ls []string) map[string]int {
+	out := map[string]int{}
+	in := false
+	for _, line := range ls {
+		if strings.HasPrefix(line, "## ") {
+			in = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == "숫자"
+			continue
+		}
+		if !in {
+			continue
+		}
+		if m := numberRow.FindStringSubmatch(line); m != nil {
+			if n, err := strconv.Atoi(m[2]); err == nil {
+				out[strings.TrimSpace(m[1])] = n
+			}
+		}
+	}
+	return out
+}
+
+// gitCommits — 얕은 클론에서는 세지 않는다. 히스토리가 잘려 있어 실제보다 작게 나오고,
+// 그대로 비교하면 문서가 틀렸다고 잘못 막는다.
+func gitCommits() int {
+	if out, err := exec.Command("git", "rev-parse", "--is-shallow-repository").Output(); err == nil &&
+		strings.TrimSpace(string(out)) == "true" {
+		fmt.Fprintln(os.Stderr, "⚠ skipping the commit-count check: this is a shallow clone (`git clone --depth`)")
+		return -1
+	}
+	out, err := exec.Command("git", "rev-list", "--count", "HEAD").Output()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "⚠ skipping the commit-count check: `git rev-list` failed:", err)
+		return -1
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	if err != nil {
+		return -1
+	}
+	return n
+}
+
+// makeAllTargets — `all` 타깃이 부르는 게이트 수. 문서가 "`Makefile`의 `all` 타깃"이라고
+// 세는 법을 밝히고 있으므로 같은 자리를 센다.
+func makeAllTargets() int {
+	ls, _, err := lines("Makefile")
+	if err != nil {
+		return -1
+	}
+	for _, line := range ls {
+		if rest, ok := strings.CutPrefix(line, "all:"); ok {
+			return len(strings.Fields(rest))
+		}
+	}
+	return -1
+}
+
+// testFuncs — 추적 중인 `*_test.go`의 테스트 함수 수. 문서의 `grep -r`와 달리 추적 파일만 세어,
+// 손에 남은 임시 파일이 숫자를 흔들지 않게 한다(깨끗한 트리에서는 같은 값이다).
+func testFuncs() int {
+	n := 0
+	for _, f := range tracked("*_test.go") {
+		ls, _, err := lines(f)
+		if err != nil {
+			return -1
+		}
+		for _, line := range ls {
+			if strings.HasPrefix(line, "func Test") {
+				n++
+			}
+		}
+	}
+	return n
 }
