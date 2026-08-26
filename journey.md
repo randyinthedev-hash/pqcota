@@ -156,7 +156,7 @@ pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 ```
 
 `pqcota-ingest`가 한 디렉터리를 읽어 관문을 지나 append-only 히스토리에 넣는다. 관문은 **전부
-선택이되, 켜면 들어오는 지점에서 막는다.**
+선택 사항이지만, 켜면 들어오는 지점에서 막는다.**
 
 | 관문 | 켜는 법 | 막는 것 |
 |---|---|---|
@@ -195,8 +195,8 @@ pqcota-inventory -diff <old> <new>     # 두 스냅샷 사이의 변화
 전환물 생성의 입력은 **확정 계획**(`FinalizedPlan` JSON)이다. `PLAN_STATUS_FINALIZED`가 아니면
 생성기가 **거부한다.** 이 단계에서 가장 센 게이트다.
 
-계획을 무엇으로 채울지, 무엇을 언제 바꿀지는 이 도구가 정하지 않는다. 손으로 쓴 계획으로도
-끝까지 돌아간다 → [예시 계획들](examples/provisioning/plans/README.md).
+계획을 무엇으로 채울지, 무엇을 언제 바꿀지는 이 도구가 정하지 않는다. 그래서 계획은 손으로 쓴다.
+그 계획을 그대로 받아 생성·적용·되돌림까지 이어진다 → [예시 계획들](examples/provisioning/plans/README.md).
 
 ---
 
@@ -270,7 +270,7 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 | 7 · 생성(L1/L2/L3 · 롤백 · before 레코드) | [`provisioning/`](provisioning/README.md) | **끝** |
 | 8 · 적용 | 표준 Ansible 플레이북 | **끝.** 데모가 실제 노드에서 확인한다 |
 | 7 · 생성(Windows CNG) | 관측만 되고 전환물은 아직 | [로드맵](RELEASE_NOTES.md#로드맵-예정-릴리스-계획) |
-| 6 · 확정 계획을 무엇으로 채우나 |: | **정하지 않는다.** 손으로 쓴 계획으로 돌아간다 |
+| 6 · 확정 계획을 무엇으로 채우나 |: | **정하지 않는다.** 손으로 쓴 계획을 그대로 입력으로 받는다 |
 | 화면(UI) |: | **없다.** CLI와 생성물이다 |
 
 ---

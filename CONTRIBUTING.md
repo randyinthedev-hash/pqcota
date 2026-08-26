@@ -27,7 +27,7 @@ pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보
 
 리눅스 전용 코드(`/proc`·AF_PACKET·attach)는 `//go:build linux`로 갈라 두고 다른 OS에는 거부 스텁을
 둔다. 그래서 macOS·Windows에선 그 코드가 컴파일 대상에서 빠지고, 깨져도 호스트 빌드는 통과한다.
-`make build`가 **호스트 + linux/amd64 + windows/amd64 교차**를 함께 확인하는 이유가 여기 있다. CNG collector가 자랄 타깃이라 Windows도 함께 본다.
+`make build`가 **호스트 + linux/amd64 + windows/amd64 교차**를 함께 확인하는 이유가 여기 있다. Windows는 CNG collector를 빌드·검증할 대상이라 함께 본다.
 
 ## 개발 루프
 
@@ -97,7 +97,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 이 리포는 **정직성·결정론**을 코드에서 강제한다. 아래는 그 관례다. 일반 Go 스타일이 아니라 **여기서 유독 지키는 것**만 적는다.
 
-**포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 `buf lint`·`fmt-check`·`check-boundary`·`check-docs`·`go vet`·`build`(호스트+리눅스+윈도우 교차)·`build-jar`·`go test`를 돌리니 PR 전 **전부 그린**이어야 한다. `check-docs`는 md를 검사한다: 끊어진 링크·앵커, 리포 바깥을 가리키는 위치 선언(안 하는 일은 "하지 않는다"로 적는다), 역할분담 산문(문서에는 **기능과 사용법**만), 개인 개발 환경 정보, 라이선스 표와 실제 의존성의 불일치. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
+**포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 `buf lint`·`fmt-check`·`check-boundary`·`check-docs`·`go vet`·`build`(호스트+리눅스+윈도우 교차)·`build-jar`·`go test`를 돌리니 PR 전에 **모두 통과해야 한다**. `check-docs`는 md를 검사한다: 끊어진 링크·앵커, 리포 바깥을 가리키는 위치 선언(안 하는 일은 "하지 않는다"로 적는다), 역할분담 산문(문서에는 **기능과 사용법**만), 개인 개발 환경 정보, 라이선스 표와 실제 의존성의 불일치. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
 
 **주석은 "왜"를 국문으로, §를 달아서.** 코드가 *무엇을* 하는지는 코드가 말한다. 주석은 *왜 이렇게* 했고 어긴 대안이 왜 틀린지를 적고, 근거를 규정서 §로 건다. 이 리포의 주석이 유독 긴 이유다. 예: `// ★ 제외는 "없음"이 아니다. 정책으로 뺀 걸 조용히 사라지게 하면 인벤토리가 거짓말한다(§2.6)`.
 
@@ -112,7 +112,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 **외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지 대응 · 노드에 남는 것 최소화, §2.3). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
 
-**계약을 바꾸면 딸린 것도.** collector가 주장하는 필드는 전부 `sign.Canonical`에 들어가야 한다(서명 사각 금지). oneof arm은 **메시지 전체에서 안 쓰인** 필드 번호를 쓴다(oneof는 메시지의 번호 공간을 공유한다). 상세 체크리스트: [contracts/README](contracts/README.md).
+**계약을 바꾸면 함께 고쳐야 하는 것이 있다.** collector가 주장하는 필드는 전부 `sign.Canonical`에 들어가야 한다(서명 사각 금지). oneof arm은 **메시지 전체에서 안 쓰인** 필드 번호를 쓴다(oneof는 메시지의 번호 공간을 공유한다). 상세 체크리스트: [contracts/README](contracts/README.md).
 
 ## 테스트
 
@@ -190,7 +190,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 
 | 이렇게 쓰지 말고 | 이렇게 |
 |---|---|
-| 앱까지 가되 **늘 되지는 않는다**. (…설명 두 문장 뒤…) | 앱까지 가되, **조회하는 순간 소켓이 살아 있어야 된다** |
+| 앱까지 가되 **늘 되지는 않는다**. (…설명 두 문장 뒤…) | 앱까지 가되, **조회하는 순간 소켓이 살아 있어야 한다** |
 | 기계가 **확정하지 않는다**. | 기계가 확정하지 않는다. **실존인지 stale인지는 사람만 안다** |
 | 관리 UI는 **만들지 않는다**. | 관리 UI는 만들지 않는다. **화면이 생기면 "여기서 승인도 하자"가 다음 걸음이 된다** |
 

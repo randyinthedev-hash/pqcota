@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.6.7**: Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, [데모](demo/README.md) 6단계가 생성물을 실제 노드에 적용·되돌림까지 확인한다. **Windows 노드도 같은 디스커버리 경로**로 관측한다(CNG·JCA). 다만 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵-예정-릴리스-계획)
+> **v0.6.7**: Discovery · Inventory · Provisioning 3단계가 리눅스에서 종단으로 동작하고, 6단계 [데모](demo/README.md)가 생성물을 실제 노드에 적용·되돌림까지 확인한다. **Windows 노드도 같은 디스커버리 경로**로 관측한다(CNG·JCA). 다만 전환물 생성은 아직이다 → [로드맵](RELEASE_NOTES.md#로드맵-예정-릴리스-계획)
 
 PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). 레거시 암호 런타임(OpenSSL · Java JCE/JCA)의 PQC 이관을 **Discovery → Inventory → Provisioning** 3단계로 다룬다.
 
@@ -96,7 +96,7 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 pqcota는 **중앙 컨트롤러 노드** 하나와, 그 컨트롤러가 Ansible/SSH로 닿는 **대상 노드들**로 구성된다.
 **빌드는 컨트롤러에서 한다.** 컨트롤러에서 실행할 CLI와 대상 노드로 보낼 collector를 여기서 함께 만든다.
 
-**클론한 그대로 빌드된다.** 계약에서 만든 `gen/`이 커밋돼 있어 코드 생성 도구를 따로 갖출 필요가 없다.
+**클론한 그대로 빌드할 수 있다.** 계약에서 만든 `gen/`이 커밋돼 있어 코드 생성 도구를 따로 갖출 필요가 없다.
 소비자가 `go get`만으로 계약 타입을 쓰게 하려고 그렇게 두었다. proto를 고칠 때만 다시 만드는데,
 그 절차는 이 절 끝에 있다.
 

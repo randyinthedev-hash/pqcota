@@ -13,7 +13,7 @@
 - **프로세스 규정(3단계, AUTO/PROPOSE/MANUAL)은 런타임 무관하게 불변**이다.
 - 런타임별로 달라지는 것은 넷이다. **(a) 디스커버리 수집 방법, (b) 버전·provider 축 스키마,
   (c) remediation taxonomy 분기, (d) 프로비저닝 substrate.**
-- 모든 finding·자산은 **`crypto_runtime`을 1급 필드**로 가진다. 이 필드가 각 단계의 런타임 분기를 결정한다.
+- 모든 finding·자산에 **`crypto_runtime`을 1급 필드**로 둔다. 이 필드가 각 단계의 런타임 분기를 결정한다.
 
 ## 2. 수용된 둘: OpenSSL · JCA
 
