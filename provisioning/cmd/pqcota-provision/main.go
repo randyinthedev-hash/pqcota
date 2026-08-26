@@ -49,9 +49,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// §3.7 최강 게이트 — FINALIZED 아니면 실행 근거 없음.
-	if plan.GetStatus() != provisioningv1.PlanStatus_PLAN_STATUS_FINALIZED {
-		fmt.Fprintf(os.Stderr, "refused: the plan is not FINALIZED (%s). Only a finalized plan justifies provisioning (§3.7).\n", plan.GetStatus())
+	// §3.7 최강 게이트 — 실행 근거인지 판정하는 규칙은 provisioning.Executable 하나뿐이다.
+	// 여기서 조건을 다시 적으면 규칙이 두 곳에 생기고, 실제로 그렇게 갈렸다: 상태만 비교하던
+	// 동안 승인 서명·조치가 빈 FINALIZED 계획이 그대로 통과했다. 사유를 함께 싣는다 — 무엇이
+	// 모자란지 말하지 않고 거절하면 사용자가 계획을 고칠 수 없다.
+	if err := provisioning.Executable(plan); err != nil {
+		fmt.Fprintf(os.Stderr, "refused: %v. Only a finalized plan justifies provisioning (§3.7).\n", err)
 		os.Exit(1)
 	}
 
