@@ -241,6 +241,16 @@ func main() {
 		titles = append(titles, "")
 	}
 
+	// (10) 테스트 맵의 레벨 분포 ↔ 실제로 센 값. (9)와 같은 이유이고, 이 표는 한때 관리체계에도
+	//      함께 있었다. 숫자를 두 곳에 적으면 한쪽만 고쳐지므로 여기 하나로 모으고 게이트를 붙였다.
+	if num := checkTestMapNumbers(); len(num) > 0 {
+		hits = append(hits, num)
+		titles = append(titles, "the test-map level counts disagree with the repo — fix the 「레벨 분포」 table in docs/test-map.md")
+	} else {
+		hits = append(hits, nil)
+		titles = append(titles, "")
+	}
+
 	fail := false
 	for i, title := range titles {
 		if title == "" {
@@ -471,7 +481,7 @@ func checkGovernanceNumbers() []string {
 	if err != nil {
 		return nil // 문서가 없으면 이 검사 대상이 아니다
 	}
-	stated := statedNumbers(ls)
+	stated := statedNumbers(ls, "숫자")
 
 	var miss []string
 	check := func(label string, actual int) {
@@ -511,13 +521,14 @@ const commitDrift = 20
 // 괄호 안 단서는 사람이 읽는 자리라 건드리지 않는다.
 var numberRow = regexp.MustCompile(`^\|\s*([^|]+?)\s*\|\s*([0-9]+)`)
 
-// statedNumbers — 「숫자」 절의 표에 적힌 값. 다른 절의 표에도 숫자가 있으므로 절을 가려서 읽는다.
-func statedNumbers(ls []string) map[string]int {
+// statedNumbers — 그 절의 표에 적힌 값. 다른 절의 표에도 숫자가 있으므로 절을 가려서 읽고,
+// 라벨의 강조 표기(`**unit**`)는 벗겨서 문서마다 다른 표기에 걸리지 않게 한다.
+func statedNumbers(ls []string, section string) map[string]int {
 	out := map[string]int{}
 	in := false
 	for _, line := range ls {
 		if strings.HasPrefix(line, "## ") {
-			in = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == "숫자"
+			in = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == section
 			continue
 		}
 		if !in {
@@ -525,7 +536,7 @@ func statedNumbers(ls []string) map[string]int {
 		}
 		if m := numberRow.FindStringSubmatch(line); m != nil {
 			if n, err := strconv.Atoi(m[2]); err == nil {
-				out[strings.TrimSpace(m[1])] = n
+				out[strings.Trim(strings.TrimSpace(m[1]), "*`")] = n
 			}
 		}
 	}
@@ -567,20 +578,72 @@ func makeAllTargets() int {
 	return -1
 }
 
-// testFuncs — 추적 중인 `*_test.go`의 테스트 함수 수. 문서의 `grep -r`와 달리 추적 파일만 세어,
-// 손에 남은 임시 파일이 숫자를 흔들지 않게 한다(깨끗한 트리에서는 같은 값이다).
+// testFuncs — 테스트 함수 전체.
 func testFuncs() int {
-	n := 0
+	total, _ := testFuncLevels()
+	return total
+}
+
+// testFuncLevels — 테스트 함수 전체와, 그중 통합(리눅스 전용) 수. unit은 그 차다. 통합의 기준은
+// 테스트 맵이 밝힌 대로 `//go:build linux` 태그다.
+//
+// 문서의 `grep -r`와 달리 추적 파일만 센다. 손에 남은 임시 파일이 숫자를 흔들지 않게 하려는 것이고,
+// 깨끗한 트리에서는 같은 값이다.
+func testFuncLevels() (total, integration int) {
 	for _, f := range tracked("*_test.go") {
 		ls, _, err := lines(f)
 		if err != nil {
-			return -1
+			return -1, -1
 		}
+		linuxOnly, n := false, 0
 		for _, line := range ls {
+			if strings.HasPrefix(line, "//go:build ") && strings.Contains(line, "linux") {
+				linuxOnly = true
+			}
 			if strings.HasPrefix(line, "func Test") {
 				n++
 			}
 		}
+		total += n
+		if linuxOnly {
+			integration += n
+		}
 	}
-	return n
+	return total, integration
+}
+
+// checkTestMapNumbers — 「테스트 명세 지도」의 레벨 분포가 실제와 맞나. 관리체계의 숫자와 같은
+// 이유다. 이 표도 스스로 "손으로 적은 것이 아니라 리포에서 센 값"이라고 밝히므로 그 말이 참인지 센다.
+//
+// e2e는 세지 않는다. Go 테스트가 아니라 데모 6단계라서 셀 대상이 없다.
+func checkTestMapNumbers() []string {
+	const doc = "docs/test-map.md"
+	ls, _, err := lines(doc)
+	if err != nil {
+		return nil // 문서가 없으면 이 검사 대상이 아니다
+	}
+	total, integration := testFuncLevels()
+	if total < 0 {
+		return nil
+	}
+	stated := statedNumbers(ls, "레벨 분포")
+
+	var miss []string
+	for _, c := range []struct {
+		label  string
+		actual int
+	}{
+		{"unit", total - integration},
+		{"integration", integration},
+	} {
+		got, ok := stated[c.label]
+		if !ok {
+			miss = append(miss, fmt.Sprintf("%s: the 「레벨 분포」 table has no `%s` row, so the gate has nothing to compare its count (%d) against", doc, c.label, c.actual))
+			continue
+		}
+		if got != c.actual {
+			miss = append(miss, fmt.Sprintf("%s: `%s` says %d but the repo has %d — the table says it was counted, so count it again", doc, c.label, got, c.actual))
+		}
+	}
+	return miss
 }
