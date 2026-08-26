@@ -348,6 +348,7 @@ L3 후에는 **재스캔으로 상태 변경을 확인한다**(§4.3). Deploy가
 
 - **`CryptoState`**(before/after)는 특정 시점 애플리케이션의 암호 상태다: `modules`(모듈+버전, 예 `libcrypto.so.3@3.0.13`·`oqsprovider@0.6`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 config 원문 참조).
 - **`ProvisioningRecord`**는 프로비저닝 행위 1건의 **append-only 히스토리**다: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수다. 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
+- **이 리포가 쓰는 것은 `before` + `STAGED`까지다.** 그것도 `--dsn`을 준 경우에 한한다. 주지 않으면 캡처도 영속도 하지 않고 플레이북만 낸다(`pqcota-provision`이 그 사실을 stderr로 알린다). `after`와 나머지 상태(installed·activated·rolled_back·failed)는 **적용을 실행하는 쪽**이 채운다. 이 리포는 Ansible을 돌리지 않으므로 적용 결과를 알 방법이 없다(§5 경계). 계약이 수명 전체를 모델링하는 것은 그 뒤를 받는 쪽을 위해서다.
 - **롤백** = `before` 복원(구 모듈·config 배치) + **통제된 재시작**. 부팅 검증에 실패했거나 사용자가 요청할 때 한다. 단계 경계마다 롤백 지점(§4.3).
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).
 - **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다. before 원문을 다시 만들 필요가 없다. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.

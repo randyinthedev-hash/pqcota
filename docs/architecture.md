@@ -65,7 +65,7 @@
   CI가 arch마다 정적 링크 여부까지 검증한다.
 - **`/proc`·ELF를 자립적으로 판다**: `debug/elf`가 표준 라이브러리다. `ldd`·`readelf`를 부르지 않으므로
   대상 호스트에 그 도구가 없어도, 있더라도 그 출력 형식이 달라도 관측이 흔들리지 않는다.
-- **오케스트레이션·계약 정렬**: Ansible/Salt를 서브프로세스로 부르고, mTLS·gRPC를 이미 쓰고 있어서 그대로 이어 간다.
+- **오케스트레이션·계약 정렬**: Ansible/Salt를 서브프로세스로 부르고, 계약을 gRPC로 규격한다. 전송 인증(mTLS 등)은 그 substrate가 이미 갖고 있는 것을 쓴다.
 - **Rust는 어디에?** ELF 심볼 분석기(§2.3)는 순수하고 고립된 모듈이라 **나중에 Rust로 교체 가능한 명확한 후보**. intake 계약만 지키면 되므로 코어를 건드리지 않고 갈아끼울 수 있다. 지금은 Go로 시작하고 필요 시 격상.
 
 ---
@@ -139,10 +139,11 @@
 **collector는 `CollectionResult`를 emit하는 CLI다**(`pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`·`pqcota-cngscan`). 배포는 표준 substrate(Ansible)로 한다. 디스커버리 실행 시 관측 대상 노드에 반입·실행·회수하고 잔재를 남기지 않는다([collector 배포 설계](../discovery/collector-deployment.md)). **자체 원격 실행 엔진은 만들지 않는다.**
 
 - **이 리포**: collector CLI + **T1 self-service**(사용자가 collector 번들을 직접 실행하며, 에어갭도 포함한다. 무결성은 지금 `SHA256SUMS`로 확인하고, 번들 서명은 [로드맵](../RELEASE_NOTES.md#로드맵-예정-릴리스-계획)에 있다) + **결과 서명·검증**(ed25519, `pqcota-keygen`·`PQCOTA_VERIFY_KEY`) + **스코프 마스터 게이트**(§1.4, `pqcota-ingest`가 등재 노드만 수용). collector를 사용자 자신의 substrate로 감싸 돌릴 수도 있다. 릴리스·번들 서명(공급망 위생)은 여기 속한다.
-- **원칙(불변)**: 어느 경로든 **스코프 게이트 필수** + **RCE 대칭성**(레거시 호스트에 실행체 투입은 위험하므로 서명검증·최소권한·멱등). 부가가치는 push 채널 소유가 아니라 그 위의 게이트·서명·완전성 맵.
+- **원칙(불변)**: 어느 경로든 **스코프 게이트를 지난다** + **RCE 대칭성**(레거시 호스트에 실행체 투입은 위험하므로 서명검증·최소권한·멱등). 부가가치는 push 채널 소유가 아니라 그 위의 게이트·서명·완전성 맵.
+  다만 **스코프 마스터를 주지 않으면 게이트를 생략한다**(한 호스트를 그 자리에서 훑는 경우·데모). 생략했다는 사실은 화면에 낸다(`scope gate: skipped`). 여러 조직의 결과가 한 저장소로 모이는 곳에서는 마스터를 반드시 준다.
 
 **호스트에 올라가는 것 (Phase 0 최소).** [수용 원칙 §2.2 스택] 근거와 직결된다:
-- **OpenSSL 노드**: Go 정적 바이너리 1개 + root/`CAP_SYS_PTRACE` + mTLS 자격. 그 외 의존 0(ELF·/proc 자립 파싱, `ldd`/`lsof`/`ss`/`readelf` 비의존 설계).
+- **OpenSSL 노드**: Go 정적 바이너리 1개 + root/`CAP_SYS_PTRACE` + 그 노드에 닿는 substrate의 접속 자격(참조 경로는 SSH 키). 그 외 의존 0(ELF·/proc 자립 파싱, `ldd`/`lsof`/`ss`/`readelf` 비의존 설계).
 - **Java 노드**: **Go 바이너리 + 인트로스펙션 agent JAR**만 올리면 된다. attach는 OS IPC(트리거 파일+SIGQUIT+유닉스 소켓)라 **JDK 없이 직접** 붙는다(대상이 순수 JRE·jlink 런타임이어도). **동일 UID/root** 필요. HotSpot이 아니면(OpenJ9) 머신의 JDK를 클라이언트로 쓰는 경로로, 그마저 막히면(`DisableAttachMechanism`·JEP 451) 정적 경로로 열화 → `evidence_strength` 하향(§2.3). 3계층 상세: [jvm-collector README](../discovery/collectors/jvm/README.md).
 - **컨테이너 주의**: `/proc`·JVM attach는 **같은 PID/마운트 네임스페이스**에서만 → host PID namespace 또는 사이드카 주입 필요(실배포 최대 함정).
 - **오프호스트로 미룰 것**: 네트워크 스캔(중앙 원격), 아티팩트/소스 스캔(CI·리포), eBPF dynamic-trace(PROPOSE·Phase 0 제외).
@@ -291,40 +292,19 @@ type ProviderSignature struct {
 
 ## 4. Collector Intake 계약 (§1.6, 플러그형 인터페이스)
 
-코어의 유일한 Collector 의존성. **"노드를 주면 정규화된 CBOM Envelope를 반환한다"** 만 안다. 백엔드가 자체 collector/CipherIQ/CBOMkit인지 **몰라야 한다.**
+코어가 Collector에 대해 아는 것은 이 계약 하나뿐이다. **"노드를 주면 정규화된 CBOM Envelope를 반환한다"** 만 안다. 백엔드가 자체 collector/CipherIQ/CBOMkit인지 **몰라야 한다.**
+
+> **이 gRPC는 서드파티 collector를 위해 준비해 둔 seam이다.** 계약과 참조 구현이 있고 테스트가 왕복을 확인하지만, **지금 운영 경로는 파일 회수**다. 레퍼런스 collector는 결과 JSON을 내고 `pqcota-ingest`가 그 디렉터리를 읽는다. 서드파티가 이 seam으로 들어오면 코어는 그 사실을 모르는 채로 같은 계약을 받는다.
 
 ### 4.1 인터페이스 (gRPC)
 
-```protobuf
-service Collector {
-  // 능력 신고 — 코어가 완전성 맵·계층 커버리지 판단에 사용
-  rpc Describe(DescribeRequest) returns (CollectorCapabilities);
-  // 수집 실행 — 정규화된 CBOM Envelope 스트림 반환
-  rpc Collect(CollectRequest) returns (stream CollectionResult);
-}
+`Collector` 서비스는 rpc 둘이다. **`Describe`**(능력 신고 — 코어가 완전성 맵·계층 커버리지 판단에
+쓴다)와 **`Collect`**(수집 실행 — `CollectionResult` 스트림).
 
-message CollectorCapabilities {
-  string collector_id = 1;
-  string version = 2;
-  repeated string crypto_runtimes = 3;   // ["openssl"] | ["jca"] | ...
-  repeated string layers = 4;            // source|artifact|process|network|jvm-introspection
-  repeated string detection_methods = 5; // §2.3 열거형
-  string license = 6;                    // "Apache-2.0" | "GPL-3.0-or-later" ← 라이선스 정리 UX 표기용
-}
-
-message CollectRequest {
-  repeated string target_node_ids = 1;   // 스코프 마스터 게이트 통과분만 (§1.4)
-  ScopeMasterRef scope = 2;
-  map<string,string> options = 3;        // dynamic-trace 등 침습 옵션 (PROPOSE 게이트 별도)
-}
-
-message CollectionResult {
-  Envelope envelope = 1;                 // §3.1
-  bytes cbom_cyclonedx = 2;              // 표준 CycloneDX JSON
-  repeated Finding findings = 3;
-  Completeness completeness = 4;
-}
-```
+**스키마는 여기 옮겨 적지 않는다.** SSOT는
+[`collector.proto`](../contracts/proto/pqcota/discovery/v1/collector.proto)이고, 사람이 읽는 지도는
+[데이터 모델](../contracts/data-model.md)이다. 한때 이 자리에 사본이 있었는데 **필드 번호까지
+어긋난 채 낡아 있었다** — 그것을 계약으로 알고 따라가면 맞지 않는 클라이언트를 만든다.
 
 ### 4.2 계약의 3대 불변식
 

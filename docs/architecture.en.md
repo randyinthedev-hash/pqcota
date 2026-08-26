@@ -69,7 +69,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 - **It digs into `/proc` and ELF on its own**: `debug/elf` is in the standard library. Never calling `ldd`
   or `readelf` means observation does not wobble when the target host lacks those tools — or has them with
   a different output format.
-- **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, mTLS, gRPC momentum.
+- **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, and gRPC for the contract. Transport authentication (mTLS and the like) is whatever the substrate already has.
 - **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and promote it if needed.
 
 ---
@@ -143,10 +143,11 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 **A collector is a CLI that emits a `CollectionResult`** (`pqcota-nodescan`, `pqcota-jvmscan`, `pqcota-netcap`, `pqcota-cngscan`). Deployment goes through a standard substrate (Ansible) — during discovery it is shipped to the observed node, run, retrieved, and leaves no residue ([collector deployment design](../discovery/collector-deployment.md), Korean). **No remote execution engine of our own is built.**
 
 - **This repo**: the collector CLI + **T1 self-service** (the user runs the collector bundle themselves — air-gapped included; integrity is checked today with `SHA256SUMS`, and bundle signing is on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned)) + **result signing and verification** (ed25519, `pqcota-keygen`, `PQCOTA_VERIFY_KEY`) + **the scope master gate** (§1.4; `pqcota-ingest` accepts only registered nodes). The collector can also be wrapped and run by the user's own substrate. Release and bundle signing (supply-chain hygiene) belongs here.
-- **The principle (invariant)**: whatever the path, **the scope gate is mandatory** plus **RCE symmetry** (putting an executable on a legacy host is risky, so: signature verification, least privilege, idempotence). The value added is not owning a push channel but the gate, signing, and completeness map above it.
+- **The principle (invariant)**: whatever the path goes through **the scope gate**, plus **RCE symmetry** (putting an executable on a legacy host is risky, so: signature verification, least privilege, idempotence). The value added is not owning a push channel but the gate, signing, and completeness map above it.
+  That said, **without a scope master the gate is skipped** (scanning one host in place, or the demo), and the fact that it was skipped is printed (`scope gate: skipped`). Where results from several organizations land in one store, the master is always supplied.
 
 **The host footprint (the Phase 0 minimum)** — directly tied to the rationale in acceptance principles §2.2:
-- **An OpenSSL node**: one static Go binary + root/`CAP_SYS_PTRACE` + mTLS credentials. Zero other dependencies (ELF and /proc are parsed self-sufficiently; by design it does not depend on `ldd`/`lsof`/`ss`/`readelf`).
+- **An OpenSSL node**: one static Go binary + root/`CAP_SYS_PTRACE` + whatever credentials the substrate uses to reach that node (SSH keys on the reference path). Zero other dependencies (ELF and /proc are parsed self-sufficiently; by design it does not depend on `ldd`/`lsof`/`ss`/`readelf`).
 - **A Java node**: only the **Go binary plus the introspection agent JAR** need to go up — attach uses OS IPC (a trigger file + SIGQUIT + a unix socket), so it **attaches directly without a JDK** (even if the target is a pure JRE or a jlink runtime). It needs **the same UID or root**. On a non-HotSpot VM (OpenJ9) it goes through the machine's JDK as the client, and if even that is blocked (`DisableAttachMechanism`, JEP 451) it degrades to the static path → `evidence_strength` is lowered (§2.3). The three-layer detail: [the jvm-collector README](../discovery/collectors/jvm/README.md) (Korean).
 - **A container caveat**: `/proc` and JVM attach work only **within the same PID/mount namespace** → a host PID namespace or sidecar injection is needed (the biggest trap in real deployments).
 - **What to defer off-host**: network scanning (remote, central), artifact/source scanning (CI and repos), eBPF dynamic-trace (PROPOSE, excluded from Phase 0).
@@ -295,40 +296,21 @@ The target standard differs by kind — KEM→ML-KEM (FIPS 203), signature→ML-
 
 ## 4. The collector intake contract (§1.6 — the pluggable interface)
 
-The core's only collector dependency. It knows only **"give it a node, get back a canonical CBOM Envelope"**. Whether the backend is our own collector, CipherIQ, or CBOMkit, it **must not know.**
+This contract is all the core knows about a collector. It knows only **"give it a node, get back a canonical CBOM Envelope"**. Whether the backend is our own collector, CipherIQ, or CBOMkit, it **must not know.**
+
+> **This gRPC is a seam prepared for third-party collectors.** The contract and a reference implementation exist and tests exercise the round trip, but **the operational path today is file retrieval**: the reference collectors emit result JSON and `pqcota-ingest` reads that directory. When a third party comes in through this seam, the core receives the same contract without knowing the difference.
 
 ### 4.1 The interface (gRPC)
 
-```protobuf
-service Collector {
-  // capability declaration — used by the core to judge the completeness map and layer coverage
-  rpc Describe(DescribeRequest) returns (CollectorCapabilities);
-  // run a collection — returns a stream of canonical CBOM Envelopes
-  rpc Collect(CollectRequest) returns (stream CollectionResult);
-}
+The `Collector` service has two rpcs: **`Describe`** (capability declaration — the core uses it to judge
+the completeness map and layer coverage) and **`Collect`** (run the collection — a stream of
+`CollectionResult`).
 
-message CollectorCapabilities {
-  string collector_id = 1;
-  string version = 2;
-  repeated string crypto_runtimes = 3;   // ["openssl"] | ["jca"] | ...
-  repeated string layers = 4;            // source|artifact|process|network|jvm-introspection
-  repeated string detection_methods = 5; // the §2.3 enumeration
-  string license = 6;                    // "Apache-2.0" | "GPL-3.0-or-later" ← surfaced in the UX
-}
-
-message CollectRequest {
-  repeated string target_node_ids = 1;   // only what passed the scope master gate (§1.4)
-  ScopeMasterRef scope = 2;
-  map<string,string> options = 3;        // invasive options such as dynamic-trace (a separate PROPOSE gate)
-}
-
-message CollectionResult {
-  Envelope envelope = 1;                 // §3.1
-  bytes cbom_cyclonedx = 2;              // standard CycloneDX JSON
-  repeated Finding findings = 3;
-  Completeness completeness = 4;
-}
-```
+**The schema is not copied here.** The SSOT is
+[`collector.proto`](../contracts/proto/pqcota/discovery/v1/collector.proto), and the human-readable map
+is the [data model](../contracts/data-model.en.md). There used to be a copy in this spot, and it had gone
+stale **down to the field numbers** — following it as if it were the contract produces a client that does
+not fit.
 
 ### 4.2 The contract's three invariants
 
