@@ -32,7 +32,7 @@ host=localhost port=5432 user=postgres dbname=pqcota
 
 ### 그다음. 만든 인벤토리로 collector 돌리기
 
-`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그건 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보이는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
+`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그건 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보여 주는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
 
 ```bash
 ansible-playbook -i targets.ini discovery/ansible/discover.yml
