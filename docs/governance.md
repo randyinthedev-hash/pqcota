@@ -15,7 +15,7 @@
 | 커밋 | 253 (2026-08-05 이후, 2026-08-26 기준) | `git log --oneline \| wc -l` |
 | 릴리스 | 16 | `gh release list` |
 | 자동 게이트 | 11 | `Makefile`의 `all` 타깃 |
-| 테스트 함수 | 225 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
+| 테스트 함수 | 227 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
 | 케이스 그룹 | 4 (`TD`·`TV`·`TP`·`TK`) | [테스트 맵](test-map.md) |
 | 설계 문서 | 규정서 · 아키텍처 · 단계별 셋 · 수용 원칙 · 호환성 · 검토 중 | [docs/](README.md) |
 
