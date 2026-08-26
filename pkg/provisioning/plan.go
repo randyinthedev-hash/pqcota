@@ -14,6 +14,8 @@ var ErrNotFinalized = errors.New("plan not finalized — refusing to provision (
 // Executable — 확정 계획이 프로비저닝 실행 근거로 유효한지 검증한다(§3.7 Inventory→Deploy 게이트).
 // 규칙: FINALIZED 상태 + 승인 서명(§3.3③) + 조치 최소 1건. 파생이 아니라 실행 직전 관문이다.
 //
+// GATE: 배선 필수
+//
 // ★ 경계(§5): 이 함수는 전 컴포넌트가 공유하는 "실행 근거" 계약 규칙일 뿐이다.
 // 실제 단계적 실행·오케스트레이션(drain·rolling·게이트·롤백)은 하지 않는다(§4.3).
 func Executable(p *provisioningv1.FinalizedPlan) error {
