@@ -75,7 +75,7 @@ func TestPlanGateRefuses(t *testing.T) {
 	}{
 		{"승인 서명이 없다", planNoSig, "no approval signature"},
 		{"조치가 없다", planNoActions, "no actions"},
-		{"확정되지 않았다", planDraft, "status="},
+		{"확정되지 않았다", planDraft, "PLAN_STATUS_DRAFT"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, args := range [][]string{

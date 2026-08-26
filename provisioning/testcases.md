@@ -62,6 +62,7 @@
 |---|---|---|---|
 | [TP-GATE-1](../pkg/provisioning/plan_test.go) | `TestExecutable`: FINALIZED+승인 서명+조치 ≥1 / draft·in-review / 서명 없음 / 조치 0건 / `nil` | 첫째만 **실행 가능**, 나머지는 전부 **거부** | 확정 전 계획으로 머신을 건드리지 못하게 하되, 정당한 계획까지 막으면 아무것도 배포할 수 없다. 잘못된 입력에서 터지면 게이트가 없는 것과 같다 |
 | [TP-GATE-2](../pkg/provisioning/plan_test.go) | `TestProviderClassWarnings`: placeholder를 낳는 조치 | 경고 1건(provider 이름·해결책 포함). `Executable`은 **여전히 통과** | 조각 안 주석은 열어봐야 보이므로 경고로도 띄운다. 미확정과 실행 거부는 별개다 |
+| [TP-GATE-3](../provisioning/cmd/pqcota-provision/main_test.go) | `TestPlanGateRefuses`·`TestPlanGateAllows`: 빌드한 `pqcota-provision`에 서명 없음 / 조치 0건 / draft 계획을 준다(정방향·`--rollback` 둘 다) | **종료 코드가 0이 아니고 stdout에 플레이북이 한 줄도 없다.** 사유가 stderr에 나온다. 정상 계획은 통과 | 규칙이 옳아도 **제품 경로가 부르지 않으면 보장이 아니다.** 실제로 CLI가 `Executable`을 부르지 않고 상태만 비교하던 동안 TP-GATE-1은 계속 초록이었다. 반환값을 버리는 식으로 배선이 헐거워져도 여기서 드러난다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)
 조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 것은 정직하게 비-config임을 명시한다.
@@ -122,7 +123,7 @@
 
 | # | 대상 | 케이스 | 레벨 |
 |---|---|---|---|
-| 1 | **실행 게이트**(finalized-only) · 경고 표면화 | TP-GATE-1–2 | unit |
+| 1 | **실행 게이트**(finalized-only) · 경고 표면화 · CLI 배선 | TP-GATE-1–3 | unit |
 | 2 | **조치 아티팩트 렌더**(OpenSSL/JCA) · 계획 채움 | TP-RENDER-1–13 | unit |
 | 3 | **플레이북 생성**(collector 배포 + L1/L2/L3 적용·롤백) | TP-PLAYBOOK-1–11 | unit |
 | 4 | **경로·무결성**(삼자 일치·절대 경로·sha256·디렉터리) | TP-PLAYBOOK-12–17 | unit |
