@@ -577,3 +577,64 @@ but record its age" from §7.4 holds.
 
 This design is independent of both and can go first. But once §5 arrives, the answer to "which nodes should run
 often" changes, so keeping the per-node variables of §7.2 open is enough to keep it from being shaken later.
+
+---
+
+## 8. The signature is not bound to a collector
+
+`pqcota-ingest` currently confirms only that **someone signed**. It does not check that **the collector
+named on the envelope signed**. The value of a signature is provenance, and half of it is missing.
+
+### 8.1 The verifier exists; the wiring does not
+
+[`sign.VerifyFrom`](../pkg/kernel/sign/sign.go) verifies against a `collector_id → public key` binding,
+and its comment spells out why that matters. **And nothing calls it.** The CLI passes **every** key from
+`PQCOTA_VERIFY_KEY` to [`sign.Verify`](../inventory/cmd/pqcota-ingest/main.go).
+
+```
+PQCOTA_VERIFY_KEY=keyA,keyB,keyC
+  → matching any one of them is enough
+  → envelope.collector_id is never consulted
+  → whoever holds keyB can write "I am pqcota-nodescan" and be accepted
+```
+
+Where several organizations and several collectors put their keys in one list, this becomes a real hole:
+one leaked key lets its holder **wear any collector's name.**
+
+### 8.2 What blocks it is the environment-variable format
+
+It is not a one-line change. `VerifyFrom` takes a `map[string]string`, and `PQCOTA_VERIFY_KEY` lists only
+keys. There is no collector name anywhere in the current value to build that map from.
+
+### 8.3 Four things to settle
+
+**The format.** Joining `collector_id=key` pairs with commas is the simplest option
+(`nodescan=AAA,netcap=BBB`). A key can itself contain `=`, so **split on the first `=` only**. A separate
+file (JSON or CSV) is the other option — this repo has precedent for taking access material as a file
+(`hosts.csv`) — but it grows what used to be a single environment variable.
+
+**How the old format is accepted.** Keep accepting today's format (a list with no `=`) and the hole
+stays; refuse it and existing users break. Following "do not delete, add" from
+[compatibility policy §3](compatibility.md) (Korean) means a second environment variable while the old one
+is accepted with a warning for a while. But **whether "warn and pass" is right here** needs a second look:
+a signature is a security boundary, so "stale but accepted" weighs more than it does elsewhere.
+
+**Meeting a collector with no key.** `VerifyFrom` refuses when no key is registered for that collector.
+Anyone who registered only one key then loses every result from the others. Refusing is right, but
+**how many were refused and why** has to be counted and reported by `IngestReport`, as it is today (§2.6).
+
+**The relation to `RequireSignature`.** Today there is only "refuse when there is no verifier"; nothing
+asks whether the verifier that exists checks provenance. Once the format changes, the two have to be
+either one axis or deliberately separate.
+
+### 8.4 What changes
+
+| Where | What |
+|---|---|
+| `pqcota-ingest` | `envKeys` parsing, building `VerifySig` |
+| The environment-variable docs | the `PQCOTA_VERIFY_KEY` description in the command reference, the demo, the journey |
+| `IngestReport` | somewhere to count the "no key for that collector" reason |
+| Tests | a result arriving under another collector's name is refused |
+
+**The gate marker becomes `배선 필수` then.** It is `보류` today, so `check-gates` lets it pass while
+announcing it every run — so that what was deferred does not go quiet.

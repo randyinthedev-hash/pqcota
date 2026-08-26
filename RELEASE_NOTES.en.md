@@ -50,6 +50,13 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, §1.4 and §2.5 say to send it to a **registration request**, and SD-5 even set an acceptance criterion for it — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today. The design is in [Designs under review §6](docs/under-review.en.md).
 
+- **Binding the signature to a collector (planned · version TBD)** — the ingest today confirms only that
+  **someone signed**. `PQCOTA_VERIFY_KEY` is a list of keys, so there is no way to check it against
+  `envelope.collector_id`, and whoever holds one key can arrive **wearing any collector's name**.
+  `sign.VerifyFrom`, which verifies against that binding, already exists and **nothing calls it**. What
+  blocks it is the environment-variable format, so it is not a one-line change. The design is in
+  [Designs under review §8](docs/under-review.en.md).
+
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the [collector deployment design](discovery/collector-deployment.md) (Korean). Until then, verify integrity with `sha256sum -c`.
 
 ### Not on the roadmap — deliberately
