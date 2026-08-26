@@ -38,7 +38,7 @@ still pass a host build — which is why `make build` also cross-compiles **linu
 The build procedure is the same as [root README · Build](README.en.md#build). What you additionally use when contributing are the gates and tests:
 
 ```bash
-make            # all: generate + lint + fmt-check + check-boundary + check-docs + vet + build + build-jar + test
+make            # every gate (what it runs is the Makefile's all target)
 go test ./...   # unit
 ```
 
@@ -96,7 +96,7 @@ See the [crypto runtime acceptance principles](docs/runtime-acceptance.en.md).
 
 This repo enforces **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
 
-**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs `buf lint` · `fmt-check` · `check-boundary` · `check-docs` · `go vet` · `build` (host + linux + windows cross) · `build-jar` · `go test`, so everything must be **green** before a PR. `check-docs` gates the Markdown: broken links/anchors, sentences calling something "out of this repo" that this repo actually does, role-division prose (docs carry **function and usage** only), and personal dev-environment details. Follow standard Go idioms, but use the spec's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
+**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs every gate, so all of them must pass before a PR. Which gate blocks what is in the table in [governance](docs/governance.md) (Korean). It is not listed again here because every new gate would then need two places kept in step — and `check-collectors` was in fact missing from this sentence for a while. Follow standard Go idioms, but use the spec's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
 
 **Comments explain "why", with a §.** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong, anchored to a spec § (the original is Korean). This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie (§2.6)`.
 

@@ -260,6 +260,15 @@ func main() {
 		titles = append(titles, "")
 	}
 
+	// (12) 문서의 Go 버전 ↔ go.mod. 툴체인을 올리면 아홉 곳을 손으로 맞춰야 했다.
+	if gv := checkGoVersion(); len(gv) > 0 {
+		hits = append(hits, gv)
+		titles = append(titles, "a document states a Go version that `go.mod` does not — bump them together")
+	} else {
+		hits = append(hits, nil)
+		titles = append(titles, "")
+	}
+
 	fail := false
 	for i, title := range titles {
 		if title == "" {
@@ -734,3 +743,49 @@ func skeleton(path string) ([]section, error) {
 	}
 	return out, nil
 }
+
+// checkGoVersion — 문서가 적은 Go 버전이 `go.mod`와 같은가.
+//
+// 툴체인을 올리면 지금은 문서 아홉 곳(루트 README·CONTRIBUTING·여정·데모와 각 영문 짝)을 손으로
+// 맞춰야 한다. SSOT는 `go.mod`의 `go` 지시자다.
+//
+// **릴리스 노트는 보지 않는다.** 지난 릴리스가 어떤 툴체인으로 나갔는지는 그때의 사실이라 지금
+// 값과 달라도 맞다. 과거를 지금에 맞추라고 막으면 역사를 고치게 된다.
+//
+// 세 자리 버전만 본다. 「Go 1.24에서 이 값이 됐다」처럼 두 자리로 적은 자리는 특정 릴리스를
+// 가리키는 것이 아니라 그 계열을 가리키므로 대조 대상이 아니다.
+func checkGoVersion() []string {
+	b, err := os.ReadFile("go.mod")
+	if err != nil {
+		return nil // go.mod가 없으면 이 검사 대상이 아니다
+	}
+	m := goDirective.FindStringSubmatch(string(b))
+	if m == nil {
+		return nil
+	}
+	want := m[1]
+
+	var miss []string
+	for _, d := range tracked("*.md") {
+		if strings.HasPrefix(filepath.Base(d), "RELEASE_NOTES") {
+			continue
+		}
+		ls, _, err := lines(d)
+		if err != nil {
+			continue
+		}
+		for n, line := range ls {
+			for _, g := range goVersion.FindAllStringSubmatch(line, -1) {
+				if g[1] != want {
+					miss = append(miss, fmt.Sprintf("%s:%d: says Go %s, but `go.mod` says %s", d, n+1, g[1], want))
+				}
+			}
+		}
+	}
+	return miss
+}
+
+var (
+	goDirective = regexp.MustCompile(`(?m)^go (\d+\.\d+\.\d+)\s*$`)
+	goVersion   = regexp.MustCompile(`(?i)\bgo ?(\d+\.\d+\.\d+)`)
+)
