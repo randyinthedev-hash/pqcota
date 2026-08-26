@@ -51,6 +51,7 @@
 | [`workloads/`](workloads) | 노드에 배포되는 **데모 크립토 워크로드**(스캔·관측 대상): `CryptoApp.java`(JCA/BouncyCastle) · `pqc-echo/`(PQC TLS 트래픽 생성기, Go) | ❌ |
 | [`expected-output/`](expected-output) | 실행 전 **예상 결과** 미리보기(콘솔·토폴로지 SVG) | ❌ |
 | [`topology/`](topology) | **데모 환경 정의**: `topology.yaml`(첫 실행 시 샘플 복사)과 생성기 | ✏️ 이 파일을 고쳐 구성 변경 |
+| [`recording/`](recording/README.md) | 데모를 **스크린캐스트로 만들 때**의 절차와 편집 뼈대. 제품을 쓰는 데는 필요 없고, 발표·출품용 영상을 다시 만들 때 쓴다 | ❌ |
 | `Dockerfile` | 컨테이너 **빌드** 정의(노드 종류별 스테이지) | ❌(스크립트가 호출) |
 
 > 처음이면 **`scripts/`의 up → demo → down** 세 개만 보면 됩니다. 나머지는 그 뒤에서 도는 부품입니다.

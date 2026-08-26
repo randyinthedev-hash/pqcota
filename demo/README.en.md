@@ -53,6 +53,7 @@ What gets built is **the source as currently checked out**, including uncommitte
 | [`workloads/`](workloads) | the **demo crypto workloads** deployed to nodes (the things being scanned and observed): `CryptoApp.java` (JCA/BouncyCastle) · `pqc-echo/` (a PQC TLS traffic generator, in Go) | ❌ |
 | [`expected-output/`](expected-output) | a preview of the **expected results** before you run | ❌ |
 | [`topology/`](topology) | the **environment definition** — `topology.yaml` (a sample is copied on first run) and the generator | ✏️ edit this file to change the setup |
+| [`recording/`](recording/README.md) | the procedure and editing skeleton for turning the demo into a **screencast** (Korean). Not needed to use the product — it is for rebuilding the presentation video | ❌ |
 | `Dockerfile` | the container **build** definition (a stage per node kind) | ❌ (the scripts call it) |
 
 > If this is your first time, the three scripts **up → demo → down** are all you need. Everything else is machinery running behind them.
