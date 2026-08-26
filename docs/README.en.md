@@ -8,6 +8,11 @@ English · [한국어](README.md)
 
 > **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](regulation.en.md).
 
+> **Before digging into the design**, it is worth walking [the journey](../journey.md) (Korean) at the
+> repository root once. It only shows what comes out in what order — preparation, observation, ingest,
+> query, generation, application — which makes it clear what the documents here are fixing.
+> **It is written for people using the platform, so it does not live in this folder.**
+
 The documents that fix the platform's "what, under which rules (WHAT)" and "through which modules and contracts (HOW)". The `§` references in the code point here.
 
 ## Reading order

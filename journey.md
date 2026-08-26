@@ -3,12 +3,12 @@
 # 여정: 관측에서 전환물까지
 
 이 문서는 pqcota를 **한 번 처음부터 끝까지** 따라간다. 무엇을 어떤 규칙으로 하는지는
-[규정서](regulation.md)와 단계별 설계가 정하고, 여기서는 **어떤 순서로 무엇이 나오는지**만 본다.
+[규정서](docs/regulation.md)와 단계별 설계가 정하고, 여기서는 **어떤 순서로 무엇이 나오는지**만 본다.
 
 **밖으로 나가는 것은 없다.** 관측도 적재도 생성도 전부 자기 인프라 안에서 끝난다. 어디로
 보내는 경로가 아예 없다. 받을 곳이 없으니 보낼 것도 없다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
+> **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
 
 ---
 
@@ -57,9 +57,9 @@ flowchart TB
 |---|---|
 | 무엇이 대상 노드에 남나 | **아무것도 남지 않는다.** collector를 반입·실행·회수하고 지운다. 상주 에이전트도 데몬도 없다 |
 | 접속 계정·키는 어디에 | 인벤토리에는 **타입에 그것을 담을 곳이 없다**(§1.5). 런타임 전용 Ansible 인벤토리(`0600`)에만 있고 영속되지 않는다 |
-| 무엇을 읽나 | 로드된 라이브러리·등록된 provider·핸드셰이크에서 **협상된 알고리즘 이름**이다. 복호화하지 않고, 설정 원문·패킷 페이로드도 담지 않는다([raw_capture 규약](../contracts/README.md)) |
+| 무엇을 읽나 | 로드된 라이브러리·등록된 provider·핸드셰이크에서 **협상된 알고리즘 이름**이다. 복호화하지 않고, 설정 원문·패킷 페이로드도 담지 않는다([raw_capture 규약](contracts/README.md)) |
 | 관측하지 못한 것은 | **못 봤다고 적는다.** 완전성 맵이 그것을 적는 곳이다(§2.6). 조용히 빠지면 *"그 노드엔 없다"* 로 읽힌다 |
-| 무엇을 판정하나 | **하지 않는다.** 🔴는 "취약하다"가 아니라 "고전 알고리즘으로 협상됐다"는 관측이다([아키텍처 §6](architecture.md#6-무판단-원칙)) |
+| 무엇을 판정하나 | **하지 않는다.** 🔴는 "취약하다"가 아니라 "고전 알고리즘으로 협상됐다"는 관측이다([아키텍처 §6](docs/architecture.md#6-무판단-원칙)) |
 
 ---
 
@@ -98,7 +98,7 @@ pqcota-hosts --ansible-out targets.ini --dsn "$PQCOTA_DSN" hosts.csv
 | 엔드포인트 upsert | `node_id`·이름·ip·port**만**. 계정·키는 빠진다. 조회 화면의 `▸`머신 헤더가 여기서 나온다 |
 
 **이 단계는 관측의 전제가 아니다.** 무엇이 필수이고 무엇이 선택인지는
-[discovery/cmd의 「필수인가」](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다)에 표로 있다.
+[discovery/cmd의 「필수인가」](discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다)에 표로 있다.
 
 ---
 
@@ -122,7 +122,7 @@ ansible-playbook -i targets.ini discovery/ansible/discover.yml  # 여러 노드
 "이 노드엔 TLS 링크가 없다"로 읽히기 때문이다.
 
 엣지에는 그 통신을 연 앱이 붙는다. 짧게 붙었다 끊긴 연결은 조회 시점에 소켓이 이미 없어 `@?`로
-남고, 그 빈칸은 [`pqcota-declare-attribution`](../inventory/cmd/README.md)으로 메운다. 선언은
+남고, 그 빈칸은 [`pqcota-declare-attribution`](inventory/cmd/README.md)으로 메운다. 선언은
 관측을 고치지 않고 자기 레인에 쌓인다.
 
 ---
@@ -145,7 +145,7 @@ cbomkit scan ./repo | pqcota-cbom-ingest - cmdb://payment-gw   # CI에서 바로
 | 어느 레인인가 | **관측 레인**이다. `detection_method=source/artifact`가 붙어 런타임 관측과 구별되고, 증거 강도도 거기서 갈린다 |
 
 **파일만 오간다.** 스캐너를 부르거나 링크하지 않으므로 그쪽 라이선스가 전염되지 않는다 →
-[위임 수신 설계](../inventory/cbom-intake.md).
+[위임 수신 설계](inventory/cbom-intake.md).
 
 ---
 
@@ -196,7 +196,7 @@ pqcota-inventory -diff <old> <new>     # 두 스냅샷 사이의 변화
 생성기가 **거부한다.** 이 단계에서 가장 센 게이트다.
 
 계획을 무엇으로 채울지, 무엇을 언제 바꿀지는 이 도구가 정하지 않는다. 손으로 쓴 계획으로도
-끝까지 돌아간다 → [예시 계획들](../examples/provisioning/plans/README.md).
+끝까지 돌아간다 → [예시 계획들](examples/provisioning/plans/README.md).
 
 ---
 
@@ -242,7 +242,7 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 > 상태**다. 레코드는 append-only라 처음 캡처가 지워지지는 않지만 같은 `id`로 before가 둘이 되고,
 > 순서대로 읽어 마지막 것을 집으면 틀린 before를 본다. 되돌릴 근거는 **처음 것**이다.
 
-[데모](../demo/README.md)가 이 두 줄을 실제 노드에서 돌려 적용·되돌림까지 확인한다. 생성만 보면
+[데모](demo/README.md)가 이 두 줄을 실제 노드에서 돌려 적용·되돌림까지 확인한다. 생성만 보면
 깨끗한 노드에서 깨지는 플레이북도 통과하기 때문이다.
 
 ---
@@ -262,14 +262,14 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 
 | 여정 | 어디에 | 상태 |
 |---|---|---|
-| 3 · 관측(openssl · jvm · network) | [`discovery/`](../discovery/README.md) | **끝.** 리눅스 · 커널 3.2+ |
-| 3 · 관측(Windows CNG) | [`cng-collector`](../discovery/collectors/cng/README.md) | **끝.** 실제 장비에서 확인했다 |
-| 3′ · 위임 수신(CI가 낸 CycloneDX) | [위임 수신 설계](../inventory/cbom-intake.md) | **끝.** 스캐너는 돌리지 않는다 |
-| 4 · 적재(관문 다섯 · 거절 이력 · 조직) | [`inventory/cmd`](../inventory/cmd/README.md) | **끝** |
-| 5 · 조회(이력 · 스냅샷 · 변화 diff) | [`inventory/`](../inventory/README.md) | **끝** |
-| 7 · 생성(L1/L2/L3 · 롤백 · before 레코드) | [`provisioning/`](../provisioning/README.md) | **끝** |
+| 3 · 관측(openssl · jvm · network) | [`discovery/`](discovery/README.md) | **끝.** 리눅스 · 커널 3.2+ |
+| 3 · 관측(Windows CNG) | [`cng-collector`](discovery/collectors/cng/README.md) | **끝.** 실제 장비에서 확인했다 |
+| 3′ · 위임 수신(CI가 낸 CycloneDX) | [위임 수신 설계](inventory/cbom-intake.md) | **끝.** 스캐너는 돌리지 않는다 |
+| 4 · 적재(관문 다섯 · 거절 이력 · 조직) | [`inventory/cmd`](inventory/cmd/README.md) | **끝** |
+| 5 · 조회(이력 · 스냅샷 · 변화 diff) | [`inventory/`](inventory/README.md) | **끝** |
+| 7 · 생성(L1/L2/L3 · 롤백 · before 레코드) | [`provisioning/`](provisioning/README.md) | **끝** |
 | 8 · 적용 | 표준 Ansible 플레이북 | **끝.** 데모가 실제 노드에서 확인한다 |
-| 7 · 생성(Windows CNG) | 관측만 되고 전환물은 아직 | [로드맵](../RELEASE_NOTES.md#로드맵-예정-릴리스-계획) |
+| 7 · 생성(Windows CNG) | 관측만 되고 전환물은 아직 | [로드맵](RELEASE_NOTES.md#로드맵-예정-릴리스-계획) |
 | 6 · 확정 계획을 무엇으로 채우나 |: | **정하지 않는다.** 손으로 쓴 계획으로 돌아간다 |
 | 화면(UI) |: | **없다.** CLI와 생성물이다 |
 
@@ -279,8 +279,8 @@ ansible-playbook -i targets.ini rollback.yml    # 되돌림
 
 | | 어디에 |
 |---|---|
-| 무엇을 어떤 규칙으로 | [규정서](regulation.md) · [아키텍처](architecture.md) |
-| 각 단계의 내부 | [디스커버리](../discovery/design.md) · [인벤토리](../inventory/design.md) · [프로비저닝](../provisioning/design.md) 설계 |
-| 계약 메시지의 모양 | [데이터 모델](../contracts/data-model.md) |
+| 무엇을 어떤 규칙으로 | [규정서](docs/regulation.md) · [아키텍처](docs/architecture.md) |
+| 각 단계의 내부 | [디스커버리](discovery/design.md) · [인벤토리](inventory/design.md) · [프로비저닝](provisioning/design.md) 설계 |
+| 계약 메시지의 모양 | [데이터 모델](contracts/data-model.md) |
 | 선언 대조 · 리뷰 확정 거버넌스 · 플릿 오케스트레이션 | **하지 않는다.** 계약에 들어올 곳만 정해 두었다 |
 | 무엇을 언제 바꿀지 | **정하지 않는다.** 관측 사실만 내고, 확정은 계획을 쓰는 쪽에서 한다 |

@@ -485,7 +485,7 @@ contract nobody could fetch came first.
 
 ### Built
 
-- **[The journey](docs/journey.md) (Korean)** — one document that walks the whole way: preparation,
+- **[The journey](journey.md) (Korean)** — one document that walks the whole way: preparation,
   observation, ingestion, querying, generation, application, rollback. The regulation fixes the rules
   and each stage design covers its own inside, but nothing answered "in what order does what come out,
   from start to finish". It puts the three entrances (one node in place · many nodes over Ansible ·

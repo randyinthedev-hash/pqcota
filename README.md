@@ -75,7 +75,7 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 - **Docker로 전 범위를 한 번에** → 위 두 줄이면 된다. 구성·예상 결과·자기 호스트에 적용하는 법은 [demo/](demo/README.md)
 - **커맨드를 하나씩 최소 설정으로** → [examples/](examples/README.md). Go만 있으면 되고 Postgres도 대상 노드도 필요 없다
-- **실제 인프라에서 어떤 순서로 무엇이 나오나** → [여정](docs/journey.md). 컨테이너 없이 순서만 훑는다
+- **실제 인프라에서 어떤 순서로 무엇이 나오나** → [여정](journey.md). 컨테이너 없이 순서만 훑는다
 - **리포에 손대려면** → [CONTRIBUTING](CONTRIBUTING.md), 설계 문서는 [docs/](docs/README.md)
 
 ---
