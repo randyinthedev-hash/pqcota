@@ -76,7 +76,7 @@ provisioning (generate, apply, roll back), against nodes it stands up as contain
 
 - **The whole scope at once, with Docker** → the two lines above. Setup, expected output, and how to point it at your own hosts are in [demo/](demo/README.en.md)
 - **One command at a time, minimal setup** → [examples/](examples/README.md) (Korean). Go is all you need — no Postgres, no target nodes
-- **What comes out in what order on real infrastructure** → [the journey](docs/journey.md) (Korean). No containers; it walks the order only
+- **What comes out in what order on real infrastructure** → [the journey](journey.md) (Korean). No containers; it walks the order only
 - **Working on the repo** → [CONTRIBUTING](CONTRIBUTING.en.md), and the design documents in [docs/](docs/README.en.md)
 
 ---
