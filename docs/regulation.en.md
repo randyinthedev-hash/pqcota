@@ -135,7 +135,7 @@ In a legacy estate, absent source is **the default** (vendor binaries, lost sour
 
 - **A canonical CBOM + Envelope**: the body (the fields in acceptance principles §2.4) plus an Envelope (collector id and version, collection method, time, target node, **the collector's signature**)
 - **A completeness map**: coverage against scope — **recorded separately per collector and per layer** ("scanned by Theia, process layer not collected"). Only then does Inventory's UNOBSERVED verdict avoid confusing "genuinely not there" with "impossible to observe in principle".
-- Collection channel: mTLS authentication plus signed reports. Avoid self-reference (the management-plane crypto is separated from and stated apart from the data plane)
+- Collection channel: an authenticated transport (SSH, mTLS, …) carrying signed reports. **The two have different owners** — transport authentication belongs to the substrate that carries the results (the reference path today is Ansible/SSH), and what this repo enforces is the **report signature** (`pqcota-keygen`, `PQCOTA_VERIFY_KEY`, `PQCOTA_REQUIRE_SIGNATURE`). Avoid self-reference (the management-plane crypto is separated from and stated apart from the data plane)
 
 ---
 

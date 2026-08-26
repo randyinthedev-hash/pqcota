@@ -136,7 +136,7 @@ collector는 intake 계약(§1.6)을 만족하는 한 무엇이든 붙는다. �
 
 - **정규화된 CBOM + Envelope**: 본문(수용 원칙 §2.4 필드) + Envelope(collector id+버전, 수집 방법, 시각, 대상 노드, **collector 서명**)
 - **완전성 맵**: 스코프 대비 커버리지다. **collector별·계층별로 분리 기록**한다("Theia 스캔됨, 프로세스 계층 미수집"). 이래야 Inventory의 UNOBSERVED 판정에서 "실제 없음"과 "원리상 관측하지 못함"을 혼동하지 않는다.
-- 수집 채널은 mTLS로 인증하고 리포트에 서명한다. 관리 평면의 크립토를 데이터 평면과 분리해 명시함으로써 자기참조를 피한다.
+- 수집 채널은 인증된 전송(SSH·mTLS 등) 위에 두고 리포트에 서명한다. **둘의 주인이 다르다.** 전송 인증은 결과를 나르는 substrate가 맡고(지금 참조 경로는 Ansible/SSH다), 이 리포가 강제하는 것은 **리포트 서명**이다(`pqcota-keygen`·`PQCOTA_VERIFY_KEY`·`PQCOTA_REQUIRE_SIGNATURE`). 관리 평면의 크립토를 데이터 평면과 분리해 명시함으로써 자기참조를 피한다.
 
 ---
 
