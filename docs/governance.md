@@ -12,7 +12,7 @@
 
 | | 지금 | 세는 법 |
 |---|---|---|
-| 커밋 | 246 (2026-08-05 이후) | `git log --oneline \| wc -l` |
+| 커밋 | 253 (2026-08-05 이후, 2026-08-26 기준) | `git log --oneline \| wc -l` |
 | 릴리스 | 16 | `gh release list` |
 | 자동 게이트 | 10 | `Makefile`의 `all` 타깃 |
 | 테스트 함수 | 225 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |

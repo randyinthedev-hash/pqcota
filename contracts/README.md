@@ -153,7 +153,7 @@ proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 �
 ## 코드 생성
 
 ```bash
-# 생성물은 커밋하지 않는다 — 계약이 바뀌면 각자 다시 만든다
+# gen/은 커밋되어 있다 — 계약을 고쳤을 때만 다시 만들어 같은 커밋에 넣는다
 make generate                              # = cd contracts && buf generate
 cd contracts && buf lint                   # 또는 make lint
 

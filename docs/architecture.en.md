@@ -142,7 +142,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 **A collector is a CLI that emits a `CollectionResult`** (`pqcota-nodescan`, `pqcota-jvmscan`, `pqcota-netcap`, `pqcota-cngscan`). Deployment goes through a standard substrate (Ansible) — during discovery it is shipped to the observed node, run, retrieved, and leaves no residue ([collector deployment design](../discovery/collector-deployment.md), Korean). **No remote execution engine of our own is built.**
 
-- **This repo**: the collector CLI + **T1 self-service** (the user runs a signed collector bundle themselves — air-gapped included) + **result signing and verification** (ed25519, `pqcota-keygen`, `PQCOTA_VERIFY_KEY`) + **the scope master gate** (§1.4; `pqcota-ingest` accepts only registered nodes). The collector can also be wrapped and run by the user's own substrate. Release and bundle signing (supply-chain hygiene) belongs here.
+- **This repo**: the collector CLI + **T1 self-service** (the user runs the collector bundle themselves — air-gapped included; integrity is checked today with `SHA256SUMS`, and bundle signing is on the [roadmap](../RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned)) + **result signing and verification** (ed25519, `pqcota-keygen`, `PQCOTA_VERIFY_KEY`) + **the scope master gate** (§1.4; `pqcota-ingest` accepts only registered nodes). The collector can also be wrapped and run by the user's own substrate. Release and bundle signing (supply-chain hygiene) belongs here.
 - **The principle (invariant)**: whatever the path, **the scope gate is mandatory** plus **RCE symmetry** (putting an executable on a legacy host is risky, so: signature verification, least privilege, idempotence). The value added is not owning a push channel but the gate, signing, and completeness map above it.
 
 **The host footprint (the Phase 0 minimum)** — directly tied to the rationale in acceptance principles §2.2:
@@ -382,7 +382,7 @@ The practical consequence is **the distinction between diff and reconcile**. **C
 | Component | Basis in the regulation | AUTO/PROPOSE/MANUAL |
 |---|---|---|
 | The collector intake contract (protobuf) + SDK | §1.6 | — (a contract) |
-| `openssl-collector`: `/proc`, `ldd`, `readelf`, ELF symbols | §2.3 | AUTO |
+| `openssl-collector`: parses `/proc` and ELF symbols itself (no `ldd`, no `readelf`) | §2.3 | AUTO |
 | `jvm-collector`: JVM attach → `getProviders()` | §2.2, §2.3 ★ | AUTO (while running); not running is a gap |
 | Declaration import (loading a CMDB/asset registry) | §1.4 | AUTO |
 | The six-step normalization pipeline + attaching `evidence_strength` | §2.4, §2.3 | AUTO |

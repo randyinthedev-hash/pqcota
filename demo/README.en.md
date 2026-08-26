@@ -193,7 +193,7 @@ It does not end at `hosts.csv`:
 | # | What you prepare | Required? | What it is |
 |---|---|---|---|
 | 1 | **`hosts.csv`** | required for remote multi-node | node_id, ip, port, account, key → `pqcota-hosts` generates the Ansible inventory (`targets.ini`, 0600, not persisted). With `--dsn` it also upserts the endpoint (secrets excluded). **Not needed** if you are scanning one host in place |
-| 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbook ships them for you** (`discover.yml` ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.en.md#build) (signed prebuilt releases are on the [roadmap](../RELEASE_NOTES.en.md) — until then, building from source is the rule) |
+| 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbook ships them for you** (`discover.yml` ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.en.md#build) (per-arch prebuilt binaries are already in the releases and their integrity is checked with `SHA256SUMS`; only the signature that proves they came from this repo is still on the [roadmap](../RELEASE_NOTES.en.md)) |
 | 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](../discovery/ansible/discover.yml) is the **reference implementation** |
 
 After that it is the same as the demo — hand the collected results to `pqcota-ingest` and they are normalized and stored; view them with `pqcota-inventory`.
