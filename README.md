@@ -93,25 +93,17 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 pqcota는 **중앙 컨트롤러 노드** 하나와, 그 컨트롤러가 Ansible/SSH로 닿는 **대상 노드들**로 구성된다.
 **빌드는 컨트롤러에서 한다.** 컨트롤러에서 실행할 CLI와 대상 노드로 보낼 collector를 여기서 함께 만든다.
 
-**① 계약 코드 생성.** 계약(`contracts/*.proto`)에서 Go 코드를 만든다. `make tools`가 생성
-플러그인(`protoc-gen-go`·`-grpc`)을 설치하고, `make generate`가 변환한다. 생성된 `gen/`은 **커밋돼 있다.** 소비자가 `go get`만으로 계약 타입을 쓰게 하려는 것이다. proto를 고치면 다시 만들어 함께 커밋한다.
+**클론한 그대로 빌드된다.** 계약에서 만든 `gen/`이 커밋돼 있어 코드 생성 도구를 따로 갖출 필요가 없다.
+소비자가 `go get`만으로 계약 타입을 쓰게 하려고 그렇게 두었다. proto를 고칠 때만 다시 만드는데,
+그 절차는 이 절 끝에 있다.
 
-```bash
-make tools && make generate     # contracts/*.proto → gen/
-```
-
-> `make tools`는 플러그인을 `$(go env GOPATH)/bin`에 넣는데, 그 디렉터리가 `PATH`에 없으면 `make
-> generate`가 "플러그인 없음"으로 넘어진다. 설치가 실패한 것처럼 보이지만 실은 **안 보이는 것뿐**이다.
-> 두 타깃 모두 그 상황을 짚어 주지만, 셸 설정에 미리 넣어 두면 매번 겪지 않는다:
-> `export PATH="$PATH:$(go env GOPATH)/bin"`.
-
-**② 컨트롤러에서 쓸 CLI.** 관측 결과를 적재·조회하고 플레이북을 생성하는 커맨드들이다.
+**① 컨트롤러에서 쓸 CLI.** 관측 결과를 적재·조회하고 플레이북을 생성하는 커맨드들이다.
 
 ```bash
 go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
 ```
 
-**③ 대상 노드에 올릴 collector.** **노드 OS·arch에 맞춰** 정적으로 만든다
+**② 대상 노드에 올릴 collector.** **노드 OS·arch에 맞춰** 정적으로 만든다
 → [배포 설계](discovery/collector-deployment.md). 어느 collector가 어느 OS에서 도는지는
 [커맨드 레퍼런스](discovery/cmd/README.md)에 있다.
 
@@ -132,6 +124,19 @@ make build-jar                  # JVM 노드가 있을 때만: attach 사이드�
 **리눅스 노드의 커널은 3.2 이상**이면 된다. 이는 Go 툴체인이 정하는 하한이고, 이 리포가 그보다 새 기능을 요구하지 않는다. CentOS 7(3.10)·Debian 8(3.16)이 위에 있고, RHEL 6(2.6.32)이 아래다. 기능별로 더 필요한 것은 [지원 범위](discovery/cmd/README.md#실행-요건-커널권한)에 있다.
 
 노드에서 collector를 돌릴 때의 권한·환경변수 → [discovery/cmd](discovery/cmd/README.md#권한--환경변수).
+
+**proto를 고쳤다면 계약 코드를 다시 만든다.** 여기부터는 리포에 손대는 사람의 절차다. `make tools`가
+생성 플러그인(`protoc-gen-go`·`-grpc`)을 설치하고 `make generate`가 변환한다. 만들어진 `gen/`은 고친
+proto와 **같은 커밋에** 넣는다.
+
+```bash
+make tools && make generate     # contracts/*.proto → gen/
+```
+
+> `make tools`는 플러그인을 `$(go env GOPATH)/bin`에 넣는데, 그 디렉터리가 `PATH`에 없으면 `make
+> generate`가 "플러그인 없음"으로 넘어진다. 설치가 실패한 것처럼 보이지만 실은 **안 보이는 것뿐**이다.
+> 두 타깃 모두 그 상황을 짚어 주지만, 셸 설정에 미리 넣어 두면 매번 겪지 않는다:
+> `export PATH="$PATH:$(go env GOPATH)/bin"`.
 
 리포에 기여한다면(테스트·게이트·계약 변경) → [CONTRIBUTING](CONTRIBUTING.md).
 
