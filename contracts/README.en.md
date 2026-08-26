@@ -88,13 +88,15 @@ The core pipeline reads those keys and maps them into a typed `Finding`.
 
 | property key | Value | Corresponding Finding field |
 |---|---|---|
-| `pqcota:crypto_runtime` | `openssl` \| `jca` | `crypto_runtime` |
+| `pqcota:crypto_runtime` | `openssl` \| `jca` \| `cng` | `crypto_runtime` |
 | `pqcota:detection_method` | `source`\|`artifact`\|`symbol-analysis`\|`runtime-introspection`\|`dynamic-trace` | `detection_method` — **how it was seen**. Strength is derived from this (seeing the real thing beats inferring it) |
 | `pqcota:usage_context` | `server`\|`client`\|`at-rest`\|`signing` | `usage_context` |
 | `pqcota:openssl.fork` | `OpenSSL`\|`BoringSSL`\|… | `openssl.fork` |
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
 | `pqcota:jca.provider_set` | CSV in registration order | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
+| `pqcota:cng.provider_set` | CSV in registration order | `cng.provider_set` — Windows CNG. **Exactly as observed** (not sorted). Whether that order is a priority is unconfirmed on CNG |
+| `pqcota:cng.algorithms` | CSV of `name:kind[:provider\|provider]` (e.g. `ML-DSA:signature:Microsoft Primitive Provider`) | `cng.algorithms` — when the kind is unknown the value is **empty**, and when the provider could not be asked **the third field is omitted** (§2.5, §2.6). CNG names contain no comma, colon, or `\|` (measured) |
 | `pqcota:app_keys` | CSV of app keys (a shared .so has several) | `app_keys` (repeated) — asset attribution (§1.5) |
 
 > `evidence_strength` and `pqc_readiness` **do not go here** — they are core-derived values (decision 1 above).
@@ -131,7 +133,7 @@ Watch out for **fields where order carries meaning** — `JcaAxes.provider_set` 
 ## Code generation
 
 ```bash
-# generated output is not committed — when the contract changes, everyone regenerates
+# gen/ is committed — regenerate it and put it in the same commit only when the contract changes
 make generate                              # = cd contracts && buf generate
 cd contracts && buf lint                   # or make lint
 

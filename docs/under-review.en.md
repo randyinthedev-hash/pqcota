@@ -3,6 +3,8 @@ English · [한국어](under-review.md)
 # Designs under review
 
 > 🌐 Translated from the Korean original. If the two differ, the [Korean version](under-review.md) is authoritative.
+>
+> **This translation is partial.** Sections 1–5 are here; the Korean original also carries §6 (edges where the observing node is the server), §7 (scope classification for the edge peer), and §8 (separating the traffic-observation cadence from asset scanning). Read those in the Korean original linked above.
 
 > **This document changes no code.** It is where the design work happens for things that made the roadmap
 > but are not committed to implementation. The real design documents (discovery, inventory, provisioning)
