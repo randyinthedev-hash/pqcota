@@ -251,6 +251,15 @@ func main() {
 		titles = append(titles, "")
 	}
 
+	// (11) 한국어 문서와 영문 짝의 뼈대. 한쪽에만 절·항목을 더하면 링크 검사로는 잡히지 않는다.
+	if par := checkBilingualParity(); len(par) > 0 {
+		hits = append(hits, par)
+		titles = append(titles, "a Korean document and its English counterpart have drifted apart in structure — one side gained or lost a section or a list item")
+	} else {
+		hits = append(hits, nil)
+		titles = append(titles, "")
+	}
+
 	fail := false
 	for i, title := range titles {
 		if title == "" {
@@ -646,4 +655,82 @@ func checkTestMapNumbers() []string {
 		}
 	}
 	return miss
+}
+
+// checkBilingualParity — 한국어 문서와 영문 짝의 뼈대가 같은가.
+//
+// 문장은 언어마다 다른 것이 당연하지만 **뼈대는 같아야 한다.** 한쪽에만 절이나 항목을 더하면
+// 조용히 갈리는데, 링크·앵커 검사로는 잡히지 않는다. 실제로 로드맵 항목 셋이 영문에만 없었고,
+// v0.6.4는 한국어만 줄이고 영문은 긴 채로 남아 있었다.
+//
+// **제목의 글자는 비교하지 않는다.** 번역이라 다른 것이 맞다. 비교하는 것은 `##` 절의 수, 그리고
+// 절마다 `###` 소제목 수와 최상위 목록 항목 수다. 코드 블록 안은 세지 않는다.
+func checkBilingualParity() []string {
+	var miss []string
+	for _, en := range tracked("*.en.md") {
+		ko := strings.TrimSuffix(en, ".en.md") + ".md"
+		if _, err := os.Stat(ko); err != nil {
+			continue // 영문만 있는 문서는 짝이 없다
+		}
+		a, errA := skeleton(ko)
+		b, errB := skeleton(en)
+		if errA != nil || errB != nil {
+			continue
+		}
+		if len(a) != len(b) {
+			miss = append(miss, fmt.Sprintf("%s: %d `##` sections but %s has %d — one side gained or lost a section",
+				ko, len(a)-1, en, len(b)-1))
+			continue
+		}
+		for i := range a {
+			where := "the text before the first `##`"
+			if a[i].title != "" {
+				where = "`" + a[i].title + "`"
+			}
+			if a[i].subs != b[i].subs {
+				miss = append(miss, fmt.Sprintf("%s: %s has %d `###` but the English counterpart has %d",
+					ko, where, a[i].subs, b[i].subs))
+			}
+			if a[i].items != b[i].items {
+				miss = append(miss, fmt.Sprintf("%s: %s has %d list items but the English counterpart has %d",
+					ko, where, a[i].items, b[i].items))
+			}
+		}
+	}
+	return miss
+}
+
+type section struct {
+	title string
+	subs  int
+	items int
+}
+
+// skeleton — 문서를 `##` 절 단위로 갈라 소제목 수와 최상위 목록 항목 수를 센다. 첫 `##` 앞의
+// 머리말도 한 칸으로 둔다(거기서 갈리는 일이 실제로 있다).
+func skeleton(path string) ([]section, error) {
+	ls, _, err := lines(path)
+	if err != nil {
+		return nil, err
+	}
+	out := []section{{}}
+	fence := false
+	for _, line := range ls {
+		if strings.HasPrefix(line, "```") {
+			fence = !fence
+			continue
+		}
+		if fence {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(line, "## "):
+			out = append(out, section{title: strings.TrimSpace(strings.TrimPrefix(line, "## "))})
+		case strings.HasPrefix(line, "### "):
+			out[len(out)-1].subs++
+		case strings.HasPrefix(line, "- "):
+			out[len(out)-1].items++
+		}
+	}
+	return out, nil
 }

@@ -167,50 +167,34 @@ documents are untouched; what changes is the Korean vocabulary for things that a
 - **`해소` ("resolve")** — one word had been doing five jobs, so it is unpacked per site: an IP mapped
   to a node is now "linked", a dependency `go get` could not fetch is "not fetched", an app key found
   from a process is "found", a volatile process is "linked at the time", and a FIPS gap is "filled".
-  Identifiers are untouched — `ProcessMatch`, `TestResolve`, `procs.Attribution`.
 
 - **"조용히 틀린다"** (a literal rendering of *silently wrong*) → **"오류 없이 틀린다"** — *wrong
   without raising an error*. The point is that nothing fails, not that the code is quiet.
 
 - **`갈리다`** now only means branching. Where it meant values diverging, it is "달라진다" — one word
   covering both "splits" and "does not match" left the reader to work out which.
+- Identifiers are untouched — `ProcessMatch`, `TestResolve`, `procs.Attribution`.
 
 ## v0.6.4 — The documents catch up with the code (2026-08-21)
 **Goal** — close the stale spots the documents were left with after the screen and the code moved on.
 **Not a line of code changed** — there is nothing to upgrade for.
 
-### Built
-
-- **Observing OpenSSL on Windows is on the roadmap.** What it needs is swapping two pieces: finding
-  the loaded modules (`procmaps.go` → Toolhelp32) and pulling strings out of a binary
-  (`elfstrings.go` → PE). **Fork detection (`registry.MatchFork`) takes only the extracted strings, so
-  it is reused as-is.**
-- **Wherever `pqcota-nodescan` is shown as a command, it now says it is Linux-only.** The per-collector
-  table stays in one place — the command reference — and everywhere else gets a single clause. A table
-  kept in several places drifts apart.
-
 ### Learned
 
 - **When the screen changes, quotations in the documents go stale quietly.** `checkdocs` looks at
   links, anchors and wording, but **not at whether the output a document quotes still matches
-  reality**. Re-running the demo and diffing the quotes against the run surfaced one (④ below). That
-  gate does not exist.
-- **The demo was re-run and both `expected-output` files were unchanged.** What v0.6.3 changed is the
-  path taken **when attach fails**, and the demo's pay-app attaches successfully, so nothing differs on
-  screen.
+  reality**. Re-running the demo and diffing the quotes against the run surfaced one. That gate does
+  not exist.
 
 ### Fixed
 
-- **① The openssl collector's "Assumptions" said `//go:build linux`** (v0.1.0–v0.6.3). That collector
-  has **no build tag** (netcap does). It therefore compiles for other systems too, and when run there
-  it emits a gap rather than an empty result. A reader could have taken it to mean the binary does not
-  exist on Windows at all.
-- **② The example's `os` column still said "windows means `pqcota-cngscan`"** (v0.6.3). In that release
-  **`pqcota-jvmscan` goes there too.**
-- **③ The architecture document's list of collectors was missing `pqcota-cngscan`** (v0.6.0). The
-  command reference was filled in during v0.6.3; this one was left behind.
-- **④ The rollback-record quotation in `expected-output` was still Korean** (v0.6.2), where the screen
-  became English. It is `affected apps: …` and `before : …`, not `영향앱=…`.
+- **Four documents were brought in line with the screen and the code.** The openssl collector's
+  "Assumptions" named the wrong build tag (v0.1.0–v0.6.3); the example's `os` column description
+  (v0.6.3); `pqcota-cngscan` missing from the architecture document's list of collectors (v0.6.0); and
+  the rollback-record quotation in `expected-output` still being Korean (v0.6.2).
+- **[Observing OpenSSL on Windows] was added to the roadmap**, and the fact that `pqcota-nodescan` is
+  Linux-only was written wherever that command is shown. The per-collector table stays in one place —
+  the command reference.
 
 ## v0.6.3 — Windows nodes join the discovery path (2026-08-21)
 **Goal** — v0.6.0 made CNG observable, but **there was no way to get that collector onto a node and the
@@ -611,6 +595,14 @@ What a person acts on is an app, not a server.
 - **The signature range changed** — a contract field was added and `sign.Canonical` updated with it, so
   **signatures produced at v0.2.0 or earlier are invalid.** [Compatibility policy §2](docs/compatibility.md) (Korean)
   is written for exactly this case, and before any real deployment is the cheapest time for it.
+- **What had been deferred behind CNG was pulled forward.** The reason for deferring was "settle the
+  app-pinning model after seeing both substrates, files and the registry" — but the axes were
+  different. A substrate is a provisioning concept, where generated output is placed; pinning an app is
+  discovery, matching a socket inode to a process. What changes on Windows is the *collection method*
+  (`GetExtendedTcpTable`), not the way an app is pinned. And the materials were already here:
+  `/proc/net/tcp` and `/proc/*/fd`, with netcap already running on that node. CNG, by contrast, needs
+  real Windows hardware, and doing it first without that would add one more place like the v0.1.0
+  `CngAxes` reservation — **schema present, never run**.
 
 
 ## v0.2.0 — moving the ingest path onto a many-users premise (2026-08-12)

@@ -88,6 +88,10 @@ The reference collectors (openssl·jvm·network) are just three examples of ways
 
 > **The provisioning generator is not yet such a plugin seam** — the plan (`plan.proto`) is a public contract, but the generator itself is internal logic. To avoid confusion, only the collector side is presented as an extension point.
 
+## Extending with a new crypto runtime
+
+See the [crypto runtime acceptance principles](docs/runtime-acceptance.en.md).
+
 ## Coding guidelines
 
 This repo enforces **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
@@ -182,6 +186,24 @@ or `~을 제공한다` is usually a sign that a sentence was translated rather t
 
 **No gate catches this.** `make check-docs` checks links, anchors and scope wording, not the grain of a
 sentence. Read it aloud; if it sounds off, that is the evidence.
+
+### When you write "it does not", attach the reason on the spot
+
+This repo does not hide its limits, so negative sentences are common: *it does not always work · it is
+not settled · we do not build it*. But **when the reason arrives two sentences later, the reader fills
+the gap with a guess.** A judgement and its basis belong together.
+
+| Not this | This |
+|---|---|
+| It goes as far as the app, but **it does not always work**. (…two sentences of explanation later…) | It goes as far as the app, but **only if the socket is still alive at lookup time** |
+| The machine **does not settle it**. | The machine does not settle it. **Whether it is live or stale is something only a person knows** |
+| An admin UI **is not built**. | An admin UI is not built. **Once there is a screen, "let's approve here too" is the next step** |
+
+Saying the same thing twice is a signal as well. If the headline says "it does not always work" and the
+next paragraph says "it is not always filled in", the first one was floating without a reason.
+
+**The gate does not catch this.** `make check-docs` looks at links, anchors and scope wording, not at
+the grain of a sentence. If it reads awkwardly, that is your evidence.
 
 ## Issues · proposals
 

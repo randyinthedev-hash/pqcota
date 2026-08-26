@@ -31,6 +31,27 @@ The namespaces split into the **three product stages plus a shared vocabulary** 
 
 > `common` is the contract-side counterpart of pkg/kernel — only shared vocabulary that belongs to no single stage (CryptoRuntime, DetectionMethod, Envelope, Completeness, and so on). Generated Go packages: `gen/pqcota/{common,discovery,inventory,provisioning}/v1` → `commonv1`, `discoveryv1`, `inventoryv1`, `provisioningv1`. The `Decision` and `FinalizedPlan` **schemas are SSOT** (so consuming engines share the same vocabulary).
 
+## How consumers use it
+
+**The generated code (`gen/`) is committed.** For the contract to really be the SSOT, that code has to
+be where it is consumed. Requiring consumers to install `buf` and the protoc plugins would mean sharing
+a build procedure, not a contract.
+
+```go
+import (
+	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
+)
+```
+
+> **The module path changed in v0.5.0** — `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
+> The declared path did not match the repository address, so `go get` could not fetch it and consumers
+> had to work around it with `replace`. Anyone on v0.4.0 or earlier deletes that line and moves the
+> imports to the new path.
+
+Generated code is never edited by hand. Edit the proto and run `make generate`. CI checks on every
+change that the two have not diverged.
+
 ## Core design decisions (read before you start)
 
 ### 1. Responsibility boundary — collectors do not enrich
