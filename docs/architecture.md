@@ -354,7 +354,7 @@ pqcota/            # Apache-2.0 · 공개 · 전 범위(Discovery·인벤토리�
   │    └─ kernel/       #   단계 가로지르는 공유 규칙: registry·등급·scope·machineid·sign
   ├─ discovery/         # 실행 진입점(단계별):
   │    ├─ collectors/{openssl(Go),jvm(Java 사이드카 ★),network(Go)}  # §1.6 플러그인·GPL 격리 경계
-  │    └─ cmd/{pqcota-hosts(접근준비),nodescan,netcap,jvmscan,procs,keygen}  # (테스트 하네스는 collectors/openssl/integration/probe)
+  │    └─ cmd/{pqcota-hosts(접근준비),nodescan,netcap,jvmscan,cngscan,procs,keygen}  # (테스트 하네스는 collectors/openssl/integration/probe)
   ├─ inventory/cmd/     # pqcota-ingest(적재) · pqcota-cbom-ingest(CBOM 수신) · pqcota-discover-view(파일 뷰) · pqcota-inventory(중앙 Postgres 조회: 엔드포인트·프로필·앱 표시) · pqcota-profile(프로필 upsert) · pqcota-declare(선언 임포트) · pqcota-prune(보존 절단)
   ├─ provisioning/cmd/  # pqcota-provision(확정계획→L2 플레이북+before/롤백 레코드) · pqcota-records(롤백 레코드 조회) — 생성까지
   └─ LICENSE (Apache-2.0), CONTRIBUTING.md, README.md

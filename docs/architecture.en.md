@@ -358,7 +358,7 @@ pqcota/            # Apache-2.0 · public · the whole scope (Discovery, invento
   │    └─ kernel/       #   shared rules crossing stages: registry, posture, scope, machineid, sign
   ├─ discovery/         # execution entry points (per stage):
   │    ├─ collectors/{openssl(Go),jvm(a Java sidecar ★),network(Go)}  # §1.6 plugins, the GPL isolation boundary
-  │    └─ cmd/{pqcota-hosts(access prep),nodescan,netcap,jvmscan,procs,keygen}  # (the test harness is collectors/openssl/integration/probe)
+  │    └─ cmd/{pqcota-hosts(access prep),nodescan,netcap,jvmscan,cngscan,procs,keygen}  # (the test harness is collectors/openssl/integration/probe)
   ├─ inventory/cmd/     # pqcota-ingest (ingestion) · pqcota-cbom-ingest (CBOM intake) · pqcota-discover-view (file view) · pqcota-inventory (central Postgres queries: endpoints, profiles, app attribution) · pqcota-profile (profile upsert) · pqcota-declare (declaration import) · pqcota-prune (retention truncation)
   ├─ provisioning/cmd/  # pqcota-provision (finalized plan → L2 playbook + before/rollback records) · pqcota-records (querying rollback records) — generation only
   └─ LICENSE (Apache-2.0), CONTRIBUTING.md, README.md
