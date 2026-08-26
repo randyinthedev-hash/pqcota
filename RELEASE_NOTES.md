@@ -67,6 +67,12 @@
   이미 있고 **부르는 곳이 없다.** 막고 있는 것은 환경변수 형식이라 한 줄로 끝나지 않는다.
   설계는 [검토 중인 설계 §8](docs/under-review.md).
 
+- **Windows 통신 관측 (계획 · 버전 미정).** `pqcota-netcap`은 리눅스 전용이라 Windows에서는
+  **바이너리 자체가 만들어지지 않는다.** 그래서 그 노드의 완전성 맵에 「NETWORK 계층 미관측」이
+  남지 않고, 조회 화면에서는 통신이 없는 것처럼 보인다. 해부 계층은 OS를 모르므로 갈아 끼울 것은
+  프레임을 얻는 조각 하나다. Npcap은 노드에 드라이버가 남아 택하지 않고, 내장 `SIO_RCVALL`로
+  간다(IPv4 위주·루프백 제외). 설계는 [검토 중인 설계 §9](docs/under-review.md).
+
 - **릴리스 서명 (계획 · 버전 미정).** **ed25519 서명과 `pqcota-verify-bundle`**을 넣는다. 번들 구성·서명·검증
   절차는 [collector 배포 설계](discovery/collector-deployment.md)에서 정해 뒀고, 그때까지 무결성 확인은
   `sha256sum -c`로 한다.

@@ -638,3 +638,85 @@ either one axis or deliberately separate.
 
 **The gate marker becomes `배선 필수` then.** It is `보류` today, so `check-gates` lets it pass while
 announcing it every run — so that what was deferred does not go quiet.
+
+---
+
+## 9. Observing communication on Windows
+
+Both [`capture_linux.go`](../discovery/collectors/network/capture_linux.go) and
+[the CLI](../discovery/cmd/pqcota-netcap/main.go) carry `//go:build linux`. Cross-compiling for Windows
+drops the package entirely, so **no `.exe` is produced.** The reference playbook likewise ships only
+`cngscan` and `jvmscan` to Windows nodes.
+
+### 9.1 Today not even a gap is recorded — fix this first
+
+Run `pqcota-cngscan` on Linux and it emits a **gap**, not an empty result (§2.6), so that "a node with no
+CNG" stays distinct from "a node whose CNG we could not see". netcap does not do that on Windows, because
+it does not exist there. So **the completeness map of a Windows node never records "NETWORK layer not
+observed"**, and on screen that node looks like one with no communication.
+
+**This hole is closed independently of the capture implementation.** It is the same shape as what cngscan
+does from the other direction, and it is needed whichever option below is taken.
+
+### 9.2 Only one piece has to be swapped
+
+The dissection layer knows nothing about the OS: `dissect`, `tls`, `ssh`, `groups`, `edge`, `handshake`,
+and `cursor` take TCP payload bytes and read ClientHello, ServerHello, and SSH KEXINIT. **What has to be
+written is the place that obtains frames.** It is the same split as the roadmap's Windows OpenSSL
+observation — `procmaps.go` → Toolhelp32, `elfstrings.go` → PE, fork detection unchanged.
+
+### 9.3 Three options
+
+| | What it gives | What it collides with |
+|---|---|---|
+| **㉠ Npcap** | Closest to AF_PACKET — full L2, IPv6, loopback | **A kernel driver has to be installed on every observed node** |
+| **㉡ `pktmon`** | Built into Windows 10 1809+, nothing to install | **It calls an external tool**, and writes a capture file on the node |
+| **㉢ raw socket + `SIO_RCVALL`** | A built-in API called directly. Nothing to install | Mostly IPv4 · no loopback · a firewall or antivirus can block the socket |
+
+**㉢ is recommended.** Nothing is left behind, `golang.org/x/sys/windows` is already in the licensing
+table, and requiring Administrator sits in the same place as Linux requiring `CAP_NET_RAW`.
+
+**The reason for not taking ㉠ is not the licence.** Npcap is indeed not permissively licensed, but that
+matters only if this repo redistributes it — and it does not have to, exactly as with Ansible and Temurin
+in the demo ([licence notes §4](licensing.en.md) (Korean)). **The real reason is that the driver stays on
+the node.** A collector is a CLI that runs and exits, and ship → run → retrieve → clean up, leaving
+nothing, is the premise of T1 self-service. Installing a driver on a legacy Windows server is a
+change-approval matter, so observing it would mean altering it.
+
+**The reason for not taking ㉡** is the same one that had cngscan call `bcrypt.dll` directly instead of
+`certutil`, PowerShell, or WMI: on a server where script execution is blocked by policy, the observation
+failure scatters into an environment problem (§2.3).
+
+### 9.4 What narrows under ㉢
+
+**The same as Linux**: parsing TLS and SSH handshakes, extracting the negotiated group and cipher —
+everything the grade decision needs.
+
+**Four things narrow**, and all of them have to be written as gaps (§2.6).
+
+- **IPv6 is effectively invisible.** AF_PACKET sees it.
+- **Loopback is invisible.**
+- **If a firewall or antivirus blocks the raw socket, nothing is observed at all.** Linux does not have
+  this problem: AF_PACKET copies frames just above the driver, below iptables and nftables. `SIO_RCVALL`
+  is a socket at the IP layer, not beneath the filter drivers. **Being blocked must never be written as
+  "there is no traffic".**
+- **A socket has to be opened per interface.** Linux takes them all on one.
+
+### 9.5 App pinning resolves separately
+
+Linux matches the socket inode (`/proc/net/tcp`) against `/proc/*/fd` to get a PID. On Windows,
+`GetExtendedTcpTable` **returns the connection list together with the PID** — one step fewer. The rules
+§5.3 settled still apply: take the shallowest one up the parent chain, treat it as best-effort, and never
+write "no app" for what a permission problem hid.
+
+### 9.6 Not settled
+
+**Whether to give up IPv6.** Under ㉢ it is hard to keep. Giving it up makes every IPv6 link a gap, and
+there is currently no way to tell that gap apart from "that node does not use IPv6".
+
+**What to emit when blocked.** The shape netcap uses when `CAP_NET_RAW` is missing (a gap, exit 0, a note
+on stderr) fits, except that a firewall or antivirus cannot be answered with "grant the capability". The
+reason has to be recorded separately.
+
+**Ordering against §5 (server-role edges).** Windows servers are often the listening side, so §5 landing
+first raises the value. Conversely, adding ㉢ without §5 yields less on Windows than it does on Linux.
