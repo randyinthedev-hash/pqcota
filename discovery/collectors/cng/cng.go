@@ -23,8 +23,8 @@ var ErrNotWindows = errors.New("CNG can only be observed on Windows — this is 
 type Observation struct {
 	// Providers — 등록된 provider 이름. **순서를 보존한다**(우선순위 협상의 근거, 수용 원칙 §2.2).
 	Providers []string `json:"providers"`
-	// Algorithms — 열거된 알고리즘. 계약의 CngAxes에는 아직 자리가 없어 파생 뷰로는 가지 않지만,
-	// 원본(raw_capture)에는 그대로 실어 보낸다 — 관측한 것을 버리지 않는다(§1.2 재계산 가능).
+	// Algorithms — 열거된 알고리즘. v0.6.0에서 CngAxes.algorithms가 생겨 파생 뷰까지 간다.
+	// 원본(raw_capture)에도 그대로 실어 보낸다 — 관측한 것을 버리지 않는다(§1.2 재계산 가능).
 	Algorithms []Algorithm `json:"algorithms,omitempty"`
 }
 
