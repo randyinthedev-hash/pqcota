@@ -23,7 +23,11 @@ grep -rh '^func Test' --include='*_test.go' . | wc -l          # 전체
 grep -rl '//go:build linux' --include='*_test.go' . | xargs grep -c '^func Test'   # integration
 ```
 
-일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·**TV-ORG-4**·**TV-ATTR-7·8**·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-16이 스킵된다. **스킵은 통과가 아니다.** 그래서 CI는 Postgres 서비스와 JDK를 붙여 그 케이스들을 실제로 돌리고, 그러고도 건너뛴 것이 있으면 이름을 로그에 남긴다. 손에서 `go test`만 돌리면 DSN이 없어 Postgres 케이스가 스킵된다.
+일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·**TV-ORG-4**·**TV-ATTR-7·8**·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-15가 스킵된다. **스킵은 통과가 아니다.**
+
+**TD-NETWORK-15와 TD-NETWORK-16은 서로 배타적이다.** 15는 소켓이 열려야 「구간이 끝까지 채워지는가」를 재고, 16은 소켓이 안 열려야 「권한이 없을 때 갭으로 강등하는가」를 잰다. 한 번 돌려서 둘 다 재는 환경은 없다. 그래서 CI는 권한 없는 러너로 전체를 한 번 돌려 16을 재고, 15만 `sudo`로 다시 돌린다. 그 두 번째 실행은 스킵을 통과로 세지 않도록 **PASS가 찍혔는지까지 확인한다.**
+
+CI는 Postgres 서비스와 JDK도 붙여 나머지 케이스를 실제로 돌리고, 그러고도 건너뛴 것이 있으면 이름을 로그에 남긴다. 손에서 `go test`만 돌리면 DSN이 없어 Postgres 케이스가 스킵된다.
 
 ## 코드는 어디에
 
