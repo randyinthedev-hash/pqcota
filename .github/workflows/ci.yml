@@ -19,6 +19,24 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Postgres 케이스(TV-RETENTION-8·TV-ORG-4·TV-ATTR-7·8·TP-RECORD-3)가 여기서 돌게 한다.
+    # 조직 격리는 **한 테이블을 공유하는 쪽에서만** 잴 수 있어, 인메모리 케이스가 통과해도
+    # 증명되지 않는다. DSN이 없으면 그 다섯이 조용히 스킵되고 격리는 확인되지 않은 채 초록이 된다.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pqcota
+          POSTGRES_PASSWORD: pqcota
+          POSTGRES_DB: pqcota
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       # 계약 하위호환 검사가 **릴리스 태그를 기준선**으로 쓴다 — 얕은 클론이면 태그가 없어
       # 검사가 조용히 건너뛴다. 게이트가 스스로 꺼지는 상태를 만들지 않는다.
@@ -86,9 +104,28 @@ jobs:
           make build-jar
 
       # integration은 환경이 없으면 스스로 스킵한다 — 스킵은 통과가 아니므로
-      # 무엇이 건너뛰었는지 로그에 남긴다.
+      # 무엇이 건너뛰었는지 로그에 남긴다. `-v` 없이 돌리면 스킵이 아예 찍히지 않아
+      # 이 약속이 지켜지지 않았다. 출력은 `-v` 로 받아 두고 요약만 낸다.
       - name: test
-        run: go test ./... -count=1
+        env:
+          PQCOTA_TEST_DSN: postgres://pqcota:pqcota@localhost:5432/pqcota?sslmode=disable
+        run: |
+          set +e
+          go test ./... -count=1 -v > /tmp/test.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            # 실패하면 요약만 봐서는 원인을 못 짚는다. 통째로 낸다.
+            cat /tmp/test.log
+          else
+            grep -E '^ok  ' /tmp/test.log
+          fi
+          echo "── 건너뛴 케이스 (스킵은 통과가 아니다)"
+          if grep -qE '^ *--- SKIP' /tmp/test.log; then
+            grep -E '^ *--- SKIP' /tmp/test.log | sed 's/^ *//'
+          else
+            echo "  없다"
+          fi
+          exit $status
 
   # 노드에 올리는 것은 정적 바이너리다. arch를 바꿔도 서는지 확인한다.
   cross-build:

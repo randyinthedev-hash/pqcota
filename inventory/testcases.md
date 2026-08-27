@@ -12,7 +12,7 @@
 
 ## 0. 실행 환경
 
-**케이스는 대부분 unit이다**. 실물 없이 어디서나 돈다. 예외는 **TV-RETENTION-8 · TV-ORG-4 · TV-ATTR-7 · TV-ATTR-8** 넷으로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**).
+**케이스는 대부분 unit이다**. 실물 없이 어디서나 돈다. 예외는 **TV-RETENTION-8 · TV-ORG-4 · TV-ATTR-7 · TV-ATTR-8** 넷으로, `PQCOTA_TEST_DSN`이 있으면 실 Postgres로도 돌고 없으면 스킵한다(**스킵은 통과가 아니다**). CI는 Postgres 서비스를 붙여 넷을 늘 돌린다.
 
 TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.** 인메모리 케이스는 저장소 객체가 애초에 다르므로 통과해도 격리를 증명하지 않는다. 한 테이블을 공유하는 쪽에서만 잴 수 있다.
 

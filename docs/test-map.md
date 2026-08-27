@@ -23,7 +23,7 @@ grep -rh '^func Test' --include='*_test.go' . | wc -l          # 전체
 grep -rl '//go:build linux' --include='*_test.go' . | xargs grep -c '^func Test'   # integration
 ```
 
-일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·**TV-ORG-4**·**TV-ATTR-7·8**·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-16이 스킵된다. **스킵은 통과가 아니다.**
+일부는 환경이 갖춰졌을 때만 돈다. `PQCOTA_TEST_DSN`이 없으면 Postgres 케이스(TV-RETENTION-8·**TV-ORG-4**·**TV-ATTR-7·8**·TP-RECORD-3)가, JDK가 없으면 TD-JVM-9가, `CAP_NET_RAW`가 없으면 TD-NETWORK-16이 스킵된다. **스킵은 통과가 아니다.** 그래서 CI는 Postgres 서비스와 JDK를 붙여 그 케이스들을 실제로 돌리고, 그러고도 건너뛴 것이 있으면 이름을 로그에 남긴다. 손에서 `go test`만 돌리면 DSN이 없어 Postgres 케이스가 스킵된다.
 
 ## 코드는 어디에
 
