@@ -131,41 +131,41 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 `topo-gen`이 0단계에 `--rm`으로 잠깐 더 돕니다(compose·groups.ini·SVG 생성 후 소멸).
 
 ## 디스커버리 (Ansible/SSH, 모두 실물)
-1. **OpenSSL 자산**은 `pqcota-nodescan`이 낸다. `/proc` 스캔으로 로드된 libssl/libcrypto를 본다.
-2. **JCA provider 체인**은 `pqcota-jvmscan`이 낸다. **정찰→attach** 순서다. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 본다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡는다. java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
-3. **통신 엣지**는 `pqcota-netcap`이 낸다. AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측한다.
+1. **OpenSSL 자산**은 `pqcota-nodescan`이 냅니다. `/proc` 스캔으로 로드된 libssl/libcrypto를 봅니다.
+2. **JCA provider 체인**은 `pqcota-jvmscan`이 냅니다. **정찰→attach** 순서입니다. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 봅니다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡습니다. java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
+3. **통신 엣지**는 `pqcota-netcap`이 냅니다. AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측합니다.
 
-`pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**을 낸다:
+`pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**을 냅니다:
 - 🟢 **PQC/하이브리드**(`X25519MLKEM768`, `sntrup761x25519`) · 🔴 **고전=양자취약**(`x25519`, `ECDHE`) · ⚪ **불명**
-- 예: `web-gw → pay-app` 🟢 MLKEM · `web-gw → pay-db` 🔴 고전 · SSH도 같은 갈림(`→pay-app` 🟢 sntrup761 · `→pay-db` 🔴이고, 레거시 OS의 OpenSSH엔 PQC KEX가 없다)
+- 예: `web-gw → pay-app` 🟢 MLKEM · `web-gw → pay-db` 🔴 고전 · SSH도 같은 갈림(`→pay-app` 🟢 sntrup761 · `→pay-db` 🔴이고, 레거시 OS의 OpenSSH엔 PQC KEX가 없습니다)
 
 ## 중앙 인벤토리 (엔드포인트·프로필·앱 표시·이력·변화)
-`pqcota-ingest`가 회수 결과를 append-only 히스토리에 적재하고, `pqcota-inventory`가 조회한다:
+`pqcota-ingest`가 회수 결과를 append-only 히스토리에 적재하고, `pqcota-inventory`가 조회합니다:
 - **▸ 머신 헤더**: `pqcota-hosts`가 upsert한 **엔드포인트**(이름·ip:port, 비밀 없음) + **프로필**(display_name·env·role·owner, CMDB 선언 레인).
-- **같은 장비가 여러 이름으로 등재되면 고지한다**: 적재 결과에 `⚠ duplicate: physical machine … → [pay-db web-gw]`가 나오는데 이것은 오류가 아니다. 데모의 타깃들은 한 호스트 위의 컨테이너라 `pay-db`와 `web-gw`가 같은 물리 장비 지문을 갖고, 플랫폼은 그 사실을 감추지 않고 그대로 알린다(TK-MACHINE). 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시가 이것이다.
-- **@앱 표시**: 각 크립토 자산이 어느 앱 것인지(`app_keys`). pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` **둘 다**에 걸린다(그 .so 교체는 두 앱 모두 영향).
-- **이력·변화**: 같은 회수 결과를 한 번 더 적재해(실운용의 "다음 회차 스캔"에 해당) `-history`(변화 지점 + 관측 횟수) · `-snapshot`(자산 + 관측 엣지) · `-diff`(`added`·`removed`·`changed`)를 보인다. 같은 관측이므로 diff는 **"변화 없음"** 이 정답이다. 도구는 없는 변화를 지어내지 않는다. 실제로 버전이 바뀌면 finding id가 유지되어 **같은 자산의 `changed`** 로 잡힌다.<br>스냅샷은 **내용이 바뀔 때만** 쌓이고, 반복 관측은 가벼운 관측 기록으로만 남는다. 저장은 변화 횟수만큼만 자라되 "매번 스캔했다"는 증거는 보존된다.
-- **자산 스코프**: 노드는 등재됐어도 그 안의 자산 전부가 관리 대상은 아니다. `sshd`·패키지 python 런타임 같은 잡음을 규칙으로 빼면 **앱이 실제로 쓰는 자산만** 남는다. 뺀 건수는 반드시 고지된다. **제외는 부재가 아니다**(§2.6).
-- **보존 정책**: `pqcota-prune`을 dry-run으로 돌려 **노드별 최신 스냅샷은 어떤 정책으로도 지우지 않음**을 보인다. 파괴적 동작이라 조회 커맨드와 분리했고, 실제 삭제는 `-apply`로만 한다.
+- **같은 장비가 여러 이름으로 등재되면 고지합니다**: 적재 결과에 `⚠ duplicate: physical machine … → [pay-db web-gw]`가 나오는데 이것은 오류가 아닙니다. 데모의 타깃들은 한 호스트 위의 컨테이너라 `pay-db`와 `web-gw`가 같은 물리 장비 지문을 갖고, 플랫폼은 그 사실을 감추지 않고 그대로 알립니다(TK-MACHINE). 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시가 이것입니다.
+- **@앱 표시**: 각 크립토 자산이 어느 앱 것인지(`app_keys`). pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` **둘 다**에 걸립니다(그 .so 교체는 두 앱 모두 영향).
+- **이력·변화**: 같은 회수 결과를 한 번 더 적재해(실운용의 "다음 회차 스캔"에 해당) `-history`(변화 지점 + 관측 횟수) · `-snapshot`(자산 + 관측 엣지) · `-diff`(`added`·`removed`·`changed`)를 보입니다. 같은 관측이므로 diff는 **"변화 없음"** 이 정답입니다. 도구는 없는 변화를 지어내지 않습니다. 실제로 버전이 바뀌면 finding id가 유지되어 **같은 자산의 `changed`** 로 잡힙니다.<br>스냅샷은 **내용이 바뀔 때만** 쌓이고, 반복 관측은 가벼운 관측 기록으로만 남습니다. 저장은 변화 횟수만큼만 자라되 "매번 스캔했다"는 증거는 보존됩니다.
+- **자산 스코프**: 노드는 등재됐어도 그 안의 자산 전부가 관리 대상은 아닙니다. `sshd`·패키지 python 런타임 같은 잡음을 규칙으로 빼면 **앱이 실제로 쓰는 자산만** 남습니다. 뺀 건수는 반드시 고지됩니다. **제외는 부재가 아닙니다**(§2.6).
+- **보존 정책**: `pqcota-prune`을 dry-run으로 돌려 **노드별 최신 스냅샷은 어떤 정책으로도 지우지 않음**을 보입니다. 파괴적 동작이라 조회 커맨드와 분리했고, 실제 삭제는 `-apply`로만 합니다.
 
 ## 프로비저닝 (생성 → 적용 → 되돌림)
-발견된 finding에 **확정 계획(FINALIZED)**을 만들어 `pqcota-provision`을 돌린다:
+발견된 finding에 **확정 계획(FINALIZED)**을 만들어 `pqcota-provision`을 돌립니다:
 - **§3.7 게이트**: FINALIZED 아니면 거부. **L2 플레이북 생성**(모듈 스테이지 + config 조각).
-- **before 캡처 + 롤백 레코드 영속**: 조치 전 암호 상태(모듈·버전)와 **영향 앱(공유 .so면 다중)**을 append-only로 남긴다.
+- **before 캡처 + 롤백 레코드 영속**: 조치 전 암호 상태(모듈·버전)와 **영향 앱(공유 .so면 다중)**을 append-only로 남깁니다.
 
-이어서 생성물을 **실제로 적용한다**. 도는지까지 봐야 "생성했다"가 말이 된다:
+이어서 생성물을 **실제로 적용합니다**. 도는지까지 봐야 "생성했다"가 말이 됩니다:
 
-- **적용**: 생성된 플레이북을 `ansible-playbook`으로 대상 노드(기본 구성에선 pay-db)에 실행. 모듈 sha256 게이트도 함께 통과시킨다.
+- **적용**: 생성된 플레이북을 `ansible-playbook`으로 대상 노드(기본 구성에선 pay-db)에 실행. 모듈 sha256 게이트도 함께 통과시킵니다.
 - **확인**: 타깃에 `/opt/pqcota/oqsprovider.so`와 `/etc/pqcota/openssl-pqc.cnf`가 놓였고, config가 **그 배치 경로를 참조**하는지(`module = /opt/pqcota/oqsprovider.so`).
-- **되돌림**: `--rollback` 플레이북으로 제거. 원본 설정을 덮은 적이 없으니 **제거만으로 이전 상태**가 되고, 두 파일이 사라지는 것까지 확인한다.
+- **되돌림**: `--rollback` 플레이북으로 제거. 원본 설정을 덮은 적이 없으니 **제거만으로 이전 상태**가 되고, 두 파일이 사라지는 것까지 확인합니다.
 
-> **왜 적용까지 하나**: 생성만 하고 안 돌리면 **문법은 맞는데 실제로는 깨지는** 플레이북이 통과한다. 실제로 그런 결함이 있었다(config 디렉터리를 안 만들어 `copy`가 실패). 이 단계가 그 부류를 상시로 잡는다.
+> **왜 적용까지 하나**: 생성만 하고 안 돌리면 **문법은 맞는데 실제로는 깨지는** 플레이북이 통과합니다. 실제로 그런 결함이 있었습니다(config 디렉터리를 안 만들어 `copy`가 실패). 이 단계가 그 부류를 상시로 잡습니다.
 >
-> **provider 모듈은 도구가 주지 않는다.** 데모는 배포 경로만 보이려 **빈 파일**을 쓴다. 실제 암호 기능은 없다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입한다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 건 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서다.
+> **provider 모듈은 도구가 주지 않습니다.** 데모는 배포 경로만 보이려 **빈 파일**을 씁니다. 실제 암호 기능은 없습니다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입합니다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 건 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서입니다.
 
-- **L2는 조각을 놓기만 한다**. 참조되게 만들지 않으므로 모든 산출물이 완전히 가역이다.
-- **L3는 여기에 활성화·재시작을 더한다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 쓴다. 환경마다 활성화 지점이 다르므로 도구가 추측하지 않는다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킨다(현실의 systemd unit·사내 기동 스크립트에 해당).
-- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**이다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않는다**. 그 노드의 실제 조치는 fork 교체이고, 그건 config로 배포되지 않는다고 플레이북 주석에 적혀 있다.
+- **L2는 조각을 놓기만 합니다**. 참조되게 만들지 않으므로 모든 산출물이 완전히 가역입니다.
+- **L3는 여기에 활성화·재시작을 더합니다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 씁니다. 환경마다 활성화 지점이 다르므로 도구가 추측하지 않습니다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킵니다(현실의 systemd unit·사내 기동 스크립트에 해당).
+- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**입니다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않습니다**. 그 노드의 실제 조치는 fork 교체이고, 그건 config로 배포되지 않는다고 플레이북 주석에 적혀 있습니다.
 
 ### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
 
@@ -173,21 +173,21 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 ```
 
-빈 파일로는 못 보이는 것이 하나 남는다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인한다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용된다.
+빈 파일로는 못 보이는 것이 하나 남습니다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인합니다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용됩니다.
 
-대상은 6단계의 pay-db가 **아니다**. provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없다. 인벤토리에서 3.x를 관측한 노드를 골라 같은 L2/L3 산출물로 배치·활성화한 뒤,
+대상은 6단계의 pay-db가 **아닙니다**. provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없습니다. 인벤토리에서 3.x를 관측한 노드를 골라 같은 L2/L3 산출물로 배치·활성화한 뒤,
 
 | | 보이는 것 |
 |---|---|
 | **능력** | `openssl list -kem-algorithms`의 ML-KEM 계열이 **0개 → 14개**, `list -providers`에 `oqsprovider … active` |
-| **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 본다 |
-| **되돌림** | L3→L2 순서로 되돌리면 다시 **0개**: 가역성도 같은 자로 잰다 |
+| **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 봅니다 |
+| **되돌림** | L3→L2 순서로 되돌리면 다시 **0개**: 가역성도 같은 자로 잽니다 |
 
-**재관측에서 인벤토리는 그대로다.** 데모는 이것을 숨기지 않고 이유까지 함께 낸다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못한다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1이다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go-sd-1-sd-3)에 있다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둔다.
+**재관측에서 인벤토리는 그대로입니다.** 데모는 이것을 숨기지 않고 이유까지 함께 냅니다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지입니다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못합니다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1입니다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go-sd-1-sd-3)에 있습니다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둡니다.
 
 ## 접근 비밀 경계 (§1.5)
-접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실린다. pqcota 인벤토리(Postgres)엔
-**엔드포인트(node_id·이름·ip·port)만** upsert되고 비밀은 적재하지 않는다(데모가 `pqcota_endpoint`에 비밀 0건임을 확인).
+접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실립니다. pqcota 인벤토리(Postgres)엔
+**엔드포인트(node_id·이름·ip·port)만** upsert되고 비밀은 적재하지 않습니다(데모가 `pqcota_endpoint`에 비밀 0건임을 확인).
 
 ## 내 환경(실제 자산)에 적용하려면
 
