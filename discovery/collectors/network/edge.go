@@ -21,7 +21,7 @@ const (
 // ConnTuple — 관측된 TCP 연결의 종단 정보(캡처 계층이 채운다). 등급·협상은 Handshake에.
 type ConnTuple struct {
 	SrcNode      string // 캡처 호스트 = 스코프 노드 ID(앵커, 알려짐)
-	DstNodeID    string // 코어가 스코프 마스터로 해소했으면 채워짐. 보통 "" (코어가 사후 해소)
+	DstNodeID    string // 코어가 스코프 마스터로 이어 붙였으면 채워짐. 보통 "" (코어가 사후에 잇는다)
 	DstAddr      string // 원시 상대 주소 "ip:port" — off-scope 판정 근거(§1.4, IC-E3)
 	Port         uint32
 	SrcInitiated bool // src가 TCP 연결 개시자면 src=client (역할 방향의 근거)

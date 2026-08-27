@@ -14,7 +14,7 @@ import (
 // JVMProc — 머신에서 발견된 실행 중 JVM 하나.
 type JVMProc struct {
 	PID       int
-	Exe       string // /proc/<pid>/exe 해소 결과(대개 런처 java 경로)
+	Exe       string // /proc/<pid>/exe를 따라간 결과(대개 런처 java 경로)
 	App       string // cmdline에서 뽑은 실행 앱(main 클래스 또는 -jar) — 자산 식별의 안정 키
 	JavaHome  string // exe/libjvm 경로에서 파생(best-effort, 못 짚으면 "")
 	JavaBin   string // <JavaHome>/bin/java, 없으면 Exe

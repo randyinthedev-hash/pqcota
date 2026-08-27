@@ -110,12 +110,12 @@ message Envelope {
   string scope_master_ref = 6;                    // 대조 대상 CMDB 스냅샷 참조
   string signature = 7;                           // collector 서명 (예: "ed25519:...") (§2.6)
   string collector_license = 8;                   // "Apache-2.0" | "GPL-3.0-or-later" (라이선스 정리 — 선택 UX)
-  MachineIdentity machine = 9;                    // 머신 상관 지문 — node_id 해소·검증·self-id (§1.4)
+  MachineIdentity machine = 9;                    // 머신 상관 지문 — node_id 잇기·검증·self-id (§1.4)
 }
 
 // MachineIdentity — 머신 상관·자동 UID 부여의 근거 지문(§1.4). collector(Ansible/수동 무관)가 채운다.
 // 권위 ID(target_node_id=CMDB)를 이 지문으로 상관·검증하고, CMDB 없으면 여기서 결정론적 self-id를 파생한다.
-// IP는 ID가 아니라 로케이터 — 네트워크 관측을 노드로 해소하는 데만 쓴다.
+// IP는 ID가 아니라 로케이터 — 네트워크 관측을 노드로 잇는 데만 쓴다.
 message MachineIdentity {
   string machine_id = 1;        // /etc/machine-id (systemd, 안정 per-install UUID) — 단일 로컬 키 최선
   string hardware_uuid = 2;     // DMI product_uuid (VM/HW). root 필요

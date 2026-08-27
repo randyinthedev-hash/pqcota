@@ -51,7 +51,7 @@ func Canonical(res *discoveryv1.CollectionResult) []byte {
 	w(env.GetTargetNodeId()) // 스코프 앵커(§1.4)
 	w(env.GetScopeMasterRef())
 	w(env.GetCollectorLicense())
-	w(machineCanon(env.GetMachine())) // 머신 지문 — node_id 해소·중복 검출의 근거
+	w(machineCanon(env.GetMachine())) // 머신 지문 — node_id 잇기·중복 검출의 근거
 
 	w(res.GetRawFormat())
 	w(res.GetCyclonedxSpecVersion())

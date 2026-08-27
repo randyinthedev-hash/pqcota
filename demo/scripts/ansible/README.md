@@ -1,6 +1,6 @@
 # scripts/ansible/: 디스커버리 오케스트레이션
 
-`demo.sh`가 구동하는 Ansible 설정. 컨트롤러(pqcota-ctl)가 **SSH로 각 타깃 노드에 접속 → collector 실행 → 결과 JSON 회수**한다. 빌드 시 컨트롤러 이미지의 `/work/ansible`로 복사된다.
+`demo.sh`가 구동하는 Ansible 설정. 컨트롤러(pqcota-ctl)가 **SSH로 각 타깃 노드에 접속 → collector 실행 → 결과 JSON 회수**한다. 빌드할 때 컨트롤러 이미지의 `/work/ansible`로 복사된다.
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](../../../docs/regulation.md)의 절 번호다.
 

@@ -192,8 +192,8 @@ func (QuantumPosture) EnumDescriptor() ([]byte, []int) {
 type ObservedEdge struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	SrcNodeId       string                 `protobuf:"bytes,1,opt,name=src_node_id,json=srcNodeId,proto3" json:"src_node_id,omitempty"` // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
-	DstNodeId       string                 `protobuf:"bytes,2,opt,name=dst_node_id,json=dstNodeId,proto3" json:"dst_node_id,omitempty"` // 스코프 마스터에 해소된 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
-	DstAddr         string                 `protobuf:"bytes,3,opt,name=dst_addr,json=dstAddr,proto3" json:"dst_addr,omitempty"`         // 원시 상대 주소 "ip:port" — dst_node_id 미해소 시 off-scope 판정 근거.
+	DstNodeId       string                 `protobuf:"bytes,2,opt,name=dst_node_id,json=dstNodeId,proto3" json:"dst_node_id,omitempty"` // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
+	DstAddr         string                 `protobuf:"bytes,3,opt,name=dst_addr,json=dstAddr,proto3" json:"dst_addr,omitempty"`         // 원시 상대 주소 "ip:port" — dst_node_id를 잇지 못했을 때 off-scope 판정 근거.
 	Port            uint32                 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`
 	Protocol        NetworkProtocol        `protobuf:"varint,5,opt,name=protocol,proto3,enum=pqcota.discovery.v1.NetworkProtocol" json:"protocol,omitempty"`
 	Role            EdgeRole               `protobuf:"varint,6,opt,name=role,proto3,enum=pqcota.discovery.v1.EdgeRole" json:"role,omitempty"`

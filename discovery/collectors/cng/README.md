@@ -102,5 +102,5 @@ Windows Client Key Protection Provider
 | `bcrypt.dll` 열거 | **된다**. Windows 11 26200에서 실측(위) |
 | 노드 식별 | **된다**. `MachineGuid`(설치 단위)와 SMBIOS `hardware_uuid`(하드웨어 단위) 둘 다 실측 확인. 표기는 리눅스 `product_uuid`와 같다 |
 | 정규화 → 파생 뷰 | **된다**. provider·알고리즘이 `CngAxes`까지 온다(실측 값으로 못 박음) |
-| 적재 → 인벤토리 조회 | **된다**. 실기 결과를 Postgres에 적재해 뷰까지 확인(TD-CNG-9). 화면에 이렇게 나온다:<br>`win_cng  confirmed  runtime_introspection  providers=9 algorithms=50 네이티브(서명만: KEM 미관측)` |
+| 적재 → 인벤토리 조회 | **된다**. 실제 장비 결과를 Postgres에 적재해 뷰까지 확인(TD-CNG-9). 화면에 이렇게 나온다:<br>`win_cng  confirmed  runtime_introspection  providers=9 algorithms=50 네이티브(서명만: KEM 미관측)` |
 | provider 활성화·설정 변경(프로비저닝) | **하지 않는다**. 이 collector는 관측까지다 |

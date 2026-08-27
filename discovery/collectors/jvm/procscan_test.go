@@ -115,7 +115,7 @@ func TestAttachCapable(t *testing.T) {
 	}
 }
 
-// ── Windows 경로 판별 — 리눅스 CI에서 검증한다. 실기 없이 못 잡는 자리를 여기서 못 박는다.
+// ── Windows 경로 판별 — 리눅스 CI에서 검증한다. 실제 장비 없이 못 잡는 자리를 여기서 못 박는다.
 
 func TestIsJavaExeWindows(t *testing.T) {
 	for _, ok := range []string{`C:\Program Files\Java\jdk-21\bin\java.exe`, `C:\jdk\bin\JAVAW.EXE`, "C:/jdk/bin/java.exe"} {

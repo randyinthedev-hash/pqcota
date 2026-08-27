@@ -10,7 +10,7 @@ import (
 
 // ForkSignature — OpenSSL 계열 fork·version 판별 시그니처 (설계 §2.1, SD-3 IP).
 // OpenSSL/BoringSSL/LibreSSL/AWS-LC가 같은 soname을 쓰는 문제(수용 원칙 §2.2)를
-// 바이너리 문자열/심볼 시그니처로 해소한다.
+// 바이너리 문자열/심볼 시그니처로 가려낸다.
 type ForkSignature struct {
 	Fork     string   // "OpenSSL" | "BoringSSL" | "LibreSSL" | "AWS-LC"
 	Contains []string // 이 중 하나라도 문자열에 나타나면 해당 fork로 판정

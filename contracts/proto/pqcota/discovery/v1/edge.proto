@@ -44,8 +44,8 @@ enum QuantumPosture {
 // Collector가 CollectionResult.observed_edges로 반환한다. 등급은 코어가 채운다.
 message ObservedEdge {
   string src_node_id = 1;   // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
-  string dst_node_id = 2;   // 스코프 마스터에 해소된 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
-  string dst_addr = 3;      // 원시 상대 주소 "ip:port" — dst_node_id 미해소 시 off-scope 판정 근거.
+  string dst_node_id = 2;   // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
+  string dst_addr = 3;      // 원시 상대 주소 "ip:port" — dst_node_id를 잇지 못했을 때 off-scope 판정 근거.
   uint32 port = 4;
   NetworkProtocol protocol = 5;
   EdgeRole role = 6;

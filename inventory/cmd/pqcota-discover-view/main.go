@@ -247,7 +247,7 @@ func hasNetwork(res *discoveryv1.CollectionResult) bool {
 	return false
 }
 
-// nodes.json: [{"name":"node-web","ips":["10.0.0.2"]}, ...] — 관측 IP→노드명 해소(가독성).
+// nodes.json: [{"name":"node-web","ips":["10.0.0.2"]}, ...] — 관측 IP→노드명 잇기(가독성).
 func loadNodeMap(path string) map[string]string {
 	m := map[string]string{}
 	if path == "" {

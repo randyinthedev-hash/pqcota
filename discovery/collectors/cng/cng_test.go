@@ -130,7 +130,7 @@ func propValue(t *testing.T, cyclone []byte, key string) string {
 //
 // 첫 실측(Windows 11 26200)에서 50개 중 18개가 빈 종류로 나오고 DH·ECDH가 `secret-agreement`가
 // 아니라 `asymmetric-encryption`으로 **틀리게** 붙었다. 원인은 열거 **요청**의 연산 비트마스크와
-// 반환값의 **인터페이스 상수**를 같은 어휘로 본 것이다. 값이 겹쳐 조용히 틀리는 자리라 못 박는다.
+// 반환값의 **인터페이스 상수**를 같은 어휘로 본 것이다. 값이 겹쳐 오류 없이 틀리는 자리라 못 박는다.
 func TestAlgorithmClassFollowsTheInterfaceConstants(t *testing.T) {
 	for _, c := range []struct {
 		dwClass uint32

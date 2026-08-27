@@ -88,8 +88,8 @@ echo "node_id,name,ip,port,ssh_user,ssh_key" > "$HOSTSCSV"
   echo -n '['
   first=1
   for n in "${NODES[@]}"; do
-    # 노드가 여러 세그먼트에 걸치면 IP도 여럿 — 첫 IP를 접속용(hosts.csv)에, 전체를 관측 해소용
-    # (nodes.json)에 담는다(관측된 IP가 어느 세그먼트의 것이든 노드로 해소되게).
+    # 노드가 여러 세그먼트에 걸치면 IP도 여럿 — 첫 IP를 접속용(hosts.csv)에, 전체를 관측 잇기용
+    # (nodes.json)에 담는다(관측된 IP가 어느 세그먼트의 것이든 노드로 이어지게).
     allips=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$n")
     ip=$(echo "$allips" | awk '{print $1}')
     ipsjson=$(echo "$allips" | tr ' ' '\n' | grep . | sed 's/.*/"&"/' | paste -sd, -)
