@@ -34,7 +34,7 @@
 ./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
 ```
 
-`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적습니다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
+`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적습니다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)입니다.
 
 > **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
 > (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가
