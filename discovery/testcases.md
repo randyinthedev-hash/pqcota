@@ -169,7 +169,7 @@
 | [TD-NETWORK-12](collectors/network/dissect_test.go) | unit | `TestDissectAndParse_TLS` · `_SSH` · `_IPv6` · `TestDissect_skipsNonTCP`: 프레임 → TCP 세그먼트 → 핸드셰이크 | IPv4·IPv6 모두 종단 디섹션, 비-TCP는 건너뜀 | 라이브 캡처 파이프라인의 순수 코어다. 여기가 막히면 파서가 옳아도 아무것도 도달하지 않는다 |
 | [TD-NETWORK-13](collectors/network/dissect_test.go) | unit | `TestCollect_degradesOnCaptureUnavailable`: 소스가 `ErrCaptureUnavailable` | 노드별 완전성 갭 결과를 스트림 | 캡처가 불가할 때 크래시하거나 "없음"으로 보고하지 않는다 |
 | [TD-NETWORK-14](collectors/network/capture_linux_test.go) | unit(linux) | `TestEdgeFor_clientOnly`: 양쪽 방향 관측 | **로컬이 클라이언트인 엣지만** client→server로 방출(낮은 포트=서버) | 같은 연결을 양쪽에서 두 번 세지 않는다 |
-| [TD-NETWORK-15](collectors/network/capture_linux_test.go) | unit(linux) | `TestObserveFillsTheWholeWindow`: 원시 syscall이 시그널(SIGURG 선점)에 깨어 EINTR | 재시도하고 구간을 유지. 정상 종료면 `Truncated`가 서지 않는다 | 구간이 무작위 시점에 잘려 결과가 "핸드셰이크 없음"이 되는 것: **결함이 갭으로 위장**(§2.6). 실측: 25초 구간이 0·0·14·25초에 종료 |
+| [TD-NETWORK-15](collectors/network/capture_linux_test.go) | **integration** | `TestObserveFillsTheWholeWindow`: 원시 syscall이 시그널(SIGURG 선점)에 깨어 EINTR | 재시도하고 구간을 유지. 정상 종료면 `Truncated`가 서지 않는다. **소켓이 열려야 재는 경로라 `CAP_NET_RAW`가 없으면 스킵**(TD-NETWORK-16과 정반대다) | 구간이 무작위 시점에 잘려 결과가 "핸드셰이크 없음"이 되는 것: **결함이 갭으로 위장**(§2.6). 실측: 25초 구간이 0·0·14·25초에 종료 |
 | [TD-NETWORK-16](collectors/network/capture_linux_test.go) | **integration** | `TestLiveSource_noCapPerm`: `CAP_NET_RAW` 없이 AF_PACKET | EPERM→`ErrCaptureUnavailable`(크래시 아님). 권한이 있으면 스킵 | 권한이 없을 때 갭으로 강등한다 |
 | [TD-NETWORK-17](collectors/network/real_test.go) | **integration** | `TestRealTLSHandshake`: 실 crypto/tls 핸드셰이크 | ClientHello의 후보에 X25519MLKEM768, ServerHello의 `negotiated_group`이 X25519MLKEM768. 그 값이 코어에서 🟢(PQC_HYBRID)로 분류된다 | 손으로 만든 바이트가 아니라 진짜 와이어에서 파서가 도는지. 관측과 등급 파생이 실물에서 맞물리는지도 함께 본다 |
 | [TD-NETWORK-18](collectors/network/real_test.go) | **integration** | `TestRealSSHKexInit`: 로컬 sshd(OpenSSH 9.6) | **제공 목록**에 `sntrup761x25519`가 있고, 단일 KEXINIT 관측이라 `negotiated_group`은 **비어 있다** | 〃 (실물 sshd). 서버가 제안한 것이지 합의된 것이 아니라는 구분이 실물에서도 지켜지는지 |
@@ -188,8 +188,8 @@
 | 5 | `/proc` 파서·경로 병합·intake 계약·결과 조립 | TD-OPENSSL-1–5 |
 | 6 | **JVM 정찰·attach·다중 JVM 구별·정적 폴백** | TD-JVM-2–7·TD-JVM-10 |
 | 7 | **서명과 그 커버리지** | TD-SIGN-1–3 |
-| 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–15 |
-| 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-16–18 |
+| 8 | **network-collector 파서·엣지·디섹션·서비스** | TD-NETWORK-1–14 |
+| 9 | 실 캡처·실 핸드셰이크 통합 | TD-NETWORK-15–18 |
 | 10 | **실 호스트 수집**(OpenSSL·JVM attach·Windows 플레이북) | TD-OPENSSL-4·TD-JVM-8·TD-JVM-11·TD-JVM-12·TD-JVM-14·TD-WIN-1·TD-WIN-2 · [데모 2/6](../demo/integration-verification.md) |
 | 11 | **관측하지 못한 것과 없는 것을 가르는 자리** | TD-OPENSSL-6 · TD-JVM-9·TD-JVM-13 · TD-CONTAINER-2 · TD-NETWORK-19 |
 
