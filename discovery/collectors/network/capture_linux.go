@@ -146,7 +146,7 @@ func (p *sshPending) resolve() []Observation {
 
 // edgeFor — 세그먼트에서 client→server 방향 엣지를 만든다. 서버 = 낮은 포트 쪽.
 // 로컬이 클라이언트일 때만 방출(emit=true)한다 — 양쪽에서 잡히는 중복과 방향 혼선을 없앤다.
-// 서버측에서 본 핸드셰이크는 상대(클라이언트) 노드가 보고한다. IP→노드 해소는 코어(§1.4).
+// 서버측에서 본 핸드셰이크는 상대(클라이언트) 노드가 보고한다. IP→노드 잇기는 코어(§1.4).
 func (s *LiveSource) edgeFor(seg *Segment) (ConnTuple, bool) {
 	serverIP, serverPort, clientIP := seg.SrcIP, seg.SrcPort, seg.DstIP
 	if seg.SrcPort > seg.DstPort { // 낮은 포트가 서버

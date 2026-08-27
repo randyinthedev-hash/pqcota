@@ -26,7 +26,7 @@ Discovery·Inventory 예제가 함께 쓰는 **회수된 결과**(실물 collect
 - `data/results/node-a-openssl.json`: OpenSSL 자산(공유 `libssl.so.3`이 두 앱 `api-gw`·`payment-gw`에 **걸쳐 있다**).
 - `data/results/node-b-jca.json`: JCA provider 체인(SUN·SunJCE·**BC**).
 - `data/results/node-a-net.json`: 관측 통신 엣지 3개(🟢 MLKEM · 🔴 x25519 · 🟢 SSH sntrup761).
-- `data/results/node-d-cng.json`: Windows CNG provider 9개·알고리즘 50개. **실기에서 관측한 값**이다
+- `data/results/node-d-cng.json`: Windows CNG provider 9개·알고리즘 50개. **실제 장비에서 관측한 값**이다
   (Windows 11 Pro 25H2 · 빌드 26200). 머신 지문은 뺐고 노드 이름만 예제에 맞췄다.
 - `data/nodes.json`: 관측 IP를 노드명으로 잇기(10.0.0.9 → node-c).
 - [`inventory/attribution.csv`](inventory/attribution.csv): 관측이 앱을 못 짚은 엣지 하나를 사람이 지정하는 선언 한 줄.

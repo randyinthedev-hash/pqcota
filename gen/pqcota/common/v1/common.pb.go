@@ -447,7 +447,7 @@ type Envelope struct {
 	ScopeMasterRef   string                 `protobuf:"bytes,6,opt,name=scope_master_ref,json=scopeMasterRef,proto3" json:"scope_master_ref,omitempty"`     // 대조 대상 CMDB 스냅샷 참조
 	Signature        string                 `protobuf:"bytes,7,opt,name=signature,proto3" json:"signature,omitempty"`                                       // collector 서명 (예: "ed25519:...") (§2.6)
 	CollectorLicense string                 `protobuf:"bytes,8,opt,name=collector_license,json=collectorLicense,proto3" json:"collector_license,omitempty"` // "Apache-2.0" | "GPL-3.0-or-later" (라이선스 정리 — 선택 UX)
-	Machine          *MachineIdentity       `protobuf:"bytes,9,opt,name=machine,proto3" json:"machine,omitempty"`                                           // 머신 상관 지문 — node_id 해소·검증·self-id (§1.4)
+	Machine          *MachineIdentity       `protobuf:"bytes,9,opt,name=machine,proto3" json:"machine,omitempty"`                                           // 머신 상관 지문 — node_id 잇기·검증·self-id (§1.4)
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -547,7 +547,7 @@ func (x *Envelope) GetMachine() *MachineIdentity {
 
 // MachineIdentity — 머신 상관·자동 UID 부여의 근거 지문(§1.4). collector(Ansible/수동 무관)가 채운다.
 // 권위 ID(target_node_id=CMDB)를 이 지문으로 상관·검증하고, CMDB 없으면 여기서 결정론적 self-id를 파생한다.
-// IP는 ID가 아니라 로케이터 — 네트워크 관측을 노드로 해소하는 데만 쓴다.
+// IP는 ID가 아니라 로케이터 — 네트워크 관측을 노드로 잇는 데만 쓴다.
 type MachineIdentity struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	MachineId       string                 `protobuf:"bytes,1,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`                     // /etc/machine-id (systemd, 안정 per-install UUID) — 단일 로컬 키 최선

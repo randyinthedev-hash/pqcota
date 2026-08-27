@@ -190,7 +190,7 @@ JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입�
 
 **내부 provider 포지셔닝**: BC가 세 표준 알고리즘을 표준 API로 제공하고 FIPS 인증본(BC-FJA)까지 있으므로, Java 쪽에서 표준 PQC를 자체 구현할 정당성은 약하다. **내부 provider의 가치는 (a) OpenSSL 런타임 특수 요구, (b) BC 미지원 독자 알고리즘·HSM 연동, (c) 라이선스·공급망 통제 사유가 있을 때로 한정**한다. 순수하게 표준 PQC를 Java에 넣는 목적이면 BC 채택이 재발명보다 합리적이며, 내부 provider는 OpenSSL·특수 케이스에 집중한다.
 
-**라이선스 주의**: BouncyCastle 표준판은 MIT 계열 허용적 라이선스라 제품에 번들·직접 통합해도 copyleft 전염이 없다([라이선스 정리](../docs/licensing.md)의 GPL 격리 대상 아님). 단 BC-FJA(FIPS) 변형은 별도 라이선스·계약 조건일 수 있어 규제 자산 채택 시 확인한다.
+**라이선스 주의**: BouncyCastle 표준판은 MIT 계열 허용적 라이선스라 제품에 번들·직접 통합해도 copyleft 전염이 없다([라이선스 정리](../docs/licensing.md)의 GPL 격리 대상 아님). 단 BC-FJA(FIPS) 변형은 별도 라이선스·계약 조건일 수 있어 규제 자산을 채택할 때 확인한다.
 
 ```mermaid
 flowchart LR

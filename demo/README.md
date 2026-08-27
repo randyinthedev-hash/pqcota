@@ -19,7 +19,7 @@
 > (스냅샷 간 변화 diff는 관측 사실이라 이 리포에 있습니다. 아키텍처 §6 기준.)
 
 📊 **실행 전 예상 결과**는 [`expected-output/`](expected-output/)에 있습니다. 콘솔 출력·토폴로지 SVG 샘플과
-실제 실행 시 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)의 설명.
+실제로 실행하면 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)의 설명.
 
 ## 요구 사항
 - Docker (Compose v2) · 인터넷(최초 이미지 빌드) · 사용자 `docker` 그룹 (루트/KVM 불필요)
@@ -34,7 +34,7 @@
 ./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
 ```
 
-`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적는다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
+`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적습니다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)다.
 
 > **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
 > (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가

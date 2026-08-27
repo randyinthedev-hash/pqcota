@@ -45,7 +45,7 @@ func (o Observation) Empty() bool { return len(o.Providers) == 0 && len(o.Algori
 //
 // ★ 열거를 **요청**할 때 쓰는 연산 비트마스크(1·2·4·8·0x10…)와 **다른 어휘**다. 처음엔 같은 것으로
 // 보고 비트마스크로 옮겼는데, 첫 실측에서 절반이 빈 값으로 나오고 DH·ECDH가 `secret-agreement`가
-// 아니라 `asymmetric-encryption`으로 **틀리게** 붙었다. 값이 겹쳐서 조용히 틀린 자리다.
+// 아니라 `asymmetric-encryption`으로 **틀리게** 붙었다. 값이 겹쳐서 오류 없이 틀리는 자리다.
 const (
 	ifaceCipher            = 1
 	ifaceHash              = 2

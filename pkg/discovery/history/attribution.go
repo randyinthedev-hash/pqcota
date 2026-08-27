@@ -15,7 +15,7 @@ type EdgeAttribution struct {
 	NodeID string
 	// Dst — 엣지에 찍힌 상대 주소 그대로. 계약이 `dst_addr`를 `"ip:port"`로 정하므로 포트가
 	// 이미 들어 있다 — 따로 두면 같은 정보를 두 곳에 적는 셈이고, 한쪽만 틀리면 매칭이 조용히
-	// 어긋난다. 상대가 노드로 해소돼 주소가 비면 그 노드 ID를 쓴다.
+	// 어긋난다. 상대가 노드로 이어져 주소가 비면 그 노드 ID를 쓴다.
 	Dst        string
 	AppKey     string
 	DeclaredAt time.Time

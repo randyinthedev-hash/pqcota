@@ -276,7 +276,7 @@ func sortedKeys(m map[string]*discoveryv1.Finding) []string {
 func edgeDst(e *discoveryv1.ObservedEdge) string {
 	d := e.GetDstNodeId()
 	if d == "" {
-		return e.GetDstAddr() // 스코프 미해소(off-scope) — 원시 주소로 표기(§1.4)
+		return e.GetDstAddr() // 스코프에 잇지 못함(off-scope) — 원시 주소로 표기(§1.4)
 	}
 	if p := e.GetPort(); p != 0 {
 		return fmt.Sprintf("%s:%d", d, p)

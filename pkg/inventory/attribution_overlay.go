@@ -10,7 +10,7 @@ import (
 //
 // **저장을 고치지 않는다.** 선언은 자기 레인에 그대로 있고, 관측 엣지도 그대로다. 둘을 합치는
 // 일은 여기서, **읽을 때만** 일어난다 — 적재가 관측을 고치면 collector의 서명과 어긋나고,
-// `raw_capture`에서 다시 계산할 때 저장된 값과 갈린다(검토 중인 설계 §5.2).
+// `raw_capture`에서 다시 계산할 때 저장된 값과 달라진다(검토 중인 설계 §5.2).
 type AttributionOverlay struct {
 	byEdge map[edgeKey]string
 }
@@ -62,7 +62,7 @@ func (o *AttributionOverlay) Len() int {
 	return len(o.byEdge)
 }
 
-// edgeDstKey — 선언이 가리키는 상대. 주소가 있으면 그것을, 노드로 해소돼 주소가 비면 노드 ID를
+// edgeDstKey — 선언이 가리키는 상대. 주소가 있으면 그것을, 노드로 이어져 주소가 비면 노드 ID를
 // 쓴다 — 화면에 보이는 값과 같아야 사람이 그대로 옮겨 적을 수 있다.
 func edgeDstKey(e *discoveryv1.ObservedEdge) string {
 	if a := e.GetDstAddr(); a != "" {

@@ -37,7 +37,7 @@ func TestMatch(t *testing.T) {
 	}
 }
 
-// Resolve — 가짜 /proc 트리로 exe/cmdline 기반 해소 검증.
+// Resolve — 가짜 /proc 트리로 exe/cmdline으로 찾아내는지 검증.
 func TestResolve(t *testing.T) {
 	root := t.TempDir()
 	mkProc := func(pid, cmdline, target string) {
