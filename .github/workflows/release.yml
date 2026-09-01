@@ -28,7 +28,7 @@ jobs:
           cache: true
 
       # JVM attach 사이드카 — 레거시 JVM에 붙어야 해서 --release 8로 빌드된다.
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
