@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -54,7 +55,13 @@ func main() {
 	// 동안 승인 서명·조치가 빈 FINALIZED 계획이 그대로 통과했다. 사유를 함께 싣는다 — 무엇이
 	// 모자란지 말하지 않고 거절하면 사용자가 계획을 고칠 수 없다.
 	if err := provisioning.Executable(plan); err != nil {
-		fmt.Fprintf(os.Stderr, "refused: %v. Only a finalized plan justifies provisioning (§3.7).\n", err)
+		// 꼬리말은 사유에 맞춰 붙인다. 조치 내용이 모자란 계획은 **이미 확정된** 것이라,
+		// "확정된 계획만 근거가 된다"고 덧붙이면 고칠 자리를 잘못 가리킨다.
+		tail := "Fill the action in — a finalized plan is the only grounds, and it has to say what to do (§3.7)."
+		if errors.Is(err, provisioning.ErrNotFinalized) {
+			tail = "Only a finalized plan justifies provisioning (§3.7)."
+		}
+		fmt.Fprintf(os.Stderr, "refused: %v. %s\n", err, tail)
 		os.Exit(1)
 	}
 
