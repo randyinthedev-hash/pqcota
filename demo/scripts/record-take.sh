@@ -72,8 +72,8 @@ need_ctl() {
 take_observe() {
 	need_ctl
 	local jnode jsec
-	jnode=$(docker exec pqcota-ctl bash -lc 'ls -1 /work/results/*-jca.json 2>/dev/null | head -1' |
-		xargs -r basename | sed 's/-jca\.json$//' | tr -d '[:space:]')
+	jnode=$(docker exec pqcota-ctl bash -lc 'ls -1 /work/results/*-jca.jsonl 2>/dev/null | head -1' |
+		xargs -r basename | sed 's/-jca\.jsonl$//' | tr -d '[:space:]')
 	[ -n "$jnode" ] || { echo "no JCA observation yet — run demo.sh first." >&2; exit 1; }
 	jsec=$(docker exec "$jnode" sh -lc 'ls /opt/java/*/conf/security/java.security /usr/lib/jvm/*/conf/security/java.security 2>/dev/null | head -1' | tr -d '[:space:]')
 

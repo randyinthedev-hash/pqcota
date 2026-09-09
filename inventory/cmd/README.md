@@ -18,7 +18,7 @@ pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 
 | 인자·옵션 | 하는 일 |
 |---|---|
-| `<results-dir>` | `*.json`(단일 객체)·`*.jsonl`(한 줄=한 결과)을 모두 읽는다. jvm attach 경로가 노드당 JVM 여럿을 JSONL로 낸다 |
+| `<results-dir>` | `*.json`(단일 객체)·`*.jsonl`(한 줄=한 결과)을 모두 읽는다. **형식은 확장자가 아니라 내용으로 가린다.** jvm attach 경로가 노드당 JVM 여럿을 JSONL로 낸다. 해독하지 못한 입력이 하나라도 있으면 **적재하지 않고 멈춘다** — 반쪽만 들어가면 빠진 자산이 없는 자산과 구별되지 않는다 |
 | `[scope-master-file]` | 노드 등재 게이트. 안 주면 게이트를 생략한다 |
 | `-scope-assets <csv>` | 자산 스코프: 등재된 노드 안에서 계속 관리할 자산만 남긴다(아래) |
 
