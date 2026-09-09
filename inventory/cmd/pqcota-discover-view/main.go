@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -18,8 +17,8 @@ import (
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func main() {
@@ -272,19 +271,18 @@ func loadNodeMap(path string) map[string]string {
 	return m
 }
 
+// loadResults — 결과 디렉터리를 읽는다. 형식 판별은 공용 디코더에 맡긴다(pkg/discovery/resultio).
+//
+// 여기서 직접 `*.json`만 훑고 단일 객체로만 읽던 때, JVM이 둘 이상인 노드의 JCA 결과가
+// **통째로 화면에서 빠졌다.** 그 파일은 JSON Lines였는데 단일 객체로 파싱해 보고 실패하면
+// 조용히 건너뛰었기 때문이다. 관측이 화면까지 오지 않으면 적지 않은 것과 같다.
+//
+// 못 읽은 입력에서 멈추지는 않는다. 이쪽은 조회용 뷰라 나머지라도 그리는 편이 낫다.
+// 대신 **무엇이 빠졌는지 반드시 알린다** — 적재 관문(pqcota-ingest)은 같은 자리에서 멈춘다.
 func loadResults(dir string) []*discoveryv1.CollectionResult {
-	paths, _ := filepath.Glob(filepath.Join(dir, "*.json"))
-	var out []*discoveryv1.CollectionResult
-	for _, p := range paths {
-		b, err := os.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		res := &discoveryv1.CollectionResult{}
-		if protojson.Unmarshal(b, res) != nil {
-			continue
-		}
-		out = append(out, res)
+	out, flaws := resultio.LoadDir(dir)
+	for _, f := range flaws {
+		fmt.Fprintln(os.Stderr, "[discover-view] ⚠ left out of the view:", f)
 	}
 	return out
 }

@@ -5,7 +5,10 @@
 //
 // usage: pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 //
-//	results-dir       : *.json (protojson CollectionResult) — Ansible/업로드로 회수된 것
+//	results-dir       : *.json(단일 객체)·*.jsonl(한 줄=한 결과) — Ansible/업로드로 회수된 것.
+//	                    형식은 확장자가 아니라 내용으로 판별한다(pkg/discovery/resultio).
+//	                    **해독하지 못한 입력이 하나라도 있으면 적재하지 않는다** — 반쪽짜리
+//	                    적재는 빠진 자산과 없는 자산을 구별할 수 없게 만든다(§2.6).
 //	scope-master-file : (선택) 등재 노드 ID 목록(한 줄에 하나). 없으면 게이트 생략(로컬/데모).
 //	-scope-assets     : (선택) 자산 스코프 정책 CSV. 노드는 등재됐어도 그 안에서 **계속 관리할
 //	                    자산만** 남긴다(§1.4 노드 게이트를 자산 단위로). 제외분은 적재되지 않되
@@ -23,17 +26,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func main() {
@@ -57,9 +59,19 @@ func main() {
 		master = scope.NewMaster(ids)
 	}
 
-	results := loadResults(dir)
+	results, flaws := resultio.LoadDir(dir)
+	// **해독하지 못한 입력에서 멈춘다.** 예전에는 조용히 건너뛰었는데, 그러면 그 파일에 있던
+	// 자산이 화면에서 "처음부터 없던 것"과 똑같이 보인다 — 성공처럼 보이는 실패다(§2.6).
+	// 판단은 여기서 한다: 디코더는 읽은 것과 못 읽은 것을 함께 돌려주고, 관문인 이쪽이 막는다.
+	for _, f := range flaws {
+		fmt.Fprintln(os.Stderr, "could not decode:", f)
+	}
+	if len(flaws) > 0 {
+		fmt.Fprintf(os.Stderr, "%d input(s) could not be decoded — refusing to ingest a partial set. Fix or remove them, then run again.\n", len(flaws))
+		os.Exit(1)
+	}
 	if len(results) == 0 {
-		fmt.Fprintf(os.Stderr, "no result JSON found: %s/*.json\n", dir)
+		fmt.Fprintf(os.Stderr, "no result found: %s/*.json or %s/*.jsonl\n", dir, dir)
 		os.Exit(1)
 	}
 
@@ -168,46 +180,6 @@ func openStore() (history.Store, func(), bool) {
 		os.Exit(1)
 	}
 	return pg, pg.Close, true
-}
-
-func loadResults(dir string) []*discoveryv1.CollectionResult {
-	// *.json(단일 객체)과 *.jsonl(JSON Lines, 한 줄=한 결과) 모두 읽는다.
-	// jvm attach 경로가 노드당 JVM 여럿을 JSONL로 방출하므로 한 스트림에 여러 결과가 온다.
-	var paths []string
-	for _, g := range []string{"*.json", "*.jsonl"} {
-		m, _ := filepath.Glob(filepath.Join(dir, g))
-		paths = append(paths, m...)
-	}
-	var out []*discoveryv1.CollectionResult
-	for _, p := range paths {
-		b, err := os.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		out = append(out, parseResultDocs(b)...)
-	}
-	return out
-}
-
-// parseResultDocs — 한 파일 바이트에서 CollectionResult 여러 개를 뽑는다(순수·테스트 가능).
-// 먼저 파일 전체를 단일 객체로 시도하고(compact·multiline 모두), 실패하면 JSON Lines로 —
-// 줄별 파싱해 성공한 것만 모은다(CollectionResult 아닌 줄은 건너뜀). 이 순서라야 pretty-print된
-// 단일 객체(줄별로는 안 깨짐)와 JSONL을 다 감당한다.
-func parseResultDocs(b []byte) []*discoveryv1.CollectionResult {
-	if res := (&discoveryv1.CollectionResult{}); protojson.Unmarshal(b, res) == nil {
-		return []*discoveryv1.CollectionResult{res}
-	}
-	var out []*discoveryv1.CollectionResult
-	for _, line := range strings.Split(string(b), "\n") {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-		res := &discoveryv1.CollectionResult{}
-		if protojson.Unmarshal([]byte(line), res) == nil {
-			out = append(out, res)
-		}
-	}
-	return out
 }
 
 // envKeys — 환경변수의 콤마 구분 base64 공개키 목록.

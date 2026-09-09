@@ -75,7 +75,10 @@
           when: (recon.stdout | from_json | length) > 0
 
         - name: "   → 컨트롤러에 저장"
-          copy: { content: "{{ scan_jca.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-jca.json" }
+          # **확장자가 `.jsonl`인 이유**: jvmscan의 attach 경로는 관측한 JVM마다 한 줄씩 낸다.
+          # JVM이 하나뿐인 노드에서는 그 한 줄이 단일 객체로도 읽혀 `.json`이라도 우연히 통했고,
+          # 둘 이상이면 그 노드의 결과가 통째로 사라졌다. 이름이 내용을 속이지 않게 한다.
+          copy: { content: "{{ scan_jca.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-jca.jsonl" }
           delegate_to: localhost
           become: false
           when: scan_jca is not skipped and scan_jca.stdout | default('') | length > 0
@@ -146,7 +149,10 @@
           when: (recon_win.stdout | from_json | length) > 0
 
         - name: "   → 컨트롤러에 저장"
-          copy: { content: "{{ scan_jca_win.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-jca.json" }
+          # **확장자가 `.jsonl`인 이유**: jvmscan의 attach 경로는 관측한 JVM마다 한 줄씩 낸다.
+          # JVM이 하나뿐인 노드에서는 그 한 줄이 단일 객체로도 읽혀 `.json`이라도 우연히 통했고,
+          # 둘 이상이면 그 노드의 결과가 통째로 사라졌다. 이름이 내용을 속이지 않게 한다.
+          copy: { content: "{{ scan_jca_win.stdout }}", dest: "{{ results_dir }}/{{ inventory_hostname }}-jca.jsonl" }
           delegate_to: localhost
           become: false
           when: scan_jca_win is not skipped and scan_jca_win.stdout | default('') | length > 0
