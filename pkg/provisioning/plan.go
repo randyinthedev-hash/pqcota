@@ -6,6 +6,7 @@ import (
 
 	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/registry"
 )
 
 // ErrNotFinalized — FINALIZED 아닌 계획을 실행 근거로 쓰려 할 때(§3.7 최강 게이트).
@@ -96,8 +97,9 @@ func TraceabilityWarnings(p *provisioningv1.FinalizedPlan) []string {
 //
 // 그런 조치의 조각은 `Groups` 줄이 주석 처리된 채 나간다(groupsLine). 즉 **배치해도 아무것도
 // 켜지지 않는다.** 조각 안 주석은 열어봐야 보이므로 여기서 크게 알린다 — ProviderClassWarnings와
-// 같은 이유다. 서명 알고리즘(ML-DSA)이 목표일 때도 걸리는데, 그 경우도 조각만으로는 완결되지
-// 않는 것이 사실이라 맞다. 하드 블록은 하지 않는다: 사람이 그룹을 손으로 적는 것이 정당한 경로다.
+// 같은 이유다. 서명 알고리즘(ML-DSA)이 목표일 때도 걸리지만 **문구가 다르다**: 서명은 그룹으로
+// 협상하지 않아 적을 그룹이 아예 없으므로, 손으로 적으라고 하면 틀린 말이 된다.
+// 하드 블록은 하지 않는다: 사람이 그룹을 손으로 적는 것이 정당한 경로다.
 func TargetAlgorithmWarnings(p *provisioningv1.FinalizedPlan) []string {
 	var out []string
 	for _, a := range p.GetActions() {
@@ -110,12 +112,19 @@ func TargetAlgorithmWarnings(p *provisioningv1.FinalizedPlan) []string {
 		if hybridGroup(a.GetTargetAlgorithm()) != "" {
 			continue
 		}
-		reason := "target_algorithm is unset"
-		if a.GetTargetAlgorithm() != "" {
-			reason = fmt.Sprintf("target_algorithm %q does not resolve to a hybrid KEM group", a.GetTargetAlgorithm())
+		target := a.GetTargetAlgorithm()
+		var why string
+		switch alg, ok := registry.MatchPQC(target); {
+		case target == "":
+			why = "target_algorithm is unset, so the fragment ships with its Groups line commented out and **deploying it enables nothing**. Name the target, or put the group in by hand."
+		case ok && alg.Kind == registry.KindSignature:
+			// ★ 여기서 "그룹을 손으로 적으라"고 하면 **틀린 말**이다. 서명은 그룹으로 협상하지
+			// 않아서 적을 그룹이 아예 없다. config 조각으로 서명을 바꿀 수 없다는 것이 사실이다.
+			why = fmt.Sprintf("target_algorithm %q is a signature algorithm, which is not negotiated as a TLS group — this config fragment cannot deliver it. The Groups line stays commented out on purpose; the signature change belongs to the certificate and its issuance, not here.", target)
+		default:
+			why = fmt.Sprintf("target_algorithm %q does not resolve to a hybrid KEM group, so the fragment ships with its Groups line commented out and **deploying it enables nothing**. Put the group in by hand before deploying.", target)
 		}
-		out = append(out, fmt.Sprintf("action %s (node=%s): %s — the fragment ships with its Groups line commented out, so **deploying it enables nothing**. Put the group in by hand before deploying.",
-			a.GetId(), a.GetTargetNodeId(), reason))
+		out = append(out, fmt.Sprintf("action %s (node=%s): %s", a.GetId(), a.GetTargetNodeId(), why))
 	}
 	return out
 }

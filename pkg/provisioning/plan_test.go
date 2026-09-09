@@ -136,9 +136,14 @@ func TestTargetAlgorithmWarnings(t *testing.T) {
 	} else if !strings.Contains(w[0], "unset") {
 		t.Errorf("the warning must say it is unset: %s", w[0])
 	}
-	// 서명 알고리즘도 그룹으로는 안 풀린다 — 조각만으로 완결되지 않는 것이 사실이라 걸리는 게 맞다.
+	// ★ 서명 알고리즘도 걸리되 **문구가 달라야 한다.** 서명은 그룹으로 협상하지 않으므로
+	// "그룹을 손으로 적으라"고 하면 있지도 않은 일을 시키는 것이 된다.
 	if w := provisioning.TargetAlgorithmWarnings(plan(configOnly, "ML-DSA (FIPS 204)")); len(w) != 1 {
 		t.Errorf("a signature target must warn once: %v", w)
+	} else if !strings.Contains(w[0], "signature algorithm") {
+		t.Errorf("the warning must say it is a signature, not a group to fill in: %s", w[0])
+	} else if strings.Contains(w[0], "by hand") {
+		t.Errorf("a signature target must not be told to put a group in by hand: %s", w[0])
 	}
 	// config로 내지 않는 조치는 Groups 줄 자체가 없다.
 	fork := provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE
