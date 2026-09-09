@@ -11,6 +11,12 @@
 //
 //	--dsn 지정 시: 히스토리에서 before-findings를 읽어 레코드를 캡처·영속(같은 저장소).
 //	미지정 시: 플레이북만 stdout(레코드 없음).
+//	env PQCOTA_APPROVAL_KEYS   : (선택) `<승인자>=<base64 공개키>` 콤마 구분. 있으면 승인 서명을
+//	                             **그 승인자의 키로** 검증한다(§3.3③). 하나라도 어긋나면 거절한다.
+//	env PQCOTA_REQUIRE_APPROVAL: "1"이면 검증할 키가 없을 때 **생성을 시작하지 않는다.**
+//	                             조용히 통과하는 경로를 닫아야 하는 배포용(§2.6).
+//
+// 승인 서명은 pqcota-approve가 붙인다. 키쌍은 pqcota-keygen이 낸다.
 package main
 
 import (
@@ -19,9 +25,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -62,6 +70,13 @@ func main() {
 			tail = "Only a finalized plan justifies provisioning (§3.7)."
 		}
 		fmt.Fprintf(os.Stderr, "refused: %v. %s\n", err, tail)
+		os.Exit(1)
+	}
+
+	// 승인 서명 검증(§3.3③) — Executable은 서명의 **개수**만 센다. 값이 맞는지, 누구 것인지는
+	// 여기서 본다. 키 묶음이 없으면 확인할 수 없으므로 **확인했다고 하지 않는다**(§2.6).
+	if err := checkApprovals(plan); err != nil {
+		fmt.Fprintln(os.Stderr, "refused:", err)
 		os.Exit(1)
 	}
 
@@ -167,4 +182,47 @@ func main() {
 		n++
 	}
 	fmt.Fprintf(os.Stderr, "[provision] persisted %d records (before capture · STAGED · rollback basis).\n", n)
+}
+
+// checkApprovals — 승인 서명이 등록된 승인자의 것인지 확인한다.
+//
+// PQCOTA_APPROVAL_KEYS가 `<승인자>=<base64 공개키>` 묶음이다. **키만 나열하지 않는 이유**가
+// PQCOTA_VERIFY_KEY의 교훈이다: 키 목록은 "누군가 서명했다"까지만 답해서 어느 서명이 누구
+// 것인지 말하지 못한다. 승인은 책임의 소재라 그 답으로는 부족하다.
+//
+// 키가 없으면 막지 않되 **확인하지 않았다고 크게 말한다.** 확인 못 한 것을 통과와 같은 자리에
+// 두지 않는다(§2.6). 그 경로를 닫아야 하는 배포에서는 PQCOTA_REQUIRE_APPROVAL=1로 막는다.
+func checkApprovals(plan *provisioningv1.FinalizedPlan) error {
+	keys, err := sign.ParseKeyMap(os.Getenv("PQCOTA_APPROVAL_KEYS"))
+	if err != nil {
+		return fmt.Errorf("PQCOTA_APPROVAL_KEYS: %w", err)
+	}
+	if len(keys) == 0 {
+		if os.Getenv("PQCOTA_REQUIRE_APPROVAL") == "1" {
+			return fmt.Errorf("PQCOTA_REQUIRE_APPROVAL=1 but PQCOTA_APPROVAL_KEYS is empty — there is no key to check the approvals with")
+		}
+		fmt.Fprintf(os.Stderr, "⚠ [provision] approval signatures: **not checked** — no PQCOTA_APPROVAL_KEYS to check them with. %d entries were counted, not verified.\n",
+			len(plan.GetApprovalSignatures()))
+		fmt.Fprintln(os.Stderr, "           where that is not good enough, close it with PQCOTA_REQUIRE_APPROVAL=1.")
+		return nil
+	}
+
+	chk := sign.VerifyApprovals(keys, plan)
+	for _, u := range chk.Unverifiable {
+		// 이름표는 틀린 것이 아니라 **아무것도 증명하지 않는 것**이다. 거부와 다른 칸에 둔다.
+		fmt.Fprintf(os.Stderr, "⚠ [provision] approval %q is not a signature — it is a label and proves nothing. Sign it with pqcota-approve.\n", u)
+	}
+	if len(chk.Rejected) > 0 {
+		var names []string
+		for _, r := range chk.Rejected {
+			names = append(names, r.String())
+		}
+		return fmt.Errorf("approval signatures did not check out: %s. A plan carrying an approval that is not the approver's is worse than one carrying none (§3.3③)",
+			strings.Join(names, ", "))
+	}
+	if len(chk.Approved) == 0 {
+		return fmt.Errorf("no approval on this plan could be verified with the registered keys, so nothing shows who approved it (§3.3③)")
+	}
+	fmt.Fprintf(os.Stderr, "[provision] approvals verified: %s\n", strings.Join(chk.Approved, ", "))
+	return nil
 }

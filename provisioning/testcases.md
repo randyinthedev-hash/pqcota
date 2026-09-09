@@ -56,7 +56,7 @@
 케이스 번호는 **`TP`(프로비저닝) - 무엇을 보나 - 순번**이다. `TP-GATE`(실행 게이트) · `TP-RENDER`(조치 렌더) · `TP-PLAYBOOK`(플레이북 생성) · `TP-RECORD`(before 캡처·레코드). 번호는 그것을 검증하는 **테스트 파일로 이어진다**. 구현 순서는 §3.
 
 ### TP-GATE. 실행 게이트(finalized-only, §3): 핵심 안전 게이트
-`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1, 그리고 조치마다 대상 노드와 조치 종류가 있어야 실행 근거로 인정한다(규정서 §3.7 최강 게이트). 되짚을 수 있는가(§1.2)는 막지 않고 경고한다.
+`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1, 그리고 조치마다 대상 노드와 조치 종류가 있어야 실행 근거로 인정한다(규정서 §3.7 최강 게이트). 되짚을 수 있는가(§1.2)는 막지 않고 경고한다. 승인 서명의 **값**은 게이트가 아니라 `sign.VerifyApprovals`가 등록된 승인자 키로 확인한다(§3.3③).
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
@@ -64,6 +64,9 @@
 | [TP-GATE-2](../pkg/provisioning/plan_test.go) | `TestProviderClassWarnings`: placeholder를 낳는 조치 | 경고 1건(provider 이름·해결책 포함). `Executable`은 **여전히 통과** | 조각 안 주석은 열어봐야 보이므로 경고로도 띄운다. 미확정과 실행 거부는 별개다 |
 | [TP-GATE-4](../pkg/provisioning/plan_test.go) | `TestTraceabilityWarnings`: `derived_from_snapshot_id`·`ruleset_version`·`finalized_at`·`finding_id`가 빈 계획 / 넷 다 채운 계획 | 앞은 항목마다 경고, 뒤는 경고 0건. 둘 다 `Executable`은 **통과** | 되짚을 수 없다는 사실은 되짚어야 할 때가 되어서야 드러난다. 실행을 막을 일은 아니지만 조용히 둘 일도 아니다(§1.2·§2.6) |
 | [TP-GATE-5](../pkg/provisioning/plan_test.go) | `TestTargetAlgorithmWarnings`: 목표가 하이브리드 KEM / 빈 목표 / 서명 알고리즘 / config로 안 내는 조치 | 첫째와 넷째는 경고 0건, 둘째·셋째는 경고 1건 | 그룹으로 안 풀리면 조각의 `Groups` 줄이 주석으로 나가 **배치해도 아무것도 켜지지 않는다.** 그 사실이 조각 안에만 적혀 있으면 열어보지 않는 한 모른다 |
+| [TP-GATE-6](../pkg/kernel/sign/plan_test.go) | `TestSignAndVerifyApproval`·`TestApprovalRejectsUnknownApprover`: 승인자 키로 서명·검증 / **다른 사람 키가 등록된 경우** / 등록되지 않은 승인자 | 첫째만 확인됨. 나머지는 사유와 함께 거부 | 서명이 「누군가 승인했다」까지만 답하면 승인이 책임의 소재를 가리키지 못한다. 그래서 승인자 id에 묶인 키로만 확인한다 |
+| [TP-GATE-7](../pkg/kernel/sign/plan_test.go) | `TestTamperBreaksApproval`: 서명 뒤 계획의 필드를 하나씩 흔든다(조치 순서·조치 추가 포함) / 승인 서명만 하나 더 붙인다 | 앞은 전부 검증 실패, 뒤는 **여전히 통과** | 덮이지 않는 필드는 바꿔도 승인이 통과해, 승인자가 본 것과 배포되는 것이 달라진다. 서명 자신은 대상에서 빠져야 두 번째 승인이 첫 번째를 깨뜨리지 않는다 |
+| [TP-GATE-8](../pkg/kernel/sign/plan_test.go) | `TestApprovalLabelIsUnverifiable`·`TestParseKeyMap`: 서명 꼴이 아닌 이름표 / `<id>=<키>`가 아닌 값 / 같은 id에 키 둘 | 이름표는 **거부가 아니라 확인 불가** 칸으로. 나머지는 거절 | 확인하지 못한 것과 틀린 것을 같은 칸에 두면 확인하지 않은 것이 확인한 것처럼 보인다(§2.6). 한 id에 키가 둘이면 어느 것이 그 사람의 키인지 말할 수 없다 |
 | [TP-GATE-3](../provisioning/cmd/pqcota-provision/main_test.go) | `TestPlanGateRefuses`·`TestPlanGateAllows`: 빌드한 `pqcota-provision`에 서명 없음 / 조치 0건 / draft 계획을 준다(정방향·`--rollback` 둘 다) | **종료 코드가 0이 아니고 stdout에 플레이북이 한 줄도 없다.** 사유가 stderr에 나온다. 정상 계획은 통과 | 규칙이 옳아도 **제품 경로가 부르지 않으면 보장이 아니다.** 실제로 CLI가 `Executable`을 부르지 않고 상태만 비교하던 동안 TP-GATE-1은 계속 초록이었다. 반환값을 버리는 식으로 배선이 헐거워져도 여기서 드러난다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)

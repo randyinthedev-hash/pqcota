@@ -101,7 +101,13 @@ The "what" a reviewer decides from asset state (the plan layer). The generator b
 - every action carries a `target_node_id` — without one the playbook's `hosts` gets a blank entry, producing a play that **reaches nothing**, and that reads as "nothing happened" rather than as a failure
 - every action carries a `kind` — on `UNSPECIFIED` the generator cannot branch and emits a fragment saying "a remediation that cannot be injected through config", which is not true: the plan simply never said (§2.5, no guessing)
 
-**Approval signatures are still only counted.** Whether a value is valid, or whose it is, is not checked. That verification remains parked along with the wiring of `sign.VerifyFrom` (§7, open questions).
+**`Executable` does not look at the value of an approval signature.** It only counts them. Checking one needs a key, and this function is a contract rule that carries no key material. The check lives in `sign.VerifyApprovals`, wired by `pqcota-provision` through `PQCOTA_APPROVAL_KEYS`. **Passing the gate does not mean the approvals were verified** — those are two different questions.
+
+An approval signature has the form `"<approver>:ed25519:<base64>"`, and what is signed is the whole plan minus the approval signatures themselves (`sign.CanonicalPlan`). The approver id sits **inside** the signature so that verification is bound to that person's key. Take keys as a bare list instead and a signature that verifies under any key can arrive wearing any name, so the signature only answers "somebody approved". An approval is where accountability sits, and that answer is not enough. Hence `PQCOTA_APPROVAL_KEYS` is a set of `<approver>=<public key>` pairs from the start.
+
+The result splits three ways: **verified**, **rejected** (signature-shaped, but no key is registered or the signature does not match), and **unverifiable** (a label, not a signature). Splitting only into pass and fail would let "not checked" look like "checked" (§2.6). One rejection stops generation, and so does having no verified approval at all. With no keys at all it does not block but **says loudly that nothing was checked**; close that path with `PQCOTA_REQUIRE_APPROVAL=1`.
+
+Approvals are attached by `pqcota-approve`, and the key pair comes from `pqcota-keygen`. **Editing the plan after signing invalidates the approval** — the approver is accountable for the content of the actions, not for the name of the plan. If `FillPlan` is going to render the fragments, approve after that.
 
 **Traceability does not block.** A plan still runs with `derived_from_snapshot_id`, `ruleset_version`, `finalized_at` or an action's `finding_id` empty. But once it has run, the history holds no basis for it, so `TraceabilityWarnings` surfaces that. For the same reason `TargetAlgorithmWarnings` reports actions whose target does not resolve to a hybrid group and which therefore **turn nothing on when deployed**. One line separates blocking from warning: if filling it in by hand is a legitimate path it warns, and if the tool would otherwise write something untrue it blocks.
 
@@ -400,7 +406,7 @@ With a relative name (`acme-pqc.so`) OpenSSL looks in the **module directory** (
 | L1/L2/L3 artifacts | ✅ playbooks (apply and roll back, both directions) |
 | Plan authoring and review-finalization | ❌ not done |
 | Fleet orchestration (drain, rolling, health gates) | ❌ not done — this repo goes as far as activating one node (§5.2) |
-| Signature provenance | as far as the format and verification functions. Comparing against registered keys and refusing is not done |
+| Signature provenance | **Approval signatures** are compared against the registered approver keys and refused on mismatch (`PQCOTA_APPROVAL_KEYS`). **Collector report signatures** are still checked against a bare key list, which binds no key to anyone (`sign.VerifyFrom` wiring parked) |
 
 > Plan authoring, review-finalization, declaration reconciliation, and fleet orchestration are not done — they are joined only through the contract (`plan.proto`).
 
@@ -420,4 +426,4 @@ With a relative name (`acme-pqc.so`) OpenSSL looks in the **module directory** (
 
 - **An Ansible playbook is data** (not linked or bundled code), so it has nothing to do with GPL contagion → **generating** playbooks is legitimate (§4.3 · [license notes](../docs/licensing.en.md)).
 - **The standard BouncyCastle edition** (MIT family) is not among the GPL-isolated items (it can be bundled). **BC-FJA (FIPS)** has separate contract terms to check (§4.4).
-- **Signature provenance**: the format and verification functions live in this repo (`pkg/kernel/sign`). Comparing against registered keys and refusing is not done.
+- **Signature provenance**: the format and verification functions live in this repo (`pkg/kernel/sign`). **Approval signatures** are compared against registered approver keys and refused on mismatch. **Collector report signatures** take keys as a bare list, so they only answer "somebody signed" — binding them to a collector needs a change of environment-variable format, which is why `sign.VerifyFrom` wiring is parked.

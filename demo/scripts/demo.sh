@@ -182,6 +182,19 @@ FID=$(pick "f->'openssl'->>'lib'='libssl.so.3' and jsonb_array_length(coalesce(f
 [ -z "$FID" ] && FID=$(pick "jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
 [ -z "$FID" ] && FID=$(pick "f ? 'openssl'")
 echo "   target finding: $FID ($PNODE)"
+# 승인 서명(§3.3③) — 이름표가 아니라 **실제 서명**을 붙인다. 검증은 승인자 id에 묶인 키로만 하므로
+# (PQCOTA_APPROVAL_KEYS), 아무 키로나 서명한 것이 아무 이름을 달고 들어올 수 없다.
+# 공개키는 ctl의 프로필에 한 번만 넣는다 — 실제로도 검증 키는 그 머신의 설정이지 명령 인자가 아니다.
+APPROVER_KEYS=$(docker exec pqcota-ctl bash -lc 'pqcota-keygen')
+APPROVER_PRIV=$(echo "$APPROVER_KEYS" | grep '^PQCOTA_SIGN_KEY=' | cut -d= -f2-)
+APPROVER_PUB=$(echo "$APPROVER_KEYS" | grep '^PQCOTA_VERIFY_KEY=' | cut -d= -f2-)
+docker exec pqcota-ctl bash -lc "printf 'export PQCOTA_APPROVAL_KEYS=%s\n' 'reviewer-1=$APPROVER_PUB' > /etc/profile.d/pqcota-approval.sh"
+# approve — 계획에 승인 서명을 붙여 제자리에 되쓴다. 원본을 남기지 않는 것은 데모라서다.
+approve() {
+  docker exec -e PQCOTA_APPROVAL_KEY="$APPROVER_PRIV" pqcota-ctl bash -lc \
+    "pqcota-approve --approver reviewer-1 $1 > $1.signed && mv $1.signed $1"
+}
+
 # 계획을 **무엇에서 뽑았는지** 함께 적는다(§1.2 재현). 이 셋이 비면 pqcota-provision이 경고한다:
 # 실행은 되지만 이력에 근거가 남지 않아, 나중에 이 조치가 어느 관측에서 나왔는지 되짚을 수 없다.
 SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
@@ -189,13 +202,13 @@ RULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$PNOD
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
 {"id":"plan-demo","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
- "approvalSignatures":["reviewer:demo"],
  "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
    "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module"}]}
 JSON
+approve /work/plan.json 2>&1 | sed 's/^/   /'
 echo "   ── pqcota-provision: finalized plan (§3.7 gate) → generate the L2 playbook + capture before, persist a record ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan.json > /work/ansible/provision.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc 'grep -E "module = |dest:" /work/ansible/provision.yml' | sed 's/^/   │ /'
@@ -231,7 +244,6 @@ docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   be
 PID_BEFORE=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
 {"id":"plan-demo-l3","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
- "approvalSignatures":["reviewer:demo"],
  "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
@@ -243,6 +255,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
      "deactivate":"rm -f /etc/pqcota/service.env",
      "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
 JSON
+approve /work/plan-l3.json 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 /work/plan-l3.json > /work/ansible/provision-l3.yml" 2>&1 | sed 's/^/   /'
 echo "   ── the generated hook tasks (the order is the safety: stop → change → enable → restart) ──"
 docker exec pqcota-ctl bash -lc 'grep -A2 -E "name: \"[①②③]" /work/ansible/provision-l3.yml | grep -vE "^--$"' | sed 's/^/   │ /'
@@ -298,9 +311,12 @@ docker exec pqcota-ctl bash -lc 'mkdir -p /work/ansible/files'
 docker cp "$GEN/oqsprovider.so" pqcota-ctl:/work/ansible/files/oqsprovider.so >/dev/null
 RSHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
 
+RSNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RRULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RNOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
 {"id":"plan-demo-real","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
- "approvalSignatures":["reviewer:demo"],
+ "derivedFromSnapshotId":"$RSNAP","rulesetVersion":"$RRULESET","finalizedAt":"$RNOW",
  "actions":[{"id":"a1","targetNodeId":"$RNODE","findingId":"$RFID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
@@ -311,6 +327,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
      "deactivate":"rm -f /etc/pqcota/service.env",
      "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
 JSON
+approve /work/plan-real.json 2>&1 | sed 's/^/   /'
 echo "   ── L2 staging (a real .so, sha256 gate) + L3 activation ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$RSHA provision-real.yml" \
