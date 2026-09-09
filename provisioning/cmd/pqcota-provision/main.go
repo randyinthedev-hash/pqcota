@@ -90,6 +90,15 @@ func main() {
 	for _, w := range provisioning.ActivationWarnings(plan, level) {
 		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
 	}
+	// 목표 알고리즘이 그룹으로 안 풀리면 조각의 Groups 줄이 주석으로 나간다 — 배치해도 아무것도
+	// 켜지지 않는데, 그 사실이 조각 안에만 적혀 있어 열어보지 않으면 모른다.
+	for _, w := range provisioning.TargetAlgorithmWarnings(plan) {
+		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
+	}
+	// 무엇에서 뽑은 계획인지 되짚을 수 있는가(§1.2). 실행은 되지만 이력에 근거가 안 남는다.
+	for _, w := range provisioning.TraceabilityWarnings(plan) {
+		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
+	}
 
 	if *dsn == "" {
 		fmt.Fprintln(os.Stderr, "[provision] no --dsn → skipping the before capture and record persistence (playbook only).")

@@ -1,21 +1,27 @@
 package provisioning_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
 	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Executable — §3.7 최강 게이트: FINALIZED + 승인 서명 + 조치 ≥1 만 실행 근거.
+// Executable — §3.7 최강 게이트. 절차(FINALIZED + 승인 서명 + 조치 ≥1)와
+// 내용(조치마다 대상 노드·조치 종류)을 함께 본다.
 func TestExecutable(t *testing.T) {
 	base := func() *provisioningv1.FinalizedPlan {
 		return &provisioningv1.FinalizedPlan{
 			Status:             provisioningv1.PlanStatus_PLAN_STATUS_FINALIZED,
 			ApprovalSignatures: []string{"ed25519:abc"},
-			Actions:            []*provisioningv1.RemediationAction{{TargetNodeId: "web-01"}},
+			Actions: []*provisioningv1.RemediationAction{{
+				TargetNodeId: "web-01",
+				Kind:         provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+			}},
 		}
 	}
 
@@ -53,6 +59,91 @@ func TestExecutable(t *testing.T) {
 	// nil 거부.
 	if err := provisioning.Executable(nil); err == nil {
 		t.Error("a nil plan must be refused")
+	}
+
+	// ★ 절차는 끝났는데 조치가 아무 데도 닿지 않는 계획. 대상이 없으면 플레이북의 hosts에
+	// 빈 항목이 들어가, 실패가 아니라 "아무 일도 없음"으로 보인다.
+	p = base()
+	p.Actions[0].TargetNodeId = ""
+	if err := provisioning.Executable(p); err == nil {
+		t.Error("an action with no target_node_id must be refused")
+	} else if !errors.Is(err, provisioning.ErrNotActionable) {
+		t.Errorf("the reason must say the plan is finalized but not actionable: %v", err)
+	}
+
+	// ★ 무엇을 할지 정하지 않은 조치. 생성기는 「config로는 넣을 수 없다」고 적은 조각을 내는데,
+	// 그것은 사실이 아니라 계획이 말하지 않은 것이다.
+	p = base()
+	p.Actions[0].Kind = provisioningv1.RemediationKind_REMEDIATION_KIND_UNSPECIFIED
+	if err := provisioning.Executable(p); err == nil {
+		t.Error("an action with kind=UNSPECIFIED must be refused")
+	} else if !errors.Is(err, provisioning.ErrNotActionable) {
+		t.Errorf("the reason must say the plan is finalized but not actionable: %v", err)
+	}
+}
+
+// TraceabilityWarnings — 되짚을 수 있는가는 **경고**다. 비어도 실행은 된다(§1.2 재현).
+func TestTraceabilityWarnings(t *testing.T) {
+	bare := &provisioningv1.FinalizedPlan{
+		Status:             provisioningv1.PlanStatus_PLAN_STATUS_FINALIZED,
+		ApprovalSignatures: []string{"ed25519:abc"},
+		Actions: []*provisioningv1.RemediationAction{{
+			Id: "a1", TargetNodeId: "web-01",
+			Kind: provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+		}},
+	}
+	// ★ 게이트는 통과해야 한다 — 경고와 차단은 별개다.
+	if err := provisioning.Executable(bare); err != nil {
+		t.Fatalf("traceability must not block execution: %v", err)
+	}
+	got := strings.Join(provisioning.TraceabilityWarnings(bare), "\n")
+	for _, want := range []string{"no id", "derived_from_snapshot_id", "ruleset_version", "finalized_at", "no finding_id"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("%q must be warned about:\n%s", want, got)
+		}
+	}
+
+	full := &provisioningv1.FinalizedPlan{
+		Id: "plan-1", Status: provisioningv1.PlanStatus_PLAN_STATUS_FINALIZED,
+		ApprovalSignatures:    []string{"ed25519:abc"},
+		DerivedFromSnapshotId: "snap-1", RulesetVersion: "ruleset-1",
+		FinalizedAt: timestamppb.Now(),
+		Actions: []*provisioningv1.RemediationAction{{
+			Id: "a1", TargetNodeId: "web-01", FindingId: "f-1",
+			Kind: provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+		}},
+	}
+	if w := provisioning.TraceabilityWarnings(full); len(w) != 0 {
+		t.Errorf("a fully traceable plan must warn about nothing: %v", w)
+	}
+}
+
+// TargetAlgorithmWarnings — 그룹으로 안 풀리는 목표는 조각의 Groups 줄이 주석으로 나간다.
+// 배치해도 아무것도 켜지지 않으므로 조각 밖에서 알려야 한다.
+func TestTargetAlgorithmWarnings(t *testing.T) {
+	plan := func(kind provisioningv1.RemediationKind, target string) *provisioningv1.FinalizedPlan {
+		return &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{{
+			Id: "a1", TargetNodeId: "web-01", Kind: kind, TargetAlgorithm: target,
+		}}}
+	}
+	const configOnly = provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
+
+	if w := provisioning.TargetAlgorithmWarnings(plan(configOnly, "ML-KEM (FIPS 203)")); len(w) != 0 {
+		t.Errorf("a hybrid KEM target must warn about nothing: %v", w)
+	}
+	if w := provisioning.TargetAlgorithmWarnings(plan(configOnly, "")); len(w) != 1 {
+		t.Errorf("an unset target must warn once: %v", w)
+	} else if !strings.Contains(w[0], "unset") {
+		t.Errorf("the warning must say it is unset: %s", w[0])
+	}
+	// 서명 알고리즘도 그룹으로는 안 풀린다 — 조각만으로 완결되지 않는 것이 사실이라 걸리는 게 맞다.
+	if w := provisioning.TargetAlgorithmWarnings(plan(configOnly, "ML-DSA (FIPS 204)")); len(w) != 1 {
+		t.Errorf("a signature target must warn once: %v", w)
+	}
+	// config로 내지 않는 조치는 Groups 줄 자체가 없다.
+	fork := provisioningv1.RemediationKind_REMEDIATION_KIND_FORK_REPLACE
+	if w := provisioning.TargetAlgorithmWarnings(plan(fork, "")); len(w) != 0 {
+		t.Errorf("a non-config remediation must warn about nothing: %v", w)
 	}
 }
 
