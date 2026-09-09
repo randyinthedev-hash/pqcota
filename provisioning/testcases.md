@@ -56,12 +56,14 @@
 케이스 번호는 **`TP`(프로비저닝) - 무엇을 보나 - 순번**이다. `TP-GATE`(실행 게이트) · `TP-RENDER`(조치 렌더) · `TP-PLAYBOOK`(플레이북 생성) · `TP-RECORD`(before 캡처·레코드). 번호는 그것을 검증하는 **테스트 파일로 이어진다**. 구현 순서는 §3.
 
 ### TP-GATE. 실행 게이트(finalized-only, §3): 핵심 안전 게이트
-`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1 만 실행 근거로 인정한다(규정서 §3.7 최강 게이트).
+`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1, 그리고 조치마다 대상 노드와 조치 종류가 있어야 실행 근거로 인정한다(규정서 §3.7 최강 게이트). 되짚을 수 있는가(§1.2)는 막지 않고 경고한다.
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TP-GATE-1](../pkg/provisioning/plan_test.go) | `TestExecutable`: FINALIZED+승인 서명+조치 ≥1 / draft·in-review / 서명 없음 / 조치 0건 / `nil` | 첫째만 **실행 가능**, 나머지는 전부 **거부** | 확정 전 계획으로 머신을 건드리지 못하게 하되, 정당한 계획까지 막으면 아무것도 배포할 수 없다. 잘못된 입력에서 터지면 게이트가 없는 것과 같다 |
+| [TP-GATE-1](../pkg/provisioning/plan_test.go) | `TestExecutable`: FINALIZED+승인 서명+조치 ≥1 / draft·in-review / 서명 없음 / 조치 0건 / `nil` / **대상 노드 없는 조치** / **`kind=UNSPECIFIED` 조치** | 첫째만 **실행 가능**, 나머지는 전부 **거부**. 뒤 둘은 `ErrNotActionable`로 사유가 갈린다 | 확정 전 계획으로 머신을 건드리지 못하게 하되, 정당한 계획까지 막으면 아무것도 배포할 수 없다. 잘못된 입력에서 터지면 게이트가 없는 것과 같다. 절차만 보고 내용을 안 보면 **확정 도장은 찍혔는데 실행할 수 없는 계획**이 지나간다 |
 | [TP-GATE-2](../pkg/provisioning/plan_test.go) | `TestProviderClassWarnings`: placeholder를 낳는 조치 | 경고 1건(provider 이름·해결책 포함). `Executable`은 **여전히 통과** | 조각 안 주석은 열어봐야 보이므로 경고로도 띄운다. 미확정과 실행 거부는 별개다 |
+| [TP-GATE-4](../pkg/provisioning/plan_test.go) | `TestTraceabilityWarnings`: `derived_from_snapshot_id`·`ruleset_version`·`finalized_at`·`finding_id`가 빈 계획 / 넷 다 채운 계획 | 앞은 항목마다 경고, 뒤는 경고 0건. 둘 다 `Executable`은 **통과** | 되짚을 수 없다는 사실은 되짚어야 할 때가 되어서야 드러난다. 실행을 막을 일은 아니지만 조용히 둘 일도 아니다(§1.2·§2.6) |
+| [TP-GATE-5](../pkg/provisioning/plan_test.go) | `TestTargetAlgorithmWarnings`: 목표가 하이브리드 KEM / 빈 목표 / 서명 알고리즘 / config로 안 내는 조치 | 첫째와 넷째는 경고 0건, 둘째·셋째는 경고 1건 | 그룹으로 안 풀리면 조각의 `Groups` 줄이 주석으로 나가 **배치해도 아무것도 켜지지 않는다.** 그 사실이 조각 안에만 적혀 있으면 열어보지 않는 한 모른다 |
 | [TP-GATE-3](../provisioning/cmd/pqcota-provision/main_test.go) | `TestPlanGateRefuses`·`TestPlanGateAllows`: 빌드한 `pqcota-provision`에 서명 없음 / 조치 0건 / draft 계획을 준다(정방향·`--rollback` 둘 다) | **종료 코드가 0이 아니고 stdout에 플레이북이 한 줄도 없다.** 사유가 stderr에 나온다. 정상 계획은 통과 | 규칙이 옳아도 **제품 경로가 부르지 않으면 보장이 아니다.** 실제로 CLI가 `Executable`을 부르지 않고 상태만 비교하던 동안 TP-GATE-1은 계속 초록이었다. 반환값을 버리는 식으로 배선이 헐거워져도 여기서 드러난다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)

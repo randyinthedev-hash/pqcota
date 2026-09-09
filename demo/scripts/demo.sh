@@ -182,9 +182,15 @@ FID=$(pick "f->'openssl'->>'lib'='libssl.so.3' and jsonb_array_length(coalesce(f
 [ -z "$FID" ] && FID=$(pick "jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
 [ -z "$FID" ] && FID=$(pick "f ? 'openssl'")
 echo "   target finding: $FID ($PNODE)"
+# 계획을 **무엇에서 뽑았는지** 함께 적는다(§1.2 재현). 이 셋이 비면 pqcota-provision이 경고한다:
+# 실행은 되지만 이력에 근거가 남지 않아, 나중에 이 조치가 어느 관측에서 나왔는지 되짚을 수 없다.
+SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
 {"id":"plan-demo","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
  "approvalSignatures":["reviewer:demo"],
+ "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
@@ -226,6 +232,7 @@ PID_BEFORE=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1"
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
 {"id":"plan-demo-l3","status":"PLAN_STATUS_FINALIZED","scope":"ring-0",
  "approvalSignatures":["reviewer:demo"],
+ "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_CONFIG_ONLY","targetAlgorithm":"ML-KEM (FIPS 203)",

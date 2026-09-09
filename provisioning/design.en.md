@@ -94,10 +94,16 @@ The "what" a reviewer decides from asset state (the plan layer). The generator b
 
 ## 3. The execution gate (`pkg/provisioning/plan.go`)
 
-`Executable(plan) error` — the **shared contract rule** validating that a finalized plan is valid grounds for execution:
+`Executable(plan) error` — the **shared contract rule** validating that a finalized plan is valid grounds for execution. It looks at two layers: the first three are **procedure** (how the plan came to be), the last two are **content** (what can actually be done with it):
 - `status == FINALIZED` (otherwise refused)
 - at least one `approval_signatures` (the §3.3③ precondition of finalize)
 - at least one `actions`
+- every action carries a `target_node_id` — without one the playbook's `hosts` gets a blank entry, producing a play that **reaches nothing**, and that reads as "nothing happened" rather than as a failure
+- every action carries a `kind` — on `UNSPECIFIED` the generator cannot branch and emits a fragment saying "a remediation that cannot be injected through config", which is not true: the plan simply never said (§2.5, no guessing)
+
+**Approval signatures are still only counted.** Whether a value is valid, or whose it is, is not checked. That verification remains parked along with the wiring of `sign.VerifyFrom` (§7, open questions).
+
+**Traceability does not block.** A plan still runs with `derived_from_snapshot_id`, `ruleset_version`, `finalized_at` or an action's `finding_id` empty. But once it has run, the history holds no basis for it, so `TraceabilityWarnings` surfaces that. For the same reason `TargetAlgorithmWarnings` reports actions whose target does not resolve to a hybrid group and which therefore **turn nothing on when deployed**. One line separates blocking from warning: if filling it in by hand is a legitimate path it warns, and if the tool would otherwise write something untrue it blocks.
 
 It is not a derivation but the gate immediately before execution. Passing this function does not cause execution — it only settles the rule of "what counts as grounds for execution".
 
