@@ -21,8 +21,10 @@ var ErrNotActionable = errors.New("plan is finalized but an action cannot be act
 // 규칙은 두 층이다. **절차**: FINALIZED 상태 + 승인 서명(§3.3③) + 조치 최소 1건.
 // **내용**: 조치마다 대상 노드가 있고 무엇을 할지가 정해져 있을 것. 파생이 아니라 실행 직전 관문이다.
 //
-// 승인 서명은 아직 **개수만 센다.** 값이 유효한지·누구의 것인지는 보지 않는다 —
-// 그 검증은 sign.VerifyFrom의 배선 보류와 함께 남아 있다.
+// 승인 서명은 여기서 **개수만 센다.** 값이 유효한지·누구의 것인지는 키가 있어야 알 수 있고,
+// 이 함수는 계약 규칙이라 키 재료를 들지 않는다. 그 확인은 sign.VerifyApprovals가 하고
+// pqcota-provision이 PQCOTA_APPROVAL_KEYS로 배선한다. 즉 **여기를 통과했다고 승인이 확인된
+// 것은 아니다** — 둘은 다른 질문이고, 답하는 자리도 다르다.
 //
 // 되짚을 수 있는가(§1.2 — derived_from_snapshot_id·ruleset_version·finding_id)는 여기서 막지
 // 않는다. 비어도 실행은 되기 때문이다. 그쪽은 TraceabilityWarnings가 표면화한다.

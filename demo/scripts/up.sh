@@ -42,7 +42,7 @@ docker exec pqcota-ctl bash -lc '
   make generate >/dev/null
   echo "   [ctl] go build -o /usr/local/bin/ …        # the central CLIs used on this machine"
   CGO_ENABLED=0 go build -o /usr/local/bin/     ./inventory/cmd/pqcota-ingest ./discovery/cmd/pqcota-hosts     ./inventory/cmd/pqcota-inventory ./inventory/cmd/pqcota-discover-view     ./inventory/cmd/pqcota-profile ./inventory/cmd/pqcota-declare ./inventory/cmd/pqcota-prune \
-    ./inventory/cmd/pqcota-declare-attribution     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records
+    ./inventory/cmd/pqcota-declare-attribution     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records ./provisioning/cmd/pqcota-approve ./discovery/cmd/pqcota-keygen
   echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # collectors to carry onto the nodes"
   CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/"     ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
   echo "   [ctl] make build-jar                      # JVM attach sidecar"

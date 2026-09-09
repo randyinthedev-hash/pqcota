@@ -1,6 +1,6 @@
 # provisioning/cmd/: 프로비저닝 진입점
 
-프로비저닝 단계의 CLI(Go 바이너리). 확정 계획에서 **Ansible 플레이북을 생성**하고 **롤백 근거를 영속**한다. 세 범주로 나눠 정리한다.
+프로비저닝 단계의 CLI(Go 바이너리). 확정 계획에 **승인 서명을 붙이고**, 그 계획에서 **Ansible 플레이북을 생성**하며 **롤백 근거를 영속**한다. 네 범주로 나눠 정리한다.
 
 플레이북의 **내용과 순서는 전부 생성기가 정한다.** 사용자가 하는 것은 그것을 자기 Ansible로 실행하는 일이다. 자체 원격 실행 엔진을 만들지 않는다.
 
@@ -20,6 +20,13 @@ pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>
 | `--level l3` | **활성화·재시작까지**. 계획의 `activation` 훅(`pre`·`activate`·`deactivate`·`restart`)을 의미 순서로 배치 |
 | `--rollback` | 역방향 플레이북: forward가 배치한 파일을 제거한다 |
 | `--dsn <postgres>` | 히스토리에서 before-findings를 읽어 **before 상태를 캡처**하고 append-only 레코드로 영속한다. 형식은 [DSN](../../discovery/cmd/README.md#pqcota-hosts) |
+
+| 환경변수 | 하는 일 |
+|---|---|
+| `PQCOTA_APPROVAL_KEYS` | `<승인자>=<base64 공개키>` 콤마 구분. 있으면 승인 서명을 **그 승인자의 키로** 검증한다. 하나라도 어긋나면 거절하고, 확인된 승인이 하나도 없어도 거절한다 |
+| `PQCOTA_REQUIRE_APPROVAL` | `1`이면 검증할 키가 없을 때 **생성을 시작하지 않는다.** 조용히 통과하는 경로를 닫아야 하는 배포용 |
+
+**키가 없으면 막지 않되 확인했다고 하지 않는다.** `PQCOTA_APPROVAL_KEYS`가 비면 서명은 세어지기만 하고, 그 사실이 stderr에 크게 나온다. 확인하지 못한 것을 통과와 같은 자리에 두지 않는다.
 
 플레이북은 stdout으로 나온다. `> provision.yml`로 받는다.
 
@@ -58,7 +65,32 @@ ansible-playbook -i targets.ini provision-rollback.yml
 
 적용이 원본을 덮지 않고 파일을 *추가*하므로 그 추가분 제거가 곧 복원이다. L3면 `deactivate` 훅으로 활성화까지 되돌린다.
 
-## ② 조회: 롤백 근거를 읽는다
+## ② 승인: 계획에 서명을 붙인다
+
+### `pqcota-approve`
+
+```
+pqcota-approve --approver <id> <plan.json>
+```
+
+| 인자·옵션 | 하는 일 |
+|---|---|
+| `--approver <id>` | 승인자 id. **`:`는 쓸 수 없다** — 서명 문자열의 구분자다 |
+| `env PQCOTA_APPROVAL_KEY` | base64 ed25519 **개인키**. [`pqcota-keygen`](../../discovery/cmd/README.md)이 낸 것 |
+
+서명한 계획이 stdout으로 나온다. 서명 문자열의 꼴은 `<승인자>:ed25519:<base64>`이고, **승인 서명 자신을 뺀 계획 전부**를 덮는다.
+
+**승인자 id가 서명 안에 들어가는 이유**는 검증할 때 그 사람의 키로만 확인하기 위해서다. 키를 목록으로 받으면 어느 키로든 통과한 서명이 아무 이름이나 달고 들어와, 서명이 「누군가 승인했다」까지만 답하게 된다.
+
+**서명한 뒤에 계획을 고치면 승인은 무효가 된다.** 그것이 요점이다. 승인자는 계획의 이름이 아니라 조치의 내용에 책임을 진다.
+
+```bash
+pqcota-keygen                                     # 승인자 키쌍
+PQCOTA_APPROVAL_KEY=<priv> pqcota-approve --approver reviewer-1 plan.json > plan.signed.json
+PQCOTA_APPROVAL_KEYS=reviewer-1=<pub> pqcota-provision --level l2 plan.signed.json > provision.yml
+```
+
+## ③ 조회: 롤백 근거를 읽는다
 
 ### `pqcota-records`
 
@@ -72,7 +104,7 @@ pqcota-records [node]
 
 `env PQCOTA_DSN` 필수: `pqcota-provision --dsn`이 쓴 그 저장소를 읽는다. id·상태·영향 앱·before/after 모듈을 나열한다. **읽기전용이라 상태를 바꾸지 않는다.**
 
-## ③ 입력은 어디서 오나. 확정 계획
+## ④ 입력은 어디서 오나. 확정 계획
 
 **이 리포는 계획을 만들지 않는다. 읽기만 한다.** `FinalizedPlan`은 공개 계약(`plan.proto`)이라 JSON으로 직접 작성한다. 조치 종류·런타임별 견본과 필드 설명이 [`examples/provisioning/plans/`](../../examples/provisioning/plans/README.md)에 있다. 가장 가까운 것을 골라 `targetNodeId`·경로·provider를 자기 것으로 바꾸면 된다.
 
@@ -85,7 +117,8 @@ pqcota-records [node]
 **언제 무엇을 쓰나**
 - 계획을 받아 적용 아티팩트 만들기 → **①**. `--level`로 어디까지 갈지 정한다.
 - 조치 후 되돌리기 → **①** 같은 계획에 `--rollback`.
-- 무엇이 어떤 before로 스테이징됐나 → **②**.
+- 계획에 승인 서명 붙이기 → **②**. 계획을 다 고친 **뒤에** 한다.
+- 무엇이 어떤 before로 스테이징됐나 → **③**.
 
 > 로직은 `pkg/provisioning/`(계획 게이트·taxonomy→config 생성기·`GenerateProvisioningPlaybook`·`CaptureState`·`RecordStore` Mem/Pg)에 있고, 이 커맨드들은 그걸 조립하는 얇은 진입점이다.
 
