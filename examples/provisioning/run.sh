@@ -36,6 +36,21 @@ list() {
   done
 }
 
+# 승인 검증은 **기본으로 닫혀 있다.** 예제도 실제로 서명해 그 경로를 그대로 보인다 — 여기서
+# --allow-unverified-approvals로 문을 열어 두면 예제가 가르치는 것이 실제 기본값과 달라진다.
+# 키쌍은 한 번 만들어 이 실행 안에서만 쓴다.
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+# `go run`은 대상의 종료 코드를 1로 감싼다 — 빈칸이 남은 계획의 3을 그대로 보려면 바이너리를
+# 직접 불러야 한다. 케이스마다 다시 컴파일하지 않는 이점도 있다.
+go build -o "$TMP/keygen"   ./discovery/cmd/pqcota-keygen
+go build -o "$TMP/approve"  ./provisioning/cmd/pqcota-approve
+go build -o "$TMP/provision" ./provisioning/cmd/pqcota-provision
+
+APPROVER_KEYS="$("$TMP/keygen")"
+APPROVER_PRIV="$(printf '%s\n' "$APPROVER_KEYS" | sed -n 's/^PQCOTA_SIGN_KEY=//p')"
+APPROVER_PUB="$(printf '%s\n' "$APPROVER_KEYS" | sed -n 's/^PQCOTA_VERIFY_KEY=//p')"
+
 desc_of() { printf '%s\n' "$CASES" | awk -F'|' -v n="$1" '$1==n{print $2}'; }
 # 케이스가 수준을 정한다 — 안 적혀 있으면 l2.
 level_of() { printf '%s\n' "$CASES" | awk -F'|' -v n="$1" '$1==n{print ($3==""?"l2":$3)}'; }
@@ -52,7 +67,21 @@ run_case() {
   echo "▶ $name"
   echo "  $(desc_of "$name")"
   echo "════════════════════════════════════════════════════════════════"
-  go run ./provisioning/cmd/pqcota-provision --level "$(level_of "$name")" "$@" "$file"
+  # 계획에 실제 승인 서명을 붙인다. 파일에 적힌 `reviewer:alice`는 서명이 아니라 이름표라,
+  # 검증하는 쪽이 "아무것도 증명하지 않는다"고 따로 알린다 — 그 대비도 예제의 일부다.
+  local signed="$TMP/$name.signed.json"
+  PQCOTA_APPROVAL_KEY="$APPROVER_PRIV" \
+    "$TMP/approve" --approver reviewer-alice "$file" > "$signed"
+
+  # 빈칸이 남은 계획은 종료 상태 3으로 끝난다. 여기서는 **의도한 케이스**라 멈추지 않고 알린다.
+  local st=0
+  PQCOTA_APPROVAL_KEYS="reviewer-alice=$APPROVER_PUB" \
+    "$TMP/provision" --level "$(level_of "$name")" "$@" "$signed" || st=$?
+  case "$st" in
+    0) ;;
+    3) echo "  ↑ 빈칸이 남아 종료 상태가 3이다 — 이 케이스가 보이려는 것이 그것이다." ;;
+    *) echo "  ↑ 예상치 못한 종료 상태 $st" >&2; return "$st" ;;
+  esac
   echo
 }
 

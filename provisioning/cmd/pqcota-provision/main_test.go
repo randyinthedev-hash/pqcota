@@ -30,6 +30,10 @@ func buildCLI(t *testing.T) string {
 	return bin
 }
 
+// 승인 검증은 이제 기본으로 닫혀 있다(TP-GATE-6). 아래 케이스들이 재는 것은 **다른 관문**이라,
+// 그 문을 명시적으로 열어 두고 본다 — 열어 둔 채로도 그 관문이 제 일을 하는지가 요점이다.
+const unverified = "--allow-unverified-approvals"
+
 func writePlan(t *testing.T, body string) string {
 	t.Helper()
 	p := filepath.Join(t.TempDir(), "plan.json")
@@ -117,7 +121,7 @@ func TestPlanGateRefuses(t *testing.T) {
 // TestPlanGateAllows — 게이트가 정상 계획까지 막으면 그것도 결함이다.
 func TestPlanGateAllows(t *testing.T) {
 	bin := buildCLI(t)
-	cmd := exec.Command(bin, "--level", "l2", writePlan(t, planOK))
+	cmd := exec.Command(bin, "--level", "l2", unverified, writePlan(t, planOK))
 	var stdout, stderr strings.Builder
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
@@ -139,7 +143,7 @@ func TestIncompletePlanDoesNotExitZero(t *testing.T) {
 	plan := writePlan(t, planIncomplete)
 
 	var stdout, stderr strings.Builder
-	cmd := exec.Command(bin, "--level", "l2", plan)
+	cmd := exec.Command(bin, "--level", "l2", unverified, plan)
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
 
@@ -157,7 +161,7 @@ func TestIncompletePlanDoesNotExitZero(t *testing.T) {
 
 	// --allow-incomplete면 같은 계획이 0으로 끝난다. 경고는 그대로 나온다.
 	var out2, err2 strings.Builder
-	cmd2 := exec.Command(bin, "--level", "l2", "--allow-incomplete", plan)
+	cmd2 := exec.Command(bin, "--level", "l2", "--allow-incomplete", unverified, plan)
 	cmd2.Stdout, cmd2.Stderr = &out2, &err2
 	if e := cmd2.Run(); e != nil {
 		t.Errorf("--allow-incomplete인데 실패했다: %v\n%s", e, err2.String())
@@ -175,7 +179,7 @@ func TestIncompletePlanDoesNotExitZero(t *testing.T) {
 func TestRollbackAlsoReportsWhatIsMissing(t *testing.T) {
 	bin := buildCLI(t)
 	var stdout, stderr strings.Builder
-	cmd := exec.Command(bin, "--level", "l2", "--rollback", writePlan(t, planIncomplete))
+	cmd := exec.Command(bin, "--level", "l2", "--rollback", unverified, writePlan(t, planIncomplete))
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
 
@@ -193,5 +197,43 @@ func TestRollbackAlsoReportsWhatIsMissing(t *testing.T) {
 	// 되돌림이 버전 롤백이 아니라는 사실은 산출물 자체에 적힌다.
 	if !strings.Contains(stdout.String(), "not a version rollback") {
 		t.Errorf("롤백 플레이북에 제한이 적히지 않았다:\n%s", stdout.String())
+	}
+}
+
+// ★ 확인할 키가 없으면 **기본으로 거절한다.**
+//
+// 전에는 경고하고 통과시켰고, 닫는 것은 PQCOTA_REQUIRE_APPROVAL=1을 따로 건 배포에서만
+// 일어났다. 그러면 승인 무결성은 "닫을 수 있는 수단"에 머물고 기본 경로는 열린 채다. 승인은
+// 책임의 소재인데 아무 문자열이나 그 자리를 채울 수 있으면 그 자리는 비어 있는 것과 같다(§3.3③).
+//
+// 여는 문은 하나만 둔다 — 명령줄에 적어야 열린다. 환경변수로도 열리면 무엇이 검증됐는지가
+// 셸 설정에 숨고, 그러면 로그만 보고는 이 산출물이 확인된 승인 위에 섰는지 알 수 없다.
+func TestUnverifiableApprovalsAreRefusedByDefault(t *testing.T) {
+	bin := buildCLI(t)
+	plan := writePlan(t, planOK) // 서명이 아니라 이름표를 달고 있다
+
+	var stdout, stderr strings.Builder
+	cmd := exec.Command(bin, "--level", "l2", plan)
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err == nil {
+		t.Fatalf("확인할 키가 없는데 통과했다:\n%s", stderr.String())
+	}
+	// 거절이므로 산출물이 한 줄도 나오면 안 된다 — 불완전(3)과 달리 이건 근거 자체가 없다.
+	if stdout.Len() != 0 {
+		t.Errorf("거절하면서 플레이북을 함께 냈다:\n%s", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "--allow-unverified-approvals") {
+		t.Errorf("어떻게 열지 말해 주지 않으면 사용자는 서명 자체를 지우는 쪽으로 간다:\n%s", stderr.String())
+	}
+
+	// 적으면 열린다. 그때는 확인하지 않았다는 사실이 크게 남는다.
+	var out2, err2 strings.Builder
+	cmd2 := exec.Command(bin, "--level", "l2", unverified, plan)
+	cmd2.Stdout, cmd2.Stderr = &out2, &err2
+	if e := cmd2.Run(); e != nil {
+		t.Fatalf("%s를 적었는데 거절됐다: %v\n%s", unverified, e, err2.String())
+	}
+	if !strings.Contains(err2.String(), "**not checked**") {
+		t.Errorf("열어 준 자리에서 '확인하지 않았다'가 사라졌다 — 넘기는 것이지 확인한 것이 아니다:\n%s", err2.String())
 	}
 }
