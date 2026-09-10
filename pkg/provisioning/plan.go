@@ -95,6 +95,27 @@ func TraceabilityWarnings(p *provisioningv1.FinalizedPlan) []string {
 	return out
 }
 
+// AutomationLevelWarnings — 위임 수준을 계획이 말하지 않은 조치.
+//
+// 말하지 않으면 실행 수준이 `--level`에서 온다. 그 플래그는 **승인 서명 밖에 있다**(서명은 계획을
+// 덮지 계획을 부르는 명령줄을 덮지 않는다). 그래서 승인자가 서명한 것과 실제 실행 수준이 갈릴 수
+// 있는데, 계획이 값을 적으면 그 자리가 닫힌다. LevelFor가 조치의 값을 먼저 보는 이유가 여기 있다.
+//
+// 하드 블록은 하지 않는다: 수준을 명령줄에서 정하는 것이 정당한 경로인 자리가 있다(한 노드를 그
+// 자리에서 시험하는 경우). 다만 그 계획은 **위임 수준을 스스로 말하지 않은 계획**이므로 빈칸으로 센다.
+func AutomationLevelWarnings(p *provisioningv1.FinalizedPlan) []string {
+	var out []string
+	for _, a := range p.GetActions() {
+		if a.GetAutomationLevel() != provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_UNSPECIFIED {
+			continue
+		}
+		out = append(out, fmt.Sprintf(
+			"action %s (node=%s): automation_level is unset, so the level comes from --level, which the approval signature does not cover. Name the level in the plan (§4.3 per-asset).",
+			a.GetId(), a.GetTargetNodeId()))
+	}
+	return out
+}
+
 // TargetAlgorithmWarnings — 목표 알고리즘이 하이브리드 그룹으로 풀리지 않는 config 조치.
 //
 // 그런 조치의 조각은 `Groups` 줄이 주석 처리된 채 나간다(groupsLine). 즉 **배치해도 아무것도

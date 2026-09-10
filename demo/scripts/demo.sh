@@ -205,6 +205,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
  "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
+   "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
    "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module"}]}
 JSON
@@ -247,6 +248,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
  "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET","finalizedAt":"$NOW",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
+   "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO",
    "kind":"REMEDIATION_KIND_CONFIG_ONLY","targetAlgorithm":"ML-KEM (FIPS 203)",
    "rollbackNote":"remove the activation point + restart",
    "activation":{
@@ -328,11 +330,14 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
      "restart":"/usr/local/bin/ssl-apps.sh start"}}]}
 JSON
 approve /work/plan-real.json 2>&1 | sed 's/^/   /'
+# 이 계획만 automationLevel을 비워 둔다. 같은 계획을 L2로 올린 뒤 L3로 escalate하는 것이 이
+# 단계의 서사라, 수준이 계획이 아니라 명령줄에서 오는 것이 맞다. 그래서 빈칸을 알고 넘긴다
+# (--allow-incomplete). 한 수준으로만 쓰는 plan.json·plan-l3.json은 계획이 수준을 말한다.
 echo "   ── L2 staging (a real .so, sha256 gate) + L3 activation ──"
-docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
+docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --allow-incomplete --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$RSHA provision-real.yml" \
   | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
-docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 /work/plan-real.json > /work/ansible/provision-real-l3.yml" 2>/dev/null
+docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --allow-incomplete /work/plan-real.json > /work/ansible/provision-real-l3.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 
 echo "   ── capability after: ask again, with that configuration active ──"
@@ -364,9 +369,9 @@ echo "     · the handshake does not change either — negotiation needs both en
 echo "     the reasoning is in discovery/design.md §2.1. Not pretending to have what it does not is this tool's premise (§2.5)."
 
 echo "   ── roll back (L3 → L2) — return the node to its original state ──"
-docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null
+docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback --allow-incomplete /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
-docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --rollback /work/plan-real.json > /work/ansible/provision-real-rollback.yml" 2>/dev/null
+docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --rollback --allow-incomplete /work/plan-real.json > /work/ansible/provision-real-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
 docker exec "$RNODE" sh -lc "$KEMQ" | sed 's/^/   ML-KEM KEMs after rollback: /'
 fi  # RNODE 가드 끝

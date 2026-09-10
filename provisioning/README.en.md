@@ -59,14 +59,22 @@ flowchart TD
 ## Try it quickly
 
 ```bash
-# ① generate — build a playbook from the plan
-pqcota-provision --level l2 plan.json > provision.yml
+# ⓪ approve — sign the plan and register the key it will be checked with.
+#    With no key to check, the generator refuses: an approval is where responsibility sits,
+#    and one nobody can verify leaves that place empty.
+eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY (private) · VERIFY_KEY (public)
+PQCOTA_APPROVAL_KEY="$PQCOTA_SIGN_KEY" \
+  pqcota-approve --approver reviewer-1 plan.json > plan.signed.json
+export PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY"
+
+# ① generate — build a playbook from the approved plan
+pqcota-provision --level l2 plan.signed.json > provision.yml
 
 # ② apply — reuse the same targets.ini you used for discovery
 ansible-playbook -i targets.ini provision.yml
 
 # ③ undo — generate the reverse playbook from the same plan and run it
-pqcota-provision --level l2 --rollback plan.json > provision-rollback.yml
+pqcota-provision --level l2 --rollback plan.signed.json > provision-rollback.yml
 ansible-playbook -i targets.ini provision-rollback.yml
 ```
 

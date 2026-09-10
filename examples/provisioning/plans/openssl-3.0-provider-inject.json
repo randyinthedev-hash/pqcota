@@ -12,6 +12,7 @@
     "findingId": "f-openssl-3.0",
     "cryptoRuntime": "CRYPTO_RUNTIME_OPENSSL",
     "kind": "REMEDIATION_KIND_PROVIDER_INJECT",
+    "automationLevel": "DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL",
     "targetAlgorithm": "ML-KEM (FIPS 203)",
     "providerChoice": "oqsprovider",
     "rollbackNote": "cnf 한 줄 + 모듈 제거"

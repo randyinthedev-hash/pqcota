@@ -32,7 +32,7 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.7.0 (planned)** — **CNG provisioning**: **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
+- **v0.8.0 (planned)** — **CNG provisioning** (moved back one slot because v0.7.0 went to plan intake and the execution gate): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
 
 - **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
   implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
@@ -81,6 +81,102 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.7.0 — Tightening plan intake and execution safety (2026-09-10)
+
+**Goal** — stop execution from discarding judgements that arrived inside the contract, and **stop
+counting what could not be checked as a pass.** The deployment-readiness review pointed at these.
+**This is not the release that completes the end-to-end handoff** — filling the plan in on the way out,
+and the approval handoff itself, are still open.
+
+> **Read before upgrading.** Two defaults changed, so **existing automation will not pass as-is.**
+> ① With no key to check approvals with (`PQCOTA_APPROVAL_KEYS`), it **refuses with exit 1**; pass
+> `--allow-unverified-approvals` to go on knowingly. ② A plan with blanks still produces the artifact but
+> **exits 3**; pass `--allow-incomplete`. ③ An unknown `--level` is now **exit 2** (it used to fall back
+> to L2 silently).
+
+### Built
+
+- **Approvals are checked with the approver's key.** The shape is `<approver>:ed25519:<base64>`, and the
+  approver id lives inside the signature, so verification uses **only that person's registered key**. The
+  signature covers the whole plan except the approvals themselves, so **it covers the order of the actions
+  and `status` too** — an approval given on a draft cannot be moved onto a finalized plan.
+  `PQCOTA_APPROVAL_KEYS` is a `<approver>=<public key>` map for this reason: a bare list of keys lets a
+  signature that passes under any key arrive wearing any name.
+- **With no key to check with, it refuses.** It used to warn and go on, and closing that path happened only
+  where a deployment set `PQCOTA_REQUIRE_APPROVAL=1`, which leaves approval integrity as something you
+  *can* close. The one way to open it knowingly is `--allow-unverified-approvals`, and **it has to be
+  written on the command line** — an environment variable would hide what was verified in shell config.
+- **The generator follows the per-asset delegation level.** `automation_level` is a first-class property of
+  the action in the contract. `--level` is now **the default for actions the plan leaves unset**. Rollback
+  splits by the same rule, and the activation warnings are per action.
+- **A plan that does not state the level counts as having a blank.** When it is unset the level comes from
+  `--level`, and that flag is **outside the approval signature** — the signature covers the plan, not the
+  command line that invokes it. So the effective level of an unset action is not covered by the approval,
+  and that is now reported by name. It does not block: deciding the level on the command line is a
+  legitimate path, for instance when trying one node in place.
+- **A plan with blanks exits 3.** The artifact is still produced — filling blanks in by hand is a legitimate
+  path, so it does not block — but it does not finish as a success. To accept it knowingly,
+  `--allow-incomplete`. It is kept apart from a refusal (1) because what you have to fix differs.
+- **The execution gate looks at minimum executable content, not only procedure.** If an action has no target
+  node, or its kind is `UNSPECIFIED`, it **refuses before producing anything**. The tool does not guess the
+  plan, so rather than ship a fragment stating something untrue it blocks.
+- **Blanks a person can fill are reported by name alongside the artifact.** Actions whose target does not
+  resolve to a hybrid group and therefore **turn nothing on when deployed**, actions whose provider class is
+  empty so a placeholder ships, and plans with no basis to trace back to. The artifact is produced and the
+  run **exits 3**. On rollback, missing activation hooks and traceability gaps are reported the same way.
+- **Five more gates.** A rule written down but never called by the product; the Go version in the docs
+  against `go.mod`; the test level counts; the governance numbers; and the shape of a Korean document
+  against its English counterpart.
+- **CI brings up Postgres.** The five org-isolation cases ran there for the first time. The case that needs
+  `CAP_NET_RAW` is run once more on its own.
+- **Result files are told apart by content, not by extension.** The place where a name could lie is gone.
+- **The rollback playbook states what it undoes.** It **removes the artifacts this plan manages at their
+  fixed paths.** Originals were never overwritten and survive, but if a second run deployed under the same
+  name and path, the first run's pqcota artifact is already overwritten — undoing it then deletes the file
+  instead of restoring the earlier one. **It is not a version rollback.**
+
+### Learned
+
+- **What a signature protects and what execution follows can diverge.** The approval signature covers
+  `automation_level`, but the generator did not read it. An approver signed "the payments DB goes no further
+  than L1" while execution flattened everything with `--level l3`. When the judgement that split delegation
+  by risk disappears at execution time, the stage boundary stops working as a gate.
+- **Closing a default moves every place that command is written down.** Making approval checks mandatory
+  left five documented paths that no longer produce a playbook. The lesson that changing one word moves four
+  places turned out to hold for exit statuses too.
+- **A skip is only counted if it reaches the log.** The workflow comment promised to record what was
+  skipped, but without `-v` no skip was ever printed — which is why nobody noticed that five Postgres cases
+  had never run in CI. The document was ahead of the code.
+- **Cases with opposite environments cannot be measured in one run.** TD-NETWORK-15 needs `CAP_NET_RAW`;
+  TD-NETWORK-16 needs its absence. No single runner satisfies both, so it runs twice.
+- **The commit-count gate has to be re-checked after committing**, because committing raises the number the
+  gate compares against.
+- **Splitting traffic observation from asset scanning is a design question first.** The implementation went
+  in and came back out. The merge rule for repeated observations and the merge key disagreed in three
+  places; dividing the cadence without settling that leaves edges that never accumulate. The design now sits
+  in [Designs under review §7](docs/under-review.en.md).
+
+### Fixed
+
+- **The generator ignored the per-asset delegation level** (v0.1.0–v0.6.7). It never read the per-action
+  value and emitted every action at the global `--level`. **What came out wrong**: in a plan mixing levels,
+  assets finalized at a lower level still received activation and restart tasks.
+- **Approvals were only counted** (v0.1.0–v0.6.7). A single string like `reviewer:demo` passed.
+  **What came out wrong**: a plan carrying an approval nobody could verify passed as grounds to execute.
+- **The CLI never called the execution gate** (through v0.6.7). The rule had tests and the documents
+  promised it, but the product path only compared status. **What came out wrong**: a finalized plan with no
+  approvals and no action content was handed a playbook. `check-gates` now catches that class.
+- **An unknown `--level` fell back to L2 silently** (v0.1.0–v0.6.7). `--level L3` differed only in case and
+  landed on the default. **What came out wrong**: it handed over an artifact with no activation or restart
+  while reading as if the request had been honoured. A level is delegation by risk, so running lower than
+  asked is as wrong as running higher. It is exit 2 now.
+- **CNG still said "not yet"** (v0.6.0–v0.6.7). Documents and comments called it unimplemented after real
+  hardware had confirmed it. **What came out wrong**: it told readers something worked when it did not.
+- **Four words that had been reverted survived in other file types.** `실기` in 12 places,
+  `저장된 값과 갈린다` in 4, `해소` in 22, `조용히 틀린다` in 2. Sweeping the documents had not covered
+  `.proto`, `.sh` and comments. **What came out wrong**: the documents and the code called the same thing by
+  different names.
 
 ## v0.6.7 — One name per thing (2026-08-21)
 **Goal** — make the same thing carry the same name everywhere, and turn what v0.6.6 exposed — "the

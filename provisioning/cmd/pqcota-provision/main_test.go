@@ -54,6 +54,17 @@ const (
   "finalizedAt": "2026-09-10T00:00:00Z",
   "actions": [{"id":"a1","targetNodeId":"n1","findingId":"f1",
     "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY",
+    "targetAlgorithm":"ML-KEM (FIPS 203)",
+    "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL"}]
+}`
+	// 다른 빈칸은 없고 **위임 수준만** 말하지 않는다. 그래야 종료 3이 그 한 가지 때문임이 드러난다.
+	planNoLevel = `{
+  "id": "t-nolevel", "status": "PLAN_STATUS_FINALIZED", "scope": "ring-0",
+  "approvalSignatures": ["reviewer:test"],
+  "derivedFromSnapshotId": "snap-1", "rulesetVersion": "rs-1",
+  "finalizedAt": "2026-09-10T00:00:00Z",
+  "actions": [{"id":"a1","targetNodeId":"n1","findingId":"f1",
+    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY",
     "targetAlgorithm":"ML-KEM (FIPS 203)"}]
 }`
 	// 실행 근거는 되지만 빈칸이 남았다 — 목표 알고리즘도 추적 정보도 없다.
@@ -235,5 +246,55 @@ func TestUnverifiableApprovalsAreRefusedByDefault(t *testing.T) {
 	}
 	if !strings.Contains(err2.String(), "**not checked**") {
 		t.Errorf("열어 준 자리에서 '확인하지 않았다'가 사라졌다 — 넘기는 것이지 확인한 것이 아니다:\n%s", err2.String())
+	}
+}
+
+// ★ 모르는 `--level`을 조용히 L2로 삼키지 않는다.
+//
+// `--level L3`처럼 대소문자만 틀려도 전에는 기본값 L2로 돌았다. 그러면 활성화·재시작이 빠진
+// 산출물을 받고도 **시킨 대로 됐다고 읽는다.** 수준은 위험도에 따른 위임이라, 말한 것보다 낮게
+// 도는 것이 말한 것보다 높게 도는 것만큼이나 잘못이다.
+func TestUnknownLevelIsRefused(t *testing.T) {
+	bin := buildCLI(t)
+	for _, bad := range []string{"L3", "l4", "full"} {
+		var stdout, stderr strings.Builder
+		cmd := exec.Command(bin, "--level", bad, unverified, writePlan(t, planOK))
+		cmd.Stdout, cmd.Stderr = &stdout, &stderr
+		err := cmd.Run()
+		var ee *exec.ExitError
+		if !errors.As(err, &ee) || ee.ExitCode() != 2 {
+			t.Errorf("--level %q: 사용법 오류(2)로 끝나야 한다, got %v", bad, err)
+		}
+		if stdout.Len() != 0 {
+			t.Errorf("--level %q: 모르는 수준인데 산출물을 냈다:\n%s", bad, stdout.String())
+		}
+	}
+}
+
+// ★ 위임 수준을 계획이 말하지 않으면 빈칸으로 센다.
+//
+// 말하지 않으면 실행 수준이 `--level`에서 오는데, 그 플래그는 **승인 서명 밖에 있다.** 서명은
+// 계획을 덮지 계획을 부르는 명령줄을 덮지 않는다. 그래서 승인자가 서명한 것과 실제 실행 수준이
+// 갈릴 수 있고, 계획이 값을 적으면 그 자리가 닫힌다.
+func TestUnsetAutomationLevelCountsAsABlank(t *testing.T) {
+	bin := buildCLI(t)
+	var stdout, stderr strings.Builder
+	cmd := exec.Command(bin, "--level", "l2", unverified, writePlan(t, planNoLevel))
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := cmd.Run()
+
+	if !strings.Contains(stderr.String(), "automation_level is unset") {
+		t.Errorf("위임 수준 빈칸을 알리지 않았다:\n%s", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "the approval signature does not cover") {
+		t.Errorf("왜 문제인지(서명 밖이라는 것)를 말하지 않으면 고칠 이유가 서지 않는다:\n%s", stderr.String())
+	}
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		t.Errorf("빈칸이 남았으므로 3으로 끝나야 한다(%v)", err)
+	}
+	// 막지는 않는다 — 수준을 명령줄에서 정하는 것이 정당한 자리가 있다.
+	if !strings.Contains(stdout.String(), "hosts:") {
+		t.Errorf("산출물이 나오지 않았다:\n%s", stdout.String())
 	}
 }
