@@ -21,7 +21,7 @@ import (
 func Render(node string, results []*discoveryv1.CollectionResult) (string, error) {
 	// 조직을 대지 않는다 — 이 저장소는 화면을 그리는 동안만 살고 아무것도 남기지 않는다.
 	// 격리할 것이 없다(적재 경로는 org.FromEnv를 쓴다).
-	snap, err := normalize.Normalize(results, "snap-local", node, "ruleset-1", history.NewMemStore(), nil)
+	snap, err := normalize.Normalize(results, "snap-local", node, normalize.RulesetVersion, history.NewMemStore(), nil)
 	if err != nil {
 		return "", fmt.Errorf("normalize: %w", err)
 	}
