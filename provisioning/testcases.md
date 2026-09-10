@@ -70,6 +70,7 @@
 | [TP-GATE-3](../provisioning/cmd/pqcota-provision/main_test.go) | `TestPlanGateRefuses`·`TestPlanGateAllows`: 빌드한 `pqcota-provision`에 서명 없음 / 조치 0건 / draft 계획을 준다(정방향·`--rollback` 둘 다) | **종료 코드가 0이 아니고 stdout에 플레이북이 한 줄도 없다.** 사유가 stderr에 나온다. 정상 계획은 통과 | 규칙이 옳아도 **제품 경로가 부르지 않으면 보장이 아니다.** 실제로 CLI가 `Executable`을 부르지 않고 상태만 비교하던 동안 TP-GATE-1은 계속 초록이었다. 반환값을 버리는 식으로 배선이 헐거워져도 여기서 드러난다 |
 | [TP-GATE-4](../provisioning/cmd/pqcota-provision/main_test.go) | `TestIncompletePlanDoesNotExitZero`: 실행 근거는 되지만 목표 알고리즘·추적 근거가 빈 계획 | **플레이북은 나오고 종료 코드가 3이다.** `--allow-incomplete`면 0이고 경고는 그대로 나온다 | 생성물이 stdout으로 먼저 나가고 경고는 뒤에 stderr로 간다. 종료 상태까지 0이면 stderr를 모으지 않는 자동화에서 **불완전한 플레이북이 정상 산출물로 남는다.** 막지 않는 이유는 사람이 손으로 채우는 것이 정당한 경로여서다 |
 | [TP-GATE-5](../provisioning/cmd/pqcota-provision/main_test.go) | `TestRollbackAlsoReportsWhatIsMissing`: 같은 계획을 `--rollback`으로 | 추적성 경고가 나오고 종료 코드가 3이다. 목표 알고리즘 경고는 섞이지 않는다. 산출물에 「버전 롤백이 아니다」가 적힌다 | 롤백 경로가 생성 직후 반환해 **경고를 하나도 내지 않았다.** 되돌림도 이력에 남아야 하는 조치라 근거 공백은 정방향과 같은 무게다 |
+| [TP-GATE-6](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnverifiableApprovalsAreRefusedByDefault`: 승인 자리에 서명이 아니라 이름표가 있고 `PQCOTA_APPROVAL_KEYS`가 없다 | **거절되고 플레이북이 한 줄도 안 나온다.** 어떻게 열지(`--allow-unverified-approvals`)를 함께 알린다. 적으면 통과하되 「확인하지 않았다」가 그대로 남는다 | 전에는 경고하고 통과시켜, 승인 무결성이 **닫을 수 있는 수단**에 머물고 기본 경로는 열린 채였다. 여는 문을 명령줄 하나로 둔 것은 환경변수로 열리면 무엇이 검증됐는지가 셸 설정에 숨기 때문이다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)
 조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 것은 정직하게 비-config임을 명시한다.
@@ -132,7 +133,7 @@
 
 | # | 대상 | 케이스 | 레벨 |
 |---|---|---|---|
-| 1 | **실행 게이트**(finalized-only) · 경고 표면화 · CLI 배선 | TP-GATE-1–5 | unit |
+| 1 | **실행 게이트**(finalized-only) · 경고 표면화 · CLI 배선 | TP-GATE-1–6 | unit |
 | 2 | **조치 아티팩트 렌더**(OpenSSL/JCA) · 계획 채움 | TP-RENDER-1–13 | unit |
 | 3 | **플레이북 생성**(collector 배포 + L1/L2/L3 적용·롤백) | TP-PLAYBOOK-1–11·18·19 | unit |
 | 4 | **경로·무결성**(삼자 일치·절대 경로·sha256·디렉터리) | TP-PLAYBOOK-12–17 | unit |

@@ -7,14 +7,17 @@
 // L3(--level l3)는 계획의 activation 훅(사용자가 적은 비활성화·활성화·재시작 명령)을 의미 순서로
 // 플레이북에 배치한다. 활성화 방법을 도구가 추측하지 않는다(§2.5).
 //
-// usage: pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>
+// usage: pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>]
 //
-//	--dsn 지정 시: 히스토리에서 before-findings를 읽어 레코드를 캡처·영속(같은 저장소).
-//	미지정 시: 플레이북만 stdout(레코드 없음).
-//	env PQCOTA_APPROVAL_KEYS   : (선택) `<승인자>=<base64 공개키>` 콤마 구분. 있으면 승인 서명을
-//	                             **그 승인자의 키로** 검증한다(§3.3③). 하나라도 어긋나면 거절한다.
-//	env PQCOTA_REQUIRE_APPROVAL: "1"이면 검증할 키가 없을 때 **생성을 시작하지 않는다.**
-//	                             조용히 통과하는 경로를 닫아야 하는 배포용(§2.6).
+//	       [--allow-incomplete] [--allow-unverified-approvals] <plan.json>
+//
+//		--dsn 지정 시: 히스토리에서 before-findings를 읽어 레코드를 캡처·영속(같은 저장소).
+//		미지정 시: 플레이북만 stdout(레코드 없음).
+//		env PQCOTA_APPROVAL_KEYS   : `<승인자>=<base64 공개키>` 콤마 구분. 승인 서명을 **그 승인자의
+//		                             키로** 검증한다(§3.3③). 하나라도 어긋나면 거절한다.
+//		                             **없으면 거절한다** — 확인할 수 없는 승인은 누가 책임졌는지를
+//		                             말해 주지 않는다. 알고 열려면 --allow-unverified-approvals.
+//		env PQCOTA_REQUIRE_APPROVAL: "1"은 그대로 받는다. 이제 기본과 같은 뜻이라 아무것도 바꾸지 않는다.
 //
 // 승인 서명은 pqcota-approve가 붙인다. 키쌍은 pqcota-keygen이 낸다.
 package main
@@ -42,6 +45,7 @@ func main() {
 	rollbackFlag := flag.Bool("rollback", false, "generate the reverse (rollback) playbook — removes the files the forward run staged")
 	dsn := flag.String("dsn", "", "Postgres DSN for history and records; when given, captures the before state and persists it")
 	allowIncomplete := flag.Bool("allow-incomplete", false, "exit 0 even when the plan is incomplete (the playbook is generated either way; without this the exit status is 3)")
+	allowUnverified := flag.Bool("allow-unverified-approvals", false, "go on when there is no PQCOTA_APPROVAL_KEYS to check the plan's approvals with (default: refuse)")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>")
@@ -76,7 +80,7 @@ func main() {
 
 	// 승인 서명 검증(§3.3③) — Executable은 서명의 **개수**만 센다. 값이 맞는지, 누구 것인지는
 	// 여기서 본다. 키 묶음이 없으면 확인할 수 없으므로 **확인했다고 하지 않는다**(§2.6).
-	if err := checkApprovals(plan); err != nil {
+	if err := checkApprovals(plan, *allowUnverified); err != nil {
 		fmt.Fprintln(os.Stderr, "refused:", err)
 		os.Exit(1)
 	}
@@ -233,19 +237,29 @@ func finish(incomplete int, allow bool) {
 // 것인지 말하지 못한다. 승인은 책임의 소재라 그 답으로는 부족하다.
 //
 // 키가 없으면 막지 않되 **확인하지 않았다고 크게 말한다.** 확인 못 한 것을 통과와 같은 자리에
-// 두지 않는다(§2.6). 그 경로를 닫아야 하는 배포에서는 PQCOTA_REQUIRE_APPROVAL=1로 막는다.
-func checkApprovals(plan *provisioningv1.FinalizedPlan) error {
+// **확인할 키가 없으면 기본으로 거절한다.** 전에는 경고하고 통과시켰고, 닫는 것은
+// PQCOTA_REQUIRE_APPROVAL=1을 따로 건 배포에서만 일어났다. 그러면 승인 무결성은 "닫을 수 있는
+// 수단"에 머물고 기본 경로는 열린 채다 — 승인은 책임의 소재인데, 아무 문자열이나 그 자리를
+// 채울 수 있으면 그 자리는 비어 있는 것과 같다(§3.3③).
+//
+// 알고 여는 길은 남긴다: --allow-unverified-approvals. 키 배포 전에 산출물만 보려는 자리가
+// 실제로 있고, 막아 버리면 그 사람은 서명 자체를 지우는 쪽으로 간다. 다만 **적어야 열린다.**
+// PQCOTA_REQUIRE_APPROVAL=1은 그대로 받는다(이제 기본과 같은 뜻이다) — 지우지 않고 더한다.
+func checkApprovals(plan *provisioningv1.FinalizedPlan, allowUnverified bool) error {
 	keys, err := sign.ParseKeyMap(os.Getenv("PQCOTA_APPROVAL_KEYS"))
 	if err != nil {
 		return fmt.Errorf("PQCOTA_APPROVAL_KEYS: %w", err)
 	}
 	if len(keys) == 0 {
-		if os.Getenv("PQCOTA_REQUIRE_APPROVAL") == "1" {
-			return fmt.Errorf("PQCOTA_REQUIRE_APPROVAL=1 but PQCOTA_APPROVAL_KEYS is empty — there is no key to check the approvals with")
+		if !allowUnverified {
+			return fmt.Errorf("no PQCOTA_APPROVAL_KEYS, so the %d approval entr(ies) on this plan cannot be checked — "+
+				"an approval nobody can verify shows nothing about who took responsibility (§3.3③). "+
+				"Register the approver's key, or pass --allow-unverified-approvals to go on knowing that",
+				len(plan.GetApprovalSignatures()))
 		}
 		fmt.Fprintf(os.Stderr, "⚠ [provision] approval signatures: **not checked** — no PQCOTA_APPROVAL_KEYS to check them with. %d entries were counted, not verified.\n",
 			len(plan.GetApprovalSignatures()))
-		fmt.Fprintln(os.Stderr, "           where that is not good enough, close it with PQCOTA_REQUIRE_APPROVAL=1.")
+		fmt.Fprintln(os.Stderr, "           you passed --allow-unverified-approvals, so this is a choice, not an oversight.")
 		return nil
 	}
 
