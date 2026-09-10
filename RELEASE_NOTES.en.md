@@ -82,6 +82,22 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.1 — Two places where the document ran ahead of the code (2026-09-10)
+
+**Goal** — fix the wording v0.7.0 left out of step. No code changes.
+
+### Fixed
+
+- **A comment on the approval check contradicted its own next sentence** (v0.7.0). Replacing the paragraph
+  left the old opening line, "with no keys it does not block", sitting right above "with no key to check
+  with, it refuses by default". **What came out wrong**: it told anyone reading the code the opposite of the
+  default. The behaviour was refusal from the start.
+- **The README described the release contents too broadly** (v0.1.0–v0.7.0). Saying only "per-architecture
+  static binaries" read as if everything shipped. What actually ships is **the collectors that go onto
+  target nodes, plus the JVM sidecar**; the controller CLIs are built from source. The release body said so;
+  the README did not. **What came out wrong**: someone who took only the release would go looking for
+  commands that were never there. Fixed in both languages.
+
 ## v0.7.0 — Tightening plan intake and execution safety (2026-09-10)
 
 **Goal** — stop execution from discarding judgements that arrived inside the contract, and **stop
