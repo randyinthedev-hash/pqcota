@@ -68,6 +68,8 @@
 | [TP-GATE-7](../pkg/kernel/sign/plan_test.go) | `TestTamperBreaksApproval`: 서명 뒤 계획의 필드를 하나씩 흔든다(조치 순서·조치 추가 포함) / 승인 서명만 하나 더 붙인다 | 앞은 전부 검증 실패, 뒤는 **여전히 통과** | 덮이지 않는 필드는 바꿔도 승인이 통과해, 승인자가 본 것과 배포되는 것이 달라진다. 서명 자신은 대상에서 빠져야 두 번째 승인이 첫 번째를 깨뜨리지 않는다 |
 | [TP-GATE-8](../pkg/kernel/sign/plan_test.go) | `TestApprovalLabelIsUnverifiable`·`TestParseKeyMap`: 서명 꼴이 아닌 이름표 / `<id>=<키>`가 아닌 값 / 같은 id에 키 둘 | 이름표는 **거부가 아니라 확인 불가** 칸으로. 나머지는 거절 | 확인하지 못한 것과 틀린 것을 같은 칸에 두면 확인하지 않은 것이 확인한 것처럼 보인다(§2.6). 한 id에 키가 둘이면 어느 것이 그 사람의 키인지 말할 수 없다 |
 | [TP-GATE-3](../provisioning/cmd/pqcota-provision/main_test.go) | `TestPlanGateRefuses`·`TestPlanGateAllows`: 빌드한 `pqcota-provision`에 서명 없음 / 조치 0건 / draft 계획을 준다(정방향·`--rollback` 둘 다) | **종료 코드가 0이 아니고 stdout에 플레이북이 한 줄도 없다.** 사유가 stderr에 나온다. 정상 계획은 통과 | 규칙이 옳아도 **제품 경로가 부르지 않으면 보장이 아니다.** 실제로 CLI가 `Executable`을 부르지 않고 상태만 비교하던 동안 TP-GATE-1은 계속 초록이었다. 반환값을 버리는 식으로 배선이 헐거워져도 여기서 드러난다 |
+| [TP-GATE-4](../provisioning/cmd/pqcota-provision/main_test.go) | `TestIncompletePlanDoesNotExitZero`: 실행 근거는 되지만 목표 알고리즘·추적 근거가 빈 계획 | **플레이북은 나오고 종료 코드가 3이다.** `--allow-incomplete`면 0이고 경고는 그대로 나온다 | 생성물이 stdout으로 먼저 나가고 경고는 뒤에 stderr로 간다. 종료 상태까지 0이면 stderr를 모으지 않는 자동화에서 **불완전한 플레이북이 정상 산출물로 남는다.** 막지 않는 이유는 사람이 손으로 채우는 것이 정당한 경로여서다 |
+| [TP-GATE-5](../provisioning/cmd/pqcota-provision/main_test.go) | `TestRollbackAlsoReportsWhatIsMissing`: 같은 계획을 `--rollback`으로 | 추적성 경고가 나오고 종료 코드가 3이다. 목표 알고리즘 경고는 섞이지 않는다. 산출물에 「버전 롤백이 아니다」가 적힌다 | 롤백 경로가 생성 직후 반환해 **경고를 하나도 내지 않았다.** 되돌림도 이력에 남아야 하는 조치라 근거 공백은 정방향과 같은 무게다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)
 조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 것은 정직하게 비-config임을 명시한다.
@@ -110,6 +112,8 @@
 | [TP-PLAYBOOK-15](../pkg/provisioning/paths_test.go) | `TestChecksumGate`: 모듈 배치 | `checksum_algorithm: sha256` + `assert` + `… is defined` 가드 | 무엇을 심었는지 고정한다. 안 주면 검사만 건너뛴다 |
 | [TP-PLAYBOOK-16](../pkg/provisioning/paths_test.go) | `TestJCAModuleIsJar`: JCA 주입 | 배치 경로가 `.jar`로 끝나고 조각 안내와 일치 | 런타임에 따라 갈리는 확장자·경로를 한 곳에서 정한다 |
 | [TP-PLAYBOOK-17](../pkg/provisioning/paths_test.go) | `TestL2CreatesConfigDirectory`: 깨끗한 노드에 L2 | 디렉터리를 `state: directory`로 **배치보다 먼저**. L1은 만들지 않음 | 실 ansible에서 잡힌 회귀: `copy`는 대상 디렉터리가 없으면 실패한다 |
+| [TP-PLAYBOOK-18](../pkg/provisioning/stage_test.go) | `TestPerAssetAutomationLevelSurvivesTheGlobalFlag`: 한 계획에 L1 자산과 L3 자산 | 전역 기본값을 어느 쪽으로 주든 **조치별 수준이 이긴다.** 롤백도 같은 규칙으로 갈린다 | 이 값은 승인 서명이 덮는다. 전역 하나로 평탄화하면 **승인자가 서명한 위임 수준과 실제 실행 수준이 갈린다** |
+| [TP-PLAYBOOK-19](../pkg/provisioning/stage_test.go) | `TestActivationWarningsFollowThePlansLevel`: 전역은 L2인데 계획이 L3로 확정한 조치 | 훅 누락이 경고로 나온다 | 전역만 보던 동안 그런 조치는 **경고조차 되지 않았다** |
 
 ### TP-RECORD. before 캡처 · 롤백 레코드 (§6A)
 롤백 근거 = 조치 *전* before 상태. append-only 보존, 노드별로 되찾는다.
@@ -128,9 +132,9 @@
 
 | # | 대상 | 케이스 | 레벨 |
 |---|---|---|---|
-| 1 | **실행 게이트**(finalized-only) · 경고 표면화 · CLI 배선 | TP-GATE-1–3 | unit |
+| 1 | **실행 게이트**(finalized-only) · 경고 표면화 · CLI 배선 | TP-GATE-1–5 | unit |
 | 2 | **조치 아티팩트 렌더**(OpenSSL/JCA) · 계획 채움 | TP-RENDER-1–13 | unit |
-| 3 | **플레이북 생성**(collector 배포 + L1/L2/L3 적용·롤백) | TP-PLAYBOOK-1–11 | unit |
+| 3 | **플레이북 생성**(collector 배포 + L1/L2/L3 적용·롤백) | TP-PLAYBOOK-1–11·18·19 | unit |
 | 4 | **경로·무결성**(삼자 일치·절대 경로·sha256·디렉터리) | TP-PLAYBOOK-12–17 | unit |
 | 5 | **before 캡처 · 레코드** | TP-RECORD-1–3 | unit + Postgres |
 

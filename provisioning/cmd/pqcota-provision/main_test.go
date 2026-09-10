@@ -11,6 +11,7 @@ package main_test
 // 여기서 드러난다.
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -40,10 +41,22 @@ func writePlan(t *testing.T, body string) string {
 
 const (
 	// 정상 — 견본(examples/provisioning/plans/openssl-3.5-config-only.json)과 같은 모양.
+	// **빈칸이 없다**: 되짚을 근거(스냅샷·규칙 버전·확정 시각·finding)와 목표 알고리즘까지 채운다.
+	// 여기가 모자라면 산출물은 나오지만 종료 상태가 3이 된다(TestIncompletePlanDoesNotExitZero).
 	planOK = `{
   "id": "t-ok", "status": "PLAN_STATUS_FINALIZED", "scope": "ring-0",
   "approvalSignatures": ["reviewer:test"],
+  "derivedFromSnapshotId": "snap-1", "rulesetVersion": "rs-1",
+  "finalizedAt": "2026-09-10T00:00:00Z",
   "actions": [{"id":"a1","targetNodeId":"n1","findingId":"f1",
+    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY",
+    "targetAlgorithm":"ML-KEM (FIPS 203)"}]
+}`
+	// 실행 근거는 되지만 빈칸이 남았다 — 목표 알고리즘도 추적 정보도 없다.
+	planIncomplete = `{
+  "id": "t-inc", "status": "PLAN_STATUS_FINALIZED", "scope": "ring-0",
+  "approvalSignatures": ["reviewer:test"],
+  "actions": [{"id":"a1","targetNodeId":"n1",
     "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY"}]
 }`
 	// 승인 서명이 없다 — FINALIZED이지만 실행 근거가 아니다(§3.3③).
@@ -112,5 +125,73 @@ func TestPlanGateAllows(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "hosts:") {
 		t.Errorf("플레이북이 나오지 않았다:\n%s", stdout.String())
+	}
+}
+
+// ★ 불완전한 계획을 **성공으로 끝내지 않는다.**
+//
+// 산출물은 그대로 낸다 — 사람이 빈칸을 손으로 채우는 것이 정당한 경로라 하드 블록하지 않는다.
+// 그러나 종료 상태까지 0이면 표준 오류를 모으지 않는 자동화에서 **불완전한 플레이북이 정상
+// 산출물로 남는다.** 생성물을 먼저 stdout에 내고 경고를 뒤에 stderr로 내는 순서라 더 그렇다.
+// 그래서 기본은 3이고, 알고 넘기려면 --allow-incomplete를 적는다.
+func TestIncompletePlanDoesNotExitZero(t *testing.T) {
+	bin := buildCLI(t)
+	plan := writePlan(t, planIncomplete)
+
+	var stdout, stderr strings.Builder
+	cmd := exec.Command(bin, "--level", "l2", plan)
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := cmd.Run()
+
+	if err == nil {
+		t.Fatalf("불완전한 계획이 성공으로 끝났다:\n%s", stderr.String())
+	}
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		t.Errorf("종료 코드가 3이 아니다(%v) — 거절(1)과 갈라야 무엇을 고칠지가 다르다는 것이 보인다", err)
+	}
+	// 막지는 않는다. 산출물이 함께 나와야 손으로 채워 쓸 수 있다.
+	if !strings.Contains(stdout.String(), "hosts:") {
+		t.Errorf("플레이북이 나오지 않았다 — 이 관문은 막는 것이 아니라 드러내는 것이다:\n%s", stdout.String())
+	}
+
+	// --allow-incomplete면 같은 계획이 0으로 끝난다. 경고는 그대로 나온다.
+	var out2, err2 strings.Builder
+	cmd2 := exec.Command(bin, "--level", "l2", "--allow-incomplete", plan)
+	cmd2.Stdout, cmd2.Stderr = &out2, &err2
+	if e := cmd2.Run(); e != nil {
+		t.Errorf("--allow-incomplete인데 실패했다: %v\n%s", e, err2.String())
+	}
+	if !strings.Contains(err2.String(), "⚠") {
+		t.Errorf("--allow-incomplete가 경고까지 지웠다 — 넘기는 것이지 감추는 것이 아니다:\n%s", err2.String())
+	}
+}
+
+// ★ --rollback도 경고를 낸다.
+//
+// 전에는 역방향 플레이북을 낸 직후 곧바로 반환해 **경고를 하나도 내지 않았다.** 되돌림에
+// 목표 알고리즘은 상관이 없지만, 무엇을 되돌리는지 되짚을 근거가 없는 것은 정방향과 같은
+// 무게다. 되돌림도 이력에 남아야 하는 조치이기 때문이다.
+func TestRollbackAlsoReportsWhatIsMissing(t *testing.T) {
+	bin := buildCLI(t)
+	var stdout, stderr strings.Builder
+	cmd := exec.Command(bin, "--level", "l2", "--rollback", writePlan(t, planIncomplete))
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := cmd.Run()
+
+	if !strings.Contains(stderr.String(), "no derived_from_snapshot_id") {
+		t.Errorf("롤백이 추적성 경고를 건너뛰었다:\n%s", stderr.String())
+	}
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		t.Errorf("롤백도 불완전하면 3으로 끝나야 한다(%v)", err)
+	}
+	// 목표 알고리즘은 파일을 지우는 일과 상관이 없다 — 롤백 경고에 끼워 넣지 않는다.
+	if strings.Contains(stderr.String(), "target_algorithm is unset") {
+		t.Errorf("롤백에 정방향 전용 경고가 섞였다:\n%s", stderr.String())
+	}
+	// 되돌림이 버전 롤백이 아니라는 사실은 산출물 자체에 적힌다.
+	if !strings.Contains(stdout.String(), "not a version rollback") {
+		t.Errorf("롤백 플레이북에 제한이 적히지 않았다:\n%s", stdout.String())
 	}
 }

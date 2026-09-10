@@ -293,6 +293,22 @@ When no group can be built it **does not guess**; it writes this into the fragme
 
 ## 5. Staged deployment — L1/L2/L3
 
+**The level is decided per action.** The contract makes `automation_level` a first-class property of the
+action (§4.3, "the level is a per-asset property, not a company-wide switch"), and the generator follows
+the value the action carries. `pqcota-provision --level` is only the **default for actions the plan leaves
+unset** (`provisioning.LevelFor`).
+
+It used not to read that value at all and emitted every action at one global level. A plan finalized as
+"payments DB = L1, stateless worker = L3" was therefore flattened by a single `--level l3`. The value is
+**covered by the approval signature** (`sign.CanonicalPlan`), so the level the approver signed and the level
+actually executed could differ. When the judgement that split delegation by risk disappears at execution
+time, the stage boundary stops working as a gate.
+
+When one node holds actions at different levels: directories and hooks are emitted once per node, so they
+are emitted if **any** action reaches that level, while hooks are collected **only from the actions that
+reach L3**. Commands belonging to a level that was never finalized are not pulled in just because they sit
+on the same node.
+
 ### 5.1 What lands on the machine
 
 When the user runs the generated playbook:
@@ -365,6 +381,7 @@ Preserving the state *before* provisioning is what makes **rollback** possible (
 - **Safety**: rather than *overwriting an existing crypto module in place* (which risks mmap corruption), the new module is staged atomically and the before module and config are preserved → restorable at any time. Activation happens only on restart (nothing is applied dynamically, §5).
 - **Generating the rollback playbook (symmetrical with forward)**: it does not stop at leaving a before record — `GenerateRollbackPlaybook` generates the **reverse playbook**. Because forward *adds* files instead of overwriting originals (see safety above), **removing** (`state: absent`) that config fragment and staged module restores the before state — no need to regenerate the original text. At L3 the `deactivate` hook also undoes the activation, making it exactly symmetrical with forward.
 - **Symmetry**: rollback deletes what forward placed. At L3 it undoes activation too — and if there is no `deactivate` hook only the files are deleted, so that fact is warned about (§2.5).
+- **It is not a version rollback.** The playbook **removes the artifacts this plan manages at their fixed paths.** Originals are never overwritten, so they survive untouched — but if a second run deployed under the same provider name and config path, the first run's pqcota artifact has already been overwritten. Undoing it then deletes the file instead of restoring the earlier one. "It does not touch the originals" is true; "it always returns to the previous state" is not. The generated playbook states this limit in its header.
 - **Implementation**: `CaptureState(findings)→CryptoState` in `capture.go` (openssl lib@version, the JCA provider) plus `NewProvisioningRecord(...)` (before capture, STAGED). `RecordStore` (Mem/Pg, append-only, queried with `ByNode`). The rollback playbook generator is `GenerateRollbackPlaybook` in `rollback.go` (the reverse of forward's `stage.go`). The consumer is `pqcota-provision` (provisioning/cmd): `FinalizedPlan` JSON → the §3.7 gate → generate the L1/L2 playbook (reverse with `--rollback`) + per-remediation before capture and app_keys attribution → persist the record.
 
 ---

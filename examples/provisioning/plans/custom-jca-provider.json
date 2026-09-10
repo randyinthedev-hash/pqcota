@@ -2,6 +2,9 @@
   "id": "ex-custom-jca",
   "status": "PLAN_STATUS_FINALIZED",
   "scope": "ring-1",
+  "derivedFromSnapshotId": "snap-example",
+  "rulesetVersion": "rs-2026.09",
+  "finalizedAt": "2026-09-10T00:00:00Z",
   "approvalSignatures": [
     "reviewer:bob"
   ],
