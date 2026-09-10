@@ -52,9 +52,11 @@ ansible-playbook provision.yml \
 
 빈 파일이라도 두면 **배치·체크섬 task는 정상적으로 돈다**(당연히 실제 암호 기능은 없다). 호스트를 건드리지 않으려면 컨테이너 안에서 로컬 연결로 돌린다:
 
+> `--allow-unverified-approvals`를 적는 이유는, 여기서 보려는 것이 **배치와 체크섬**이지 승인 경로가 아니어서다. 생성기는 확인할 키가 없으면 기본으로 거절하므로, 그 문을 명시적으로 열어 둔다. 승인까지 함께 밟는 모습은 [예제 실행기](../README.md)가 보인다.
+
 ```bash
 mkdir -p /tmp/try/files && : > /tmp/try/files/acme-pqc.so
-go run ./provisioning/cmd/pqcota-provision --level l2 \
+go run ./provisioning/cmd/pqcota-provision --level l2 --allow-unverified-approvals \
   examples/provisioning/plans/custom-openssl-provider.json \
   | sed 's/^  hosts: .*/  hosts: all/' > /tmp/try/provision.yml
 
@@ -72,7 +74,7 @@ docker run --rm -v /tmp/try:/work -w /work alpine/ansible:latest \
 되돌림까지 보려면 **같은 컨테이너 안에서** 이어 돌려야 한다. `docker run`은 매번 새 컨테이너라 따로 돌리면 지울 파일이 애초에 없다(`changed=0`이 나오고 아무 일도 안 한 것처럼 보인다):
 
 ```bash
-go run ./provisioning/cmd/pqcota-provision --level l2 --rollback \
+go run ./provisioning/cmd/pqcota-provision --level l2 --allow-unverified-approvals --rollback \
   examples/provisioning/plans/custom-openssl-provider.json \
   | sed 's/^  hosts: .*/  hosts: all/' > /tmp/try/provision-rollback.yml
 

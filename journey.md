@@ -202,9 +202,18 @@ pqcota-inventory -diff <old> <new>     # 두 스냅샷 사이의 변화
 
 ## 7. 생성
 
+**승인이 생성의 전제다.** 계획에 승인 서명을 붙이고 그 승인자의 공개키를 등록해야 생성기가
+움직인다. 확인할 키가 없으면 거절한다 — 승인은 책임의 소재라, 확인되지 않으면 그 자리는
+비어 있는 것과 같기 때문이다.
+
 ```bash
-pqcota-provision --level l2 --dsn "$PQCOTA_DSN" plan.json > provision.yml
-pqcota-provision --level l2 --rollback plan.json > rollback.yml
+eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY(개인) · VERIFY_KEY(공개)
+PQCOTA_APPROVAL_KEY="$PQCOTA_SIGN_KEY" \
+  pqcota-approve --approver reviewer-1 plan.json > plan.signed.json
+export PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY"
+
+pqcota-provision --level l2 --dsn "$PQCOTA_DSN" plan.signed.json > provision.yml
+pqcota-provision --level l2 --rollback plan.signed.json > rollback.yml
 ```
 
 | 레벨 | 어디까지 |

@@ -3,8 +3,18 @@
 `pqcota-provision`의 **입력**이다. 이 리포는 계획을 만들지 않고 읽기만 하므로, 쓰려면 사용자가 직접 작성한다. 여기 견본에서 가장 가까운 것을 골라 `targetNodeId`·경로·provider를 자기 것으로 바꾸면 된다.
 
 ```bash
-pqcota-provision --level l2 plans/openssl-3.5-config-only.json > provision.yml
-./run.sh openssl-3.5-config-only          # 예제 러너로 산출물만 보기
+./run.sh openssl-3.5-config-only          # 예제 러너 — 서명까지 밟아 준다
+```
+
+**계획은 승인을 받아야 생성기를 지난다.** 확인할 키가 없으면 거절하므로, 직접 부를 때는 서명하고
+그 공개키를 등록한다. 러너는 이 셋을 대신 해 준다.
+
+```bash
+eval "$(pqcota-keygen | grep '^PQCOTA_')"
+PQCOTA_APPROVAL_KEY="$PQCOTA_SIGN_KEY" \
+  pqcota-approve --approver reviewer-1 plans/openssl-3.5-config-only.json > plan.signed.json
+PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
+  pqcota-provision --level l2 plan.signed.json > provision.yml
 ```
 
 **무엇이 생성되는지**는 [상위 README](../README.md)에 케이스별로 있다. 이 문서는 **JSON 자체가 어떻게 생겼는지**를 다룬다.
