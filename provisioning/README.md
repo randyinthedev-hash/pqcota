@@ -57,14 +57,22 @@ flowchart TD
 ## 간단히 써보기
 
 ```bash
-# ① 생성 — 계획에서 플레이북을 만든다
-pqcota-provision --level l2 plan.json > provision.yml
+# ⓪ 승인 — 계획에 승인 서명을 붙이고, 검증할 공개키를 등록한다.
+#    확인할 키가 없으면 생성기가 거절한다. 승인은 책임의 소재라 확인되지 않으면
+#    그 자리가 비어 있는 것과 같기 때문이다.
+eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY(개인) · VERIFY_KEY(공개)
+PQCOTA_APPROVAL_KEY="$PQCOTA_SIGN_KEY" \
+  pqcota-approve --approver reviewer-1 plan.json > plan.signed.json
+export PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY"
+
+# ① 생성 — 승인된 계획에서 플레이북을 만든다
+pqcota-provision --level l2 plan.signed.json > provision.yml
 
 # ② 적용 — 디스커버리에서 쓰던 targets.ini를 그대로 쓴다
 ansible-playbook -i targets.ini provision.yml
 
 # ③ 되돌림 — 같은 계획으로 역방향 플레이북을 만들어 돌린다
-pqcota-provision --level l2 --rollback plan.json > provision-rollback.yml
+pqcota-provision --level l2 --rollback plan.signed.json > provision-rollback.yml
 ansible-playbook -i targets.ini provision-rollback.yml
 ```
 
