@@ -82,6 +82,19 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.2 — The controller CLIs ship too (2026-09-10)
+
+**Goal** — let someone who took only the release run all three stages.
+
+### Built
+
+- **A controller bundle is attached to the release.** `pqcota-ctl-linux-amd64.tar.gz` and `-arm64.tar.gz`
+  carry every CLI, including ingest (`pqcota-ingest`), query (`pqcota-inventory`), approval
+  (`pqcota-approve`) and generation (`pqcota-provision`). It is kept apart from the node bundles **by where
+  they go**: those are carried onto the hosts you observe, this one sits on the single central machine.
+  Building the operator CLIs from source used to be the only way, so anyone who took only the release could
+  observe and go no further.
+
 ## v0.7.1 — Two places where the document ran ahead of the code (2026-09-10)
 
 **Goal** — fix the wording v0.7.0 left out of step. No code changes.
