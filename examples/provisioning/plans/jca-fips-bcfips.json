@@ -2,6 +2,9 @@
   "id": "ex-jca-bcfips",
   "status": "PLAN_STATUS_FINALIZED",
   "scope": "regulated",
+  "derivedFromSnapshotId": "snap-example",
+  "rulesetVersion": "rs-2026.09",
+  "finalizedAt": "2026-09-10T00:00:00Z",
   "approvalSignatures": ["reviewer:bob", "compliance:carol"],
   "actions": [{
     "id": "a1",

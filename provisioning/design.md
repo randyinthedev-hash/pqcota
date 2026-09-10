@@ -293,6 +293,19 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 
 ## 5. 단계적 배포: L1/L2/L3
 
+**수준은 조치마다 따로 정해진다.** 계약이 `automation_level`을 조치의 1급 속성으로 두고(§4.3 "레벨은
+자산별 속성이며 전사 일괄이 아니다"), 생성기는 조치가 말한 값을 따른다. `pqcota-provision --level`은
+**계획이 말하지 않은 조치의 기본값**일 뿐이다(`provisioning.LevelFor`).
+
+전에는 그 값을 아예 읽지 않고 전역 하나로 모든 조치를 냈다. 그래서 「결제 서버=L1 · 무상태 워커=L3」로
+확정한 계획이 `--level l3` 한 번에 평탄화됐다. 이 값은 **승인 서명이 덮는 것이라**(`sign.CanonicalPlan`),
+승인자가 서명한 위임 수준과 실제 실행 수준이 갈리는 자리였다. 위험도에 따라 위임을 나눈 판정이
+실행에서 사라지면 단계 경계가 게이트 구실을 하지 못한다.
+
+한 노드에 수준이 다른 조치가 섞이면 이렇게 갈린다. 디렉터리와 훅은 노드마다 한 번만 내므로 **하나라도
+그 수준에 닿으면** 내고, 훅은 **L3에 닿은 조치의 것만** 모은다. 확정하지 않은 수준의 명령을 같은 노드에
+있다는 이유로 끌어오지 않는다.
+
 ### 5.1 머신에는 무엇이 놓이나
 
 생성된 플레이북을 사용자가 실행하면:
@@ -365,6 +378,7 @@ L3 후에는 **재스캔으로 상태 변경을 확인한다**(§4.3). Deploy가
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).
 - **롤백 플레이북 생성 (forward와 대칭)**: before 레코드만 두지 않고, `GenerateRollbackPlaybook`이 **역방향 플레이북**을 생성한다. forward가 원본을 덮어쓰지 않고 파일을 *추가*하므로(위 안전성), 그 config 조각·스테이지 모듈을 **제거**(`state: absent`)하면 before로 복원된다. before 원문을 다시 만들 필요가 없다. L3면 `deactivate` 훅으로 활성화까지 되돌려 forward와 정확히 대칭이다.
 - **대칭**: forward가 놓은 것을 롤백이 지운다. L3면 활성화도 되돌린다. `deactivate` 훅이 없으면 파일만 지워지므로 그 사실을 경고한다(§2.5).
+- **버전 롤백이 아니다.** 이 플레이북은 **이번 계획이 관리하는 고정 경로의 산출물을 지운다.** 원본 설정을 덮은 적이 없으므로 원본은 그대로 남지만, 같은 provider 이름·같은 config 경로로 **두 번째 배포**를 했다면 첫 배포의 pqcota 산출물은 이미 덮여 있다. 그때 되돌리면 이전 판으로 돌아가는 것이 아니라 파일이 사라진다. 「원본을 건드리지 않는다」는 맞지만 「항상 직전 상태로 돌아간다」로 읽어서는 안 된다. 생성된 플레이북 머리말이 이 제한을 함께 적는다.
 - **구현**: `capture.go`의 `CaptureState(findings)→CryptoState`(openssl lib@version·JCA provider) + `NewProvisioningRecord(...)`(before 캡처·STAGED). `RecordStore`(Mem/Pg, append-only, `ByNode` 조회). 롤백 플레이북 생성기 `rollback.go`의 `GenerateRollbackPlaybook`(forward `stage.go`의 역방향). 소비자 `pqcota-provision`(provisioning/cmd): `FinalizedPlan` JSON → §3.7 게이트 → L1/L2 플레이북 생성(`--rollback`이면 역방향) + 조치별 before 캡처·app_keys 부착 → 레코드를 영속한다.
 
 ---

@@ -335,3 +335,69 @@ func strings2Contains(v any, want string) bool {
 	}
 	return false
 }
+
+// ★ 자산별 위임 수준이 전역 플래그에 평탄화되지 않는다.
+//
+// 계약은 automation_level을 **조치별** 속성으로 정하고(§4.3 "레벨은 자산별 속성이며 전사
+// 일괄이 아니다"), 승인 서명이 그 값을 덮는다(sign.CanonicalPlan). 그런데 생성기가 전역
+// `--level` 하나로 모든 조치를 내던 동안, 「결제 서버=L1 · 무상태 워커=L3」으로 확정한 계획이
+// `--level l3` 한 번에 평탄화됐다. **승인자가 서명한 위임 수준과 실제 실행 수준이 갈리는**
+// 자리라, 위험도에 따라 위임을 나눈 판정이 실행에서 사라졌다.
+func TestPerAssetAutomationLevelSurvivesTheGlobalFlag(t *testing.T) {
+	plan := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{
+		// 고위험 자산 — 계획이 L1로 확정했다. 스테이지만, config도 활성화도 없다.
+		{Id: "pay", TargetNodeId: "pay-db", CryptoRuntime: commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
+			Kind:            provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT,
+			TargetAlgorithm: "ML-KEM (FIPS 203)", ProviderChoice: "oqsprovider",
+			AutomationLevel: provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY,
+			Activation:      &provisioningv1.ActivationHooks{Activate: "pay-activate", Restart: "pay-restart"}},
+		// 무상태 워커 — 계획이 L3로 확정했다. 활성화·재시작까지 간다.
+		{Id: "worker", TargetNodeId: "worker-01", CryptoRuntime: commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
+			Kind:            provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+			TargetAlgorithm: "ML-KEM (FIPS 203)",
+			AutomationLevel: provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO,
+			Activation:      &provisioningv1.ActivationHooks{Activate: "worker-activate", Restart: "worker-restart"}},
+	}}
+
+	// 전역 기본값을 어느 쪽으로 주든 조치별 판정이 이긴다. 그래서 두 방향을 다 돌린다 —
+	// 한 방향만 보면 "기본값이 우연히 맞았다"와 구별되지 않는다.
+	for _, fallback := range []provisioningv1.DeployAutomationLevel{
+		provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO,
+		provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY,
+	} {
+		pb := provisioning.GenerateProvisioningPlaybook(plan, fallback)
+		if strings.Contains(pb, "pay-activate") || strings.Contains(pb, "pay-restart") {
+			t.Errorf("default=%s: the L1 asset was activated — the plan finalized it as stage-only:\n%s", levelName(fallback), pb)
+		}
+		if !strings.Contains(pb, "worker-activate") || !strings.Contains(pb, "worker-restart") {
+			t.Errorf("default=%s: the L3 asset was not activated — the plan finalized it as full-auto:\n%s", levelName(fallback), pb)
+		}
+		// L1은 config 조각을 놓지 않는다. 놓으면 L2를 한 것이다.
+		if strings.Contains(pb, "/etc/pqcota/openssl-pqc.cnf") && !strings.Contains(pb, `hosts: ["worker-01"]`) {
+			t.Errorf("default=%s: a config fragment was staged for the L1 asset:\n%s", levelName(fallback), pb)
+		}
+	}
+
+	// 롤백도 같은 규칙으로 갈려야 대칭이다 — 놓지 않은 것을 지우려 들면 안 된다.
+	rb := provisioning.GenerateRollbackPlaybook(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY)
+	if strings.Contains(rb, "pay-activate") {
+		t.Errorf("the rollback ran the L1 asset's activation hook:\n%s", rb)
+	}
+	if !strings.Contains(rb, "worker-restart") {
+		t.Errorf("the rollback skipped the L3 asset's restart:\n%s", rb)
+	}
+}
+
+// 전역이 L2여도 계획이 L3로 확정한 조치의 훅 누락은 경고로 나와야 한다.
+// 전에는 전역만 보아 그런 조치가 경고조차 되지 않았다.
+func TestActivationWarningsFollowThePlansLevel(t *testing.T) {
+	plan := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{
+		{Id: "w", TargetNodeId: "worker-01", CryptoRuntime: commonv1.CryptoRuntime_CRYPTO_RUNTIME_OPENSSL,
+			Kind:            provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY,
+			AutomationLevel: provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO},
+	}}
+	ws := provisioning.ActivationWarnings(plan, provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
+	if len(ws) == 0 {
+		t.Error("an L3 action with no hooks drew no warning while the global default was L2")
+	}
+}

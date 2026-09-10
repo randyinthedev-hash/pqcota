@@ -41,6 +41,7 @@ func main() {
 	levelFlag := flag.String("level", "l2", "automation level: l1 (stage only) | l2 (through install) | l3 (through activation and restart, using the plan's activation hooks)")
 	rollbackFlag := flag.Bool("rollback", false, "generate the reverse (rollback) playbook — removes the files the forward run staged")
 	dsn := flag.String("dsn", "", "Postgres DSN for history and records; when given, captures the before state and persists it")
+	allowIncomplete := flag.Bool("allow-incomplete", false, "exit 0 even when the plan is incomplete (the playbook is generated either way; without this the exit status is 3)")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>")
@@ -91,39 +92,21 @@ func main() {
 	// (1) 플레이북 — stdout. --rollback이면 역방향(배치 파일 제거), 아니면 forward.
 	if *rollbackFlag {
 		fmt.Print(provisioning.GenerateRollbackPlaybook(plan, level))
-		return
+	} else {
+		fmt.Print(provisioning.GenerateProvisioningPlaybook(plan, level))
 	}
-	fmt.Print(provisioning.GenerateProvisioningPlaybook(plan, level))
 
-	// 산출물이 그대로는 불완전한 조치(JCA provider_class 미확정 → java.security placeholder)를
-	// 조용히 통과시키지 않는다 — 조각 안 ⚠는 열어봐야 보이므로 여기서 stderr로 크게 알린다(§2.5).
-	for _, w := range provisioning.ProviderClassWarnings(plan) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
-	}
-	// provider 주입은 java.security의 한 자리를 대체한다 — 무엇이 밀려나는지 알린다.
-	for _, w := range provisioning.ProviderSlotWarnings(plan) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
-	}
-	// 같은 런타임에 조각이 여러 개면 경로를 나눴다는 사실을 알린다 — 나눈 채 두면 참조되지 않는다.
-	for _, w := range provisioning.ConfigConflictWarnings(plan) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
-	}
-	// L3인데 훅이 비면 무엇이 **일어나지 않는지** 알린다 — 활성화 방법을 추측하지 않기 때문(§2.5).
-	for _, w := range provisioning.ActivationWarnings(plan, level) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
-	}
-	// 목표 알고리즘이 그룹으로 안 풀리면 조각의 Groups 줄이 주석으로 나간다 — 배치해도 아무것도
-	// 켜지지 않는데, 그 사실이 조각 안에만 적혀 있어 열어보지 않으면 모른다.
-	for _, w := range provisioning.TargetAlgorithmWarnings(plan) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
-	}
-	// 무엇에서 뽑은 계획인지 되짚을 수 있는가(§1.2). 실행은 되지만 이력에 근거가 안 남는다.
-	for _, w := range provisioning.TraceabilityWarnings(plan) {
-		fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
+	// (2) 계획이 모자라 산출물이나 이력이 불완전해지는 자리를 알린다.
+	incomplete := reportWarnings(plan, level, *rollbackFlag)
+
+	if *rollbackFlag {
+		finish(incomplete, *allowIncomplete)
+		return
 	}
 
 	if *dsn == "" {
 		fmt.Fprintln(os.Stderr, "[provision] no --dsn → skipping the before capture and record persistence (playbook only).")
+		finish(incomplete, *allowIncomplete)
 		return
 	}
 
@@ -182,6 +165,65 @@ func main() {
 		n++
 	}
 	fmt.Fprintf(os.Stderr, "[provision] persisted %d records (before capture · STAGED · rollback basis).\n", n)
+	finish(incomplete, *allowIncomplete)
+}
+
+// reportWarnings — 경고를 stderr로 내고, 그중 **불완전**으로 세는 건수를 돌려준다.
+//
+// 가르는 기준은 「이 산출물이 계획대로의 일을 하는가」다. 조각이 참조되지 않거나 아무것도
+// 켜지 않거나 이력에 근거가 남지 않으면 불완전이다. 반면 provider 자리 대체 고지는 **의도한
+// 일이 그대로 일어난다는 안내**라 세지 않는다.
+//
+// 롤백은 보는 것이 다르다. 파일을 지우는 일에 목표 알고리즘이나 provider 클래스는 상관이
+// 없지만, deactivate·restart가 없으면 활성화를 되돌리지 못하고, 근거가 없으면 무엇을
+// 되돌리는지 되짚을 수 없다. 전에는 롤백 경로가 생성 직후 반환해 **경고를 하나도 내지 않았다.**
+func reportWarnings(plan *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel, rollback bool) int {
+	say := func(ws []string) int {
+		for _, w := range ws {
+			fmt.Fprintln(os.Stderr, "⚠ [provision] "+w)
+		}
+		return len(ws)
+	}
+
+	n := 0
+	if !rollback {
+		// 산출물이 그대로는 불완전한 조치(JCA provider_class 미확정 → java.security placeholder)를
+		// 조용히 통과시키지 않는다 — 조각 안 ⚠는 열어봐야 보이므로 여기서 stderr로 크게 알린다(§2.5).
+		n += say(provisioning.ProviderClassWarnings(plan))
+		// provider 주입은 java.security의 한 자리를 대체한다 — 무엇이 밀려나는지 알린다.
+		// 이것은 안내라 불완전으로 세지 않는다.
+		say(provisioning.ProviderSlotWarnings(plan))
+		// 같은 런타임에 조각이 여러 개면 경로를 나눴다는 사실을 알린다 — 나눈 채 두면 참조되지 않는다.
+		n += say(provisioning.ConfigConflictWarnings(plan))
+		// 목표 알고리즘이 그룹으로 안 풀리면 조각의 Groups 줄이 주석으로 나간다 — 배치해도 아무것도
+		// 켜지지 않는데, 그 사실이 조각 안에만 적혀 있어 열어보지 않으면 모른다.
+		n += say(provisioning.TargetAlgorithmWarnings(plan))
+	}
+	// L3인데 훅이 비면 무엇이 **일어나지 않는지** 알린다 — 활성화 방법을 추측하지 않기 때문(§2.5).
+	n += say(provisioning.ActivationWarnings(plan, level))
+	// 무엇에서 뽑은 계획인지 되짚을 수 있는가(§1.2). 실행은 되지만 이력에 근거가 안 남는다.
+	n += say(provisioning.TraceabilityWarnings(plan))
+	return n
+}
+
+// finish — 불완전한 계획을 **성공으로 끝내지 않는다.**
+//
+// 산출물은 그대로 낸다. 사람이 손으로 채우는 것이 정당한 경로라 하드 블록하지 않기 때문이다.
+// 그러나 종료 상태까지 0이면 표준 오류를 모으지 않는 자동화에서 **불완전한 플레이북이 정상
+// 산출물로 남는다.** 그래서 기본은 3으로 끝내고, 알고 넘기려면 --allow-incomplete를 적는다.
+// 거절(1)과 가르는 이유는 무엇을 고쳐야 하는지가 다르기 때문이다 — 1은 계획이 실행 근거가
+// 아니라는 뜻이고, 3은 근거는 되지만 빈칸이 남았다는 뜻이다.
+func finish(incomplete int, allow bool) {
+	if incomplete == 0 {
+		return
+	}
+	if allow {
+		fmt.Fprintf(os.Stderr, "[provision] %d incomplete spot(s) — passed over because --allow-incomplete was given.\n", incomplete)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "✗ [provision] the playbook was generated, but %d spot(s) above are incomplete. "+
+		"Fill them in, or re-run with --allow-incomplete to accept it knowingly (exit 3).\n", incomplete)
+	os.Exit(3)
 }
 
 // checkApprovals — 승인 서명이 등록된 승인자의 것인지 확인한다.
