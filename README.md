@@ -189,8 +189,10 @@ Windows(CNG)는 **관측된다**(`pqcota-cngscan`). 전환물 생성은 substrat
 
 ## 상태 · 버전
 
-**릴리스마다** arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
-받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
+**릴리스마다 arch별 정적 바이너리와 `SHA256SUMS`가 [릴리스](https://github.com/randyinthedev-hash/pqcota/releases)에 붙는다.
+붙는 것은 대상 노드에 올리는 collector와 JVM 사이드카다.** 컨트롤러에서 쓰는 CLI(`pqcota-ingest`·
+`pqcota-inventory`·`pqcota-provision` 등)는 번들에 없으므로 [빌드](#빌드)에서 만든다. 받은 뒤
+`sha256sum -c SHA256SUMS`로 확인한다. 서명된 릴리스는 [로드맵](RELEASE_NOTES.md)에 있다.
 버전별 목표·성과는 [릴리스 노트](RELEASE_NOTES.md)에 있다.
 
 ## 라이선스

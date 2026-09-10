@@ -195,9 +195,12 @@ Windows (CNG) is **observed** (`pqcota-cngscan`). Generating its migration artif
 
 ## Status · version
 
-**Every release** attaches per-architecture static binaries and `SHA256SUMS` to the
-[releases](https://github.com/randyinthedev-hash/pqcota/releases). Verify what you download with
-`sha256sum -c SHA256SUMS`; signed releases are on the [roadmap](RELEASE_NOTES.en.md).
+**Every release attaches per-architecture static binaries and `SHA256SUMS` to the
+[releases](https://github.com/randyinthedev-hash/pqcota/releases). What it attaches is the collectors
+that go onto target nodes, plus the JVM sidecar.** The CLIs you run on the controller
+(`pqcota-ingest`, `pqcota-inventory`, `pqcota-provision` and the rest) are not in the bundle, so build
+them from [Build](#build). Verify what you download with `sha256sum -c SHA256SUMS`; signed releases are
+on the [roadmap](RELEASE_NOTES.en.md).
 Per-version goals and results are in the [release notes](RELEASE_NOTES.en.md).
 
 ## License
