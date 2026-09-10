@@ -31,6 +31,7 @@ import (
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
@@ -96,7 +97,7 @@ func main() {
 
 	opts := ingest.IngestOptions{
 		Master: master, VerifySig: verifySig, SnapshotPrefix: prefix,
-		RulesetVersion: "ruleset-demo", Store: store, AssetPolicy: assetPolicy,
+		RulesetVersion: normalize.RulesetVersion, Store: store, AssetPolicy: assetPolicy,
 		RequireSignature: os.Getenv("PQCOTA_REQUIRE_SIGNATURE") == "1",
 	}
 	// 거절 기록은 남길 수 있을 때만 남긴다 — 인메모리 저장소도 같은 규칙을 만족하므로

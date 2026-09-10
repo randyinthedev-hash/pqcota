@@ -15,6 +15,17 @@ import (
 // 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다(§2.6 제외 ≠ 부재).
 //
 // 결정론적: 같은 입력 + 같은 rulesetVersion → 같은 finding id(§1.2 재현성).
+// RulesetVersion — **이 리포의 강화 규칙 판**이다. 파생값(`evidence_strength`·`pqc_readiness`·
+// 등급·성숙도)을 만드는 규칙이 바뀔 때만 올린다.
+//
+// **릴리스 버전과 같지 않다.** 문구를 고치거나 CLI를 더한다고 파생 결과가 달라지지 않는다.
+// 반대로 같은 관측에서 나오는 값이 달라지면 그것은 규칙이 바뀐 것이고, 그때 스냅샷을 가르는
+// 근거가 이 문자열이다(§1.2 파생은 원본에서 재계산). 이력 비교가 「규칙이 달라 파생값이
+// 움직인 것인지 실제 변화인지」를 이 값으로 가른다.
+//
+// 소비하는 쪽은 자기 규칙 판을 여기에 이어 붙인다 — 대조·계획 변환은 이 리포의 규칙이 아니다.
+const RulesetVersion = "pqcota-enrich/v1"
+
 func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rulesetVersion string,
 	store history.Store, policy *scope.AssetPolicy) (*history.Snapshot, error) {
 	seen := make(map[string]bool)

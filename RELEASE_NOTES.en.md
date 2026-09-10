@@ -82,6 +82,25 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.3 — This repo owns the enrichment ruleset version (2026-09-10)
+
+**Goal** — give the rules that produce derived values a version of their own.
+
+### Built
+
+- **`normalize.RulesetVersion`** (`pqcota-enrich/v1`). It moves only when the rules that produce derived
+  values (`evidence_strength`, `pqc_readiness`, posture, maturity) change. **It is not the release
+  version** — editing prose or adding a CLI does not change what those rules produce. Consumers append
+  their own ruleset version to it, because reconciliation and plan conversion are not this repo's rules.
+
+### Fixed
+
+- **Ingest stamped `ruleset-demo` onto snapshots** (v0.1.0–v0.7.2). A placeholder went into the real
+  history. **What came out wrong**: history comparison uses this value to tell "the rules changed, so a
+  derived value moved" apart from "something actually changed", and every snapshot carrying the same
+  placeholder could not answer that. The two view-only paths (`pqcota-discover-view` and the local view)
+  carried `ruleset-1` and `ruleset-demo` too.
+
 ## v0.7.2 — The controller CLIs ship too (2026-09-10)
 
 **Goal** — let someone who took only the release run all three stages.
