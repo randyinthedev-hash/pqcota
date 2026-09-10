@@ -159,8 +159,8 @@ take_provision() {
 	cut_mark
 
 	say "the tool generates the artifacts from that plan — one to apply, one to roll back"
-	type_cmd "pqcota-provision --level l2 plan-real.json > provision-real.yml"
-	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
+	type_cmd "pqcota-provision --level l2 --allow-incomplete plan-real.json > provision-real.yml"
+	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 --allow-incomplete /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 	docker exec pqcota-ctl bash -lc 'ls -1 /work/ansible/provision-real*.yml'
 	cut_mark
 

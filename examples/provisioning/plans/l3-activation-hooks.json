@@ -12,6 +12,7 @@
     "findingId": "f-jca-no-pqc",
     "cryptoRuntime": "CRYPTO_RUNTIME_JCA",
     "kind": "REMEDIATION_KIND_PROVIDER_INJECT",
+    "automationLevel": "DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO",
     "targetAlgorithm": "ML-KEM (FIPS 203)",
     "providerChoice": "BC",
     "providerClass": "org.bouncycastle.jce.provider.BouncyCastleProvider",

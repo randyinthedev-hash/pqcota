@@ -85,12 +85,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	level := provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL
+	// 모르는 값을 조용히 L2로 삼키지 않는다. `--level L3`처럼 대소문자만 틀려도 **말한 것보다 낮은
+	// 수준으로** 돌아 버리는데, 그러면 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고 읽는다.
+	var level provisioningv1.DeployAutomationLevel
 	switch *levelFlag {
 	case "l1":
 		level = provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L1_STAGE_ONLY
+	case "l2":
+		level = provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL
 	case "l3":
 		level = provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO
+	default:
+		fmt.Fprintf(os.Stderr, "unknown --level %q — it has to be l1, l2 or l3.\n", *levelFlag)
+		os.Exit(2)
 	}
 
 	// (1) 플레이북 — stdout. --rollback이면 역방향(배치 파일 제거), 아니면 forward.
@@ -205,6 +212,9 @@ func reportWarnings(plan *provisioningv1.FinalizedPlan, level provisioningv1.Dep
 	}
 	// L3인데 훅이 비면 무엇이 **일어나지 않는지** 알린다 — 활성화 방법을 추측하지 않기 때문(§2.5).
 	n += say(provisioning.ActivationWarnings(plan, level))
+	// 위임 수준을 계획이 말하지 않으면 실행 수준이 서명 밖의 --level에서 온다. 정방향·롤백 모두
+	// 그 값으로 갈리므로 양쪽에서 센다.
+	n += say(provisioning.AutomationLevelWarnings(plan))
 	// 무엇에서 뽑은 계획인지 되짚을 수 있는가(§1.2). 실행은 되지만 이력에 근거가 안 남는다.
 	n += say(provisioning.TraceabilityWarnings(plan))
 	return n
