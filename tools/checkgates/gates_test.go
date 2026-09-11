@@ -85,10 +85,10 @@ func TestRulesetPlaceholderIsBlocked(t *testing.T) {
 	if err != nil {
 		t.Fatalf("rulesetPlaceholders: %v", err)
 	}
-	if len(hits) != 2 {
-		t.Fatalf("자리표시자와 베낀 상수 둘을 잡아야 한다: %v", hits)
+	if len(hits) != 4 {
+		t.Fatalf("자리표시자와 계열 셋을 잡아야 한다: %v", hits)
 	}
-	for _, want := range []string{"ruleset-demo", "pqcota-enrich/v1"} {
+	for _, want := range []string{"ruleset-demo", "pqcota-enrich/v1", "pqcota-enrich/v0", "pqcota-enrich/v9"} {
 		found := false
 		for _, h := range hits {
 			if strings.Contains(h, want) {
@@ -131,6 +131,28 @@ func TestTheCheckerPassesItsOwnRule(t *testing.T) {
 	}
 	if len(hits) != 0 {
 		t.Errorf("검사기가 자기 규칙에 걸린다 — 값을 베껴 두었다는 뜻이다: %v", hits)
+	}
+}
+
+// ★ 지금 판만 잡으면 판이 오른 다음이 빈다.
+//
+// 상수가 `v2` 로 올라가면 어딘가 남은 `v1` 복사본은 「지금 값과 다르다」로 지나간다. 그것이
+// 바로 잡아야 하는 것이다: 베낀 값은 상수를 고쳐도 따라오지 않으므로, 옛 판을 찍는 코드가
+// 조용히 남는다. **이 검사는 지금 상수의 값에 기대지 않는다** — 계열의 다른 판을 넣어 본다.
+func TestPastAndFutureRulesetsAreCaughtToo(t *testing.T) {
+	for _, v := range []string{"pqcota-enrich/v0", "pqcota-enrich/v9", "pqcota-enrich/"} {
+		if !looksLikeRuleset(v) {
+			t.Errorf("계열의 다른 판 %q를 놓쳤다 — 판이 오른 뒤 옛 복사본이 남는다", v)
+		}
+	}
+	if fam := rulesetFamily(); fam == "" || strings.HasSuffix(fam, "/") == false {
+		t.Errorf("계열을 상수에서 못 뽑았다: %q", fam)
+	}
+	// 계열 밖은 그대로 둔다. 거짓 실패가 나는 게이트는 곧 꺼진다.
+	for _, v := range []string{"pqcaton-plan/v1", "pqcota-enrich", "enrich/v1"} {
+		if looksLikeRuleset(v) {
+			t.Errorf("계열 밖의 %q를 걸었다", v)
+		}
 	}
 }
 

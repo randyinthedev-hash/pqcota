@@ -82,6 +82,25 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.6 — The gate matches the whole family (2026-09-11)
+
+**Goal** — catch the old copies that survive a ruleset bump.
+
+### Fixed
+
+- **Only copies of the current version were caught** (v0.7.4–v0.7.5). Once the constant moves to
+  `pqcota-enrich/v2`, a leftover `pqcota-enrich/v1` passes as "not the current value, so not a
+  placeholder". **What came out wrong**: that leftover is exactly what needs catching. A copied value
+  does not follow the constant, so **code stamping the old version quietly survives**, and from then on
+  those snapshots look as though the current rules produced them. The family prefix
+  (`pqcota-enrich/`) is now derived from the constant, catching past and future versions alike. The
+  check does not depend on the constant's current value, so bumping it needs no test edits.
+
+> **This gate took three releases to get right** (`v0.7.4` introduced it, `v0.7.5` made it pass its own
+> rule, `v0.7.6` widened it to the family). All three were the same kind of defect: correct today,
+> wrong after the next change. When writing a checker, ask what it catches **after the value moves**,
+> not what it catches now.
+
 ## v0.7.5 — The checker passes its own rule (2026-09-11)
 
 **Goal** — actually establish what `v0.7.4` promised: that a placeholder cannot come back.
