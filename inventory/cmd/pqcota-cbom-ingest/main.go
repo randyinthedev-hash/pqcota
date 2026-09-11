@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
@@ -49,7 +50,7 @@ func main() {
 	// CBOM 서명 검증(verifySig)은 아직 미배선 — CBOM은 신뢰된 CI/전송 경로로 온다는 전제(SV-2).
 	// (sign 패키지는 CollectionResult 전용. raw-CBOM 서명 검증은 후속.)
 	prefix := "cbom-" + time.Now().UTC().Format("20060102T150405Z")
-	disp, err := ingest.IngestCBOM(raw, nodeID, nil, prefix, "ruleset-demo", store)
+	disp, err := ingest.IngestCBOM(raw, nodeID, nil, prefix, normalize.RulesetVersion, store)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ingest:", err)
 		os.Exit(1)
