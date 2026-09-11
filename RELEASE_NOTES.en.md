@@ -97,7 +97,8 @@ These are **boundaries**, not directions. Written down so no one waits for them.
   `provisioning.PrepareApproval`, and `check-gates` checks that it is wired.
 
 - **Structure is checked before approval.** There must be actions, each with a target node and a kind
-  (the same content layer as `Executable`). A plan that fails this and then gets signed becomes
+  (the same content layer as `Executable`). It runs for the first approval **and** for further ones — a
+  plan whose actions were removed after the first approval must not collect another. A plan that fails this and then gets signed becomes
   "approved, yet not executable" — a state in which nobody can say what the approver took
   responsibility for.
 

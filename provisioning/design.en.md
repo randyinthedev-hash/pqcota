@@ -120,12 +120,12 @@ The side that produces the plan (judgment) and the side that approves execution 
 | Incoming status | What happens |
 |---|---|
 | `IN_REVIEW` | There must be **no** existing approval and no `finalized_at`. If either is present the plan is refused as corrupt — someone attached a signature to this status, and that signature is about this status. There must be at least one action, each with a target node and a kind (the same content layer as `Executable`). If that passes, status becomes `FINALIZED` and `finalized_at` becomes now, **first**, and then that state is signed |
-| `FINALIZED` | There must be **both** an existing approval and a `finalized_at`. If either is missing the plan is refused as corrupt — `FINALIZED` only ever comes from an approval, so an empty field means the status was edited in. If both are present, nothing is changed; only the signature is added |
+| `FINALIZED` | There must be **both** an existing approval and a `finalized_at`. If either is missing the plan is refused as corrupt — `FINALIZED` only ever comes from an approval, so an empty field means the status was edited in. **The structure check runs here too** — a plan whose actions were removed after the first approval must not collect another. If all of that passes, nothing is changed; only the signature is added |
 | `DRAFT` · `UNSPECIFIED` | Refused. Not something to approve |
 
 **The order is the point.** `CanonicalPlan` covers `status` and `finalized_at`, so changing them after signing breaks the signature just made. A second approval re-stamping the time would break the first signature too — that is why nothing changes on `FINALIZED`. Two approvers must sign **the same canonical bytes** for both to verify.
 
-**Structure is checked before approval** because a plan that fails it and then gets signed becomes "approved, yet not executable" — a state in which nobody can say what the approver took responsibility for.
+**Structure is checked before approval** because a plan that fails it and then gets signed becomes "approved, yet not executable" — a state in which nobody can say what the approver took responsibility for. The order is **invariants → structure → transition**, and a refused plan keeps its status, time and approval list exactly as they came in.
 
 `pqcota-approve` used to look at status not at all; it signed `DRAFT` plans. `Executable` blocked them downstream, so it was not exploitable, but approval was an act that never checked what it was about. And when the judging side put an unverifiable label into the approval slot, the plan had the shape of `FINALIZED` with an approval entry and **looked as though it satisfied the structural gate.** That shape is now refused as corrupt.
 

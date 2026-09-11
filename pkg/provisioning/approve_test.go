@@ -47,11 +47,14 @@ func TestDraftAndUnspecifiedCannotBeApproved(t *testing.T) {
 	}
 }
 
-// TP-GATE-9 — 승인 전에 물을 수 있는 구조는 승인 전에 묻는다.
+// TP-GATE-9 — 승인 전에 물을 수 있는 구조는 승인 전에 묻는다. **두 상태 모두.**
 //
-// 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생긴다.
+// 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생긴다. FINALIZED 에서
+// 건너뛰면 첫 승인 뒤에 조치가 지워진 계획에도 추가 승인이 붙는다. 거부할 때는 상태·시각·승인
+// 목록이 들어온 그대로여야 한다 — 거부하면서 계획을 만지면 그 계획이 무엇인지 말할 수 없다.
 func TestStructureIsCheckedBeforeApproval(t *testing.T) {
-	for _, tc := range []struct {
+	_, priv, _ := sign.Generate()
+	faults := []struct {
 		what string
 		mut  func(*provisioningv1.FinalizedPlan)
 	}{
@@ -60,15 +63,39 @@ func TestStructureIsCheckedBeforeApproval(t *testing.T) {
 		{"종류 미정", func(p *provisioningv1.FinalizedPlan) {
 			p.Actions[0].Kind = provisioningv1.RemediationKind_REMEDIATION_KIND_UNSPECIFIED
 		}},
-	} {
-		p := judged()
-		tc.mut(p)
-		err := provisioning.PrepareApproval(p, t0)
-		if !errors.Is(err, provisioning.ErrNotApprovable) {
-			t.Errorf("%s: 승인을 막지 않았다: %v", tc.what, err)
-		}
-		if p.GetStatus() != provisioningv1.PlanStatus_PLAN_STATUS_IN_REVIEW {
-			t.Errorf("%s: 거부하면서 상태를 올렸다", tc.what)
+	}
+	// 두 상태의 깨끗한 출발점. FINALIZED 는 실제로 한 번 승인을 거친 모양이다.
+	starts := map[string]func() *provisioningv1.FinalizedPlan{
+		"IN_REVIEW": judged,
+		"FINALIZED": func() *provisioningv1.FinalizedPlan {
+			p := judged()
+			if err := provisioning.PrepareApproval(p, t0); err != nil {
+				t.Fatal(err)
+			}
+			sig, _ := sign.SignApproval(priv, "alice", p)
+			p.ApprovalSignatures = []string{sig}
+			return p
+		},
+	}
+	for state, start := range starts {
+		for _, f := range faults {
+			p := start()
+			f.mut(p)
+			wantStatus, wantAt, wantSigs := p.GetStatus(), p.GetFinalizedAt(), append([]string(nil), p.GetApprovalSignatures()...)
+
+			err := provisioning.PrepareApproval(p, t0.Add(time.Hour))
+			if !errors.Is(err, provisioning.ErrNotApprovable) {
+				t.Errorf("%s · %s: 승인을 막지 않았다: %v", state, f.what, err)
+			}
+			if p.GetStatus() != wantStatus {
+				t.Errorf("%s · %s: 거부하면서 상태를 바꿨다: %s", state, f.what, p.GetStatus())
+			}
+			if (p.GetFinalizedAt() == nil) != (wantAt == nil) || (wantAt != nil && !p.GetFinalizedAt().AsTime().Equal(wantAt.AsTime())) {
+				t.Errorf("%s · %s: 거부하면서 확정 시각을 바꿨다", state, f.what)
+			}
+			if got := p.GetApprovalSignatures(); len(got) != len(wantSigs) || (len(got) > 0 && got[0] != wantSigs[0]) {
+				t.Errorf("%s · %s: 거부하면서 승인 목록을 바꿨다", state, f.what)
+			}
 		}
 	}
 }
