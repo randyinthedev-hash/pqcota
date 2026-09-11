@@ -34,6 +34,12 @@ func plan() *provisioningv1.FinalizedPlan {
 			Activation: &provisioningv1.ActivationHooks{
 				Pre: "stop", Activate: "link", Deactivate: "unlink", Restart: "start",
 			},
+			EvidenceSources: []*provisioningv1.ActionEvidenceSource{{
+				FindingId: "f-1",
+				Snapshot: &provisioningv1.SnapshotReference{SourceNodeId: "web-01.corp",
+					Reference: &provisioningv1.SnapshotReference_Content{Content: &provisioningv1.SnapshotContentReference{
+						FormatVersion: "pqcota-snapshot-content/v1", Digest: "ab", RulesetVersion: "pqcota-enrich/v2"}}},
+			}},
 		}, {
 			Id: "a2", TargetNodeId: "db-01",
 			Kind: provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT,
@@ -128,6 +134,18 @@ func TestTamperBreaksApproval(t *testing.T) {
 		{"ruleset", func(p *provisioningv1.FinalizedPlan) { p.RulesetVersion = "ruleset-2" }},
 		{"finalized at", func(p *provisioningv1.FinalizedPlan) { p.FinalizedAt = timestamppb.New(time.Unix(1, 0)) }},
 		{"action node", func(p *provisioningv1.FinalizedPlan) { p.Actions[0].TargetNodeId = "elsewhere" }},
+		{"evidence finding", func(p *provisioningv1.FinalizedPlan) { p.Actions[0].EvidenceSources[0].FindingId = "f-9" }},
+		{"evidence source node", func(p *provisioningv1.FinalizedPlan) { p.Actions[0].EvidenceSources[0].Snapshot.SourceNodeId = "x" }},
+		{"evidence digest", func(p *provisioningv1.FinalizedPlan) {
+			p.Actions[0].EvidenceSources[0].Snapshot.GetContent().Digest = "cd"
+		}},
+		{"evidence kind", func(p *provisioningv1.FinalizedPlan) {
+			p.Actions[0].EvidenceSources[0].Snapshot.Reference = &provisioningv1.SnapshotReference_SnapshotId{SnapshotId: "ab"}
+		}},
+		{"evidence removed", func(p *provisioningv1.FinalizedPlan) { p.Actions[0].EvidenceSources = nil }},
+		{"evidence added", func(p *provisioningv1.FinalizedPlan) {
+			p.Actions[1].EvidenceSources = append(p.Actions[1].EvidenceSources, &provisioningv1.ActionEvidenceSource{FindingId: "f-2"})
+		}},
 		{"action kind", func(p *provisioningv1.FinalizedPlan) {
 			p.Actions[0].Kind = provisioningv1.RemediationKind_REMEDIATION_KIND_DECOMMISSION
 		}},
@@ -183,14 +201,20 @@ func TestTamperBreaksApproval(t *testing.T) {
 // ★ 필드 수 가드 — 계약에 필드가 늘면 여기서 실패한다. CanonicalPlan을 함께 갱신하라는 신호다.
 func TestCanonicalPlanCoversAllFields(t *testing.T) {
 	want := map[string]int{
-		"FinalizedPlan":     8,  // 그중 approval_signatures는 서명 대상에서 제외(자기 자신)
-		"RemediationAction": 13, // id, node, finding, runtime, kind, level, target, provider, artifact, note, priority, class, activation
-		"ActivationHooks":   4,  // pre, activate, deactivate, restart
+		"FinalizedPlan":            8,  // 그중 approval_signatures는 서명 대상에서 제외(자기 자신)
+		"RemediationAction":        14, // id, node, finding, runtime, kind, level, target, provider, artifact, note, priority, class, activation, evidence_sources
+		"ActivationHooks":          4,  // pre, activate, deactivate, restart
+		"ActionEvidenceSource":     2,  // finding_id, snapshot
+		"SnapshotReference":        3,  // source_node_id, snapshot_id | content
+		"SnapshotContentReference": 3,  // format_version, digest, ruleset_version
 	}
 	got := map[string]int{
-		"FinalizedPlan":     (&provisioningv1.FinalizedPlan{}).ProtoReflect().Descriptor().Fields().Len(),
-		"RemediationAction": (&provisioningv1.RemediationAction{}).ProtoReflect().Descriptor().Fields().Len(),
-		"ActivationHooks":   (&provisioningv1.ActivationHooks{}).ProtoReflect().Descriptor().Fields().Len(),
+		"FinalizedPlan":            (&provisioningv1.FinalizedPlan{}).ProtoReflect().Descriptor().Fields().Len(),
+		"RemediationAction":        (&provisioningv1.RemediationAction{}).ProtoReflect().Descriptor().Fields().Len(),
+		"ActivationHooks":          (&provisioningv1.ActivationHooks{}).ProtoReflect().Descriptor().Fields().Len(),
+		"ActionEvidenceSource":     (&provisioningv1.ActionEvidenceSource{}).ProtoReflect().Descriptor().Fields().Len(),
+		"SnapshotReference":        (&provisioningv1.SnapshotReference{}).ProtoReflect().Descriptor().Fields().Len(),
+		"SnapshotContentReference": (&provisioningv1.SnapshotContentReference{}).ProtoReflect().Descriptor().Fields().Len(),
 	}
 	for msg, n := range want {
 		if got[msg] != n {

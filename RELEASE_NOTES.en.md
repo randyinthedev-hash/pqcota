@@ -106,6 +106,20 @@ records it. **Every existing approval signature becomes invalid** (see "What cha
   is implemented by Postgres and the in-memory store. `Store` was not widened — it is public, and
   widening it breaks whoever implements it.
 
+- **Actions carry their evidence.** `RemediationAction.evidence_sources[] = {finding_id, snapshot}` —
+  which finding, in which snapshot state. The reference (`SnapshotReference`) is either the history's
+  real id or a content fingerprint (`{format_version, digest, ruleset_version}`), and names the
+  **source node** (the name the history stored it under). The plural unit is "evidence", not
+  "snapshot": listing snapshots alone leaves a single `finding_id` that cannot say which finding in the
+  second snapshot is the basis. The plan-level `derived_from_snapshot_id` stays as a compatibility path.
+
+- **The generator actually resolves references.** Shape is checked without `--dsn` (malformed → exit
+  3); with `--dsn` it looks the reference up, checks that **the found snapshot contains the finding**,
+  and records the submitted reference paired with the real id in
+  `ProvisioningRecord.snapshot_resolutions`. Not found → exit 3, and the warning names the possible
+  causes as values (another history, the source node's name, the ruleset, the scope policy, the result
+  set). `pqcota-records` shows it as a `snapshot:` line. This closes the record → plan → snapshot chain.
+
 ### Fixed
 
 - **Per-node merging depended on input order** (v0.1.0–v0.8.0). Duplicate findings, duplicate edges and
@@ -123,6 +137,20 @@ records it. **Every existing approval signature becomes invalid** (see "What cha
   references unresolvable. Folding now keys on v1. **The first ingest after upgrading creates a new row
   even for an unchanged state** — a mark of the migration, not a change. Old rows keep an empty v1 and
   are not back-filled.
+
+### What changes for consumers
+
+- **Every existing approval signature is invalid.** The action's evidence is part of `CanonicalPlan`.
+  An empty list still occupies a slot in the canonical form, so plans that had no evidence must also be
+  re-approved. Left uncovered, a reference could be swapped after signing and "traceable" would not be
+  a guarantee.
+- **Old consumers cannot read new plans.** Generators and approvers up to `v0.8.0` do not know
+  `evidence_sources`; `protojson` rejects unknown fields, so they refuse the plan. Roll back with the
+  same release of the generator.
+- **The ruleset version is `pqcota-enrich/v2`.** History comparison shows "the rules changed, so a
+  derived value moved". Downstream rebuilds its combined identifier.
+- **The first ingest after upgrading creates a new row even for an unchanged state.** A mark of the
+  migration, not a change.
 
 ## v0.8.0 — Approval finalizes the plan (2026-09-11)
 

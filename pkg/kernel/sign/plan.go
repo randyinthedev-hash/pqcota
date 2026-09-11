@@ -63,6 +63,28 @@ func actionCanon(w func(string), a *provisioningv1.RemediationAction) {
 	w(h.GetActivate())
 	w(h.GetDeactivate())
 	w(h.GetRestart())
+	// 근거들 — **순서대로** 덮는다. 주 근거가 앞이라 순서가 뜻이다. 덮지 않으면 참조를 서명 뒤에
+	// 바꿔 넣을 수 있어 「되짚을 수 있다」가 보장이 아니게 된다. 빈 목록도 자리 하나(길이 0)를
+	// 차지하므로, 근거가 없던 옛 계획의 정규형은 이 필드가 생기기 전과 같지 않다 — 기존 승인이
+	// 전부 무효가 되는 이유다(릴리스 노트 v0.9.0).
+	w(strconv.Itoa(len(a.GetEvidenceSources())))
+	for _, e := range a.GetEvidenceSources() {
+		w(e.GetFindingId())
+		r := e.GetSnapshot()
+		w(r.GetSourceNodeId())
+		switch ref := r.GetReference().(type) {
+		case *provisioningv1.SnapshotReference_SnapshotId:
+			w("id")
+			w(ref.SnapshotId)
+		case *provisioningv1.SnapshotReference_Content:
+			w("content")
+			w(ref.Content.GetFormatVersion())
+			w(ref.Content.GetDigest())
+			w(ref.Content.GetRulesetVersion())
+		default:
+			w("none")
+		}
+	}
 }
 
 // SignApproval — priv(base64)로 계획을 승인 서명한다. 반환값을 `approval_signatures`에 덧붙인다.

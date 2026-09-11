@@ -166,16 +166,20 @@ type ProvisioningRecord struct {
 	NodeId string                 `protobuf:"bytes,2,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"` // 머신 앵커(§1.4)
 	// 이 조치가 영향을 주는 애플리케이션(들). 공유 라이브러리 교체는 그걸 로드한 모든 앱에 영향이라
 	// 다중일 수 있다(cbom Finding.app_keys에서 유래). 각 원소가 (node_id,app_key)=전역 유일.
-	AppKeys       []string               `protobuf:"bytes,3,rep,name=app_keys,json=appKeys,proto3" json:"app_keys,omitempty"`
-	ActionId      string                 `protobuf:"bytes,4,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"` // 근거 RemediationAction(plan.proto) 참조
-	PlanId        string                 `protobuf:"bytes,5,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`       // 소속 FinalizedPlan
-	Before        *CryptoState           `protobuf:"bytes,6,opt,name=before,proto3" json:"before,omitempty"`                     // 프로비저닝 *전* 상태 — **롤백 기준**
-	After         *CryptoState           `protobuf:"bytes,7,opt,name=after,proto3" json:"after,omitempty"`                       // 적용 후 목표/실측 상태
-	Status        ProvisioningStatus     `protobuf:"varint,8,opt,name=status,proto3,enum=pqcota.provisioning.v1.ProvisioningStatus" json:"status,omitempty"`
-	Note          string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"` // 실패 사유·검증 결과 등
-	At            *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=at,proto3" json:"at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	AppKeys  []string               `protobuf:"bytes,3,rep,name=app_keys,json=appKeys,proto3" json:"app_keys,omitempty"`
+	ActionId string                 `protobuf:"bytes,4,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"` // 근거 RemediationAction(plan.proto) 참조
+	PlanId   string                 `protobuf:"bytes,5,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`       // 소속 FinalizedPlan
+	Before   *CryptoState           `protobuf:"bytes,6,opt,name=before,proto3" json:"before,omitempty"`                     // 프로비저닝 *전* 상태 — **롤백 기준**
+	After    *CryptoState           `protobuf:"bytes,7,opt,name=after,proto3" json:"after,omitempty"`                       // 적용 후 목표/실측 상태
+	Status   ProvisioningStatus     `protobuf:"varint,8,opt,name=status,proto3,enum=pqcota.provisioning.v1.ProvisioningStatus" json:"status,omitempty"`
+	Note     string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"` // 실패 사유·검증 결과 등
+	At       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=at,proto3" json:"at,omitempty"`
+	// 이 조치의 근거 참조가 이력에서 어떻게 해결됐나. 제출된 참조와 찾은 실제 id 를 **한 항목으로**
+	// 짝지어 남긴다 — 따로 두면 하나만 못 찾았을 때 어느 참조가 어느 id 로 해결됐는지 알 수 없다.
+	// 이것이 레코드 → 계획 → 스냅샷으로 되짚는 사슬의 마지막 고리다.
+	SnapshotResolutions []*SnapshotResolution `protobuf:"bytes,11,rep,name=snapshot_resolutions,json=snapshotResolutions,proto3" json:"snapshot_resolutions,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ProvisioningRecord) Reset() {
@@ -278,16 +282,122 @@ func (x *ProvisioningRecord) GetAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ProvisioningRecord) GetSnapshotResolutions() []*SnapshotResolution {
+	if x != nil {
+		return x.SnapshotResolutions
+	}
+	return nil
+}
+
+// SnapshotResolution — 참조 하나가 어떻게 해결됐나.
+type SnapshotResolution struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to What:
+	//
+	//	*SnapshotResolution_Submitted
+	//	*SnapshotResolution_LegacyPlanSnapshotId
+	What               isSnapshotResolution_What `protobuf_oneof:"what"`
+	ResolvedSnapshotId string                    `protobuf:"bytes,3,opt,name=resolved_snapshot_id,json=resolvedSnapshotId,proto3" json:"resolved_snapshot_id,omitempty"` // 비면 미해결 — 못 찾았거나 찾지 않았다. reason 이 갈라 말한다
+	Reason             string                    `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`                                                     // 사람이 읽는다. 못 찾았을 때 가능한 이유까지
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SnapshotResolution) Reset() {
+	*x = SnapshotResolution{}
+	mi := &file_pqcota_provisioning_v1_rollback_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotResolution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotResolution) ProtoMessage() {}
+
+func (x *SnapshotResolution) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_rollback_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotResolution.ProtoReflect.Descriptor instead.
+func (*SnapshotResolution) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_rollback_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SnapshotResolution) GetWhat() isSnapshotResolution_What {
+	if x != nil {
+		return x.What
+	}
+	return nil
+}
+
+func (x *SnapshotResolution) GetSubmitted() *SnapshotReference {
+	if x != nil {
+		if x, ok := x.What.(*SnapshotResolution_Submitted); ok {
+			return x.Submitted
+		}
+	}
+	return nil
+}
+
+func (x *SnapshotResolution) GetLegacyPlanSnapshotId() string {
+	if x != nil {
+		if x, ok := x.What.(*SnapshotResolution_LegacyPlanSnapshotId); ok {
+			return x.LegacyPlanSnapshotId
+		}
+	}
+	return ""
+}
+
+func (x *SnapshotResolution) GetResolvedSnapshotId() string {
+	if x != nil {
+		return x.ResolvedSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotResolution) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type isSnapshotResolution_What interface {
+	isSnapshotResolution_What()
+}
+
+type SnapshotResolution_Submitted struct {
+	Submitted *SnapshotReference `protobuf:"bytes,1,opt,name=submitted,proto3,oneof"` // 조치 근거의 참조 그대로
+}
+
+type SnapshotResolution_LegacyPlanSnapshotId struct {
+	LegacyPlanSnapshotId string `protobuf:"bytes,2,opt,name=legacy_plan_snapshot_id,json=legacyPlanSnapshotId,proto3,oneof"` // 계획 단위 호환 경로. source_node_id 가 없어 참조로 합성하지 않는다
+}
+
+func (*SnapshotResolution_Submitted) isSnapshotResolution_What() {}
+
+func (*SnapshotResolution_LegacyPlanSnapshotId) isSnapshotResolution_What() {}
+
 var File_pqcota_provisioning_v1_rollback_proto protoreflect.FileDescriptor
 
 const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
 	"\n" +
-	"%pqcota/provisioning/v1/rollback.proto\x12\x16pqcota.provisioning.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x01\n" +
+	"%pqcota/provisioning/v1/rollback.proto\x12\x16pqcota.provisioning.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!pqcota/provisioning/v1/plan.proto\"\xa3\x01\n" +
 	"\vCryptoState\x12\x18\n" +
 	"\amodules\x18\x01 \x03(\tR\amodules\x12#\n" +
 	"\rconfig_digest\x18\x02 \x01(\tR\fconfigDigest\x12%\n" +
 	"\x0eprovider_chain\x18\x03 \x03(\tR\rproviderChain\x12.\n" +
-	"\x13config_snapshot_ref\x18\x04 \x01(\tR\x11configSnapshotRef\"\x8a\x03\n" +
+	"\x13config_snapshot_ref\x18\x04 \x01(\tR\x11configSnapshotRef\"\xe9\x03\n" +
 	"\x12ProvisioningRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\x12\x19\n" +
@@ -299,7 +409,14 @@ const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
 	"\x06status\x18\b \x01(\x0e2*.pqcota.provisioning.v1.ProvisioningStatusR\x06status\x12\x12\n" +
 	"\x04note\x18\t \x01(\tR\x04note\x12*\n" +
 	"\x02at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\x02at*\xe4\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12]\n" +
+	"\x14snapshot_resolutions\x18\v \x03(\v2*.pqcota.provisioning.v1.SnapshotResolutionR\x13snapshotResolutions\"\xea\x01\n" +
+	"\x12SnapshotResolution\x12I\n" +
+	"\tsubmitted\x18\x01 \x01(\v2).pqcota.provisioning.v1.SnapshotReferenceH\x00R\tsubmitted\x127\n" +
+	"\x17legacy_plan_snapshot_id\x18\x02 \x01(\tH\x00R\x14legacyPlanSnapshotId\x120\n" +
+	"\x14resolved_snapshot_id\x18\x03 \x01(\tR\x12resolvedSnapshotId\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reasonB\x06\n" +
+	"\x04what*\xe4\x01\n" +
 	"\x12ProvisioningStatus\x12#\n" +
 	"\x1fPROVISIONING_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aPROVISIONING_STATUS_STAGED\x10\x01\x12!\n" +
@@ -321,23 +438,27 @@ func file_pqcota_provisioning_v1_rollback_proto_rawDescGZIP() []byte {
 }
 
 var file_pqcota_provisioning_v1_rollback_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_pqcota_provisioning_v1_rollback_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pqcota_provisioning_v1_rollback_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_pqcota_provisioning_v1_rollback_proto_goTypes = []any{
 	(ProvisioningStatus)(0),       // 0: pqcota.provisioning.v1.ProvisioningStatus
 	(*CryptoState)(nil),           // 1: pqcota.provisioning.v1.CryptoState
 	(*ProvisioningRecord)(nil),    // 2: pqcota.provisioning.v1.ProvisioningRecord
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(*SnapshotResolution)(nil),    // 3: pqcota.provisioning.v1.SnapshotResolution
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*SnapshotReference)(nil),     // 5: pqcota.provisioning.v1.SnapshotReference
 }
 var file_pqcota_provisioning_v1_rollback_proto_depIdxs = []int32{
 	1, // 0: pqcota.provisioning.v1.ProvisioningRecord.before:type_name -> pqcota.provisioning.v1.CryptoState
 	1, // 1: pqcota.provisioning.v1.ProvisioningRecord.after:type_name -> pqcota.provisioning.v1.CryptoState
 	0, // 2: pqcota.provisioning.v1.ProvisioningRecord.status:type_name -> pqcota.provisioning.v1.ProvisioningStatus
-	3, // 3: pqcota.provisioning.v1.ProvisioningRecord.at:type_name -> google.protobuf.Timestamp
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 3: pqcota.provisioning.v1.ProvisioningRecord.at:type_name -> google.protobuf.Timestamp
+	3, // 4: pqcota.provisioning.v1.ProvisioningRecord.snapshot_resolutions:type_name -> pqcota.provisioning.v1.SnapshotResolution
+	5, // 5: pqcota.provisioning.v1.SnapshotResolution.submitted:type_name -> pqcota.provisioning.v1.SnapshotReference
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_provisioning_v1_rollback_proto_init() }
@@ -345,13 +466,18 @@ func file_pqcota_provisioning_v1_rollback_proto_init() {
 	if File_pqcota_provisioning_v1_rollback_proto != nil {
 		return
 	}
+	file_pqcota_provisioning_v1_plan_proto_init()
+	file_pqcota_provisioning_v1_rollback_proto_msgTypes[2].OneofWrappers = []any{
+		(*SnapshotResolution_Submitted)(nil),
+		(*SnapshotResolution_LegacyPlanSnapshotId)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_provisioning_v1_rollback_proto_rawDesc), len(file_pqcota_provisioning_v1_rollback_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

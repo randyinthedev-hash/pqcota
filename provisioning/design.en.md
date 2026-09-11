@@ -129,6 +129,35 @@ The side that produces the plan (judgment) and the side that approves execution 
 
 `pqcota-approve` used to look at status not at all; it signed `DRAFT` plans. `Executable` blocked them downstream, so it was not exploitable, but approval was an act that never checked what it was about. And when the judging side put an unverifiable label into the approval slot, the plan had the shape of `FINALIZED` with an approval entry and **looked as though it satisfied the structural gate.** That shape is now refused as corrupt.
 
+### 3.2 Which snapshot state did an action come from — references and the resolution order
+
+What `TraceabilityWarnings` used to report as "the plan does not say which snapshot it came from" can now be answered **per action**. A plan spans nodes, so one plan-level field cannot point at them all, and the side producing the plan cannot reproduce a history snapshot id (`ingest-<time>:<node>`). So the reference is **per piece of evidence** and may be a **content fingerprint**.
+
+```
+RemediationAction.evidence_sources[] = { finding_id, snapshot: SnapshotReference }
+SnapshotReference = { source_node_id, snapshot_id | content: { format_version, digest, ruleset_version } }
+```
+
+**Why the plural unit is "evidence", not "snapshot".** When several source nodes saw the same asset, listing snapshots alone leaves a single `finding_id` that cannot say which finding in the second snapshot is the basis. One evidence entry pairs a finding with its snapshot. The primary comes first, and the compatibility `finding_id` must equal `evidence_sources[0].finding_id`.
+
+**A node has two names.** `target_node_id` is the declared name used by whoever produced the plan; `source_node_id` is the name the history stored the snapshot under (the envelope's `target_node_id`). Where several observed names map onto one declared node, the two differ. The generator **does not require them to be equal** — that mapping was decided by the producer and cannot be verified here. For a real-id reference it only checks that the found snapshot's node equals `source_node_id`.
+
+**The content fingerprint is `pqcota-snapshot-content/v1`** (inventory design §7.3.1): a version of *which fields in which order*, not of the hash algorithm, and the reference carries the **snapshot's** ruleset version (`pqcota-enrich/…`, not the plan's). The history looks it up by `(org, source_node_id, ruleset_version, digest)`.
+
+**Resolution order** (`provisioning.ResolveReference` · `ResolveAction`). The history layer does not know reference formats — it exposes only the narrow `history.SnapshotLookup`; formats are interpreted here.
+
+1. **Check the shape.** A reference with no source node, no reference kind, an empty id, a content reference missing any of its three fields, a digest that is not 64 lowercase hex characters, or an unknown format version is malformed. **This runs without a history (`--dsn` absent)** — a malformed reference is wrong whether or not a history exists, and reporting it only when a DSN is present would surface a locally produced plan's defect at deploy time. It counts as incomplete: exit 3.
+2. **Prefer the action's evidence.** Each entry is resolved on its own. If there is none, the plan-level `derived_from_snapshot_id` is read as a **legacy branch** — never synthesized into a `SnapshotReference` (it has no source node and would fail step 1). If neither exists, `TraceabilityWarnings` says so.
+3. **A real id** is looked up with `ByID`, and the snapshot's node must equal `source_node_id`.
+4. **A content digest** is looked up with `ByContentHashV1(source_node_id, ruleset_version, digest)`.
+5. **The found snapshot must contain the finding.** A pair whose snapshot id, node and digest match but whose finding is absent is mispaired. Checked for real-id and content references alike.
+6. **Not found** counts as incomplete (exit 3, 0 only with `--allow-incomplete`) and the warning names the possible causes as values — another history, the source node's name, the ruleset version, the asset-scope policy (excluded count), the result set.
+7. **Found** is recorded in `ProvisioningRecord.snapshot_resolutions` as one entry pairing the submitted reference with the **real snapshot id**. Without `--dsn` nothing is looked up and no record is written — not looked up, not not-found, so not incomplete.
+
+**A reference points at a deduplicated snapshot state, not an observation event.** Observing the same state again does not create a new row.
+
+**These fields are part of `CanonicalPlan`, so every existing approval signature is invalid.** Leaving them uncovered would let a reference be swapped after signing, and "traceable" would not be a guarantee. An empty list still occupies a slot in the canonical form, so plans that had no evidence must also be re-approved.
+
 **Traceability does not block.** A plan still runs with `derived_from_snapshot_id`, `ruleset_version`, `finalized_at` or an action's `finding_id` empty. But once it has run, the history holds no basis for it, so `TraceabilityWarnings` surfaces that. For the same reason `TargetAlgorithmWarnings` reports actions whose target does not resolve to a hybrid group and which therefore **turn nothing on when deployed**. One line separates blocking from warning: if filling it in by hand is a legitimate path it warns, and if the tool would otherwise write something untrue it blocks.
 
 It is not a derivation but the gate immediately before execution. Passing this function does not cause execution — it only settles the rule of "what counts as grounds for execution".

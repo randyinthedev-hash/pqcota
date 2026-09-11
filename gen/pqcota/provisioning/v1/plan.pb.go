@@ -296,14 +296,16 @@ func (x *ActivationHooks) GetRestart() string {
 }
 
 type RemediationAction struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TargetNodeId    string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`                                                           // 스코프 마스터 앵커(§1.4)
-	FindingId       string                 `protobuf:"bytes,3,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`                                                                      // 근거 Finding(수용 원칙 §2.4)
-	CryptoRuntime   v1.CryptoRuntime       `protobuf:"varint,4,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"`                     // openssl | jca 분기(docs/runtime-acceptance.md)
-	Kind            RemediationKind        `protobuf:"varint,5,opt,name=kind,proto3,enum=pqcota.provisioning.v1.RemediationKind" json:"kind,omitempty"`                                                    // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
-	AutomationLevel DeployAutomationLevel  `protobuf:"varint,6,opt,name=automation_level,json=automationLevel,proto3,enum=pqcota.provisioning.v1.DeployAutomationLevel" json:"automation_level,omitempty"` // L1/L2/L3 자산별(§4.3)
-	TargetAlgorithm string                 `protobuf:"bytes,7,opt,name=target_algorithm,json=targetAlgorithm,proto3" json:"target_algorithm,omitempty"`                                                    // 목표 표준. posture.Remediate 산출. 예 "ML-KEM (FIPS 203)"
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TargetNodeId string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"` // 스코프 마스터 앵커(§1.4)
+	// 근거 Finding(수용 원칙 §2.4). **호환용 주 근거**다 — 새 소비자는 evidence_sources 를 읽고, 이 값은
+	// evidence_sources[0].finding_id 와 같아야 한다(생성기가 검사한다).
+	FindingId       string                `protobuf:"bytes,3,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
+	CryptoRuntime   v1.CryptoRuntime      `protobuf:"varint,4,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"`                     // openssl | jca 분기(docs/runtime-acceptance.md)
+	Kind            RemediationKind       `protobuf:"varint,5,opt,name=kind,proto3,enum=pqcota.provisioning.v1.RemediationKind" json:"kind,omitempty"`                                                    // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
+	AutomationLevel DeployAutomationLevel `protobuf:"varint,6,opt,name=automation_level,json=automationLevel,proto3,enum=pqcota.provisioning.v1.DeployAutomationLevel" json:"automation_level,omitempty"` // L1/L2/L3 자산별(§4.3)
+	TargetAlgorithm string                `protobuf:"bytes,7,opt,name=target_algorithm,json=targetAlgorithm,proto3" json:"target_algorithm,omitempty"`                                                    // 목표 표준. posture.Remediate 산출. 예 "ML-KEM (FIPS 203)"
 	// 넣을 provider의 이름. **이 값이 모듈 파일명이 된다** — OpenSSL이면 "<이름>.so", JCA면
 	// "<이름>.jar"로 타깃에 놓인다. 그래서 OpenSSL은 아무 이름이나 쓸 수 있다(경로만 정하면 되므로).
 	// JCA는 java.security에 등록 클래스를 적어야 하는데, 이름에서 클래스를 유도할 수 있는 것은
@@ -321,9 +323,14 @@ type RemediationAction struct {
 	// OpenSSL 조치에는 쓰이지 않는다.
 	ProviderClass string `protobuf:"bytes,12,opt,name=provider_class,json=providerClass,proto3" json:"provider_class,omitempty"`
 	// 활성화·재시작 훅(L3). 비어 있으면 그 단계를 만들지 않는다 — 추측하지 않는다(§2.5).
-	Activation    *ActivationHooks `protobuf:"bytes,13,opt,name=activation,proto3" json:"activation,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Activation *ActivationHooks `protobuf:"bytes,13,opt,name=activation,proto3" json:"activation,omitempty"`
+	// 이 조치의 근거들 — 어느 finding 이, 어느 스냅샷 상태에서. 대개 하나. 같은 자산을 원천 노드
+	// 여럿이 봤으면 여럿이고, 주 근거가 앞이다. 복수 단위를 「스냅샷」이 아니라 「근거」로 둔 것은,
+	// 스냅샷만 여럿 두면 finding_id 가 하나라 둘째 스냅샷의 어느 finding 이 근거인지 말할 수 없기
+	// 때문이다. 비어 있으면 생성기가 계획 단위 derived_from_snapshot_id 를 호환 경로로 읽는다.
+	EvidenceSources []*ActionEvidenceSource `protobuf:"bytes,14,rep,name=evidence_sources,json=evidenceSources,proto3" json:"evidence_sources,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *RemediationAction) Reset() {
@@ -447,6 +454,225 @@ func (x *RemediationAction) GetActivation() *ActivationHooks {
 	return nil
 }
 
+func (x *RemediationAction) GetEvidenceSources() []*ActionEvidenceSource {
+	if x != nil {
+		return x.EvidenceSources
+	}
+	return nil
+}
+
+// ActionEvidenceSource — 조치의 근거 하나.
+type ActionEvidenceSource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FindingId     string                 `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"` // 그 스냅샷 안의 finding. 생성기는 찾은 스냅샷에 이 id 가 실제로 있는지 본다
+	Snapshot      *SnapshotReference     `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActionEvidenceSource) Reset() {
+	*x = ActionEvidenceSource{}
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActionEvidenceSource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActionEvidenceSource) ProtoMessage() {}
+
+func (x *ActionEvidenceSource) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActionEvidenceSource.ProtoReflect.Descriptor instead.
+func (*ActionEvidenceSource) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ActionEvidenceSource) GetFindingId() string {
+	if x != nil {
+		return x.FindingId
+	}
+	return ""
+}
+
+func (x *ActionEvidenceSource) GetSnapshot() *SnapshotReference {
+	if x != nil {
+		return x.Snapshot
+	}
+	return nil
+}
+
+// SnapshotReference — 어느 스냅샷 상태인가. 이력이 준 실제 id 이거나, 만드는 쪽이 같은 규칙으로 계산한
+// 내용 지문이다. 「관측 사건」이 아니라 「중복 억제된 상태」를 가리킨다 — 같은 상태를 다시 관측하면
+// 이력은 새 행을 만들지 않는다.
+type SnapshotReference struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 이력이 그 스냅샷을 저장한 노드 이름 — 봉투의 target_node_id. 조치의 target_node_id(선언 이름)와
+	// 다를 수 있다: 여러 관측 이름이 선언 노드 하나에 걸리는 구성에서 그렇다. 생성기는 이 둘이 같아야
+	// 한다는 조건을 두지 않는다 — 그 대응은 계획을 만든 쪽(선언)이 정한 것이라 여기서 검증하지 못한다.
+	SourceNodeId string `protobuf:"bytes,1,opt,name=source_node_id,json=sourceNodeId,proto3" json:"source_node_id,omitempty"`
+	// Types that are valid to be assigned to Reference:
+	//
+	//	*SnapshotReference_SnapshotId
+	//	*SnapshotReference_Content
+	Reference     isSnapshotReference_Reference `protobuf_oneof:"reference"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotReference) Reset() {
+	*x = SnapshotReference{}
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotReference) ProtoMessage() {}
+
+func (x *SnapshotReference) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotReference.ProtoReflect.Descriptor instead.
+func (*SnapshotReference) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SnapshotReference) GetSourceNodeId() string {
+	if x != nil {
+		return x.SourceNodeId
+	}
+	return ""
+}
+
+func (x *SnapshotReference) GetReference() isSnapshotReference_Reference {
+	if x != nil {
+		return x.Reference
+	}
+	return nil
+}
+
+func (x *SnapshotReference) GetSnapshotId() string {
+	if x != nil {
+		if x, ok := x.Reference.(*SnapshotReference_SnapshotId); ok {
+			return x.SnapshotId
+		}
+	}
+	return ""
+}
+
+func (x *SnapshotReference) GetContent() *SnapshotContentReference {
+	if x != nil {
+		if x, ok := x.Reference.(*SnapshotReference_Content); ok {
+			return x.Content
+		}
+	}
+	return nil
+}
+
+type isSnapshotReference_Reference interface {
+	isSnapshotReference_Reference()
+}
+
+type SnapshotReference_SnapshotId struct {
+	SnapshotId string `protobuf:"bytes,2,opt,name=snapshot_id,json=snapshotId,proto3,oneof"` // 이력이 준 실제 id
+}
+
+type SnapshotReference_Content struct {
+	Content *SnapshotContentReference `protobuf:"bytes,3,opt,name=content,proto3,oneof"` // 내용 지문
+}
+
+func (*SnapshotReference_SnapshotId) isSnapshotReference_Reference() {}
+
+func (*SnapshotReference_Content) isSnapshotReference_Reference() {}
+
+// SnapshotContentReference — 내용 지문. 해시 알고리즘이 아니라 **어떤 필드를 어떤 순서로** 해시했는지
+// (format_version)와 그 스냅샷의 규칙 판을 함께 든다. 지문 안에 규칙 판이 들어 있어 조건이 겹치지만,
+// 참조가 규칙 판을 밝히면 못 찾았을 때 「규칙 판이 다르다」를 추측이 아니라 값으로 말할 수 있다.
+type SnapshotContentReference struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	FormatVersion  string                 `protobuf:"bytes,1,opt,name=format_version,json=formatVersion,proto3" json:"format_version,omitempty"`    // 예: "pqcota-snapshot-content/v1". 모르는 값이면 잘못된 참조다
+	Digest         string                 `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`                                       // 소문자 16진수 64자
+	RulesetVersion string                 `protobuf:"bytes,3,opt,name=ruleset_version,json=rulesetVersion,proto3" json:"ruleset_version,omitempty"` // **스냅샷의** 규칙 판(pqcota-enrich/…). 계획의 규칙 판이 아니다
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SnapshotContentReference) Reset() {
+	*x = SnapshotContentReference{}
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotContentReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotContentReference) ProtoMessage() {}
+
+func (x *SnapshotContentReference) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotContentReference.ProtoReflect.Descriptor instead.
+func (*SnapshotContentReference) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SnapshotContentReference) GetFormatVersion() string {
+	if x != nil {
+		return x.FormatVersion
+	}
+	return ""
+}
+
+func (x *SnapshotContentReference) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+func (x *SnapshotContentReference) GetRulesetVersion() string {
+	if x != nil {
+		return x.RulesetVersion
+	}
+	return ""
+}
+
 // 계획 봉투 — 판정을 끝낸 계획(IN_REVIEW)부터 실행 승인까지 끝난 계획(FINALIZED)까지 **같은
 // 메시지로 운반한다.** 이름은 FINALIZED만 담는 것처럼 읽히지만 그렇지 않다. 이름을 바꾸면
 // 소비자가 깨지므로 두고, 여기에 적는다.
@@ -456,22 +682,25 @@ func (x *RemediationAction) GetActivation() *ActivationHooks {
 // 그 상태를 서명한다. 프로비저닝의 실행 근거가 되는 것은 FINALIZED뿐이다(§3.7·§5).
 // 스키마=contracts SSOT(공개).
 type FinalizedPlan struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status                PlanStatus             `protobuf:"varint,2,opt,name=status,proto3,enum=pqcota.provisioning.v1.PlanStatus" json:"status,omitempty"`                        // IN_REVIEW=판정 끝·승인 전 / FINALIZED=승인 끝. FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
-	Scope                 string                 `protobuf:"bytes,3,opt,name=scope,proto3" json:"scope,omitempty"`                                                                  // 링/도메인 — 부분 확정 허용(§3.3③)
-	Actions               []*RemediationAction   `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`                                                              // 순서 의미 있음(§4.1 "어떤 순서로")
-	ApprovalSignatures    []string               `protobuf:"bytes,5,rep,name=approval_signatures,json=approvalSignatures,proto3" json:"approval_signatures,omitempty"`              // 실행 승인 서명(§3.3③). 판정한 쪽은 비운다 — 승인이 채운다. IN_REVIEW에 값이 있으면 손상
-	DerivedFromSnapshotId string                 `protobuf:"bytes,6,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"` // 어떤 리컨실리에이션 스냅샷에서(§1.2)
-	RulesetVersion        string                 `protobuf:"bytes,7,opt,name=ruleset_version,json=rulesetVersion,proto3" json:"ruleset_version,omitempty"`                          // 생성 규칙 버전(§1.2 재현)
-	FinalizedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=finalized_at,json=finalizedAt,proto3" json:"finalized_at,omitempty"`                                   // 첫 승인이 찍는다. 판정한 쪽은 비운다. IN_REVIEW에 값이 있으면 손상
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status             PlanStatus             `protobuf:"varint,2,opt,name=status,proto3,enum=pqcota.provisioning.v1.PlanStatus" json:"status,omitempty"`           // IN_REVIEW=판정 끝·승인 전 / FINALIZED=승인 끝. FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
+	Scope              string                 `protobuf:"bytes,3,opt,name=scope,proto3" json:"scope,omitempty"`                                                     // 링/도메인 — 부분 확정 허용(§3.3③)
+	Actions            []*RemediationAction   `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`                                                 // 순서 의미 있음(§4.1 "어떤 순서로")
+	ApprovalSignatures []string               `protobuf:"bytes,5,rep,name=approval_signatures,json=approvalSignatures,proto3" json:"approval_signatures,omitempty"` // 실행 승인 서명(§3.3③). 판정한 쪽은 비운다 — 승인이 채운다. IN_REVIEW에 값이 있으면 손상
+	// 어떤 스냅샷에서(§1.2). **이전 판 호환 경로.** 조치마다 근거를 두는 evidence_sources 가 우선이고, 조치에
+	// 근거가 하나도 없을 때만 생성기가 이 값을 읽는다(실제 id 로만, 원천 노드를 알 수 없어). 계획이
+	// 여러 노드에 걸치면 이 하나로는 가리킬 수 없어 비워 둔다.
+	DerivedFromSnapshotId string                 `protobuf:"bytes,6,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"`
+	RulesetVersion        string                 `protobuf:"bytes,7,opt,name=ruleset_version,json=rulesetVersion,proto3" json:"ruleset_version,omitempty"` // 생성 규칙 버전(§1.2 재현)
+	FinalizedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=finalized_at,json=finalizedAt,proto3" json:"finalized_at,omitempty"`          // 첫 승인이 찍는다. 판정한 쪽은 비운다. IN_REVIEW에 값이 있으면 손상
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
 
 func (x *FinalizedPlan) Reset() {
 	*x = FinalizedPlan{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +712,7 @@ func (x *FinalizedPlan) String() string {
 func (*FinalizedPlan) ProtoMessage() {}
 
 func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +725,7 @@ func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizedPlan.ProtoReflect.Descriptor instead.
 func (*FinalizedPlan) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *FinalizedPlan) GetId() string {
@@ -566,7 +795,7 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\n" +
 	"deactivate\x18\x03 \x01(\tR\n" +
 	"deactivate\x12\x18\n" +
-	"\arestart\x18\x04 \x01(\tR\arestart\"\xf5\x04\n" +
+	"\arestart\x18\x04 \x01(\tR\arestart\"\xce\x05\n" +
 	"\x11RemediationAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12$\n" +
 	"\x0etarget_node_id\x18\x02 \x01(\tR\ftargetNodeId\x12\x1d\n" +
@@ -584,7 +813,22 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\x0eprovider_class\x18\f \x01(\tR\rproviderClass\x12G\n" +
 	"\n" +
 	"activation\x18\r \x01(\v2'.pqcota.provisioning.v1.ActivationHooksR\n" +
-	"activation\"\x88\x03\n" +
+	"activation\x12W\n" +
+	"\x10evidence_sources\x18\x0e \x03(\v2,.pqcota.provisioning.v1.ActionEvidenceSourceR\x0fevidenceSources\"|\n" +
+	"\x14ActionEvidenceSource\x12\x1d\n" +
+	"\n" +
+	"finding_id\x18\x01 \x01(\tR\tfindingId\x12E\n" +
+	"\bsnapshot\x18\x02 \x01(\v2).pqcota.provisioning.v1.SnapshotReferenceR\bsnapshot\"\xb7\x01\n" +
+	"\x11SnapshotReference\x12$\n" +
+	"\x0esource_node_id\x18\x01 \x01(\tR\fsourceNodeId\x12!\n" +
+	"\vsnapshot_id\x18\x02 \x01(\tH\x00R\n" +
+	"snapshotId\x12L\n" +
+	"\acontent\x18\x03 \x01(\v20.pqcota.provisioning.v1.SnapshotContentReferenceH\x00R\acontentB\v\n" +
+	"\treference\"\x82\x01\n" +
+	"\x18SnapshotContentReference\x12%\n" +
+	"\x0eformat_version\x18\x01 \x01(\tR\rformatVersion\x12\x16\n" +
+	"\x06digest\x18\x02 \x01(\tR\x06digest\x12'\n" +
+	"\x0fruleset_version\x18\x03 \x01(\tR\x0erulesetVersion\"\x88\x03\n" +
 	"\rFinalizedPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12:\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".pqcota.provisioning.v1.PlanStatusR\x06status\x12\x14\n" +
@@ -629,30 +873,36 @@ func file_pqcota_provisioning_v1_plan_proto_rawDescGZIP() []byte {
 }
 
 var file_pqcota_provisioning_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_pqcota_provisioning_v1_plan_proto_goTypes = []any{
-	(DeployAutomationLevel)(0),    // 0: pqcota.provisioning.v1.DeployAutomationLevel
-	(PlanStatus)(0),               // 1: pqcota.provisioning.v1.PlanStatus
-	(RemediationKind)(0),          // 2: pqcota.provisioning.v1.RemediationKind
-	(*ActivationHooks)(nil),       // 3: pqcota.provisioning.v1.ActivationHooks
-	(*RemediationAction)(nil),     // 4: pqcota.provisioning.v1.RemediationAction
-	(*FinalizedPlan)(nil),         // 5: pqcota.provisioning.v1.FinalizedPlan
-	(v1.CryptoRuntime)(0),         // 6: pqcota.common.v1.CryptoRuntime
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(DeployAutomationLevel)(0),       // 0: pqcota.provisioning.v1.DeployAutomationLevel
+	(PlanStatus)(0),                  // 1: pqcota.provisioning.v1.PlanStatus
+	(RemediationKind)(0),             // 2: pqcota.provisioning.v1.RemediationKind
+	(*ActivationHooks)(nil),          // 3: pqcota.provisioning.v1.ActivationHooks
+	(*RemediationAction)(nil),        // 4: pqcota.provisioning.v1.RemediationAction
+	(*ActionEvidenceSource)(nil),     // 5: pqcota.provisioning.v1.ActionEvidenceSource
+	(*SnapshotReference)(nil),        // 6: pqcota.provisioning.v1.SnapshotReference
+	(*SnapshotContentReference)(nil), // 7: pqcota.provisioning.v1.SnapshotContentReference
+	(*FinalizedPlan)(nil),            // 8: pqcota.provisioning.v1.FinalizedPlan
+	(v1.CryptoRuntime)(0),            // 9: pqcota.common.v1.CryptoRuntime
+	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
 }
 var file_pqcota_provisioning_v1_plan_proto_depIdxs = []int32{
-	6, // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
-	2, // 1: pqcota.provisioning.v1.RemediationAction.kind:type_name -> pqcota.provisioning.v1.RemediationKind
-	0, // 2: pqcota.provisioning.v1.RemediationAction.automation_level:type_name -> pqcota.provisioning.v1.DeployAutomationLevel
-	3, // 3: pqcota.provisioning.v1.RemediationAction.activation:type_name -> pqcota.provisioning.v1.ActivationHooks
-	1, // 4: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
-	4, // 5: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
-	7, // 6: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	9,  // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
+	2,  // 1: pqcota.provisioning.v1.RemediationAction.kind:type_name -> pqcota.provisioning.v1.RemediationKind
+	0,  // 2: pqcota.provisioning.v1.RemediationAction.automation_level:type_name -> pqcota.provisioning.v1.DeployAutomationLevel
+	3,  // 3: pqcota.provisioning.v1.RemediationAction.activation:type_name -> pqcota.provisioning.v1.ActivationHooks
+	5,  // 4: pqcota.provisioning.v1.RemediationAction.evidence_sources:type_name -> pqcota.provisioning.v1.ActionEvidenceSource
+	6,  // 5: pqcota.provisioning.v1.ActionEvidenceSource.snapshot:type_name -> pqcota.provisioning.v1.SnapshotReference
+	7,  // 6: pqcota.provisioning.v1.SnapshotReference.content:type_name -> pqcota.provisioning.v1.SnapshotContentReference
+	1,  // 7: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
+	4,  // 8: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
+	10, // 9: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_provisioning_v1_plan_proto_init() }
@@ -660,13 +910,17 @@ func file_pqcota_provisioning_v1_plan_proto_init() {
 	if File_pqcota_provisioning_v1_plan_proto != nil {
 		return
 	}
+	file_pqcota_provisioning_v1_plan_proto_msgTypes[3].OneofWrappers = []any{
+		(*SnapshotReference_SnapshotId)(nil),
+		(*SnapshotReference_Content)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_provisioning_v1_plan_proto_rawDesc), len(file_pqcota_provisioning_v1_plan_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

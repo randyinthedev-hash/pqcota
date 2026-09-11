@@ -195,16 +195,19 @@ approve() {
     "pqcota-approve --approver reviewer-1 $1 > $1.signed && mv $1.signed $1"
 }
 
-# 계획을 **무엇에서 뽑았는지** 함께 적는다(§1.2 재현). 이 둘이 비면 pqcota-provision이 경고한다:
-# 실행은 되지만 이력에 근거가 남지 않아, 나중에 이 조치가 어느 관측에서 나왔는지 되짚을 수 없다.
+# 계획을 **무엇에서 뽑았는지** 조치마다 적는다(§1.2 재현) — 어느 finding 이, 어느 스냅샷 상태에서
+# (evidenceSources). 비면 pqcota-provision이 경고한다: 실행은 되지만 이력에 근거가 남지 않아, 나중에
+# 이 조치가 어느 스냅샷 상태에서 나왔는지 되짚을 수 없다. --dsn 을 주면 생성기가 그 참조를 이력에서
+# 실제로 찾아 레코드에 남긴다 — 아래 pqcota-records 출력에 그것이 보인다.
 # 확정 시각은 적지 않는다 — 판정을 끝낸 계획은 IN_REVIEW로 넘기고, 승인(pqcota-approve)이
 # FINALIZED로 올리며 그때 시각을 찍는다.
 SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
 RULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
 {"id":"plan-demo","status":"PLAN_STATUS_IN_REVIEW","scope":"ring-0",
- "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET",
+ "rulesetVersion":"$RULESET",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
+   "evidenceSources":[{"findingId":"$FID","snapshot":{"sourceNodeId":"$PNODE","snapshotId":"$SNAP"}}],
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
@@ -246,8 +249,9 @@ docker exec "$PNODE" sh -lc '/usr/local/bin/ssl-apps.sh status' | sed 's/^/   be
 PID_BEFORE=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-l3.json" <<JSON
 {"id":"plan-demo-l3","status":"PLAN_STATUS_IN_REVIEW","scope":"ring-0",
- "derivedFromSnapshotId":"$SNAP","rulesetVersion":"$RULESET",
+ "rulesetVersion":"$RULESET",
  "actions":[{"id":"a1","targetNodeId":"$PNODE","findingId":"$FID",
+   "evidenceSources":[{"findingId":"$FID","snapshot":{"sourceNodeId":"$PNODE","snapshotId":"$SNAP"}}],
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO",
    "kind":"REMEDIATION_KIND_CONFIG_ONLY","targetAlgorithm":"ML-KEM (FIPS 203)",
@@ -318,8 +322,9 @@ RSNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by
 RRULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
 {"id":"plan-demo-real","status":"PLAN_STATUS_IN_REVIEW","scope":"ring-0",
- "derivedFromSnapshotId":"$RSNAP","rulesetVersion":"$RRULESET",
+ "rulesetVersion":"$RRULESET",
  "actions":[{"id":"a1","targetNodeId":"$RNODE","findingId":"$RFID",
+   "evidenceSources":[{"findingId":"$RFID","snapshot":{"sourceNodeId":"$RNODE","snapshotId":"$RSNAP"}}],
    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL",
    "kind":"REMEDIATION_KIND_PROVIDER_INJECT","targetAlgorithm":"ML-KEM (FIPS 203)",
    "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module",
