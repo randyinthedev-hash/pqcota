@@ -82,6 +82,19 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.5 — The checker passes its own rule (2026-09-11)
+
+**Goal** — actually establish what `v0.7.4` promised: that a placeholder cannot come back.
+
+### Fixed
+
+- **The gate was doing the very duplication it forbids** (v0.7.4). The authoritative constant's value
+  was copied into the checker, and the checker's own file was therefore excluded from the scan.
+  **What came out wrong**: a copied value does not follow the constant. Once the ruleset version moves,
+  **copies of the new value go uncaught.** It worked today and guaranteed nothing tomorrow. The
+  constant is now read from `normalize` and the name is matched by segment, so the checker passes its
+  own rule with no exemption. A test holds that in place — copy the value again and it breaks.
+
 ## v0.7.4 — The delegated intake endpoint stamps the ruleset too (2026-09-11)
 
 **Goal** — make it impossible for a placeholder to come back.

@@ -7,6 +7,8 @@ import (
 	"go/token"
 	"strconv"
 	"strings"
+
+	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 )
 
 // 규칙 판 자리표시자 검사 — **상수는 있는데 제품이 자기 문자열을 쓰는** 자리를 막는다.
@@ -32,23 +34,21 @@ import (
 // 변수에 담아 돌려 넘기는 것도 못 본다. 값이 상수에서 왔는지 끝까지 좇으려면 타입 해석이
 // 필요하고, 그 해석은 이 검사기가 감당하는 범위 밖이다. 못 보는 것을 안 보는 척하지 않는다.
 
-// rulesetExempt — 리터럴이 정의 그 자체인 파일. 권위 있는 상수를 선언하는 자리와, 무엇을
-// 막을지 적어 둔 이 검사기 자신이다. 검사기를 빼지 않으면 **자기 규칙에 자기가 걸린다** —
-// 실제로 그랬다(v0.7.4 CI). 추적 전 파일은 `git ls-files` 에 없어 손에서는 통과했다.
-var rulesetExempt = map[string]bool{
-	"pkg/discovery/normalize/pipeline.go": true,
-	"tools/checkgates/ruleset.go":         true,
-}
-
-// rulesetConst — 그 상수의 값. 다른 데서 이 문자열을 베끼면 상수를 고쳐도 따라오지 않는다.
-const rulesetConst = "pqcota-enrich/v1"
+// rulesetHome — 리터럴이 정의 그 자체인 파일. 권위 있는 상수를 선언하는 자리 하나다.
+//
+// **이 검사기 자신은 예외로 두지 않는다.** 처음에는 상수의 값을 여기에 베껴 적어 두고 그
+// 때문에 이 파일을 빼야 했는데, 그것이 **막으려는 바로 그 복제**였다. 값을 베끼면 상수를
+// 고쳐도 따라오지 않으므로, 판이 올라간 다음부터는 새 값을 베낀 자리를 못 잡는다. 그래서
+// 상수는 `normalize` 에서 직접 읽고, 이름은 마디로만 본다(아래 [looksLikeRuleset]).
+// 자기 규칙을 자기가 지나는 검사기는 그 규칙이 무엇을 막는지 보장하지 못한다.
+const rulesetHome = "pkg/discovery/normalize/pipeline.go"
 
 // rulesetPlaceholders — 규칙 판 식별자처럼 생긴 리터럴이 있는 자리.
 func rulesetPlaceholders(files []string) ([]string, error) {
 	fset := token.NewFileSet()
 	var out []string
 	for _, f := range files {
-		if rulesetExempt[f] || strings.HasSuffix(f, "_test.go") {
+		if f == rulesetHome || strings.HasSuffix(f, "_test.go") {
 			continue
 		}
 		af, err := parser.ParseFile(fset, f, nil, 0)
@@ -72,10 +72,19 @@ func rulesetPlaceholders(files []string) ([]string, error) {
 	return out, nil
 }
 
+// looksLikeRuleset — 규칙 판 식별자처럼 생긴 값인가.
+//
+// 권위 있는 값과 같거나, `ruleset` 뒤에 마디 기호가 붙은 것이다. 이름과 기호를 **따로**
+// 두는 것은 이 함수가 자기 리터럴에 걸리지 않게 하기 위해서다. `"ruleset"` 만으로는 마디가
+// 없어 걸리지 않고, 기호 목록에는 이름이 없다.
 func looksLikeRuleset(v string) bool {
-	if v == rulesetConst {
+	if v == normalize.RulesetVersion {
 		return true
 	}
+	const name = "ruleset"
 	l := strings.ToLower(v)
-	return strings.HasPrefix(l, "ruleset-") || strings.HasPrefix(l, "ruleset_") || strings.HasPrefix(l, "ruleset/")
+	if !strings.HasPrefix(l, name) || len(l) == len(name) {
+		return false
+	}
+	return strings.ContainsRune("-_/", rune(l[len(name)]))
 }
