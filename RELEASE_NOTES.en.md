@@ -82,6 +82,27 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.7.4 — The delegated intake endpoint stamps the ruleset too (2026-09-11)
+
+**Goal** — make it impossible for a placeholder to come back.
+
+### Fixed
+
+- **`pqcota-cbom-ingest` was still stamping `ruleset-demo`** (v0.1.0–v0.7.3). v0.7.3 said the ingest
+  placeholder was fixed, but **only one of the two ingest endpoints actually moved.** This command is
+  the documented endpoint for receiving external CBOMs (delegated intake), not a demo path, so history
+  built from CI-produced CycloneDX still could not answer "did the rules change, or did something?"
+  after v0.7.3.
+
+### Built
+
+- **`check-gates` blocks ruleset placeholders.** It finds string literals that look like a ruleset
+  identifier in tracked Go files; the file declaring the constant and the tests are exempt. It lives in
+  the same gate as the wiring check because it is the same failure: the rule is written down, the
+  product uses its own value instead, and **nothing fails while the guarantee quietly disappears.**
+  That is how two endpoints carried the same defect across two releases. The word `ruleset` inside a
+  format string is a label, not a value, so it is not flagged.
+
 ## v0.7.3 — This repo owns the enrichment ruleset version (2026-09-10)
 
 **Goal** — give the rules that produce derived values a version of their own.

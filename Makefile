@@ -144,6 +144,9 @@ check-collectors:
 # 게이트 배선 검사 — 규칙을 적어 두고 제품이 부르지 않으면 보장이 아니다. 실제로 pqcota-provision이
 # provisioning.Executable을 부르지 않는 동안 승인 서명이 빈 계획이 통과했다. 테스트는 규칙이 옳은지
 # 보지, 그 규칙이 쓰이는지 보지 않는다.
+#   같은 부류로 **규칙 판 자리표시자**도 막는다. normalize.RulesetVersion 하나가 파생값의 근거를
+#   말하기로 해 놓고 적재 명령이 "ruleset-demo"를 넘기면, 아무것도 실패하지 않은 채 이력 비교만
+#   조용히 무의미해진다 — 모든 스냅샷이 같은 자리표시자를 달기 때문이다.
 check-gates:
 	@go build -o build/checkgates ./tools/checkgates && ./build/checkgates
 

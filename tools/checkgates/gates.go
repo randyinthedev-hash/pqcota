@@ -68,8 +68,22 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	stale, err := rulesetPlaceholders(files)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	for _, n := range notes {
 		fmt.Fprintln(os.Stderr, "· "+n)
+	}
+	if len(stale) > 0 {
+		fmt.Println("✗ 규칙 판을 자기 문자열로 찍는다 — 이력 비교가 조용히 무의미해지는 자리다:")
+		for _, s := range stale {
+			fmt.Println("    " + s)
+		}
+		fmt.Println()
+		fmt.Println("gates check failed — fix the locations above and run `make check-gates` again.")
+		os.Exit(1)
 	}
 	if len(miss) > 0 {
 		fmt.Println("✗ 규칙은 있는데 제품 경로가 부르지 않는다 — 배선하거나, 왜 미루는지 `GATE: 보류`로 적을 것:")
@@ -80,7 +94,7 @@ func main() {
 		fmt.Println("gates check failed — fix the locations above and run `make check-gates` again.")
 		os.Exit(1)
 	}
-	fmt.Printf("✓ gates check passed (%d개 등록 · 보류 %d개)\n", len(notes)+countWired(files), len(notes))
+	fmt.Printf("✓ gates check passed (%d개 등록 · 보류 %d개 · 규칙 판 자리표시자 없음)\n", len(notes)+countWired(files), len(notes))
 }
 
 // goFiles — 추적 중인 Go 파일. **testdata는 뺀다.** 이 검사기 자신의 fixture가 들어 있어,

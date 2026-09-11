@@ -77,3 +77,44 @@ func TestMethodsAreNotRegistered(t *testing.T) {
 		t.Errorf("메서드를 등록했다: miss=%v notes=%v", miss, notes)
 	}
 }
+
+// 규칙 판을 자기 문자열로 찍으면 막는다. 아무것도 실패하지 않고 이력 비교만 조용히
+// 무의미해지는 자리라, 사람 눈으로는 릴리스 두 번을 지나도 안 보였다.
+func TestRulesetPlaceholderIsBlocked(t *testing.T) {
+	hits, err := rulesetPlaceholders([]string{"testdata/ruleset/main.go"})
+	if err != nil {
+		t.Fatalf("rulesetPlaceholders: %v", err)
+	}
+	if len(hits) != 2 {
+		t.Fatalf("자리표시자와 베낀 상수 둘을 잡아야 한다: %v", hits)
+	}
+	for _, want := range []string{"ruleset-demo", "pqcota-enrich/v1"} {
+		found := false
+		for _, h := range hits {
+			if strings.Contains(h, want) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%q를 놓쳤다: %v", want, hits)
+		}
+	}
+	for _, h := range hits {
+		if !strings.Contains(h, "normalize.RulesetVersion") {
+			t.Errorf("무엇을 써야 하는지 말하지 않는다: %s", h)
+		}
+	}
+}
+
+// 형식 문자열의 `ruleset`은 이름표다. 잡으면 거짓 실패가 나고, 그런 게이트는 곧 꺼진다.
+func TestRulesetLabelIsNotAValue(t *testing.T) {
+	hits, err := rulesetPlaceholders([]string{"testdata/ruleset/main.go"})
+	if err != nil {
+		t.Fatalf("rulesetPlaceholders: %v", err)
+	}
+	for _, h := range hits {
+		if strings.Contains(h, "snapshot %s") {
+			t.Errorf("이름표를 값으로 셌다: %s", h)
+		}
+	}
+}
