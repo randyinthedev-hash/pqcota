@@ -81,3 +81,94 @@ func sortedJoin(ss []string) string {
 	sort.Strings(out)
 	return strings.Join(out, ",")
 }
+
+// SnapshotContentFormatV1 — 참조용 지문의 **규격 판**. 해시 알고리즘이 아니라 어떤 필드를 어떤
+// 순서로 해시했는지를 가리킨다. 다운스트림이 같은 스냅샷을 같은 규칙으로 만들어 같은 값을 내고,
+// 이력이 그 값으로 스냅샷을 찾는다.
+//
+// **v1 은 닫혔다.** 필드를 더하거나 순서를 바꾸면 v2 를 새로 만든다. v1 을 고쳐 쓰면 이미 저장된
+// v1 참조가 같은 규칙으로 다시 계산되지 않는다. TestContentHashV1IsFrozen 이 고정 입력의 값으로
+// 그것을 잰다.
+const SnapshotContentFormatV1 = "pqcota-snapshot-content/v1"
+
+// ContentHashV1 — 참조용 지문. [ContentHash](중복 억제)와 **용도가 다르다.**
+//
+// 중복 억제는 「같은 상태를 다시 관측했는가」를 묻는다 — 그래서 규칙 판을 뺀다. 참조는 「어느
+// 스냅샷 상태에서 나온 조치인가」를 묻는다 — 규칙 판이 다르면 다른 상태다. 두 물음을 한 함수에
+// 섞지 않는다. 다만 v1 이 생긴 뒤로 이력의 중복 억제도 이 값으로 접는다(pg.go·history.go) — 옛
+// 지문으로 접으면 v1 열이 빈 옛 행이 재사용되어 v1 참조가 영원히 찾히지 않기 때문이다.
+//
+// ContentHash 와 다른 점:
+//   - RulesetVersion 을 넣는다.
+//   - ExcludedByScope 를 넣는다. 정책의 **결과인 제외 수**다. 어떤 정책인지까지 증명하지는 않는다.
+//   - 엣지를 안정 필드 전부(EdgeIdentity 와 같은 필드)로 정렬하고, app_key·app_key_kind 를 넣는다.
+//   - Completeness.layers_covered 를 넣는다. 무엇을 봤는지가 빠지면 「못 봤다」와 「안 봤다」가
+//     같은 지문이 된다.
+//   - 필드마다 NUL 로 끊는다. 구분자가 값에 섞이지 않게.
+func ContentHashV1(s *Snapshot) string {
+	h := sha256.New()
+	w := func(parts ...string) {
+		for _, p := range parts {
+			h.Write([]byte(p))
+			h.Write([]byte{0})
+		}
+		h.Write([]byte{'\n'})
+	}
+	w("V", SnapshotContentFormatV1)
+	w("R", s.RulesetVersion)
+	w("X", fmt.Sprint(s.ExcludedByScope))
+
+	fs := append([]*discoveryv1.Finding(nil), s.Findings...)
+	sort.Slice(fs, func(i, j int) bool { return fs[i].GetId() < fs[j].GetId() })
+	for _, f := range fs {
+		w("F", f.GetId(), f.GetCryptoRuntime().String(), f.GetUsageContext().String(),
+			f.GetDetectionMethod().String(), f.GetEvidenceStrength().String(), f.GetAlgorithm(),
+			f.GetPqcReadiness(), f.GetFipsValidation(), f.GetRemediationClass(), sortedJoin(f.GetAppKeys()))
+		if o := f.GetOpenssl(); o != nil {
+			w("O", o.GetLib(), o.GetFork(), o.GetVersion(), o.GetBindingMode().String())
+		}
+		if j := f.GetJca(); j != nil {
+			w("J", j.GetJdkVendor(), j.GetJdkVersion(), strings.Join(j.GetProviderSet(), ","), j.GetRegistrationMode().String())
+		}
+		if c := f.GetCng(); c != nil {
+			var algs []string
+			for _, a := range c.GetAlgorithms() {
+				algs = append(algs, a.GetName()+":"+a.GetClass()+":"+strings.Join(a.GetProviders(), "|"))
+			}
+			w("N", strings.Join(c.GetProviderSet(), ","), strings.Join(algs, ","))
+		}
+	}
+
+	es := append([]*discoveryv1.ObservedEdge(nil), s.Edges...)
+	sort.Slice(es, func(i, j int) bool { return edgeIdentityV1(es[i]) < edgeIdentityV1(es[j]) })
+	for _, e := range es {
+		w("E", e.GetSrcNodeId(), e.GetDstNodeId(), e.GetDstAddr(), fmt.Sprint(e.GetPort()),
+			e.GetProtocol().String(), e.GetRole().String(), e.GetDetectionMethod().String(),
+			e.GetNegotiatedGroup(), e.GetCipher(), e.GetAppKey(), e.GetAppKeyKind())
+	}
+
+	if c := s.Completeness; c != nil {
+		var cov, miss []string
+		for _, l := range c.GetLayersCovered() {
+			cov = append(cov, l.String())
+		}
+		for _, l := range c.GetLayersMissing() {
+			miss = append(miss, l.String())
+		}
+		sort.Strings(cov)
+		sort.Strings(miss)
+		w("C", strings.Join(cov, ","), strings.Join(miss, ","), c.GetNote())
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// edgeIdentityV1 — v1 이 엣지를 정렬하는 키. normalize.EdgeIdentity 와 같은 필드·같은 순서다.
+// 여기 따로 적는 것은 v1 을 normalize 의 변경에서 떼어 두기 위해서다 — 저쪽이 바뀌어도 v1 은
+// 닫혀 있어야 한다.
+func edgeIdentityV1(e *discoveryv1.ObservedEdge) string {
+	return strings.Join([]string{
+		e.GetSrcNodeId(), e.GetDstNodeId(), e.GetDstAddr(), fmt.Sprint(e.GetPort()),
+		e.GetProtocol().String(), e.GetRole().String(), e.GetDetectionMethod().String(),
+		e.GetNegotiatedGroup(), e.GetCipher(), e.GetAppKey(), e.GetAppKeyKind(),
+	}, "|")
+}

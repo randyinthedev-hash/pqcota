@@ -32,6 +32,7 @@
 |---|---|---|---|
 | [TK-PIPELINE-1](../pkg/discovery/normalize/pipeline_test.go) | `TestDeriveFindings` · `_MultiApp` · `_JCA`: openssl·JCA collector 산출물 | 런타임 축(`openssl.fork` · `binding_mode` / `provider_set`)이 채워지고, `pqcota:app_keys` CSV가 **정렬된 복수**로 옮겨진다. 강도·스냅샷·ruleset이 부착된다 | 표준 CycloneDX 본문에서 파생 뷰를 만드는 유일한 자리다. 여기서 축을 잃으면 조치 계획이 무엇을 바꿔야 하는지 모른다 |
 | [TK-PIPELINE-2](../pkg/discovery/normalize/pipeline_test.go) | `TestNormalizePipeline`: 결과 여럿 → `Normalize` 종단, 같은 입력으로 두 번 | 스냅샷에 finding·엣지·완전성이 모이고, **같은 입력 + 같은 ruleset이면 같은 finding**이 나온다 | 파생은 재계산 가능해야 한다(§1.2). 흔들리면 이력의 "변화"가 실제 변화인지 계산 차이인지 구분할 수 없다 |
+| **[TK-PIPELINE-3](../pkg/discovery/normalize/merge_test.go)** | `TestNormalizeIsOrderInvariant` · `TestConflictingFindingKeepsTheLatestAndSaysSo` · `TestEdgeIdentityIsEveryStableField` · `TestCompletenessMergeKeepsEveryNote`: 결과 셋을 열 번 섞기 / 같은 finding 을 두 수집기가 다르게 봄(이름순과 시각순이 반대) / 암호군만 다른 두 엣지와 같은 엣지 재관측 / 두 수집기의 note | 순서를 섞어도 같은 스냅샷 / **수집 시각이 최근인 것**이 남고 note 에 「다르게 왔다」가 적힌다(같으면 안 적힌다) / 암호군이 다르면 둘 다 남고 같은 엣지는 횟수가 합쳐진다 / note 가 하나도 안 사라지고 정렬된다 | 노드별 병합이 「먼저 온 것이 이긴다」면 결과 파일의 순서가 스냅샷을 바꾼다. 그러면 다른 자리(다운스트림)가 같은 결과 집합으로 다른 지문을 내 참조가 찾히지 않는다. 같은 입력에서 v1 과 다른 스냅샷이 나오므로 규칙 판을 `pqcota-enrich/v2` 로 올렸다 |
 
 ### TK-RAW. 원본 보존: 재정규화의 전제
 

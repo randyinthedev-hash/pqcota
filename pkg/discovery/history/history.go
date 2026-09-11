@@ -64,6 +64,19 @@ type Store interface {
 	ObservationStats(nodeID string) (map[string]ObsStat, error)
 }
 
+// SnapshotLookup — 참조로 스냅샷을 찾는 좁은 조회. **Store 와 별개다.** Store 를 넓히면 그것을
+// 구현한 외부 코드가 깨진다. 이 리포는 부가 기능을 별도 인터페이스로 갈라 왔다.
+//
+// 참조의 **형식**은 모른다 — 그것은 프로비저닝 계약(SnapshotReference)의 일이고, 이력 계층이
+// 하류 계약을 알면 안 된다. 여기는 키로만 찾는다. 두 저장소(Postgres·메모리)가 구현한다.
+type SnapshotLookup interface {
+	ByID(id string) (*Snapshot, error)
+	// ByContentHashV1 — (org, node, ruleset, digest). org 는 핸들이 든다. 없으면 (nil, nil).
+	// ruleset 이 지문 안에도 들어 있어 조건이 겹치지만, 참조가 규칙 판을 밝히면 못 찾았을 때
+	// 「규칙 판이 다르다」를 추측이 아니라 값으로 말할 수 있다.
+	ByContentHashV1(node, ruleset, digest string) (*Snapshot, error)
+}
+
 // MemStore — 인메모리 append-only 구현(테스트·단일 실행용). 영속화는 PgStore.
 //
 // **PgStore와 같은 규칙으로 조직에 묶인다.** 한 MemStore는 한 조직만 담는다 — 테스트가 격리 없는
@@ -73,7 +86,8 @@ type MemStore struct {
 	mu     sync.RWMutex
 	seq    int64 // PgStore의 BIGSERIAL에 대응 — 전역 단조증가
 	byNode map[string][]*Snapshot
-	hash   map[string]string              // 스냅샷 id → 내용 지문
+	hash   map[string]string              // 스냅샷 id → 내용 지문(중복 억제, 옛 규칙)
+	hashV1 map[string]string              // 스냅샷 id → 참조용 지문(v1). **접는 기준**
 	obs    map[string]map[string]*ObsStat // node → 스냅샷 id → 관측 요약
 	events []RetentionEvent               // 절단 기록(보존 정책 집행 흔적)
 	rej    memRejections                  // 거절 기록(받지 않은 사실)
@@ -101,6 +115,7 @@ func newMem(o org.ID) *MemStore {
 		org:    o,
 		byNode: make(map[string][]*Snapshot),
 		hash:   make(map[string]string),
+		hashV1: make(map[string]string),
 		obs:    make(map[string]map[string]*ObsStat),
 	}
 }
@@ -111,7 +126,9 @@ func (m *MemStore) Append(s *Snapshot) error {
 	now := time.Now().UTC()
 
 	// 실질 내용이 직전과 같으면 스냅샷을 새로 만들지 않는다 — 관측 사실만 기록.
-	if prev := m.latestLocked(s.NodeID); prev != nil && m.hash[prev.ID] == ContentHash(s) {
+	// **v1 지문으로 접는다.** 옛 지문(ContentHash)으로 접으면 v1 이 없는 옛 행이 재사용되어
+	// v1 참조가 영원히 찾히지 않는다. v1 이 빈 옛 행은 같은 행이 아니다 — 새 행을 만든다.
+	if prev := m.latestLocked(s.NodeID); prev != nil && m.hashV1[prev.ID] != "" && m.hashV1[prev.ID] == ContentHashV1(s) {
 		s.ID, s.Seq, s.CreatedAt, s.Created = prev.ID, prev.Seq, prev.CreatedAt, false
 		m.observeLocked(s.NodeID, prev.ID, now)
 		return nil
@@ -124,6 +141,7 @@ func (m *MemStore) Append(s *Snapshot) error {
 	}
 	s.Created = true
 	m.hash[s.ID] = ContentHash(s)
+	m.hashV1[s.ID] = ContentHashV1(s)
 	m.byNode[s.NodeID] = append(m.byNode[s.NodeID], s)
 	m.observeLocked(s.NodeID, s.ID, now)
 	return nil
@@ -168,6 +186,23 @@ func (m *MemStore) ByID(id string) (*Snapshot, error) {
 			if s.ID == id {
 				return s, nil
 			}
+		}
+	}
+	return nil, nil
+}
+
+func (m *MemStore) ByContentHashV1(node, ruleset, digest string) (*Snapshot, error) {
+	if digest == "" {
+		return nil, nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	snaps := m.byNode[node]
+	// 최근 것부터 — 같은 상태를 두 행이 가질 수 있다(이행의 자국, D8). 뒤의 것이 지금 규칙의 것이다.
+	for i := len(snaps) - 1; i >= 0; i-- {
+		s := snaps[i]
+		if s.RulesetVersion == ruleset && m.hashV1[s.ID] == digest {
+			return s, nil
 		}
 	}
 	return nil, nil
