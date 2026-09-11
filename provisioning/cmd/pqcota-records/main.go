@@ -50,6 +50,14 @@ func main() {
 		if b := r.GetBefore(); b != nil && len(b.GetModules()) > 0 {
 			fmt.Printf("    before : %s\n", strings.Join(b.GetModules(), ", "))
 		}
+		// 어느 스냅샷 상태에서 나온 조치인지 — 되짚는 사슬의 마지막 고리. 찾은 것과 못 찾은 것을 가려 낸다.
+		for _, sr := range r.GetSnapshotResolutions() {
+			if id := sr.GetResolvedSnapshotId(); id != "" {
+				fmt.Printf("    snapshot: %s\n", id)
+			} else {
+				fmt.Printf("    snapshot: (unresolved) %s\n", sr.GetReason())
+			}
+		}
 		if a := r.GetAfter(); a != nil && len(a.GetModules()) > 0 {
 			fmt.Printf("    after  : %s\n", strings.Join(a.GetModules(), ", "))
 		}

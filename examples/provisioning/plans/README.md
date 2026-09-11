@@ -50,7 +50,7 @@ PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
 | `status` | ✅ | 판정을 끝낸 계획은 **`PLAN_STATUS_IN_REVIEW`로 온다.** `pqcota-approve`가 첫 승인에서 `FINALIZED`로 올리고, 생성기는 **`FINALIZED`가 아니면 거부한다.** 승인받지 않은 계획으로 배포하는 일을 막는 게이트다. `DRAFT`는 승인 자체가 거부된다 |
 | `scope` | | 계획의 적용 범위 라벨(예: `ring-0`) |
 | `approvalSignatures` | | **비워서 온다.** 실행 승인의 자리라 판정한 쪽이 채우지 않고, [`pqcota-approve`](../../../provisioning/cmd/README.md)가 승인자의 키로 서명해 넣는다. 생성기는 **비어 있으면 거부한다.** `IN_REVIEW`인데 값이 있으면 승인이 「이 상태에 대한 서명」이라며 손상으로 거부한다 |
-| `derivedFromSnapshotId` | | 이 계획을 뽑은 관측 스냅샷. 비면 경고한다 — 실행은 되지만 이력에 근거가 남지 않는다 |
+| `derivedFromSnapshotId` | | **이전 판 호환 경로.** 계획 전체가 스냅샷 하나에서 나왔을 때 그 id. 조치에 `evidenceSources`가 있으면 그것이 우선이고 이 값은 읽지 않는다. 둘 다 비면 경고한다 — 실행은 되지만 이력에 근거가 남지 않는다 |
 | `rulesetVersion` | | 계획을 만든 규칙 버전. 비면 경고한다 |
 | `finalizedAt` | | **비워서 온다.** 첫 승인이 찍는다. `IN_REVIEW`인데 값이 있으면 손상으로 거부한다. 승인된 계획에서 비어 있으면 생성기가 경고한다 |
 | `actions` | ✅ | 조치 목록. **노드별로 play가 갈린다** |
@@ -64,6 +64,7 @@ PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
 | `id` | ✅ | 조치 식별자. 경고 메시지가 이 값으로 어느 조치인지 가리킨다 |
 | `targetNodeId` | ✅ | 이 조치가 갈 노드. 플레이북의 `hosts:`가 된다. **비면 거부한다** — 빈 항목이 들어가 어디에도 닿지 않는 play가 나온다 |
 | `findingId` | | 근거가 된 관측. 인벤토리의 자산과 잇는다. 비면 경고한다 |
+| `evidenceSources[]` | | **이 조치의 근거들** — 어느 finding이, 어느 스냅샷 상태에서. `{findingId, snapshot: {sourceNodeId, snapshotId \| content: {formatVersion, digest, rulesetVersion}}}`. `sourceNodeId`는 이력이 그 스냅샷을 저장한 이름(봉투의 노드)이라 `targetNodeId`와 다를 수 있다. 대개 하나이고 주 근거가 앞이다. **모양이 틀리면 `--dsn` 없이도 불완전(종료 3)** 이고, `--dsn`이 있으면 생성기가 이력에서 실제로 찾아 레코드에 남긴다 — 못 찾거나 찾은 스냅샷에 그 finding이 없어도 불완전이다. [`openssl-3.5-config-only`](openssl-3.5-config-only.json)가 내용 지문 꼴을 보인다 |
 | `cryptoRuntime` | ✅ | `CRYPTO_RUNTIME_OPENSSL` \| `CRYPTO_RUNTIME_JCA`: config 조각의 문법을 가른다 |
 | `kind` | ✅ | 조치 종류(아래). **`UNSPECIFIED`면 거부한다** — 생성기가 분기하지 못해, 계획이 말하지 않은 것을 「config로는 넣을 수 없다」고 적은 조각이 나가기 때문이다 |
 | `targetAlgorithm` | | 목표 알고리즘. KEM이면 하이브리드 그룹 줄이 나가고, **서명이면 그룹 줄 대신 주석**이 나간다 |

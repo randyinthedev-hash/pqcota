@@ -74,6 +74,16 @@ const (
   "actions": [{"id":"a1","targetNodeId":"n1",
     "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY"}]
 }`
+	// 스냅샷 참조의 모양이 틀렸다 — 원천 노드가 없다. 이력이 없어도 틀린 것이라 --dsn 없이 잡혀야 한다.
+	// 다른 빈칸은 다 채워 이 하나만 남긴다.
+	planBadRef = `{
+  "id": "t-badref", "status": "PLAN_STATUS_FINALIZED", "scope": "ring-0",
+  "approvalSignatures": ["reviewer:test"], "rulesetVersion": "r", "finalizedAt": "2026-09-10T00:00:00Z",
+  "actions": [{"id":"a1","targetNodeId":"n1","findingId":"f-1",
+    "cryptoRuntime":"CRYPTO_RUNTIME_OPENSSL","kind":"REMEDIATION_KIND_CONFIG_ONLY",
+    "automationLevel":"DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL","targetAlgorithm":"ML-KEM (FIPS 203)",
+    "evidenceSources":[{"findingId":"f-1","snapshot":{"snapshotId":"ingest-1:n1"}}]}]
+}`
 	// 승인 서명이 없다 — FINALIZED이지만 실행 근거가 아니다(§3.3③).
 	planNoSig = `{
   "id": "t-nosig", "status": "PLAN_STATUS_FINALIZED", "scope": "ring-0",
@@ -296,5 +306,25 @@ func TestUnsetAutomationLevelCountsAsABlank(t *testing.T) {
 	// 막지는 않는다 — 수준을 명령줄에서 정하는 것이 정당한 자리가 있다.
 	if !strings.Contains(stdout.String(), "hosts:") {
 		t.Errorf("산출물이 나오지 않았다:\n%s", stdout.String())
+	}
+}
+
+// TP-GATE-13 — 참조의 모양은 이력이 없어도 본다. 원천 노드가 없는 참조는 --dsn 없이도 불완전이고
+// 종료 3이다. DSN 이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다.
+func TestMalformedSnapshotReferenceIsIncompleteWithoutDSN(t *testing.T) {
+	bin := buildCLI(t)
+	var stdout, stderr strings.Builder
+	cmd := exec.Command(bin, "--level", "l2", unverified, writePlan(t, planBadRef))
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := cmd.Run()
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		t.Fatalf("모양이 틀린 참조인데 종료 3이 아니다(%v):\n%s", err, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "source_node_id") {
+		t.Errorf("무엇이 틀렸는지 말하지 않는다:\n%s", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "hosts:") {
+		t.Error("플레이북이 나오지 않았다 — 막는 것이 아니라 드러내는 것이다")
 	}
 }

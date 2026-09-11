@@ -86,8 +86,16 @@ func TraceabilityWarnings(p *provisioningv1.FinalizedPlan) []string {
 	if p.GetId() == "" {
 		out = append(out, "the plan has no id — provisioning records point back with plan_id, so this run cannot be tied to the plan that caused it.")
 	}
+	// 스냅샷 참조는 **조치마다** 본다. 조치에 근거(evidence_sources)가 있으면 그것이 참조이고, 없으면
+	// 계획 단위 derived_from_snapshot_id 가 호환 경로다. 둘 다 없는 조치만 알린다. 참조의 모양이
+	// 맞는지·찾히는지는 ResolveAction 이 따로 말한다 — 여기는 「있는가」만 본다.
 	if p.GetDerivedFromSnapshotId() == "" {
-		out = append(out, "the plan has no derived_from_snapshot_id — nothing says which observation snapshot it was derived from (§1.2).")
+		for _, a := range p.GetActions() {
+			if len(a.GetEvidenceSources()) == 0 {
+				out = append(out, fmt.Sprintf("action %s (node=%s): no evidence_sources and the plan has no derived_from_snapshot_id — nothing says which snapshot state it was derived from (§1.2).",
+					a.GetId(), a.GetTargetNodeId()))
+			}
+		}
 	}
 	if p.GetRulesetVersion() == "" {
 		out = append(out, "the plan has no ruleset_version — it cannot be regenerated and compared against what was run (§1.2).")
