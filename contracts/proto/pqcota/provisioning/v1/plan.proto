@@ -34,8 +34,8 @@ enum DeployAutomationLevel {
 enum PlanStatus {
   PLAN_STATUS_UNSPECIFIED = 0;  // 미상
   PLAN_STATUS_DRAFT = 1;        // 작성 중
-  PLAN_STATUS_IN_REVIEW = 2;    // 리뷰 큐
-  PLAN_STATUS_FINALIZED = 3;    // 전 필수항목 판정 + 승인 서명 완료 → 실행 가능
+  PLAN_STATUS_IN_REVIEW = 2;    // 판정이 끝나 승인을 기다린다. 판정한 쪽이 이 상태로 넘긴다
+  PLAN_STATUS_FINALIZED = 3;    // 전 필수항목 판정 + 승인 서명 완료 → 실행 가능. 승인(pqcota-approve)만이 이 상태를 만든다
 }
 
 // Remediation taxonomy 조치 종류 (프로비저닝 설계 §4.1 OpenSSL / §4.4 JCA 조치 컬럼).
@@ -103,14 +103,21 @@ message RemediationAction {
   ActivationHooks activation = 13;
 }
 
-// 확정 계획 — 프로비저닝의 유일 실행 근거(§3.7·§5). 스키마=contracts SSOT(공개).
+// 계획 봉투 — 판정을 끝낸 계획(IN_REVIEW)부터 실행 승인까지 끝난 계획(FINALIZED)까지 **같은
+// 메시지로 운반한다.** 이름은 FINALIZED만 담는 것처럼 읽히지만 그렇지 않다. 이름을 바꾸면
+// 소비자가 깨지므로 두고, 여기에 적는다.
+//
+// 판정과 실행 승인은 다른 단계다. 판정한 쪽은 status=IN_REVIEW, approval_signatures와
+// finalized_at을 **비운 채** 넘기고, 승인(pqcota-approve)이 FINALIZED로 올리며 시각을 찍고
+// 그 상태를 서명한다. 프로비저닝의 실행 근거가 되는 것은 FINALIZED뿐이다(§3.7·§5).
+// 스키마=contracts SSOT(공개).
 message FinalizedPlan {
   string id = 1;
-  PlanStatus status = 2;                    // FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
+  PlanStatus status = 2;                    // IN_REVIEW=판정 끝·승인 전 / FINALIZED=승인 끝. FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
   string scope = 3;                         // 링/도메인 — 부분 확정 허용(§3.3③)
   repeated RemediationAction actions = 4;   // 순서 의미 있음(§4.1 "어떤 순서로")
-  repeated string approval_signatures = 5;  // 승인 서명(§3.3③ finalize 전제)
+  repeated string approval_signatures = 5;  // 실행 승인 서명(§3.3③). 판정한 쪽은 비운다 — 승인이 채운다. IN_REVIEW에 값이 있으면 손상
   string derived_from_snapshot_id = 6;      // 어떤 리컨실리에이션 스냅샷에서(§1.2)
   string ruleset_version = 7;               // 생성 규칙 버전(§1.2 재현)
-  google.protobuf.Timestamp finalized_at = 8;
+  google.protobuf.Timestamp finalized_at = 8; // 첫 승인이 찍는다. 판정한 쪽은 비운다. IN_REVIEW에 값이 있으면 손상
 }

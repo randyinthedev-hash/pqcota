@@ -47,15 +47,15 @@ PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
 | 필드 | 필수 | 하는 일 |
 |---|---|---|
 | `id` | ✅ | 계획 식별자 |
-| `status` | ✅ | **`PLAN_STATUS_FINALIZED`가 아니면 거부한다.** 확정되지 않은 계획으로 배포하는 일을 막는 게이트 |
+| `status` | ✅ | 판정을 끝낸 계획은 **`PLAN_STATUS_IN_REVIEW`로 온다.** `pqcota-approve`가 첫 승인에서 `FINALIZED`로 올리고, 생성기는 **`FINALIZED`가 아니면 거부한다.** 승인받지 않은 계획으로 배포하는 일을 막는 게이트다. `DRAFT`는 승인 자체가 거부된다 |
 | `scope` | | 계획의 적용 범위 라벨(예: `ring-0`) |
-| `approvalSignatures` | ✅ | 승인 서명. **비어 있으면 거부한다.** 아래 견본들이 담고 있는 `"reviewer:alice"` 같은 값은 **이름표일 뿐 아무것도 증명하지 않는다** — 실제 서명은 [`pqcota-approve`](../../../provisioning/cmd/README.md)가 붙인다 |
+| `approvalSignatures` | | **비워서 온다.** 실행 승인의 자리라 판정한 쪽이 채우지 않고, [`pqcota-approve`](../../../provisioning/cmd/README.md)가 승인자의 키로 서명해 넣는다. 생성기는 **비어 있으면 거부한다.** `IN_REVIEW`인데 값이 있으면 승인이 「이 상태에 대한 서명」이라며 손상으로 거부한다 |
 | `derivedFromSnapshotId` | | 이 계획을 뽑은 관측 스냅샷. 비면 경고한다 — 실행은 되지만 이력에 근거가 남지 않는다 |
 | `rulesetVersion` | | 계획을 만든 규칙 버전. 비면 경고한다 |
-| `finalizedAt` | | 확정 시각(RFC 3339). 비면 경고한다 |
+| `finalizedAt` | | **비워서 온다.** 첫 승인이 찍는다. `IN_REVIEW`인데 값이 있으면 손상으로 거부한다. 승인된 계획에서 비어 있으면 생성기가 경고한다 |
 | `actions` | ✅ | 조치 목록. **노드별로 play가 갈린다** |
 
-**견본은 서명되어 있지 않다.** `approvalSignatures`에 이름표를 담고 있어서, `PQCOTA_APPROVAL_KEYS`를 켜고 돌리면 「확인된 승인이 없다」로 거절된다. 그것이 맞는 동작이다 — 견본은 조치의 모양을 보여 주는 것이지 승인받은 계획이 아니다. 실제로 배포할 계획은 `pqcota-approve`로 서명한다.
+**견본은 승인되어 있지 않다.** 판정을 끝낸 모양(`IN_REVIEW`, 승인 칸과 확정 시각이 빈 채) 그대로라, 생성기에 바로 넣으면 「승인 서명 없음」으로 거절된다. 그것이 맞는 동작이다 — 견본은 조치의 모양을 보여 주는 것이지 승인받은 계획이 아니다. 전에는 견본이 `FINALIZED`에 `"reviewer:alice"` 같은 이름표를 담고 있었는데, **이름표가 승인 칸에 앉아 구조 관문을 지나는 것처럼 보이게 했다.** 실제로 배포할 계획은 `pqcota-approve`로 서명한다. 그 명령이 상태를 올리고 시각을 찍는다.
 
 ### 조치(`actions[]`)
 

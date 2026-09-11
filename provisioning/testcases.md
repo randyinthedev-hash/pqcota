@@ -56,7 +56,7 @@
 케이스 번호는 **`TP`(프로비저닝) - 무엇을 보나 - 순번**이다. `TP-GATE`(실행 게이트) · `TP-RENDER`(조치 렌더) · `TP-PLAYBOOK`(플레이북 생성) · `TP-RECORD`(before 캡처·레코드). 번호는 그것을 검증하는 **테스트 파일로 이어진다**. 구현 순서는 §3.
 
 ### TP-GATE. 실행 게이트(finalized-only, §3): 핵심 안전 게이트
-`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1, 그리고 조치마다 대상 노드와 조치 종류가 있어야 실행 근거로 인정한다(규정서 §3.7 최강 게이트). 되짚을 수 있는가(§1.2)는 막지 않고 경고한다. 승인 서명의 **값**은 게이트가 아니라 `sign.VerifyApprovals`가 등록된 승인자 키로 확인한다(§3.3③).
+`FINALIZED` + 승인 서명 ≥1 + 조치 ≥1, 그리고 조치마다 대상 노드와 조치 종류가 있어야 실행 근거로 인정한다(규정서 §3.7 최강 게이트). 되짚을 수 있는가(§1.2)는 막지 않고 경고한다. 승인 서명의 **값**은 게이트가 아니라 `sign.VerifyApprovals`가 등록된 승인자 키로 확인한다(§3.3③). **`FINALIZED`는 승인만이 만든다**: 판정을 끝낸 계획은 `IN_REVIEW`로 오고 `pqcota-approve`가 올린다(설계 §3.1).
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
@@ -73,6 +73,10 @@
 | [TP-GATE-6](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnverifiableApprovalsAreRefusedByDefault`: 승인 자리에 서명이 아니라 이름표가 있고 `PQCOTA_APPROVAL_KEYS`가 없다 | **거절되고 플레이북이 한 줄도 안 나온다.** 어떻게 열지(`--allow-unverified-approvals`)를 함께 알린다. 적으면 통과하되 「확인하지 않았다」가 그대로 남는다 | 전에는 경고하고 통과시켜, 승인 무결성이 **닫을 수 있는 수단**에 머물고 기본 경로는 열린 채였다. 여는 문을 명령줄 하나로 둔 것은 환경변수로 열리면 무엇이 검증됐는지가 셸 설정에 숨기 때문이다 |
 | [TP-GATE-7](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnknownLevelIsRefused`: `--level L3`·`l4`·`full` | **사용법 오류(2)로 끝나고 산출물이 없다** | 모르는 값을 조용히 L2로 삼키면 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고 읽는다. 말한 것보다 낮게 도는 것도 잘못이다 |
 | [TP-GATE-8](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnsetAutomationLevelCountsAsABlank`: 다른 빈칸은 없고 위임 수준만 말하지 않는 계획 | 이름으로 알리고 **종료 3**. 산출물은 나온다 | 말하지 않으면 실행 수준이 `--level`에서 오는데 그 플래그는 **승인 서명 밖이다.** 계획이 값을 적으면 그 자리가 닫힌다 |
+| [TP-GATE-9](../pkg/provisioning/approve_test.go) | `TestDraftAndUnspecifiedCannotBeApproved`·`TestStructureIsCheckedBeforeApproval`: `DRAFT`·`UNSPECIFIED`·`nil` / `IN_REVIEW`인데 조치 0건·대상 노드 없음·종류 미정 | 전부 **승인 거부**(`ErrNotApprovable`). 거부하면서 상태를 바꾸지 않는다 | 전에는 `pqcota-approve`가 상태를 아예 보지 않아 `DRAFT`에도 서명이 찍혔다. 구조를 승인 전에 묻는 것은, 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생기기 때문이다 |
+| **[TP-GATE-10](../pkg/provisioning/approve_test.go)** | `TestFirstApprovalFinalizesThenSigns`·`TestSecondApprovalKeepsStatusAndTime`: 깨끗한 `IN_REVIEW`를 승인하고 서명 / 이틀 뒤 두 번째 승인자가 더 서명 | 첫 승인이 `FINALIZED`로 올리고 시각을 찍은 **뒤에** 서명해 검증되고 `Executable`을 지난다. 두 번째 승인은 시각을 다시 찍지 않고 **둘 다 검증된다** | `CanonicalPlan`이 상태와 시각을 덮으므로 순서가 바뀌면 방금 만든 서명이 깨진다. 두 승인자가 같은 정준 바이트에 서명해야 둘 다 선다 |
+| **[TP-GATE-11](../pkg/provisioning/approve_test.go)** | `TestInconsistentStatusIsCorrupt`: `IN_REVIEW`인데 승인이 있다 / 시각이 있다 · `FINALIZED`인데 승인이 없다 / 시각이 없다 | 넷 다 **손상으로 거부**(`ErrCorruptPlan`). 상태는 그대로 | `FINALIZED`는 승인이 찍힌 뒤에만 생기는 상태라 승인이나 시각이 비어 있으면 상태만 바꿔 넣은 것이다. 판정한 쪽이 승인 칸에 이름표를 넣던 모양이 여기서 걸린다 — 그 모양이 **구조 관문의 의미를 충족한 것처럼 보이게 했다** |
+| [TP-GATE-12](../provisioning/cmd/pqcota-approve/main_test.go) | `TestApproveFinalizesJudgedPlan`·`TestApproveRefuses`: 빌드한 `pqcota-approve`에 `IN_REVIEW` 계획 / `DRAFT` / 승인 없는 `FINALIZED`를 준다 | 앞은 `FINALIZED`·시각·서명 1건이 stdout으로 나오고 그 서명이 검증된다. 뒤 둘은 **거절되고 stdout이 비어 있다** | 규칙이 옳아도 제품 경로가 부르지 않으면 보장이 아니다(TP-GATE-3과 같은 이유). 거절하면서 계획을 함께 내면 그것을 받아 다음 단계에 넣는 사람이 생긴다 |
 
 ### TP-RENDER. 조치 아티팩트 렌더 (§4)
 조치 taxonomy(`RemediationKind`)별로 config 조각을 **결정론적으로** 렌더한다(§1.2 재계산 가능). config로 못 넣는 것은 정직하게 비-config임을 명시한다.

@@ -195,6 +195,10 @@ pqcota-inventory -diff <old> <new>     # 두 스냅샷 사이의 변화
 전환물 생성의 입력은 **확정 계획**(`FinalizedPlan` JSON)이다. `PLAN_STATUS_FINALIZED`가 아니면
 생성기가 **거부한다.** 이 단계에서 가장 센 게이트다.
 
+**계획을 쓰는 사람은 `FINALIZED`를 적지 않는다.** 판정을 끝낸 계획은 `PLAN_STATUS_IN_REVIEW`에
+승인 칸과 확정 시각을 비운 채 두고, 다음 절의 승인이 `FINALIZED`로 올린다. 판정과 실행 승인은
+다른 단계이고, 그 경계를 상태가 표시한다.
+
 계획을 무엇으로 채울지, 무엇을 언제 바꿀지는 이 도구가 정하지 않는다. 그래서 계획은 사용자가 직접 작성한다.
 그 계획을 그대로 받아 생성·적용·되돌림까지 이어진다 → [예시 계획들](examples/provisioning/plans/README.md).
 
@@ -204,7 +208,8 @@ pqcota-inventory -diff <old> <new>     # 두 스냅샷 사이의 변화
 
 **승인이 생성의 전제다.** 계획에 승인 서명을 붙이고 그 승인자의 공개키를 등록해야 생성기가
 움직인다. 확인할 키가 없으면 거절한다 — 승인은 책임의 소재라, 확인되지 않으면 그 자리는
-비어 있는 것과 같기 때문이다.
+비어 있는 것과 같기 때문이다. **첫 승인이 계획을 확정한다.** `pqcota-approve`가 `IN_REVIEW`를
+`FINALIZED`로 올리고 확정 시각을 찍은 뒤에 서명한다. `DRAFT`는 승인 자체가 거절된다.
 
 ```bash
 eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY(개인) · VERIFY_KEY(공개)

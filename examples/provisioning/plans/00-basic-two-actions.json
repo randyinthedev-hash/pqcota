@@ -1,9 +1,7 @@
 {
-  "status": "PLAN_STATUS_FINALIZED",
+  "status": "PLAN_STATUS_IN_REVIEW",
   "derivedFromSnapshotId": "snap-example",
   "rulesetVersion": "rs-2026.09",
-  "finalizedAt": "2026-09-10T00:00:00Z",
-  "approvalSignatures": ["reviewer:alice"],
   "actions": [
     {
       "targetNodeId": "node-a",

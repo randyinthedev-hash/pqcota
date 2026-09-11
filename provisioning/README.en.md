@@ -59,7 +59,7 @@ flowchart TD
 ## Try it quickly
 
 ```bash
-# ⓪ approve — sign the plan and register the key it will be checked with.
+# ⓪ approve — raise the judged plan (IN_REVIEW) to FINALIZED while signing it, and register the key it will be checked with.
 #    With no key to check, the generator refuses: an approval is where responsibility sits,
 #    and one nobody can verify leaves that place empty.
 eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY (private) · VERIFY_KEY (public)
@@ -78,7 +78,7 @@ pqcota-provision --level l2 --rollback plan.signed.json > provision-rollback.yml
 ansible-playbook -i targets.ini provision-rollback.yml
 ```
 
-All options, and where provider modules go → [provisioning/cmd](cmd/README.md) (Korean). Before anything runs, **the plan must pass the gate** — if `status` is not `PLAN_STATUS_FINALIZED`, or there are no approval signatures, or there is not a single remediation, nothing is generated.
+All options, and where provider modules go → [provisioning/cmd](cmd/README.md) (Korean). Before anything runs, **the plan must pass the gate** — if `status` is not `PLAN_STATUS_FINALIZED`, or there are no approval signatures, or there is not a single remediation, nothing is generated. **A judged plan arrives as `IN_REVIEW` and `pqcota-approve` raises it to `FINALIZED`** — so a plan that skipped approval is caught by its status first.
 
 ## The two axes that decide the output
 
@@ -103,7 +103,8 @@ The activation and restart commands come from the plan's `activation` hook. With
 
 | Symptom | Cause |
 |---|---|
-| `plan not finalized — provisioning refused` | `status` is not FINALIZED, or `approvalSignatures` is empty |
+| `plan not finalized — provisioning refused` | `status` is not FINALIZED, or `approvalSignatures` is empty. Usually **`pqcota-approve` was skipped** — a judged plan arrives as `IN_REVIEW` and approval raises it |
+| `refusing to approve: … inconsistent with its own status` | `IN_REVIEW` with an approval or a `finalized_at`, or `FINALIZED` missing either. The status was edited in by hand |
 | the playbook has no config fragment | you are on `--level l1`. Config starts at L2 |
 | the fragment has `Groups`/`namedGroups` only as a comment | `targetAlgorithm` is not a KEM, or was not recognized |
 | the playbook has the remediation only as a comment | that `kind` cannot be deployed via config (fork replacement, rebuild, and so on) |
