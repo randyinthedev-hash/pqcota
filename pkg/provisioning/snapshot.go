@@ -135,8 +135,12 @@ func hasFinding(s *history.Snapshot, id string) bool {
 // **legacy 분기**로 읽는다 — SnapshotReference 로 합성하지 않는다(source_node_id 가 없어 ValidateReference
 // 를 지나지 못한다). ByID 만 하고, 그때는 노드 일치도 finding 소속도 확인할 수 있는 것만 한다.
 //
-// 근거가 있으면 호환용 finding_id 가 evidence_sources[0].finding_id 와 같아야 한다. 다르면 첫 항목에
-// 그 사실을 사유로 남긴다 — 어느 것이 주 근거인지 계획이 두 말을 하는 것이다.
+// **근거마다 finding_id 가 있어야 한다.** 없으면 「무엇의 근거인가」를 말하지 못하는 근거다 — 스냅샷
+// 참조만 맞으면 해결된 모양이 되는데, 그 해결은 아무것도 가리키지 않는다.
+//
+// **호환용 finding_id 는 evidence_sources[0].finding_id 와 무조건 같아야 한다.** 비어 있어도 예외가
+// 아니다: 계약이 「같아야 하고 생성기가 검사한다」고 적었고, 빈값을 봐주면 새 소비자가 읽는 주 근거와
+// 옛 소비자가 읽는 근거가 갈린다.
 //
 // 근거도 계획 단위 id 도 없으면 빈 목록이다. 그것은 추적성 불완전이고 TraceabilityWarnings 가 말한다.
 //
@@ -144,13 +148,19 @@ func hasFinding(s *history.Snapshot, id string) bool {
 func ResolveAction(lookup history.SnapshotLookup, plan *provisioningv1.FinalizedPlan, a *provisioningv1.RemediationAction) []*provisioningv1.SnapshotResolution {
 	if srcs := a.GetEvidenceSources(); len(srcs) > 0 {
 		out := make([]*provisioningv1.SnapshotResolution, 0, len(srcs))
-		for _, e := range srcs {
-			out = append(out, ResolveReference(lookup, e.GetSnapshot(), e.GetFindingId()))
+		for i, e := range srcs {
+			r := ResolveReference(lookup, e.GetSnapshot(), e.GetFindingId())
+			// 모양 검사와 같은 층이다 — 이력이 있든 없든 틀린 것이고, 그래서 같은 접두어를 쓴다.
+			if e.GetFindingId() == "" {
+				r.ResolvedSnapshotId = ""
+				r.Reason = fmt.Sprintf("%sevidence_sources[%d] names no finding_id — a reference with nothing it is evidence of resolves to nothing", invalidPrefix, i)
+			}
+			out = append(out, r)
 		}
-		if a.GetFindingId() != "" && a.GetFindingId() != srcs[0].GetFindingId() {
-			out[0].Reason = strings.TrimSpace(fmt.Sprintf("compat finding_id %q is not the primary evidence's finding %q — the plan names two primary findings. %s",
-				a.GetFindingId(), srcs[0].GetFindingId(), out[0].Reason))
+		if a.GetFindingId() != srcs[0].GetFindingId() {
 			out[0].ResolvedSnapshotId = ""
+			out[0].Reason = fmt.Sprintf("%scompat finding_id %q does not equal the primary evidence's finding %q — old and new consumers would read different bases. %s",
+				invalidPrefix, a.GetFindingId(), srcs[0].GetFindingId(), strings.TrimPrefix(out[0].Reason, invalidPrefix))
 		}
 		return out
 	}

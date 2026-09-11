@@ -113,6 +113,11 @@ records it. **Every existing approval signature becomes invalid** (see "What cha
   "snapshot": listing snapshots alone leaves a single `finding_id` that cannot say which finding in the
   second snapshot is the basis. The plan-level `derived_from_snapshot_id` stays as a compatibility path.
 
+- **Evidence must say what it is evidence of.** `evidence_sources[].finding_id` cannot be empty, and the
+  compatibility `finding_id` must equal `evidence_sources[0].finding_id` — **empty is not an exception.**
+  Allowing empty would let old consumers read no basis while new ones read the primary. A mismatch leaves
+  that evidence unresolved and counts as incomplete.
+
 - **The generator actually resolves references.** Shape is checked without `--dsn` (malformed → exit
   3); with `--dsn` it looks the reference up, checks that **the found snapshot contains the finding**,
   and records the submitted reference paired with the real id in
