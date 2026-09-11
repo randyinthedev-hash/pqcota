@@ -25,7 +25,8 @@ import (
 // # 무엇을 보나
 //
 // 추적 중인 Go 파일(테스트·`gen/` 제외)의 문자열 리터럴 가운데, **규칙 판 식별자처럼 생긴
-// 것**을 막는다. 곧 `ruleset`으로 시작하는 값과, 권위 있는 상수의 값을 그대로 베낀 값이다.
+// 것**을 막는다. 곧 `ruleset`으로 시작하는 값과, 권위 있는 상수와 **같은 계열**인 값이다.
+// 계열로 보는 것은 판이 오른 뒤에 남은 옛 판 복사본까지 잡기 위해서다(`rulesetFamily`).
 // 상수를 선언하는 파일 자신은 예외다.
 //
 // # 무엇을 보지 못하나
@@ -72,13 +73,35 @@ func rulesetPlaceholders(files []string) ([]string, error) {
 	return out, nil
 }
 
+// rulesetFamily — 권위 있는 값의 **계열**. 마지막 마디 앞까지다(`pqcota-enrich/v1` 이면
+// `pqcota-enrich/`).
+//
+// **지금 값 하나만 보면 판이 오른 뒤가 빈다.** 상수가 `v2` 로 올라가면 어딘가 남은
+// `pqcota-enrich/v1` 복사본은 「지금 값과 다르니 자리표시자가 아니다」로 지나간다. 그것이
+// 바로 잡아야 하는 것이다: 베낀 값은 상수를 고쳐도 따라오지 않아 **옛 판을 찍는 코드가
+// 조용히 남는다.** 계열로 보면 과거·미래 판이 함께 걸린다.
+//
+// 마디가 없는 값이면 빈 문자열을 돌려준다. 그때 계열은 「전부」가 되어 아무 문자열이나
+// 걸리기 때문이다.
+func rulesetFamily() string {
+	i := strings.LastIndex(normalize.RulesetVersion, "/")
+	if i < 0 {
+		return ""
+	}
+	return normalize.RulesetVersion[:i+1]
+}
+
 // looksLikeRuleset — 규칙 판 식별자처럼 생긴 값인가.
 //
-// 권위 있는 값과 같거나, `ruleset` 뒤에 마디 기호가 붙은 것이다. 이름과 기호를 **따로**
-// 두는 것은 이 함수가 자기 리터럴에 걸리지 않게 하기 위해서다. `"ruleset"` 만으로는 마디가
-// 없어 걸리지 않고, 기호 목록에는 이름이 없다.
+// 권위 있는 값의 계열에 들거나, `ruleset` 뒤에 마디 기호가 붙은 것이다. 이름과 기호를
+// **따로** 두는 것은 이 함수가 자기 리터럴에 걸리지 않게 하기 위해서다. `"ruleset"` 만으로는
+// 마디가 없어 걸리지 않고, 기호 목록에는 이름이 없다. 계열은 상수에서 계산하므로 여기에
+// 그 값이 적히지 않는다.
 func looksLikeRuleset(v string) bool {
 	if v == normalize.RulesetVersion {
+		return true
+	}
+	if fam := rulesetFamily(); fam != "" && strings.HasPrefix(v, fam) {
 		return true
 	}
 	const name = "ruleset"
