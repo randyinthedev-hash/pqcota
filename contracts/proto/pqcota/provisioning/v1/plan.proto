@@ -75,8 +75,10 @@ message ActivationHooks {
 message RemediationAction {
   string id = 1;
   string target_node_id = 2; // 스코프 마스터 앵커(§1.4)
-  // 근거 Finding(수용 원칙 §2.4). **호환용 주 근거**다 — 새 소비자는 evidence_sources 를 읽고, 이 값은
-  // evidence_sources[0].finding_id 와 같아야 한다(생성기가 검사한다).
+  // 근거 Finding(수용 원칙 §2.4). **호환용 주 근거**다 — 새 소비자는 evidence_sources 를 읽는다.
+  // evidence_sources 가 있으면 이 값은 evidence_sources[0].finding_id 와 **같아야 한다. 비어 있어도
+  // 예외가 아니다** — 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 주 근거로 읽어 둘이 갈린다.
+  // 생성기가 검사하고, 어긋나면 그 근거를 해결하지 않고 불완전으로 센다.
   string finding_id = 3;
 
   pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기(docs/runtime-acceptance.md)
@@ -112,7 +114,9 @@ message RemediationAction {
 
 // ActionEvidenceSource — 조치의 근거 하나.
 message ActionEvidenceSource {
-  string finding_id = 1;          // 그 스냅샷 안의 finding. 생성기는 찾은 스냅샷에 이 id 가 실제로 있는지 본다
+  // 그 스냅샷 안의 finding. **비울 수 없다** — 무엇의 근거인지 말하지 못하는 근거는, 참조가 맞아도
+  // 아무것도 가리키지 않는다. 생성기는 이것이 있는지 보고, 찾은 스냅샷에 이 id 가 실제로 있는지도 본다.
+  string finding_id = 1;
   SnapshotReference snapshot = 2;
 }
 

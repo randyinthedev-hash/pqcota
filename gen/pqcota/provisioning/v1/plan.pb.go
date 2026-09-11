@@ -299,8 +299,10 @@ type RemediationAction struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
 	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	TargetNodeId string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"` // 스코프 마스터 앵커(§1.4)
-	// 근거 Finding(수용 원칙 §2.4). **호환용 주 근거**다 — 새 소비자는 evidence_sources 를 읽고, 이 값은
-	// evidence_sources[0].finding_id 와 같아야 한다(생성기가 검사한다).
+	// 근거 Finding(수용 원칙 §2.4). **호환용 주 근거**다 — 새 소비자는 evidence_sources 를 읽는다.
+	// evidence_sources 가 있으면 이 값은 evidence_sources[0].finding_id 와 **같아야 한다. 비어 있어도
+	// 예외가 아니다** — 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 주 근거로 읽어 둘이 갈린다.
+	// 생성기가 검사하고, 어긋나면 그 근거를 해결하지 않고 불완전으로 센다.
 	FindingId       string                `protobuf:"bytes,3,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
 	CryptoRuntime   v1.CryptoRuntime      `protobuf:"varint,4,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"`                     // openssl | jca 분기(docs/runtime-acceptance.md)
 	Kind            RemediationKind       `protobuf:"varint,5,opt,name=kind,proto3,enum=pqcota.provisioning.v1.RemediationKind" json:"kind,omitempty"`                                                    // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
@@ -463,9 +465,11 @@ func (x *RemediationAction) GetEvidenceSources() []*ActionEvidenceSource {
 
 // ActionEvidenceSource — 조치의 근거 하나.
 type ActionEvidenceSource struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FindingId     string                 `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"` // 그 스냅샷 안의 finding. 생성기는 찾은 스냅샷에 이 id 가 실제로 있는지 본다
-	Snapshot      *SnapshotReference     `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 그 스냅샷 안의 finding. **비울 수 없다** — 무엇의 근거인지 말하지 못하는 근거는, 참조가 맞아도
+	// 아무것도 가리키지 않는다. 생성기는 이것이 있는지 보고, 찾은 스냅샷에 이 id 가 실제로 있는지도 본다.
+	FindingId     string             `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
+	Snapshot      *SnapshotReference `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

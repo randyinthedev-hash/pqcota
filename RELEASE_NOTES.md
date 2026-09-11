@@ -121,6 +121,11 @@
   스냅샷의 어느 finding이 근거인지 말할 수 없기 때문이다. 계획 단위 `derived_from_snapshot_id`는
   이전 판 호환 경로로 남는다.
 
+- **근거는 무엇의 근거인지 말해야 한다.** `evidence_sources[].finding_id` 는 비울 수 없고, 호환용
+  `finding_id` 는 `evidence_sources[0].finding_id` 와 **같아야 한다 — 비어 있어도 예외가 아니다.**
+  빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 주 근거로 읽어 둘이 갈린다. 어긋나면 그 근거를
+  해결하지 않고 불완전으로 센다.
+
 - **생성기가 참조를 실제로 찾는다.** 모양은 `--dsn` 없이도 보고(틀리면 종료 3), `--dsn`이면
   이력에서 찾아 **찾은 스냅샷에 그 finding이 있는지**까지 본 뒤 `ProvisioningRecord.snapshot_resolutions`에
   제출된 참조와 실제 id를 한 항목으로 남긴다. 못 찾으면 종료 3이고 경고문이 가능한 이유(다른 이력·

@@ -113,10 +113,30 @@ func TestResolveActionWalksEvidenceThenLegacy(t *testing.T) {
 		t.Error("못 찾은 항목이 제출된 참조를 잃었다")
 	}
 
-	// 호환용 finding_id 가 주 근거와 다르다 — 계획이 두 말을 한다.
+	// 호환용 finding_id 가 주 근거와 다르다 — 옛 소비자와 새 소비자가 다른 근거를 읽는다.
 	two := &provisioningv1.RemediationAction{Id: "a2", FindingId: "f-9", EvidenceSources: a.EvidenceSources[:1]}
-	if r := provisioning.ResolveAction(m, plan, two)[0]; r.GetResolvedSnapshotId() != "" || !strings.Contains(r.GetReason(), "two primary") {
+	if r := provisioning.ResolveAction(m, plan, two)[0]; r.GetResolvedSnapshotId() != "" || !strings.Contains(r.GetReason(), "does not equal the primary evidence") {
 		t.Errorf("호환 finding_id 와 주 근거의 불일치를 잡지 않았다: %q", r.GetReason())
+	}
+
+	// ★ 호환용 finding_id 가 **비어 있어도** 예외가 아니다. 계약이 「같아야 하고 검사한다」고 적었다.
+	// 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 f-1 로 읽는다.
+	blank := &provisioningv1.RemediationAction{Id: "a5", EvidenceSources: a.EvidenceSources[:1]}
+	r0 := provisioning.ResolveAction(m, plan, blank)[0]
+	if r0.GetResolvedSnapshotId() != "" || !provisioning.IsInvalidReference(r0) {
+		t.Errorf("빈 호환 finding_id 를 예외로 두었다: %q", r0.GetReason())
+	}
+
+	// ★ 근거 자체에 finding_id 가 없으면, 참조가 맞아도 아무것도 가리키지 못한다.
+	noFinding := &provisioningv1.RemediationAction{Id: "a6", EvidenceSources: []*provisioningv1.ActionEvidenceSource{
+		{Snapshot: idRef("web-01.corp", s.ID)},
+	}}
+	r1 := provisioning.ResolveAction(m, plan, noFinding)[0]
+	if r1.GetResolvedSnapshotId() != "" || !strings.Contains(r1.GetReason(), "names no finding_id") {
+		t.Errorf("finding 없는 근거가 해결된 모양이 됐다: %q", r1.GetReason())
+	}
+	if len(provisioning.Unresolved([]*provisioningv1.SnapshotResolution{r1})) != 1 {
+		t.Error("finding 없는 근거를 불완전으로 세지 않았다")
 	}
 
 	// 근거가 없으면 계획 단위 id 를 legacy 분기로 — 참조로 합성하지 않는다.
