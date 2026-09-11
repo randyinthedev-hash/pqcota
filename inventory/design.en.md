@@ -245,6 +245,38 @@ Everything hinges on what decides "is this the same state". **Include a volatile
 
 `ExcludedByScope` (§8) is **left out** of the fingerprint — assets outside management coming and going is not a change to the managed inventory.
 
+#### 7.3.1 The reference fingerprint v1 (`ContentHashV1`) — a second fingerprint for a different question
+
+The fingerprint above answers "was the same state observed again?". There is a **different question**: "which snapshot state did this action come from?". If the side producing the plan (downstream) normalizes the same results under the same rules and gets **the same value**, the history can find the snapshot by it. The two questions are not mixed into one function.
+
+| | dedup fingerprint | reference fingerprint v1 |
+|---|---|---|
+| version | none | `pqcota-snapshot-content/v1`. **Closed.** A change means v2 |
+| ruleset version | excluded | **included.** A different ruleset is a different state |
+| `ExcludedByScope` | excluded | **included** — as the **count the policy excluded**. It does not prove which policy |
+| edge sort key | direction, address, port, protocol, role, detection method | **every stable field** (including group, cipher, app). Order is fixed even with several edges under one key |
+| edge `app_key` / `app_key_kind` | absent | included |
+| `Completeness.layers_covered` | absent | included. Without what was seen, "not seen" and "not looked at" fingerprint the same |
+
+**v1 is frozen the moment it is published.** The ⚠️ above ("update this function when a field is added to the contract") applies to the dedup fingerprint only. Editing v1 in place means stored v1 references can no longer be recomputed under the same rules. A new field means **a new v2**. A test pins the value of a fixed input.
+
+**Migration.** A `content_hash_v1` column and an `(org, node_id, ruleset_ver, content_hash_v1)` index are added to `pqcota_snapshots`. **Folding switches to this fingerprint too.** The `content_hash` column is kept but is no longer the key — if folding kept using the old fingerprint, old rows with an empty v1 would be reused forever, the v1 column would stay empty forever, and downstream references would never resolve. An old row with no v1 is not the same row; a new row is created. Old rows are not back-filled: the value cannot say which rules computed it. The first ingest after upgrading creates a new row even for an unchanged state — a mark of the migration, not a change.
+
+**Lookup** does not widen `Store`; it is the narrow `SnapshotLookup{ByID, ByContentHashV1(node, ruleset, digest)}`. `Store` is a public interface, and widening it breaks whoever implements it. The history layer does not know the **format** of a reference — that belongs to the provisioning contract.
+
+#### 7.3.2 Per-node merging is deterministic (`normalize.Normalize`)
+
+For the reference fingerprint to come out equal elsewhere, **the snapshot has to be equal first.** So per-node merging does not depend on input order. It used to be "first one wins" for a duplicate finding, a duplicate edge and the completeness note alike, and the order of result files changed the snapshot.
+
+| overlap | rule |
+|---|---|
+| order of results | sorted by `(collected_at, collector_id, canonical bytes)` before normalizing. Time is the first key, so "later = most recent" holds across collectors |
+| same finding id twice | identical content is one finding. Otherwise the **most recent** is kept and `Completeness.note` records "differs between collectors". Nothing is chosen silently |
+| same edge twice | identity is every stable field (`EdgeIdentity`). Counts are summed and times widened **only on an exact match**; any difference is a distinct observation |
+| completeness | layers sorted; every non-empty note is kept, sorted and joined |
+
+The same input now yields a different snapshot than under v1, so the ruleset version moved to **`pqcota-enrich/v2`**. Merging is "how a snapshot is built from observations", the front of the enrichment rules, and gets no separate version — two versions would make the combined identifier a triple.
+
 ### 7.4 The truncation policy (`pqcota-prune`)
 
 Because §7.2 already folds repetitions of the same state, truncation deals only with **old points of change**. Every stored snapshot is a point of change, so an axis like "preserve change points" is unnecessary.

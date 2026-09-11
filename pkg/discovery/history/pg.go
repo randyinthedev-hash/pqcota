@@ -32,6 +32,12 @@ ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS edges JSONB;
 ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS content_hash TEXT;
 -- 자산 스코프로 제외한 finding 수(제외 ≠ 부재 — 뷰가 고지해야 한다).
 ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS excluded_by_scope INT NOT NULL DEFAULT 0;
+-- 참조용 지문(규격 pqcota-snapshot-content/v1). 다운스트림이 같은 스냅샷을 같은 규칙으로 만들어
+-- 같은 값을 내고, 이력이 이 값으로 찾는다. **접는 기준도 이것이다** — content_hash 는 보존하되
+-- 키가 아니다. 옛 지문으로 접으면 v1 이 없는 옛 행이 재사용되어 v1 참조가 영원히 찾히지 않는다.
+-- 기존 행은 NULL 이고 소급하지 않는다: 어느 규칙으로 계산했는지 값이 말하지 못한다.
+ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS content_hash_v1 TEXT;
+CREATE INDEX IF NOT EXISTS idx_pqcota_snap_ref ON pqcota_snapshots(org, node_id, ruleset_ver, content_hash_v1);
 
 -- 관측 기록(가벼움) — 적재할 때마다 1행. 스냅샷은 변화 시에만 쌓이므로,
 -- "언제·몇 번 관측했나"(관측 증명)는 이쪽이 보존한다.
@@ -130,6 +136,7 @@ func (p *PgStore) Append(s *Snapshot) error {
 	}
 	ctx := context.Background()
 	hash := ContentHash(s)
+	hashV1 := ContentHashV1(s)
 
 	// 실질 내용이 직전과 같으면 스냅샷을 새로 만들지 않는다 — 관측 기록만 남긴다.
 	var prevID string
@@ -137,8 +144,8 @@ func (p *PgStore) Append(s *Snapshot) error {
 	var prevAt time.Time
 	err = p.pool.QueryRow(ctx,
 		`SELECT id, seq, created_at FROM pqcota_snapshots
-		 WHERE org=$1 AND node_id=$2 AND content_hash=$3 ORDER BY seq DESC LIMIT 1`,
-		p.org, s.NodeID, hash).Scan(&prevID, &prevSeq, &prevAt)
+		 WHERE org=$1 AND node_id=$2 AND ruleset_ver=$3 AND content_hash_v1=$4 ORDER BY seq DESC LIMIT 1`,
+		p.org, s.NodeID, s.RulesetVersion, hashV1).Scan(&prevID, &prevSeq, &prevAt)
 	switch {
 	case err == nil:
 		// 직전 스냅샷과 같은 내용인지 확인 — 중간에 변했다 되돌아온 경우도 그 최신 동일본을 가리킨다.
@@ -150,9 +157,9 @@ func (p *PgStore) Append(s *Snapshot) error {
 
 	// seq·created_at은 DB가 부여한다 — RETURNING으로 되받아 호출자의 스냅샷에 채운다.
 	if err := p.pool.QueryRow(ctx,
-		`INSERT INTO pqcota_snapshots(org,id,node_id,ruleset_ver,findings,completeness,edges,content_hash,excluded_by_scope)
-		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING seq, created_at`,
-		p.org, s.ID, s.NodeID, s.RulesetVersion, fj, cj, ej, hash, s.ExcludedByScope).Scan(&s.Seq, &s.CreatedAt); err != nil {
+		`INSERT INTO pqcota_snapshots(org,id,node_id,ruleset_ver,findings,completeness,edges,content_hash,excluded_by_scope,content_hash_v1)
+		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING seq, created_at`,
+		p.org, s.ID, s.NodeID, s.RulesetVersion, fj, cj, ej, hash, s.ExcludedByScope, hashV1).Scan(&s.Seq, &s.CreatedAt); err != nil {
 		return err
 	}
 	s.Created = true
@@ -202,6 +209,17 @@ func (p *PgStore) ByID(id string) (*Snapshot, error) {
 	row := p.pool.QueryRow(context.Background(),
 		`SELECT `+snapCols+` FROM pqcota_snapshots
 		 WHERE org=$1 AND id=$2 ORDER BY seq DESC LIMIT 1`, p.org, id)
+	return scanSnapshot(row)
+}
+
+func (p *PgStore) ByContentHashV1(node, ruleset, digest string) (*Snapshot, error) {
+	if digest == "" {
+		return nil, nil
+	}
+	row := p.pool.QueryRow(context.Background(),
+		`SELECT `+snapCols+` FROM pqcota_snapshots
+		 WHERE org=$1 AND node_id=$2 AND ruleset_ver=$3 AND content_hash_v1=$4 ORDER BY seq DESC LIMIT 1`,
+		p.org, node, ruleset, digest)
 	return scanSnapshot(row)
 }
 

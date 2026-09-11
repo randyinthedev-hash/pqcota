@@ -82,6 +82,48 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.9.0 — Tracing an action back to the snapshot state it came from (in progress)
+
+**Goal** — make `derived_from_snapshot_id` fillable. The side producing the plan normalizes the same
+results under the same rules and gets the same fingerprint; the history finds the snapshot by it and
+records it. **Every existing approval signature becomes invalid** (see "What changes for consumers").
+
+### Built
+
+- **The reference fingerprint v1** (`history.ContentHashV1`, format `pqcota-snapshot-content/v1`). It
+  answers a **different question** than the dedup fingerprint — not "was the same state observed
+  again?" but "which snapshot state did this action come from?". It includes the ruleset version, the
+  excluded count, the layers covered and the edge's app, and sorts edges by every stable field. **v1 is
+  frozen.** A change means v2. A test pins the value of a fixed input.
+
+- **Per-node merging is deterministic.** Results are sorted by time, collector and content; a finding
+  that arrives differently keeps the most recent and says so in the note; edges merge only on an exact
+  match of every stable field; no completeness note is dropped. The order of result files no longer
+  changes the snapshot.
+
+- **The history looks up by fingerprint.** A `content_hash_v1` column and an `(org, node_id,
+  ruleset_ver, content_hash_v1)` index on `pqcota_snapshots`. `SnapshotLookup{ByID, ByContentHashV1}`
+  is implemented by Postgres and the in-memory store. `Store` was not widened — it is public, and
+  widening it breaks whoever implements it.
+
+### Fixed
+
+- **Per-node merging depended on input order** (v0.1.0–v0.8.0). Duplicate findings, duplicate edges and
+  the completeness note were all "first one wins". **What came out wrong**: reordering result files
+  changed the snapshot. Which of two collectors' views of one asset survived depended on directory
+  order, and the later collector's gap note vanished. The ruleset version moved to `pqcota-enrich/v2`
+  because the same input now yields a different snapshot.
+
+- **Edge identity was too narrow** (v0.1.0–v0.8.0). Only direction, protocol and negotiated group.
+  **What came out wrong**: two observations differing only in cipher or app folded into one, keeping the
+  first.
+
+- **Deduplication folded on the old fingerprint.** Keeping the v1 column while still folding on the old
+  fingerprint would have reused old rows with an empty v1 forever, leaving the column empty and the
+  references unresolvable. Folding now keys on v1. **The first ingest after upgrading creates a new row
+  even for an unchanged state** — a mark of the migration, not a change. Old rows keep an empty v1 and
+  are not back-filled.
+
 ## v0.8.0 — Approval finalizes the plan (2026-09-11)
 
 **Goal** — separate judging from approving execution by contract status. The judging side hands over

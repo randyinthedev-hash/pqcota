@@ -61,6 +61,9 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-HISTORY-4](../pkg/inventory/history_view_test.go) | `TestRenderDiffNoChange`: 같은 스냅샷끼리 diff | "변화 없음"을 **명시**(빈 출력 아님) | 변화가 없을 때 없다고 말한다. 빈 출력은 "안 봤다"와 구분되지 않는다 |
 | [TV-HISTORY-5](../pkg/inventory/render_test.go) | `TestRenderDiffDirection`: 인자를 **시간 역순**으로 준 diff | `added`·`removed`가 뒤집혀 읽히므로 **역순 경고**를 낸다 | 인자 순서를 잘못 주면 결과가 정반대로 읽힌다. 조용히 뒤집히지 않게 한다 |
 | [TV-HISTORY-6](../pkg/inventory/render_test.go) | `TestRenderDiffWarnsOnRulesetChange`: `ruleset`이 다른/같은 두 스냅샷 diff | 다르면 재계산 경고, 같으면 안 뜸(§1.2) | 파생값 차이를 실제 변화로 읽으면 없던 변경을 쫓게 된다. 매번 뜨는 경고는 읽히지 않는다 |
+| **[TV-HISTORY-7](../pkg/discovery/history/fingerprint_v1_test.go)** | `TestContentHashV1IsFrozen` · `TestContentHashV1CoversWhatDedupHashDoesNot` · `TestContentHashV1IsOrderInvariant` · `TestContentHashV1SortsEdgesByFullIdentity`: 고정 입력의 v1 지문 / 규칙 판·제외 수·본 계층·엣지의 앱을 하나씩 바꾸기 / finding·엣지·계층·앱 키 순서 섞기 / 암호군만 다른 두 엣지의 순서 | **v1 은 고정값과 같다**(바뀌면 v2 를 만든다). 넷 다 v1 만 달라지고 중복 억제 지문은 그대로다. 순서를 섞어도 같다. 암호군만 다른 두 엣지는 순서에 안 흔들리고 하나가 빠지면 달라진다 | 참조용 지문은 다운스트림이 같은 스냅샷을 같은 규칙으로 만들어 **같은 값을 내야** 이력에서 찾힌다. 그러려면 닫혀 있어야 하고, 중복 억제가 못 보던 것(규칙 판·제외 수·본 계층·앱)을 봐야 하며, 입력 순서에 흔들리면 안 된다. 두 용도를 한 함수에 섞지 않는다 |
+| **[TV-HISTORY-8](../pkg/discovery/history/lookup_test.go)** | `TestDedupFoldsOnV1NotOnLegacyHash` · `TestByContentHashV1`: 같은 내용 재적재 / 같은 내용·다른 규칙 판 / v1 이 빈 옛 행 뒤에 같은 내용 / `(node, ruleset, digest)` 조회 | 접힌다 / **접히지 않고 새 행** / **옛 행을 재사용하지 않고 새 행** / 찾는다. 규칙 판이 다르거나 노드가 다르거나 지문이 비면 못 찾는다 | 중복 억제를 옛 지문으로 계속 하면 v1 이 빈 옛 행이 재사용되어 v1 열이 영원히 비고, 다운스트림의 참조를 영원히 못 찾는다. 열을 보존하는 것과 그 열로 접는 것은 다른 결정이다 |
+| [TV-HISTORY-9](../pkg/discovery/history/lookup_pg_test.go) | `TestPgDedupAndLookupOnV1`: Postgres 에서 TV-HISTORY-8 과 같은 절차 | 같다. `content_hash_v1` 열과 `(org, node_id, ruleset_ver, content_hash_v1)` 인덱스로 | 메모리 저장소와 Postgres 가 갈리면 로컬에서 찾히던 참조가 중앙에서 안 찾힌다. `PQCOTA_TEST_DSN` 이 있을 때만 돈다 |
 
 ### TV-RETENTION. 보존 정책 (설계 §7.2·§7.4)
 | 케이스 | Given → When | Then | 목적 |
