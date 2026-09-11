@@ -118,3 +118,32 @@ func TestRulesetLabelIsNotAValue(t *testing.T) {
 		}
 	}
 }
+
+// ★ 검사기는 자기 검사를 지나야 한다.
+//
+// 처음에는 막으려는 값을 여기에 베껴 두고 이 파일을 예외로 뺐다. 그것이 **막으려는 바로 그
+// 복제**다: 값을 베끼면 상수를 고쳐도 따라오지 않아, 판이 올라간 다음부터는 새 값을 베낀
+// 자리를 못 잡는다. 예외로 빼 두면 그 사실이 영원히 드러나지 않는다.
+func TestTheCheckerPassesItsOwnRule(t *testing.T) {
+	hits, err := rulesetPlaceholders([]string{"ruleset.go"})
+	if err != nil {
+		t.Fatalf("rulesetPlaceholders: %v", err)
+	}
+	if len(hits) != 0 {
+		t.Errorf("검사기가 자기 규칙에 걸린다 — 값을 베껴 두었다는 뜻이다: %v", hits)
+	}
+}
+
+// 이름만으로는 값이 아니다. 마디가 붙어야 식별자다.
+func TestBareWordIsNotARulesetID(t *testing.T) {
+	for _, v := range []string{"ruleset", "rulesetting", "-_/"} {
+		if looksLikeRuleset(v) {
+			t.Errorf("%q를 규칙 판 식별자로 셌다", v)
+		}
+	}
+	for _, v := range []string{"ruleset-demo", "ruleset_1", "ruleset/v2"} {
+		if !looksLikeRuleset(v) {
+			t.Errorf("%q를 놓쳤다", v)
+		}
+	}
+}
