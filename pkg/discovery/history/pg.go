@@ -37,7 +37,6 @@ ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS excluded_by_scope INT NOT 
 -- 키가 아니다. 옛 지문으로 접으면 v1 이 없는 옛 행이 재사용되어 v1 참조가 영원히 찾히지 않는다.
 -- 기존 행은 NULL 이고 소급하지 않는다: 어느 규칙으로 계산했는지 값이 말하지 못한다.
 ALTER TABLE pqcota_snapshots ADD COLUMN IF NOT EXISTS content_hash_v1 TEXT;
-CREATE INDEX IF NOT EXISTS idx_pqcota_snap_ref ON pqcota_snapshots(org, node_id, ruleset_ver, content_hash_v1);
 
 -- 관측 기록(가벼움) — 적재할 때마다 1행. 스냅샷은 변화 시에만 쌓이므로,
 -- "언제·몇 번 관측했나"(관측 증명)는 이쪽이 보존한다.
@@ -74,6 +73,9 @@ ALTER TABLE pqcota_retention_events ADD COLUMN IF NOT EXISTS org TEXT NOT NULL D
 -- 인덱스 선두가 org다. 조직이 하나뿐인 저장소에서도 손해가 없고(선두 컬럼이 상수), 여럿이면
 -- 조직 안에서만 훑는다. 옛 인덱스는 지우지 않는다 — 지우는 것은 되돌릴 수 없다.
 CREATE INDEX IF NOT EXISTS idx_pqcota_snap_org ON pqcota_snapshots(org, node_id, seq);
+-- 참조 조회 (org, node, ruleset, v1 지문). org 열이 위에서 생긴 뒤에 만들어야 한다 — 새 DB 에서
+-- 이 줄이 org 보다 앞에 있으면 "column org does not exist" 로 스키마 전체가 멈춘다(CI 에서 그랬다).
+CREATE INDEX IF NOT EXISTS idx_pqcota_snap_ref ON pqcota_snapshots(org, node_id, ruleset_ver, content_hash_v1);
 CREATE INDEX IF NOT EXISTS idx_pqcota_obs_org  ON pqcota_observations(org, node_id, seq);
 CREATE INDEX IF NOT EXISTS idx_pqcota_ret_org  ON pqcota_retention_events(org, node_id, seq);
 `
