@@ -32,7 +32,7 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** — why it isn't added all at once, plus the pressure test: [Accepting a new crypto runtime](docs/runtime-acceptance.en.md).
 
-- **v0.8.0 (planned)** — **CNG provisioning** (moved back one slot because v0.7.0 went to plan intake and the execution gate): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
+- **v0.10.0 (planned)** — **CNG provisioning** (moved back two more slots because v0.8.0 went to the approval handoff and v0.9.0 to evidence traceability): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided — [Designs under review §2.2](docs/under-review.en.md).
 
 - **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
   implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
@@ -82,7 +82,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.9.0 — Tracing an action back to the snapshot state it came from (in progress)
+## v0.9.0 — Tracing an action back to the snapshot state it came from (2026-09-11)
 
 **Goal** — make `derived_from_snapshot_id` fillable. The side producing the plan normalizes the same
 results under the same rules and gets the same fingerprint; the history finds the snapshot by it and
