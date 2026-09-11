@@ -98,8 +98,8 @@ type PlanStatus int32
 const (
 	PlanStatus_PLAN_STATUS_UNSPECIFIED PlanStatus = 0 // 미상
 	PlanStatus_PLAN_STATUS_DRAFT       PlanStatus = 1 // 작성 중
-	PlanStatus_PLAN_STATUS_IN_REVIEW   PlanStatus = 2 // 리뷰 큐
-	PlanStatus_PLAN_STATUS_FINALIZED   PlanStatus = 3 // 전 필수항목 판정 + 승인 서명 완료 → 실행 가능
+	PlanStatus_PLAN_STATUS_IN_REVIEW   PlanStatus = 2 // 판정이 끝나 승인을 기다린다. 판정한 쪽이 이 상태로 넘긴다
+	PlanStatus_PLAN_STATUS_FINALIZED   PlanStatus = 3 // 전 필수항목 판정 + 승인 서명 완료 → 실행 가능. 승인(pqcota-approve)만이 이 상태를 만든다
 )
 
 // Enum value maps for PlanStatus.
@@ -447,17 +447,24 @@ func (x *RemediationAction) GetActivation() *ActivationHooks {
 	return nil
 }
 
-// 확정 계획 — 프로비저닝의 유일 실행 근거(§3.7·§5). 스키마=contracts SSOT(공개).
+// 계획 봉투 — 판정을 끝낸 계획(IN_REVIEW)부터 실행 승인까지 끝난 계획(FINALIZED)까지 **같은
+// 메시지로 운반한다.** 이름은 FINALIZED만 담는 것처럼 읽히지만 그렇지 않다. 이름을 바꾸면
+// 소비자가 깨지므로 두고, 여기에 적는다.
+//
+// 판정과 실행 승인은 다른 단계다. 판정한 쪽은 status=IN_REVIEW, approval_signatures와
+// finalized_at을 **비운 채** 넘기고, 승인(pqcota-approve)이 FINALIZED로 올리며 시각을 찍고
+// 그 상태를 서명한다. 프로비저닝의 실행 근거가 되는 것은 FINALIZED뿐이다(§3.7·§5).
+// 스키마=contracts SSOT(공개).
 type FinalizedPlan struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status                PlanStatus             `protobuf:"varint,2,opt,name=status,proto3,enum=pqcota.provisioning.v1.PlanStatus" json:"status,omitempty"`                        // FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
+	Status                PlanStatus             `protobuf:"varint,2,opt,name=status,proto3,enum=pqcota.provisioning.v1.PlanStatus" json:"status,omitempty"`                        // IN_REVIEW=판정 끝·승인 전 / FINALIZED=승인 끝. FINALIZED 아니면 실행 거부(§3.7 최강 게이트)
 	Scope                 string                 `protobuf:"bytes,3,opt,name=scope,proto3" json:"scope,omitempty"`                                                                  // 링/도메인 — 부분 확정 허용(§3.3③)
 	Actions               []*RemediationAction   `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`                                                              // 순서 의미 있음(§4.1 "어떤 순서로")
-	ApprovalSignatures    []string               `protobuf:"bytes,5,rep,name=approval_signatures,json=approvalSignatures,proto3" json:"approval_signatures,omitempty"`              // 승인 서명(§3.3③ finalize 전제)
+	ApprovalSignatures    []string               `protobuf:"bytes,5,rep,name=approval_signatures,json=approvalSignatures,proto3" json:"approval_signatures,omitempty"`              // 실행 승인 서명(§3.3③). 판정한 쪽은 비운다 — 승인이 채운다. IN_REVIEW에 값이 있으면 손상
 	DerivedFromSnapshotId string                 `protobuf:"bytes,6,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"` // 어떤 리컨실리에이션 스냅샷에서(§1.2)
 	RulesetVersion        string                 `protobuf:"bytes,7,opt,name=ruleset_version,json=rulesetVersion,proto3" json:"ruleset_version,omitempty"`                          // 생성 규칙 버전(§1.2 재현)
-	FinalizedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=finalized_at,json=finalizedAt,proto3" json:"finalized_at,omitempty"`
+	FinalizedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=finalized_at,json=finalizedAt,proto3" json:"finalized_at,omitempty"`                                   // 첫 승인이 찍는다. 판정한 쪽은 비운다. IN_REVIEW에 값이 있으면 손상
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }

@@ -97,7 +97,7 @@ case "${1:-}" in
     run_case 00-basic-two-actions
     echo "✅ all cases: ./run.sh --all · reverse: ./run.sh <case> --rollback"
     echo "   • before capture + persisted rollback record: add --dsn <postgres> (discovery must have ingested first — see demo/)"
-    echo "   • change status to PLAN_STATUS_DRAFT and the §3.7 gate refuses it."
+    echo "   • change status to PLAN_STATUS_DRAFT and pqcota-approve refuses to sign it; skip approve and the §3.7 gate refuses it."
     ;;
   *)
     run_case "$@"

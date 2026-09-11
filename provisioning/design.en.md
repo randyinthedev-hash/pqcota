@@ -111,6 +111,24 @@ The result splits three ways: **verified**, **rejected** (signature-shaped, but 
 
 Approvals are attached by `pqcota-approve`, and the key pair comes from `pqcota-keygen`. **Editing the plan after signing invalidates the approval** — the approver is accountable for the content of the actions, not for the name of the plan. If `FillPlan` is going to render the fragments, approve after that.
 
+### 3.1 Judging and approving execution are different steps
+
+The side that produces the plan (judgment) and the side that approves execution answer different questions. **The judging side hands over `status=IN_REVIEW` with `approval_signatures` and `finalized_at` empty, and approval raises it to `FINALIZED`.** The contract already has both states, so no new one is needed. Despite its name, `FinalizedPlan` is an envelope that carries both (see the contract comment).
+
+`pqcota-approve` runs `provisioning.PrepareApproval` **before** signing. By incoming status:
+
+| Incoming status | What happens |
+|---|---|
+| `IN_REVIEW` | There must be **no** existing approval and no `finalized_at`. If either is present the plan is refused as corrupt — someone attached a signature to this status, and that signature is about this status. There must be at least one action, each with a target node and a kind (the same content layer as `Executable`). If that passes, status becomes `FINALIZED` and `finalized_at` becomes now, **first**, and then that state is signed |
+| `FINALIZED` | There must be **both** an existing approval and a `finalized_at`. If either is missing the plan is refused as corrupt — `FINALIZED` only ever comes from an approval, so an empty field means the status was edited in. If both are present, nothing is changed; only the signature is added |
+| `DRAFT` · `UNSPECIFIED` | Refused. Not something to approve |
+
+**The order is the point.** `CanonicalPlan` covers `status` and `finalized_at`, so changing them after signing breaks the signature just made. A second approval re-stamping the time would break the first signature too — that is why nothing changes on `FINALIZED`. Two approvers must sign **the same canonical bytes** for both to verify.
+
+**Structure is checked before approval** because a plan that fails it and then gets signed becomes "approved, yet not executable" — a state in which nobody can say what the approver took responsibility for.
+
+`pqcota-approve` used to look at status not at all; it signed `DRAFT` plans. `Executable` blocked them downstream, so it was not exploitable, but approval was an act that never checked what it was about. And when the judging side put an unverifiable label into the approval slot, the plan had the shape of `FINALIZED` with an approval entry and **looked as though it satisfied the structural gate.** That shape is now refused as corrupt.
+
 **Traceability does not block.** A plan still runs with `derived_from_snapshot_id`, `ruleset_version`, `finalized_at` or an action's `finding_id` empty. But once it has run, the history holds no basis for it, so `TraceabilityWarnings` surfaces that. For the same reason `TargetAlgorithmWarnings` reports actions whose target does not resolve to a hybrid group and which therefore **turn nothing on when deployed**. One line separates blocking from warning: if filling it in by hand is a legitimate path it warns, and if the tool would otherwise write something untrue it blocks.
 
 It is not a derivation but the gate immediately before execution. Passing this function does not cause execution — it only settles the rule of "what counts as grounds for execution".

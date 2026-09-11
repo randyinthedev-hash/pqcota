@@ -82,6 +82,56 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.8.0 — Approval finalizes the plan (2026-09-11)
+
+**Goal** — separate judging from approving execution by contract status. The judging side hands over
+`IN_REVIEW`; approval raises it to `FINALIZED`.
+
+### Built
+
+- **`pqcota-approve` raises the status.** A judged plan arrives as `status=IN_REVIEW` with the approval
+  slot and `finalized_at` empty; the first approval raises it to `FINALIZED`, stamps `finalized_at`,
+  and **then** signs. `CanonicalPlan` covers both fields, so the other order would break the signature
+  just made. Further approvals change nothing and only add a signature — two approvers must sign the
+  same canonical bytes for both to verify. The per-status behaviour lives in one place,
+  `provisioning.PrepareApproval`, and `check-gates` checks that it is wired.
+
+- **Structure is checked before approval.** There must be actions, each with a target node and a kind
+  (the same content layer as `Executable`). A plan that fails this and then gets signed becomes
+  "approved, yet not executable" — a state in which nobody can say what the approver took
+  responsibility for.
+
+- **Corrupt plans are refused.** `IN_REVIEW` with an approval or a `finalized_at`, or `FINALIZED`
+  missing either, is not approved. `FINALIZED` only ever comes from an approval, so an empty field means
+  the status was edited in.
+
+- **The contract comment is corrected.** Despite its name, `FinalizedPlan` is an envelope that carries
+  `IN_REVIEW` too. Renaming would break consumers, so the name stays and the comment says so.
+  `buf breaking` does not object to comments.
+
+### Fixed
+
+- **`pqcota-approve` never looked at status** (v0.7.0–v0.7.6). It signed whatever came in, including
+  `DRAFT`. **What came out wrong**: nothing executed, because `Executable` blocked it downstream. But
+  approval was an act that never checked what it was about, and when the plan-producing side put an
+  unverifiable label into the approval slot, the plan had the shape of `FINALIZED` with an approval
+  entry and **looked as though it satisfied the structural gate.** That shape is now refused as corrupt.
+
+- **The samples and the demo carried labels on `FINALIZED`** (v0.1.0–v0.7.6). Fourteen sample plans
+  had values like `"reviewer:alice"` in the approval slot, and the three demo plans wrote `FINALIZED`
+  with no approval slot at all. **What came out wrong**: the docs said the samples were not approved
+  plans, but their shape said otherwise, and every normal run printed "it is a label and proves
+  nothing". A warning that always fires is never read. All seventeen now arrive as `IN_REVIEW` with the
+  approval slot and `finalized_at` empty.
+
+### What changes for consumers
+
+**Whoever writes a plan by hand does not write `FINALIZED`.** Leave it `IN_REVIEW` and run
+`pqcota-approve`. A plan previously written as `FINALIZED` with an empty approval slot is now
+**refused as corrupt** — set its status back to `IN_REVIEW`. A plan that skipped `pqcota-approve` used
+to be refused with "approvals cannot be checked" and is now refused with "status is not `FINALIZED`".
+Same procedure, different message.
+
 ## v0.7.6 — The gate matches the whole family (2026-09-11)
 
 **Goal** — catch the old copies that survive a ruleset bump.

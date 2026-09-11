@@ -47,8 +47,17 @@ func Executable(p *provisioningv1.FinalizedPlan) error {
 		return fmt.Errorf("%w: no actions", ErrNotFinalized)
 	}
 	// 절차만 보고 내용을 안 보면, **확정 도장은 찍혔는데 실행할 수 없는 계획**이 게이트를 지난다.
-	// 상태·서명·건수는 계획이 어떻게 만들어졌는지에 대한 것이고, 아래 둘은 그 계획으로 무엇을
+	// 상태·서명·건수는 계획이 어떻게 만들어졌는지에 대한 것이고, 아래는 그 계획으로 무엇을
 	// 할 수 있는지에 대한 것이다. §3.7이 확정 계획을 유일한 실행 근거라고 했으니 후자도 봐야 한다.
+	return actionable(p)
+}
+
+// actionable — 내용 층. 조치마다 대상 노드가 있고 무엇을 할지가 정해져 있나.
+//
+// Executable과 PrepareApproval이 함께 쓴다. 승인 전에도 이것을 묻는 이유는, 여기서 걸리는
+// 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생기기 때문이다 — 그것은
+// 승인자가 책임진 것이 무엇인지 말할 수 없는 상태다.
+func actionable(p *provisioningv1.FinalizedPlan) error {
 	for i, a := range p.GetActions() {
 		where := fmt.Sprintf("action[%d] id=%q", i, a.GetId())
 		if a.GetTargetNodeId() == "" {

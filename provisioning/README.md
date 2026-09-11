@@ -57,7 +57,7 @@ flowchart TD
 ## 간단히 써보기
 
 ```bash
-# ⓪ 승인 — 계획에 승인 서명을 붙이고, 검증할 공개키를 등록한다.
+# ⓪ 승인 — 판정을 끝낸 계획(IN_REVIEW)을 FINALIZED로 올리며 서명하고, 검증할 공개키를 등록한다.
 #    확인할 키가 없으면 생성기가 거절한다. 승인은 책임의 소재라 확인되지 않으면
 #    그 자리가 비어 있는 것과 같기 때문이다.
 eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY(개인) · VERIFY_KEY(공개)
@@ -76,7 +76,7 @@ pqcota-provision --level l2 --rollback plan.signed.json > provision-rollback.yml
 ansible-playbook -i targets.ini provision-rollback.yml
 ```
 
-옵션 전체와 provider 모듈을 어디 두는지는 [provisioning/cmd](cmd/README.md). 실행 전에 **계획이 게이트를 통과해야 한다**. `status`가 `PLAN_STATUS_FINALIZED`가 아니거나, 승인 서명이 없거나, 조치가 하나도 없으면 아무것도 생성되지 않는다.
+옵션 전체와 provider 모듈을 어디 두는지는 [provisioning/cmd](cmd/README.md). 실행 전에 **계획이 게이트를 통과해야 한다**. `status`가 `PLAN_STATUS_FINALIZED`가 아니거나, 승인 서명이 없거나, 조치가 하나도 없으면 아무것도 생성되지 않는다. **판정을 끝낸 계획은 `IN_REVIEW`로 오고 `pqcota-approve`가 `FINALIZED`로 올린다** — 그래서 승인을 건너뛴 계획은 상태부터 걸린다.
 
 ## 결과를 가르는 두 축
 
@@ -101,7 +101,8 @@ ansible-playbook -i targets.ini provision-rollback.yml
 
 | 증상 | 원인 |
 |---|---|
-| `plan not finalized: 프로비저닝 실행 거부` | `status`가 FINALIZED가 아니거나 `approvalSignatures`가 비었다 |
+| `plan not finalized: 프로비저닝 실행 거부` | `status`가 FINALIZED가 아니거나 `approvalSignatures`가 비었다. 대개 **`pqcota-approve`를 건너뛴 것**이다 — 판정을 끝낸 계획은 `IN_REVIEW`로 오고 승인이 올린다 |
+| `refusing to approve: … inconsistent with its own status` | `IN_REVIEW`인데 승인이나 확정 시각이 있거나, `FINALIZED`인데 둘 중 하나가 없다. 상태만 손으로 바꿔 넣은 계획이다 |
 | 플레이북에 config 조각이 없다 | `--level l1`이다. config는 L2부터 |
 | 조각에 `Groups`/`namedGroups`가 주석으로만 있다 | `targetAlgorithm`이 KEM이 아니거나 인식되지 않았다 |
 | 플레이북에 조치가 주석으로만 있다 | 그 `kind`는 config로 배포할 수 없다(포크 교체·재빌드 등) |
