@@ -32,8 +32,13 @@ import (
 // 변수에 담아 돌려 넘기는 것도 못 본다. 값이 상수에서 왔는지 끝까지 좇으려면 타입 해석이
 // 필요하고, 그 해석은 이 검사기가 감당하는 범위 밖이다. 못 보는 것을 안 보는 척하지 않는다.
 
-// rulesetHome — 권위 있는 상수를 선언하는 파일. 여기서의 리터럴은 정의 그 자체다.
-const rulesetHome = "pkg/discovery/normalize/pipeline.go"
+// rulesetExempt — 리터럴이 정의 그 자체인 파일. 권위 있는 상수를 선언하는 자리와, 무엇을
+// 막을지 적어 둔 이 검사기 자신이다. 검사기를 빼지 않으면 **자기 규칙에 자기가 걸린다** —
+// 실제로 그랬다(v0.7.4 CI). 추적 전 파일은 `git ls-files` 에 없어 손에서는 통과했다.
+var rulesetExempt = map[string]bool{
+	"pkg/discovery/normalize/pipeline.go": true,
+	"tools/checkgates/ruleset.go":         true,
+}
 
 // rulesetConst — 그 상수의 값. 다른 데서 이 문자열을 베끼면 상수를 고쳐도 따라오지 않는다.
 const rulesetConst = "pqcota-enrich/v1"
@@ -43,7 +48,7 @@ func rulesetPlaceholders(files []string) ([]string, error) {
 	fset := token.NewFileSet()
 	var out []string
 	for _, f := range files {
-		if f == rulesetHome || strings.HasSuffix(f, "_test.go") {
+		if rulesetExempt[f] || strings.HasSuffix(f, "_test.go") {
 			continue
 		}
 		af, err := parser.ParseFile(fset, f, nil, 0)
