@@ -117,7 +117,7 @@ type PlanItem struct {
 }
 ```
 **엣지의 빈 `app_key`는 선언으로 메우되, 관측을 고쳐 쓰지 않는다**(v0.4.0). netcap이 앱을 늘
-짚어내지는 못하므로(디스커버리 설계 §2.3) 운영자가 CSV로 넣는 길이 있다. 그때 적재가 그 자리에서
+짚어내지는 못하므로(디스커버리 설계 §2.3) 운영자가 CSV로 넣는 방법이 있다. 그때 적재가 그 자리에서
 관측 엣지의 빈 칸을 메우는 쪽이 간단해 보이지만 **두 곳에서 막힌다.**
 
 - **서명.** `sign.Canonical`이 `ObservedEdge`를 `app_key`까지 덮는다. 적재가 그 필드를 채우면
@@ -258,7 +258,7 @@ type PlanItem struct {
 
 **이행.** `pqcota_snapshots.content_hash_v1` 열과 `(org, node_id, ruleset_ver, content_hash_v1)` 인덱스가 든다. **접는 기준도 이 지문이다.** `content_hash` 열은 보존하되 키가 아니다. 옛 지문으로 계속 접으면 v1이 빈 옛 행이 재사용되어 v1 열이 영원히 비고, 다운스트림의 참조를 영원히 못 찾는다. v1이 빈 옛 행은 같은 행이 아니라 새 행을 만든다. 어느 규칙으로 계산했는지 알 수 없어 옛 행은 소급하지 않는다. 업그레이드 뒤 첫 적재는 같은 상태여도 새 행이 생긴다. 이행의 자국이지 변화가 아니다.
 
-**찾는 길**은 `Store`를 넓히지 않고 `SnapshotLookup{ByID, ByContentHashV1(node, ruleset, digest)}`로 연다. `Store`는 공개 인터페이스라 넓히면 그것을 구현한 외부 코드가 깨진다. 참조의 **형식**은 이력이 모른다. 그것은 프로비저닝 계약의 일이다.
+**찾는 방법**은 `Store`를 넓히지 않고 `SnapshotLookup{ByID, ByContentHashV1(node, ruleset, digest)}`로 연다. `Store`는 공개 인터페이스라 넓히면 그것을 구현한 외부 코드가 깨진다. 참조의 **형식**은 이력이 모른다. 그것은 프로비저닝 계약의 일이다.
 
 #### 7.3.2 노드별 병합은 결정론적이다 (`normalize.Normalize`)
 
