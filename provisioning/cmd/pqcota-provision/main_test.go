@@ -30,7 +30,7 @@ func buildCLI(t *testing.T) string {
 	return bin
 }
 
-// 승인 검증은 이제 기본으로 닫혀 있다(TP-GATE-6). 아래 케이스들이 재는 것은 **다른 관문**이라,
+// 승인 검증은 이제 기본으로 닫혀 있다(TP-GATE-17). 아래 케이스들이 재는 것은 **다른 관문**이라,
 // 그 문을 명시적으로 열어 두고 본다 — 열어 둔 채로도 그 관문이 제 일을 하는지가 요점이다.
 const unverified = "--allow-unverified-approvals"
 
