@@ -12,10 +12,10 @@
 
 | | 지금 | 세는 법 |
 |---|---|---|
-| 커밋 | 317 (2026-08-05 이후, 2026-09-15 기준) | `git log --oneline \| wc -l` |
+| 커밋 | 325 (2026-08-05 이후, 2026-09-16 기준) | `git log --oneline \| wc -l` |
 | 릴리스 | 25 | `gh release list` |
-| 자동 게이트 | 12 | `Makefile`의 `all` 타깃 |
-| 테스트 함수 | 280 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
+| 자동 게이트 | 13 | `Makefile`의 `all` 타깃 |
+| 테스트 함수 | 298 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
 | 케이스 그룹 | 4 (`TD`·`TV`·`TP`·`TK`) | [테스트 맵](test-map.md) |
 | 설계 문서 | 규정서 · 아키텍처 · 단계별 셋 · 수용 원칙 · 호환성 · 검토 중 | [docs/](README.md) |
 
@@ -45,6 +45,7 @@
 | `build` | 호스트뿐 아니라 **linux/amd64·windows/amd64 교차**가 깨지는 것 |
 | `build-jar` | JVM 사이드카 빌드 |
 | `check-gates` | **규칙은 적어 뒀는데 제품이 부르지 않는 게이트.** 배선을 미뤘다면 왜 미뤘는지를 함수 자리에 적어야 통과한다. 미룬 것은 통과시키되 화면에 낸다 |
+| `check-prose` | **한 번 걷어낸 한국어 표현이 문서·HTML·도구 출력에 다시 들어오는 것.** 엠대시·`조용히`·코드 뒤에 띄운 조사 같은 규칙이 `tools/checkprose/rules.tsv`에 있고, 지금 남은 것은 `baseline.tsv`에 파일마다 적어 두어 **늘면 막고 줄어도 막는다**(줄었으면 기준선을 내려 같은 커밋에 넣는다). `notices.tsv`는 관문이 아니라 알림이다. 영문 짝(`*.en.md`)·코드 블록·주석은 보지 않는다 |
 | `test` | 단위·통합 테스트 전부 |
 
 **게이트는 실제로 겪은 문제에서 나왔다.** `check-gates`는 `pqcota-provision`이 `provisioning.Executable`을

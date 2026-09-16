@@ -202,8 +202,11 @@ the gap with a guess.** A judgement and its basis belong together.
 Saying the same thing twice is a signal as well. If the headline says "it does not always work" and the
 next paragraph says "it is not always filled in", the first one was floating without a reason.
 
-**The gate does not catch this.** `make check-docs` looks at links, anchors and scope wording, not at
-whether a sentence reads naturally. If it reads awkwardly, that is your evidence.
+**The gates catch only part of this.** `make check-prose` blocks expressions that were removed once (em dashes,
+"조용히", a particle spaced off from code, and so on: `tools/checkprose/rules.tsv`) from coming back, and
+`make check-docs` looks at links, anchors and scope wording. Neither can tell whether a sentence reads naturally.
+If it reads awkwardly, that is your evidence. When a fix lowers a rule's count, rewrite the baseline with
+`go run ./tools/checkprose -baseline` and commit it in the same change.
 
 ## Issues · proposals
 
