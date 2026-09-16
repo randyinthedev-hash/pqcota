@@ -17,8 +17,8 @@
 
 | 파일 | 패키지 | 정의 | 규정서 근거 |
 |---|---|---|---|
-| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | 수용 원칙 §2.4, §2.4, §2.7, §3.1 |
-| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | 수용 원칙 §2.4, §2.4, §3.2 |
+| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | 수용 원칙 §2.4, §2.7, §3.1 |
+| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | 수용 원칙 §2.4, §3.2 |
 | `proto/pqcota/discovery/v1/collector.proto` | `pqcota.discovery.v1` | Collector intake gRPC 서비스 · CollectionResult | §1.6 |
 | `proto/pqcota/discovery/v1/edge.proto` | `pqcota.discovery.v1` | 통신 엣지 관측 · ObservedEdge · QuantumPosture | 인벤토리 설계 §6 |
 | `proto/pqcota/discovery/v1/asset.proto` | `pqcota.discovery.v1` | 자산 계층 · Application · ProcessMatch · LiveProcess (Machine→App→Process) | §1.4, §2 |

@@ -156,7 +156,7 @@
 | TD-CNG-7 | **실물로 확인** | Windows 노드에서 `pqcota-cngscan` 재실행 | `machine_id`가 `MachineGuid`로 차고 `derived_from`=`machine-id`. 알고리즘 50개 **전부** 종류가 붙는다(빈 값 0) | 첫 실측에서 `fqdn`으로 떨어졌다. 호스트명을 바꾸면 같은 머신이 다른 노드가 된다. `hardware_uuid`는 SMBIOS라 아직 빈다 |
 
 ### TD-NETWORK. network-collector: 통신 엣지 관측 (설계 §2.3, Phase 1)
-> 다른 collector가 노드의 **능력**(로드된 lib)을 본다면, network-collector는 **실제 등급**(그 연결이 실제로 PQC로 협상됐나)를 본다. **책임은 협상 그룹 "관측"까지**. 등급 분류는 코어 파생(§1.2, `pkg/kernel/posture`). Finding이 아니라 **`ObservedEdge`**(인벤토리 인벤토리 설계 §6)를 채운다. 복호화 없이 핸드셰이크 평문만 관측한다. **구현**: `collectors/network/`(tls.go·ssh.go·dissect.go·edge.go·service.go·capture_linux.go). 라이브 캡처는 libpcap 없이 순수 Go AF_PACKET(`x/sys/unix`). 실측: TD-NETWORK-11=실 crypto/tls로 X25519MLKEM768 협상 관측, TD-NETWORK-12=로컬 OpenSSH 9.6 KEXINIT에서 sntrup761x25519 관측.
+> 다른 collector가 노드의 **능력**(로드된 lib)을 본다면, network-collector는 **실제 등급**(그 연결이 실제로 PQC로 협상됐나)를 본다. **책임은 협상 그룹 "관측"까지**. 등급 분류는 코어 파생(§1.2, `pkg/kernel/posture`). Finding이 아니라 **`ObservedEdge`**(인벤토리 설계 §6)를 채운다. 복호화 없이 핸드셰이크 평문만 관측한다. **구현**: `collectors/network/`(tls.go·ssh.go·dissect.go·edge.go·service.go·capture_linux.go). 라이브 캡처는 libpcap 없이 순수 Go AF_PACKET(`x/sys/unix`). 실측: TD-NETWORK-11=실 crypto/tls로 X25519MLKEM768 협상 관측, TD-NETWORK-12=로컬 OpenSSH 9.6 KEXINIT에서 sntrup761x25519 관측.
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|

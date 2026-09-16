@@ -15,7 +15,7 @@
 | 패키지 | 하는 일 | 설계 근거 |
 |---|---|---|
 | [`discovery/normalize`](discovery/normalize) | 정규화 파이프라인 후단: Finding 파생, 동일성 해소, 완전성 병합, 자산 스코프 게이트 | [디스커버리 §2.4](../discovery/design.md) |
-| [`discovery/history`](discovery/history) | append-only 히스토리: 스냅샷·관측 기록 2층, 내용 지문, 보존 정책 절단 | [인벤토리 §13](../inventory/design.md) |
+| [`discovery/history`](discovery/history) | append-only 히스토리: 스냅샷·관측 기록 2층, 내용 지문, 보존 정책 절단 | [인벤토리 §7](../inventory/design.md) |
 | [`inventory/ingest`](inventory/ingest) | 중앙 적재 관문: 스코프 게이트, 서명 검증, 외부 CBOM 수신 | [위임 수신 설계](../inventory/cbom-intake.md) |
 | [`discovery/procs`](discovery/procs) | 프로세스↔앱 잇기 | [디스커버리 §1.5](../discovery/design.md) |
 | [`inventory`](inventory) | 읽기전용 뷰 렌더(누적·이력·상세·diff), 머신 메타데이터 스토어, hosts 파서 | [인벤토리 설계](../inventory/design.md) |

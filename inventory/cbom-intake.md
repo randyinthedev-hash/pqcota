@@ -57,7 +57,7 @@ CBOMkit은 GPL 계열이다. pqcota는 **링크·번들하지 않고 파일(Cycl
 
 ## 시나리오 SV-2: 소스/아티팩트가 있는 앱
 
-소스·아티팩트는 **pqcota가 스캔하지 않고** CBOMkit 등에 위임, 결과(표준 CycloneDX)만 받는다(§1.1 CI 위임). 상세 설계·라이선스·provenance 경계: **[위임수신_설계(이 문서)**.
+소스·아티팩트는 **pqcota가 스캔하지 않고** CBOMkit 등에 위임, 결과(표준 CycloneDX)만 받는다(§1.1 CI 위임). 상세 설계·라이선스·provenance 경계: **위임 수신 설계(이 문서)**.
 
 - **상황**: 소스 리포·빌드 아티팩트(JAR/WAR·의존성 매니페스트)가 남아 있음. CI에서 CBOMkit 실행 가능.
 - **[사용자]** 자기 **CI/로컬에서 CBOMkit(hyperion/theia) 실행** → CycloneDX 산출·제출. (SD-3의 반대 케이스)

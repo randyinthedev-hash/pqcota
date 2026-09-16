@@ -78,7 +78,7 @@ include,openssl,libcrypto.so.3,/opt/apps/payment-gw,결제 게이트웨이만 �
 - 공유 `.so`는 쓰는 앱이 여럿이라, **하나만 맞아도** 규칙이 걸린다.
 - **제외는 "없음"이 아니다**. 뺀 건수를 적재 요약과 인벤토리 뷰가 고지한다. 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다.
 
-> 근거·경계 상세: [인벤토리 설계 §14 자산 스코프](../design.md), 인수 기준: [테스트케이스 S](../testcases.md).
+> 근거·경계 상세: [인벤토리 설계 §8 자산 스코프](../design.md), 인수 기준: [테스트케이스 S](../testcases.md).
 
 ## ② CBOM 수신: 외부 도구가 낸 결과 임포트
 
@@ -107,7 +107,7 @@ CycloneDX를 수신·검증·적재한다. 부적합은 거부하고 저장하�
 > ```bash
 > cbomkit scan ./repo | pqcota-cbom-ingest - cmdb://payment-gw
 > ```
-> CI는 자기가 무엇을 빌드하는지 아니까 `target-node-id`를 여기서 못박는다(앵커 없으면 스코프 판정으로 라우팅, [discovery/README](../../discovery/README.md) 참고).
+> CI는 자기가 무엇을 빌드하는지 알므로 `target-node-id`를 여기서 못 박는다(앵커 없으면 스코프 판정으로 라우팅, [discovery/README](../../discovery/README.md) 참고).
 
 ## ③ 조회: 쌓인 것을 읽기전용으로 본다
 
@@ -133,7 +133,7 @@ pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <과거id>,<최신id>]
 ```
 
-인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다. `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)이 붙는다. `env PQCOTA_DSN`가 있어야 한다(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
+인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다. `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)가 붙는다. `env PQCOTA_DSN`가 있어야 한다(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
 
 | 플래그 | 하는 일 |
 |---|---|
