@@ -138,7 +138,7 @@ The core pipeline reads those keys and maps them into a typed `Finding`.
 
 ## When you change the contract — ripple check
 
-Fixing the proto is not the end. **Two things in the code are derived from the contract, and forgetting either breaks things silently.**
+Fixing the proto is not the end. **Two things in the code are derived from the contract, and if you forget either, the build still passes and only the behaviour breaks.**
 
 | Also look at | When | If you forget |
 |---|---|---|

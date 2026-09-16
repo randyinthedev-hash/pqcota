@@ -70,7 +70,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
   or `readelf` means observation does not wobble when the target host lacks those tools — or has them with
   a different output format.
 - **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, and gRPC for the contract. Transport authentication (mTLS and the like) is whatever the substrate already has.
-- **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and promote it if needed.
+- **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and replace it when the need arises.
 
 ---
 

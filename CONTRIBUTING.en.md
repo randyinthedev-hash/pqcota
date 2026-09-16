@@ -203,7 +203,7 @@ Saying the same thing twice is a signal as well. If the headline says "it does n
 next paragraph says "it is not always filled in", the first one was floating without a reason.
 
 **The gate does not catch this.** `make check-docs` looks at links, anchors and scope wording, not at
-the grain of a sentence. If it reads awkwardly, that is your evidence.
+whether a sentence reads naturally. If it reads awkwardly, that is your evidence.
 
 ## Issues · proposals
 
