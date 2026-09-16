@@ -197,8 +197,10 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 같은 말을 두 번 하게 되면 그것도 신호다. 헤드라인에서 "늘 되지는 않는다"고 하고 다음 문단에서
 "항상 채워지지는 않는다"고 또 적었다면, 앞의 것이 이유 없이 떠 있었다는 뜻이다.
 
-**게이트가 잡지 못한다.** `make check-docs`는 링크·앵커·범위 표현은 보지만 문장이 자연스러운지는 보지 못한다.
-읽어 보고 어색하면 그것이 근거다.
+**게이트는 일부만 잡는다.** `make check-prose`가 한 번 걷어낸 표현(엠대시·`조용히`·코드 뒤에 띄운 조사 등,
+`tools/checkprose/rules.tsv`)이 다시 들어오는 것을 막고, `make check-docs`는 링크·앵커·범위 표현을 본다. 둘 다
+문장이 자연스러운지는 보지 못한다. 읽어 보고 어색하면 그것이 근거다. 규칙에 걸린 것을 고쳐 줄였으면
+`go run ./tools/checkprose -baseline`으로 기준선을 내려 같은 커밋에 넣는다.
 
 ## 이슈 · 제안
 

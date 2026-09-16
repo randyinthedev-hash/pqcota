@@ -94,6 +94,10 @@ jobs:
       - name: check-gates
         run: make check-gates
 
+      # 문체 게이트 — 한 번 걷어낸 한국어 표현이 문서·HTML·도구 출력에 다시 들어오는 것을 막는다.
+      - name: check-prose
+        run: make check-prose
+
       # 다른 티어를 지목하는 표현이 새어 들어오지 않게 한다.
       - name: check-boundary
         run: make check-boundary

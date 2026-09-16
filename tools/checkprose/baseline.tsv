@@ -1,0 +1,71 @@
+# checkprose baseline. count<TAB>rule<TAB>file
+# Rewrite with: go run ./tools/checkprose -baseline
+2	엠대시	CODE_OF_CONDUCT.md
+2	갈리다	CONTRIBUTING.md
+1	말하다	CONTRIBUTING.md
+1	박히다	CONTRIBUTING.md
+2	갈리다	RELEASE_NOTES.md
+3	갖다	RELEASE_NOTES.md
+2	끊다	RELEASE_NOTES.md
+3	띄운 조사	RELEASE_NOTES.md
+1	이기다	RELEASE_NOTES.md
+1	재료	RELEASE_NOTES.md
+1	엠대시	THIRD-PARTY-NOTICES.md
+1	갈리다	contracts/data-model.md
+3	띄운 조사	demo/README.md
+1	띄운 조사	demo/expected-output/README.md
+1	띄운 조사	demo/recording/edit-sheet.md
+1	엠대시	demo/recording/intro-slides.html
+1	엠대시	demo/recording/outro-card.html
+4	엠대시	demo/recording/section-cards.html
+2	엠대시	demo/recording/title-card.html
+1	엠대시	demo/recording/topology-frame.html
+1	갈리다	discovery/ansible/README.md
+2	띄운 조사	discovery/collectors/cng/README.md
+1	띄운 조사	discovery/collectors/jvm/README.md
+1	갖다	discovery/collectors/network/README.md
+2	갈리다	discovery/design.md
+1	갖다	discovery/design.md
+1	갖다	docs/architecture.md
+2	띄운 조사	docs/architecture.md
+8	엠대시	docs/architectures/platform-structure.html
+2	갈리다	docs/governance.md
+1	엠대시	docs/index.html
+4	띄운 조사	docs/kernel-testcases.md
+1	이기다	docs/kernel-testcases.md
+1	품다	docs/kernel-testcases.md
+1	끊다	docs/regulation.md
+1	인간의 결론	docs/regulation.md
+1	갖다	docs/runtime-acceptance.md
+1	갈리다	docs/under-review.md
+1	갖다	docs/under-review.md
+4	말하다	docs/under-review.md
+3	재료	docs/under-review.md
+1	갈리다	examples/discovery/README.md
+1	끊다	examples/discovery/README.md
+1	이기다	examples/discovery/README.md
+1	띄운 조사	examples/inventory/README.md
+1	갈리다	examples/provisioning/README.md
+1	띄운 조사	examples/provisioning/plans/README.md
+2	띄운 조사	inventory/cbom-intake.md
+1	끊다	inventory/cmd/README.md
+1	말하다	inventory/cmd/README.md
+1	말하다	inventory/design.md
+4	이기다	inventory/design.md
+1	갈리다	inventory/testcases.md
+6	띄운 조사	inventory/testcases.md
+1	말하다	inventory/testcases.md
+2	이기다	inventory/testcases.md
+2	띄운 조사	provisioning/README.md
+2	갖다	provisioning/design.md
+5	띄운 조사	provisioning/design.md
+2	말하다	provisioning/design.md
+1	재료	provisioning/design.md
+3	갈리다	provisioning/testcases.md
+4	띄운 조사	provisioning/testcases.md
+1	말하다	provisioning/testcases.md
+2	박히다	provisioning/testcases.md
+1	이기다	provisioning/testcases.md
+4	엠대시	tools/checkgates/gates.go
+1	조용히	tools/checkgates/gates.go
+1	엠대시	tools/checkgates/ruleset.go
