@@ -19,8 +19,8 @@ The namespaces split into the **three product stages plus a shared vocabulary** 
 
 | File | Package | Defines | Basis in the regulation |
 |---|---|---|---|
-| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | shared vocabulary: Envelope, completeness, controlled-vocabulary enums (crosses all stages) | acceptance principles §2.4, §2.4, §2.7, §3.1 |
-| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | derived Finding · OpensslAxes · JcaAxes | acceptance principles §2.4, §2.4, §3.2 |
+| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | shared vocabulary: Envelope, completeness, controlled-vocabulary enums (crosses all stages) | acceptance principles §2.4, §2.7, §3.1 |
+| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | derived Finding · OpensslAxes · JcaAxes | acceptance principles §2.4, §3.2 |
 | `proto/pqcota/discovery/v1/collector.proto` | `pqcota.discovery.v1` | collector intake gRPC service · CollectionResult | §1.6 |
 | `proto/pqcota/discovery/v1/edge.proto` | `pqcota.discovery.v1` | communication edge observation · ObservedEdge · QuantumPosture | inventory design §6 |
 | `proto/pqcota/discovery/v1/asset.proto` | `pqcota.discovery.v1` | asset hierarchy · Application · ProcessMatch · LiveProcess (Machine→App→Process) | §1.4, §2 |
