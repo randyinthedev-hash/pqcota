@@ -353,7 +353,7 @@ and the approval handoff itself, are still open.
   empty so a placeholder ships, and plans with no basis to trace back to. The artifact is produced and the
   run **exits 3**. On rollback, missing activation hooks and traceability gaps are reported the same way.
 - **Five more gates.** A rule written down but never called by the product; the Go version in the docs
-  against `go.mod`; the test level counts; the governance numbers; and the shape of a Korean document
+  against `go.mod`; the test level counts; the governance numbers; and the section structure of a Korean document
   against its English counterpart.
 - **CI brings up Postgres.** The five org-isolation cases ran there for the first time. The case that needs
   `CAP_NET_RAW` is run once more on its own.

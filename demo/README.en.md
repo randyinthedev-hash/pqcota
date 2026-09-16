@@ -128,7 +128,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 ## Discovery (Ansible/SSH, all of it real)
 1. **OpenSSL assets** — `pqcota-nodescan`: the loaded libssl/libcrypto, found by scanning `/proc`.
-2. **The JCA provider chain** — `pqcota-jvmscan`: **recon then attach**. It finds the running JVM (pay-app's CryptoApp) through `/proc`, attaches to that PID, and reads the real `Security.getProviders()`. That catches **the BouncyCastle CryptoApp registered at runtime with `addProvider`** — there is no static registration in java.security, so **a static scan cannot see it** (symmetrical with openssl's `/proc` scan; `detection=runtime-introspection`). If attach is impossible it falls back honestly to a static probe.
+2. **The JCA provider chain** — `pqcota-jvmscan`: **recon then attach**. It finds the running JVM (pay-app's CryptoApp) through `/proc`, attaches to that PID, and reads the real `Security.getProviders()`. That catches **the BouncyCastle CryptoApp registered at runtime with `addProvider`** — there is no static registration in java.security, so **a static scan cannot see it** (symmetrical with openssl's `/proc` scan; `detection=runtime-introspection`). If attach is impossible it falls back to a static probe, and whatever it could not observe is recorded as a gap.
 3. **Communication edges** — `pqcota-netcap`: TLS/SSH handshakes observed through AF_PACKET (`CAP_NET_RAW`) without decryption.
 
 `pqcota-discover-view` (OSS) collates the results into **discovered assets plus the grade of the observed edges**:
