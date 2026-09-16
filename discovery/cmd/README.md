@@ -4,7 +4,7 @@
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
 
-## ① 접근 준비: 사용자 hosts 파일에서 discovery 접근을 세팅
+## ① 접근 준비: 사용자 hosts 파일에서 discovery 접근을 준비한다
 discovery를 시작하기 전에, 접근 대상 노드의 접속 정보를 **사용자가 직접 작성한 hosts 파일**(CSV)로 정의한다. 접근 비밀(계정·SSH 키)은 이 파일에만 있고 **pqcota 인벤토리엔 적재하지 않는다**.
 
 ### `pqcota-hosts`
@@ -16,7 +16,7 @@ pqcota-hosts [--ansible-out <path>] [--dsn <postgres>] <hosts.csv>
 | 인자·옵션 | 하는 일 |
 |---|---|
 | `<hosts.csv>` | 접속 정보 파일(사용자 작성). 헤더 필수·순서 자유이며 `node_id`만 필수다. **컬럼 표와 그대로 돌려볼 수 있는 샘플**은 [examples/discovery](../../examples/discovery/README.md)에 있다([hosts.csv](../../examples/discovery/hosts.csv)) |
-| `--ansible-out <path>` | Ansible 인벤토리(ini) 생성: 계정·키가 담기므로 **소유자만 읽을 수 있게**(`0600`) 쓴다. 이걸로 ②를 각 노드에 돌린다 |
+| `--ansible-out <path>` | Ansible 인벤토리(ini) 생성: 계정·키가 담기므로 **소유자만 읽을 수 있게**(`0600`) 쓴다. 이것으로 ②를 각 노드에 돌린다 |
 | `--dsn <postgres>` | 엔드포인트를 pqcota 인벤토리에 upsert: 계정·키 제외, 나중에 수정·재사용 가능 |
 
 `<postgres>`는 Postgres 접속 문자열이다. 드라이버가 pgx라 URL 형식과 키=값 형식을 모두 받는다:
@@ -26,13 +26,13 @@ postgres://<user>:<password>@<host>:<port>/<db>     # 예: postgres://postgres:p
 host=localhost port=5432 user=postgres dbname=pqcota
 ```
 
-같은 문자열을 `PQCOTA_DSN` 환경변수로도 준다(적재·조회 커맨드가 이걸 읽는다).
+같은 문자열을 `PQCOTA_DSN` 환경변수로도 준다(적재·조회 커맨드가 이것을 읽는다).
 
 옵션 없이 돌리면 안전 엔드포인트(`node_id`·이름·ip·port)를 stdout에 요약만 한다.
 
 ### 그다음. 만든 인벤토리로 collector 돌리기
 
-`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그건 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보여 주는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
+`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그것은 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보여 주는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
 
 ```bash
 ansible-playbook -i targets.ini discovery/ansible/discover.yml
@@ -101,7 +101,7 @@ pqcota-jvmscan --recon
 | `--recon` | 정찰만 하고 발견된 JVM을 JSON으로 낸다(관측 안 함) |
 | `--output` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
-`--pid`가 지목한 PID가 실행 중 JVM에 없으면 **전부 훑기로 갈아타지 않고 실패한다**. 관측하지 못한 것은 갭이지 다른 대상으로 대체할 일이 아니다.
+`--pid`가 지목한 PID가 실행 중 JVM에 없으면 **전부 훑기로 바꾸지 않고 실패한다**. 관측하지 못한 것은 갭이지 다른 대상으로 대체할 일이 아니다.
 
 `--recon`은 오케스트레이터가 "이 노드에 JVM이 있나"를 보고 에이전트 JAR를 보낼지 정하는 근거다. JVM이 없으면 `[]`를 낸다.
 
@@ -134,7 +134,7 @@ pqcota-cngscan [--output json|table] [node-id]
 
 | 인자·옵션 | 기본값 | 하는 일 |
 |---|---|---|
-| `[node-id]` | 머신 지문에서 뽑은 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
+| `[node-id]` | 머신 지문에서 파생한 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
 | `--output` | `json` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
 **릴리스에 바이너리가 붙지 않는다**. 노드에 올리는 셋이 리눅스 전용이라 그 묶음에 없다. 쓰려면 직접 만든다:
@@ -166,9 +166,9 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discov
 
 | 커맨드 | 권한 | 환경변수 |
 |---|---|---|
-| `pqcota-nodescan` | 자기 프로세스는 그냥 된다. **다른 사용자 것까지 보려면 root**(또는 `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY`: 있으면 결과에 서명(선택) |
+| `pqcota-nodescan` | 자기 프로세스는 권한 없이 된다. **다른 사용자 것까지 보려면 root**(또는 `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY`: 있으면 결과에 서명(선택) |
 | `pqcota-netcap` | **`CAP_NET_RAW` 필수**(`setcap` 또는 root): 없으면 포집이 시작되지 않는다 | `NETCAP_IFACE`(기본 `eth0`) · `NETCAP_WINDOW_SEC`(기본 8초) |
-| `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 대상의 `java.security`를 읽는 정적 폴백으로 떨어진다 | `PQCOTA_JVM_AGENT`=collector.jar 경로: 주면 attach 경로. **없고 도는 JVM도 없으면** java를 하나 띄워 그 기본 provider 체인을 보되 **강등**으로 적는다(도는 앱의 관측이 아니다) |
+| `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 대상의 `java.security`를 읽는 정적 폴백으로 내려간다 | `PQCOTA_JVM_AGENT`=collector.jar 경로: 주면 attach 경로. **없고 도는 JVM도 없으면** java를 하나 띄워 그 기본 provider 체인을 보되 **강등**으로 적는다(도는 앱의 관측이 아니다) |
 | `pqcota-cngscan` | 특별한 권한이 필요 없다. `bcrypt.dll`의 열거 API는 읽기 조회다 | `PQCOTA_SIGN_KEY`: 있으면 결과에 서명(선택) |
 
 
@@ -231,11 +231,11 @@ pqcota-procs [--unit UNIT] [--exe PATH] [--cmd REGEX]
 
 **셋 중 하나 이상**을 줘야 한다(전부 비면 종료코드 2). 다른 사용자 프로세스까지 보려면 root가 필요하다.
 
-프로비저닝 직전 **재시작 대상**을 찾는 용도다. PID는 휘발이라 저장하지 않고 그때그때 조회한다. 아직 이걸 부르는 자동 경로는 없다(플레이북의 `activation.restart`는 사용자가 쓴 명령을 그대로 실행한다).
+프로비저닝 직전 **재시작 대상**을 찾는 용도다. PID는 휘발이라 저장하지 않고 그때그때 조회한다. 아직 이것을 부르는 자동 경로는 없다(플레이북의 `activation.restart`는 사용자가 쓴 명령을 그대로 실행한다).
 
 ---
 **언제 무엇을 쓰나**
 - 여러 노드를 관측해 인벤토리에 쌓기 → **②**를 각 노드에서(기본 `--output json`) → [`pqcota-ingest`](../../inventory/cmd/README.md)로 중앙 적재.
 - 한 노드를 그 자리에서 확인만 하기 → **②**를 `--output table`로. 쌓이지 않는다.
 
-> 로직은 전부 `pkg/discovery/`(정규화·히스토리)·`discovery/collectors/`(수집)에 있고, 이 커맨드들은 그걸 조립하는 얇은 진입점이다. 회수된 결과는 인벤토리의 `pqcota-ingest`가 **append-only 히스토리로 누적**한다.
+> 로직은 전부 `pkg/discovery/`(정규화·히스토리)·`discovery/collectors/`(수집)에 있고, 이 커맨드들은 그것을 조립하는 얇은 진입점이다. 회수된 결과는 인벤토리의 `pqcota-ingest`가 **append-only 히스토리로 누적**한다.

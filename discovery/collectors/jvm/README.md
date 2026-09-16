@@ -20,7 +20,7 @@
 ⑤ 응답 읽기             첫 줄 = 리턴 코드(0=성공), 이후 = 메시지
 ```
 
-**이 절차는 언어 무관**이다. 그래서 이걸 **Go로 직접 구현**했다(`NativeAttach`): openssl collector가 `ldd`·`readelf` 없이 `/proc`·ELF를 자체 파싱하는 것과 같은 원칙이다(외부 툴체인 비의존, §2.3).
+**이 절차는 언어 무관**이다. 그래서 이것을 **Go로 직접 구현**했다(`NativeAttach`): openssl collector가 `ldd`·`readelf` 없이 `/proc`·ELF를 자체 파싱하는 것과 같은 원칙이다(외부 툴체인 비의존, §2.3).
 
 > ⚠️ **트리거 파일과 SIGQUIT은 둘 다, 이 순서로.** 파일 없이 SIGQUIT만 보내면 JVM은 평범한 스레드 덤프 요청으로 보고 **애플리케이션 stdout에 덤프를 쏟는다.** 신호 처리가 비동기라 **파일은 소켓이 열린 뒤에** 지워야 한다. (구현 중 실제로 이 실수를 했고 데모 실행이 잡아냈다.)
 
@@ -36,11 +36,11 @@
 | ② | JDK 클라이언트 (`SubprocessRunner`) | 대상 또는 머신의 JDK | **벤더 무관**: OpenJ9 등 비-HotSpot | 머신에 attach 가능 JDK가 있어야 |
 | ③ | 정적 폴백 (**`StaticFallbackGo`**) | Go | **어떤 JVM·런타임이어도**: `java.security`는 텍스트 파일 | **동적 등록 사각** → 강등·갭 고지 |
 
-- **OS에 따라 커버가 갈린다**: ①은 리눅스 전용이라 Windows에서는 ②·③만 남는다. 즉 **머신에 JDK가 있어야 동적 등록까지 보고**, 없으면 ③으로 내려가 `java.security`만 읽는다. 리눅스에서 ①이 메우던 순수 JRE 구멍이 Windows에서는 열려 있다.
+- **OS에 따라 커버가 갈린다**: ①은 리눅스 전용이라 Windows에서는 ②·③만 남는다. 즉 **머신에 JDK가 있어야 동적 등록까지 보고**, 없으면 ③으로 내려가 `java.security`만 읽는다. 리눅스에서 ①이 메우던 순수 JRE의 빈자리가 Windows에서는 남아 있다.
 - **②가 남아 있는 이유**: ①의 소켓 프로토콜은 HotSpot 구현이라 **OpenJ9**(공유 세마포어 + 다른 IPC)엔 안 통한다. ②는 그 JDK 자신의 attach 구현을 쓰므로 벤더를 안 가린다.
-- **②의 클라이언트 선택**: 대상이 순수 JRE여도, 머신에 attach 가능한 JDK가 있으면 **그걸 클라이언트로 재사용**한다(`AttachClient`). 클라이언트는 대상의 java일 필요가 없다.
+- **②의 클라이언트 선택**: 대상이 순수 JRE여도, 머신에 attach 가능한 JDK가 있으면 **그것을 클라이언트로 재사용**한다(`AttachClient`). 클라이언트는 대상의 java일 필요가 없다.
 - **③으로 내려가는 조건**: `DisableAttachMechanism`, JEP 451(최신 JDK는 동적 에이전트 로딩을 기본으로 차단하므로 `-XX:+EnableDynamicAgentLoading`이 필요하다), 권한 부족, 비-HotSpot+JDK 없음 등.
-- **③이 Go인 이유**: 예전엔 `StaticFallback.java`뿐이라 **그걸 돌릴 java가 필요**했고, ②는 `--add-modules jdk.attach`로 떠서 순수 JRE에선 시작조차 못 해 **폴백까지 함께 못 돌았다**(노드가 통째로 갭). `java.security`는 텍스트 파일이라 Go가 직접 읽어 그 구멍을 닫았다.
+- **③이 Go인 이유**: 예전엔 `StaticFallback.java`뿐이라 **그것을 돌릴 java가 필요**했고, ②는 `--add-modules jdk.attach`로 떠서 순수 JRE에선 시작조차 못 해 **폴백까지 함께 못 돌았다**(노드가 통째로 갭). `java.security`는 텍스트 파일이라 Go가 직접 읽어 그 빈자리를 메웠다.
 - **②는 폴백하지 않는다**: 붙지 못하면 사유와 함께 실패로 끝내고 ③에 넘긴다. Java 쪽에서 폴백하면 `java.home`이 **클라이언트의 것**이라 남의 provider 목록이 대상 자산에 붙는다. 강등 표시가 있어도 값이 틀린 것은 그대로다. ③은 **대상의** JAVA_HOME을 쓰고 모르면 갭을 낸다.
 
 ### 배포에 미치는 영향
@@ -51,7 +51,7 @@
 
 ## 3. 왜 이 collector만 폴리글랏인가
 
-**에이전트는 JVM 안에서 돌아야 하므로 Java일 수밖에 없다.** 그게 유일한 강제이고, 나머지는 Go다.
+**에이전트는 JVM 안에서 돌아야 하므로 Java일 수밖에 없다.** 그것이 유일한 강제이고, 나머지는 Go다.
 
 | 층 | 언어 | 하는 일 |
 |---|---|---|
@@ -60,7 +60,7 @@
 | attach 클라이언트 ①·정찰·정규화 | **Go** | OS IPC로 직접 attach, `/proc` 정찰, 정규화된 CBOM Envelope 변환, intake 계약(§1.6) |
 | attach 클라이언트 ② (`Attacher.java`) | Java | 벤더 무관 폴백 경로에서만 쓰임 |
 
-> **제약은 "JVM"이지 특정 언어가 아니다.** 사이드카는 플랫폼 자신의 언어인 **순수 Java**로 쓴다. Kotlin·Gradle 없이 `javac`+`jar`, 산출물은 이식적인 JAR 하나.
+> **제약은 "JVM"이지 특정 언어가 아니다.** 사이드카는 플랫폼 자신의 언어인 **순수 Java**로 쓴다. Kotlin·Gradle 없이 `javac`+`jar`, 산출물은 이식 가능한 JAR 하나다.
 
 ---
 
@@ -69,11 +69,11 @@
 openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **jvm도 실행 중인 JVM을 먼저 조사한다**(`ScanJVMs`, [procscan.go](procscan.go)). 머신에 JDK가 여럿일 수 있고 **어느 JVM을 보느냐가 결과를 바꾸므로**, 호출자가 PID·JDK 경로를 미리 알아야 하던 비대칭을 없앤다.
 
 - **식별**: 런처가 `java`거나 그 프로세스가 JVM 라이브러리를 로드한 것(래퍼로 재실행돼 exe가 java가 아니어도 잡는다). 보는 창구가 OS마다 다르다. 리눅스는 `/proc/<pid>/exe`·`maps`, Windows는 Toolhelp32의 프로세스·모듈 목록이다.
-- **뽑는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값: 추측하지 않는다(§2.5).
+- **얻는 것**: PID · 런처 경로 · 파생 `JAVA_HOME` · `release`의 버전 · **`AttachCapable`**(=`$JAVA_HOME/lib/libattach.so` 존재 → jdk.attach 있는 JDK인가). best-effort라 못 짚으면 빈 값: 추측하지 않는다(§2.5).
 - **`AttachCapable`의 쓰임**: ②의 클라이언트 선택, 그리고 **attach 실패 사유를 미리 설명**(§2.6 갭 고지의 질), 나아가 [배포 결정](../../collector-deployment.md)의 입력이 된다.
-- **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로 삼는다(§2.6). 조용한 0이 아니다.
+- **못 읽은 프로세스는 갭**: 타 사용자·종료로 접근 불가면 `Denied`로 세어 완전성 갭의 원천으로 삼는다(§2.6). 읽지 못한 프로세스를 누락한 채 0으로 보고하지 않는다.
 - **커버리지는 권한에 달렸다**: root(또는 동일 UID)면 그 사용자 프로세스를 본다. **Windows에서 특히 크게 갈린다**. 실측(Windows 11 26200)에서 일반 사용자는 265개 중 **163개를 못 열었고** 관리자는 264개 중 **3개**였다. Java 서버가 Windows 서비스(SYSTEM)로 도는 배치가 흔하므로, 권한 없이 돌리면 정작 봐야 할 JVM이 통째로 안 보인다. 그래서 못 연 수가 있으면 화면이 그 뜻과 넓히는 법을 함께 낸다.
-- **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다. 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 뭉개진다**(리눅스에서는 `cmdline`이 파일이라 그냥 읽는다).
+- **Windows에서는 앱 이름이 빈다**: 남의 프로세스 명령줄을 읽으려면 그 프로세스의 메모리(PEB)를 들여다봐야 한다. 관측하자고 넘을 선이 아니다. 대신 `App`이 비고 그 사실이 `CmdlineUnavailable`로 남는다. **한 JDK 위에 앱이 여럿이면 식별자가 구별되지 않는다**(리눅스에서는 `cmdline`이 파일이라 바로 읽는다).
 
 > **Windows에서 실제 장비로 확인한 것과 아닌 것**(Windows 11 26200 + JDK 21): 프로세스 열거·식별·JAVA_HOME 유도·권한 효과, 그리고 **attach ②가 실제로 붙는 것**까지 봤다(TD-JVM-11·12·14). ①이 없으니 ②로 내려가고, 붙지 못하면 ③, 그것도 안 되면 갭이다. **아직 못 본 것**은 `jvm.dll`로 잡는 경로(네이티브 런처가 JVM을 품은 경우)다.
 >
@@ -82,7 +82,7 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 **정찰 → attach로 이으면** 발견한 각 PID에 실제로 붙어 provider 체인(동적 등록 포함)을 관측한다(`AttachAll`, [attach.go](attach.go)).
 
 - **다중 JVM 구별**: 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이 된다. 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME→exe. **PID는 안 쓴다**(매 스캔 달라져 이력이 "매번 새 자산"으로 깨진다). 한 JDK에 앱이 여럿이어도 dedup으로 하나가 사라지지 않는다.
-- **attach 실패는 갭**: 차단·권한 부족한 JVM은 조용히 버리지 않고 `AttachStats.Failed`로 센다(§2.6).
+- **attach 실패는 갭**: 차단·권한 부족한 JVM은 세지 않은 채 버리지 않고 `AttachStats.Failed`로 센다(§2.6).
 
 > **관측 경로 두 갈래**: **프로브**(경량)는 별도 JVM을 띄워 **정적 등록 체인만** 본다. **attach**는 실행 중 앱의 `addProvider()` **동적 등록까지** 본다. 정찰은 어느 쪽이든 대상을 찾아주는 선행 단계다.
 
@@ -90,11 +90,11 @@ openssl collector가 `/proc`를 훑어 로드된 libssl을 스스로 찾듯, **j
 
 ## 5. 등록 **순서**가 곧 우선순위다
 
-`provider_set`은 정렬하지 않고 **등록 순서 그대로** 보존한다. JCA는 목록에서 앞선 provider가 같은 알고리즘을 먼저 서비스하므로, **BouncyCastle을 넣어도 앞자리에 없으면 무시된다**(수용 원칙 §2.2). 순서를 잃으면 "PQC provider가 있다"는 관측이 "실제로 그게 쓰인다"를 보장하지 못한다.
+`provider_set`은 정렬하지 않고 **등록 순서 그대로** 보존한다. JCA는 목록에서 앞선 provider가 같은 알고리즘을 먼저 서비스하므로, **BouncyCastle을 넣어도 앞자리에 없으면 무시된다**(수용 원칙 §2.2). 순서를 잃으면 "PQC provider가 있다"는 관측이 "실제로 그것이 쓰인다"를 보장하지 못한다.
 
 ---
 
-## 6. 열화: 실패가 조용한 0이 되지 않는다
+## 6. 열화: 실패를 누락 없이 셈으로 남긴다
 
 ③ 정적 폴백으로 내려가면:
 
@@ -181,6 +181,6 @@ go test ./discovery/collectors/jvm/...            # 단위(실 JVM 없이 — �
 
 그래서 `make build-jar`는 두 번 컴파일한다. `IntrospectAgent`만 `--release 8`, 나머지는 `--release 11`.
 `IntrospectAgent`가 Java 9+ API를 직접 부르지 않는 이유도 이것이다(provider 버전은 `getVersionStr()`을
-리플렉션으로 찾고 없으면 Java 8의 `getVersion()`으로 떨어진다).
+리플렉션으로 찾고 없으면 Java 8의 `getVersion()`으로 내려간다).
 
 실측했다. **JDK 1.8.0_492 대상에 attach해** provider 체인 9개(`SUN,SunRsaSign,…,SunPCSC`)를 읽었다.

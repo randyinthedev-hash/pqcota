@@ -1,4 +1,4 @@
-# files/: 여기에 당신의 provider 모듈을 둔다
+# files/: 여기에 자기 provider 모듈을 둔다
 
 **이 리포에는 provider 모듈 바이너리가 없다.** `.so`는 arch·libc별로 다르고 JAR은 10MB급이라, 커밋하면 리포가 **갱신되지 않는 사본**을 떠안는다. 더미를 넣어두는 것은 더 나쁘다. 로드되지도 않으면서 동작하는 것처럼 보인다.
 
@@ -87,4 +87,4 @@ docker run --rm -v /tmp/try:/work -w /work alpine/ansible:latest sh -c '
 
 활성화·재시작(L3)까지 보려면 `--level l3`과 `activation` 훅이 있는 계획을 쓴다 → [`l3-activation-hooks`](../plans/l3-activation-hooks.json), [예제 README의 L3 절](../README.md#l3-활성화재시작).
 
-> 이 폴더의 `.so`·`.jar`은 gitignore된다. 받은 것이든 당신 것이든 벤더 바이너리가 실수로 커밋되지 않게.
+> 이 폴더의 `.so`·`.jar`은 gitignore된다. 받은 것이든 직접 만든 것이든 벤더 바이너리가 실수로 커밋되지 않게.

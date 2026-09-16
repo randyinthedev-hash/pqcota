@@ -2,12 +2,12 @@
 
 # 기여 안내 (CONTRIBUTING)
 
-pqcota를 **포크·확장·기여**하려는 개발자용. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
+pqcota를 **포크·확장·기여**하려는 개발자를 위한 문서다. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
 
 > **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
 
 > **깨지 않기로 한 것.** 계약·서명·Go API·DB 스키마·혼재 버전, 다섯 면을 갈라 적었다:
-> [호환성 정책](docs/compatibility.md). 무언가를 바꾸기 전에 읽을 것.
+> [호환성 정책](docs/compatibility.md). 무언가를 바꾸기 전에 먼저 읽는다.
 
 ## 사전 요구
 
@@ -57,7 +57,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 릴리스 태그가 없는 동안(v0.1.0 전)에는 기준선이 없어 앞의 것이 건너뛴다. 그 사실을 로그에 찍는다.
 
-그리고 [계약 변경 시 파급 점검](contracts/README.md)(서명 범위·변화 판정)을 함께 볼 것.
+그리고 [계약 변경 시 파급 점검](contracts/README.md)(서명 범위·변화 판정)을 함께 본다.
 
 ## 코드 구조: 최상위는 종류로, 단계는 그 안으로
 
@@ -71,7 +71,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 | `demo/` | Docker 종단 데모(접근준비→디스커버리→인벤토리→프로비저닝) |
 | `tools/` | 리포 도구다. `checkdocs`(문서 게이트, `make check-docs`가 빌드해 실행) |
 
-즉 **`pkg/`·`contracts/`는 단계로, 최상위 실행 폴더도 단계로** 갈린다. **커맨드를 실제로 돌려보려면 [`examples/`](examples/)** (각 단계 `run.sh`), 어느 커맨드가 뭔지는 각 `<stage>/cmd/README`([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md)) 참조.
+즉 **`pkg/`·`contracts/`는 단계로, 최상위 실행 폴더도 단계로** 갈린다. **커맨드를 실제로 돌려보려면 [`examples/`](examples/)** (각 단계 `run.sh`), 어느 커맨드가 무엇인지는 각 `<stage>/cmd/README`([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md))에 있다.
 
 ## 계약 우선 (contract-first)
 
@@ -85,7 +85,7 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 - collector가 하는 일은 **관측 → `CollectionResult` emit**까지다. `evidence_strength`·`pqc_readiness` 같은 파생값은 **채우지 않는다.** 코어가 계약 입력에서 파생한다(§1.2: 규칙이 한 곳에 있어야 재계산으로 재현된다).
 - 계약만 맞추면 언어도 자유다(레퍼런스도 Go·Java 폴리글랏). 도구 고유 enrichment는 표준 `properties` 확장 키(규약: [contracts/README](contracts/README.md))에 싣는다.
-- 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors)을 참고한다. 새 collector도 같은 틀(관측까지·관측하지 못한 건 갭으로·추측 금지)을 따른다.
+- 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors)을 참고한다. 새 collector도 같은 틀(관측까지·관측하지 못한 것은 갭으로·추측 금지)을 따른다.
 
 > **provisioning 생성기는 아직 이런 플러그인 seam이 아니다.** 계획(`plan.proto`)은 공개 계약이지만 생성기 자체는 내부 로직이다. 오해 없게 collector 쪽만 확장 지점으로 둔다.
 
@@ -103,8 +103,8 @@ make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
 
 **정직성을 코드로 강제한다.** 문서가 아니라 실행에서 지켜져야 한다:
 - **unknown은 1급**이다(§2.5). 판별 불가는 빈칸이 아니라 `*_UNSPECIFIED`/명시적 "미상"으로 둔다. 통제 어휘 enum의 `0`은 항상 unknown이다.
-- **갭은 부재가 아니다**(§2.6). 관측하지 못한 것·정책으로 뺀 것을 조용히 드롭하지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
-- **추측·판정 금지**다(§2.1). 관측 안 한 걸 지어내지 않는다. diff가 "변화 없음"이면 그게 정답이다.
+- **갭은 부재가 아니다**(§2.6). 관측하지 못한 것·정책으로 뺀 것을 세지 않은 채 버리지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
+- **추측·판정 금지**다(§2.1). 관측하지 않은 것을 지어내지 않는다. diff가 "변화 없음"이면 그것이 정답이다.
 
 **파생값은 원본에서 재계산 가능하게**(§1.2). `evidence_strength` 같은 파생은 collector가 아니라 코어가 원본(`detection_method`)에서 결정론적으로 만든다. 규칙이 한 곳(`pkg/discovery/normalize`)에 있어야 재현된다. **서명·정규화 경로엔 벽시계·난수를 넣지 않는다**(같은 입력→같은 바이트). 내용 지문은 휘발 필드(관측 횟수·`last_seen`)를 뺀다.
 
@@ -138,7 +138,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 | **테스트 실패 메시지** | **영어** | CI 로그에 남는다 |
 
 **주석만 한국어인 이유가 이 표의 전부다.** 나머지는 전부 프로그램이 **내보내는 것**이고, 내보내는
-것에는 읽는 사람을 고를 권리가 없다. 화면에 한국어를 보이고 싶으면 그건 뷰에서 옮길 일이지
+것에는 읽는 사람을 고를 권리가 없다. 화면에 한국어를 보이고 싶으면 그것은 뷰에서 옮길 일이지
 관측 데이터에 한국어를 담을 일이 아니다.
 
 > **예외가 하나 있다.** `tools/checkdocs`의 **패턴**은 한국어다. 한국어 문서를 검사하는 도구라 찾는 대상이
@@ -146,7 +146,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 
 문서의 정본은 **한국어**이고, 영문(`*.en.md`)은 번역본이다. 기계 번역의 도움을 받으며, 둘이 다르면 한국어가 맞다.
 
-**한국어 문서를 고치면 짝이 되는 `*.en.md`를 원문에 맞춰 다시 번역한다.** 한쪽만 고치면 번역본이 조용히
+**한국어 문서를 고치면 짝이 되는 `*.en.md`를 원문에 맞춰 다시 번역한다.** 한쪽만 고치면 번역본이 알아채지 못하는 사이에
 낡아 "둘이 다르면 한국어가 맞다"가 면죄부가 된다. 영문 문서 안의 링크는 **영문 짝이 있으면 그쪽을 가리키고**,
 없으면 한국어 문서를 가리키되 `(Korean)`으로 밝힌다.
 
@@ -198,7 +198,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 "항상 채워지지는 않는다"고 또 적었다면, 앞의 것이 이유 없이 떠 있었다는 뜻이다.
 
 **게이트가 잡지 못한다.** `make check-docs`는 링크·앵커·범위 표현을 보지 문장의 결은 못 본다.
-읽어 보고 어색하면 그게 근거다.
+읽어 보고 어색하면 그것이 근거다.
 
 ## 이슈 · 제안
 

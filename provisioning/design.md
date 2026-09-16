@@ -3,7 +3,7 @@
 # 배포 서브시스템 설계 (Deploy / Provisioning Subsystem Design)
 
 **대상 규정**: 규정서 §4(DEPLOY 프로비저닝) · §3.7(Inventory→Deploy 게이트) · 아키텍처 §5(OSS 경계).
-**범위**: 확정 계획(FinalizedPlan)을 입력으로 받아 remediation **아티팩트를 생성**하는 부분. 플릿 오케스트레이션(drain·rolling·헬스체크 게이트)은 하지 않는다.
+**범위**: 확정 계획(FinalizedPlan)을 입력으로 받아 remediation **아티팩트를 생성**하는 부분이다. 플릿 오케스트레이션(drain·rolling·헬스체크 게이트)은 하지 않는다.
 
 > **한 줄**: **"무엇을 배포할지"를 생성한다.** "어떻게 안전하게 fleet에 미는지"의 오케스트레이션은 하지 않는다. §4.1의 "리뷰어=무엇을·어떤 순서로(계획 레이어) / 플랫폼=어떻게 안전하게(실행 레이어)"를 코드 경계로 옮긴 것이다.
 
@@ -249,7 +249,7 @@ JCA 고유 검증: 주입한 provider가 **실제 디스패치 체인에 진입�
 | OpenSSL 백엔드 통합 희망 | openssl-jostle | 이원 런타임 provider 수렴 |
 | 특수 알고리즘·HSM·독자 통제 | 내부 PQC provider | 아래 참조 |
 
-**내부 provider 포지셔닝**: BC가 세 표준 알고리즘을 표준 API로 제공하고 FIPS 인증본(BC-FJA)까지 있으므로, Java 쪽에서 표준 PQC를 자체 구현할 정당성은 약하다. **내부 provider의 가치는 (a) OpenSSL 런타임 특수 요구, (b) BC 미지원 독자 알고리즘·HSM 연동, (c) 라이선스·공급망 통제 사유가 있을 때로 한정**한다. 순수하게 표준 PQC를 Java에 넣는 목적이면 BC 채택이 재발명보다 합리적이며, 내부 provider는 OpenSSL·특수 케이스에 집중한다.
+**내부 provider의 자리**: BC가 세 표준 알고리즘을 표준 API로 제공하고 FIPS 인증본(BC-FJA)까지 있으므로, Java 쪽에서 표준 PQC를 자체 구현할 정당성은 약하다. **내부 provider의 가치는 (a) OpenSSL 런타임 특수 요구, (b) BC 미지원 독자 알고리즘·HSM 연동, (c) 라이선스·공급망 통제 사유가 있을 때로 한정**한다. 순수하게 표준 PQC를 Java에 넣는 목적이면 BC 채택이 재발명보다 합리적이며, 내부 provider는 OpenSSL·특수 케이스에 집중한다.
 
 **라이선스 주의**: BouncyCastle 표준판은 MIT 계열 허용적 라이선스라 제품에 번들·직접 통합해도 copyleft 전염이 없다([라이선스 정리](../docs/licensing.md)의 GPL 격리 대상 아님). 단 BC-FJA(FIPS) 변형은 별도 라이선스·계약 조건일 수 있어 규제 자산을 채택할 때 확인한다.
 
@@ -286,7 +286,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 > placeholder가 조각 안에만 있으면 놓치기 쉬우므로, `pqcota-provision`은 이런 조치를 만나면
 > **stderr에 ⚠를 찍는다**(`조치 …: provider_class 미확정 …`). 계획은 유효하고 플레이북도 정상
 > 생성되니 실행을 막지는 않는다. "생성 → 사람이 FQCN 기입 → 적용" 경로를 살리되, 불완전 산출물이
-> **조용히** 지나가지 않게 할 뿐이다.
+> **경고 없이** 지나가지 않게 할 뿐이다.
 
 **커스텀 provider는 `providerClass`에 FQCN을 적는다.** 그러면 placeholder도 경고도 없이 완결된다:
 
@@ -366,13 +366,13 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 | JCA config 조각 | `/etc/pqcota/java.security.pqcota` | L2 |
 | (조각이 여럿일 때) | `…/openssl-pqc.<조치id>.cnf` 처럼 조치별로 분리 | 한 노드·같은 런타임에 **내용이 다른** 조각이 둘 이상 |
 
-한 경로에 두 번 배치하면 뒤가 앞을 덮어써 앞 조치가 조용히 사라지므로, 그럴 때는 경로를 나누고 그 사실을 알린다. 한 파일로 합치지는 않는다. 섹션이 충돌할 수 있어 병합 순서를 도구가 정하면 판단이 된다. 어느 조각을 참조할지는 `activation.activate`가 정한다.
+한 경로에 두 번 배치하면 뒤가 앞을 덮어써 앞 조치가 경고 없이 사라지므로, 그럴 때는 경로를 나누고 그 사실을 알린다. 한 파일로 합치지는 않는다. 섹션이 충돌할 수 있어 병합 순서를 도구가 정하면 판단이 된다. 어느 조각을 참조할지는 `activation.activate`가 정한다.
 
 **전부 새 파일이다.** 기존 `openssl.cnf`·`java.security`를 덮어쓰지 않는다. 그래서 되돌리기가 **파일 제거**로 끝난다.
 
 #### 어느 머신에 놓이나: `node_id`가 곧 Ansible 인벤토리 호스트
 
-계획의 `targetNodeId`가 그대로 플레이북의 대상이 된다. 생성물은 `hosts: ["<node_id>"]`로 나온다(계획 문자열은 항상 인용해 내므로 이름에 `:`가 있어도 YAML이 깨지지 않는다). `node_id`는 **식별 앵커**이고 IP가 아니므로(§1.3에서 IP는 로케이터일 뿐이다), 그 이름을 실제 접속(IP·SSH 사용자·키)으로 잇는 건 **사용자의 Ansible 인벤토리**다. 그 인벤토리는 `pqcota-hosts`가 `hosts.csv`에서 생성한 `targets.ini`(런타임 전용·0600)로, 각 `node_id`를 `ansible_host`·`ansible_user`·키로 매핑한다. 즉:
+계획의 `targetNodeId`가 그대로 플레이북의 대상이 된다. 생성물은 `hosts: ["<node_id>"]`로 나온다(계획 문자열은 항상 인용해 내므로 이름에 `:`가 있어도 YAML이 깨지지 않는다). `node_id`는 **식별 앵커**이고 IP가 아니므로(§1.3에서 IP는 로케이터일 뿐이다), 그 이름을 실제 접속(IP·SSH 사용자·키)으로 잇는 것은 **사용자의 Ansible 인벤토리**다. 그 인벤토리는 `pqcota-hosts`가 `hosts.csv`에서 생성한 `targets.ini`(런타임 전용·0600)로, 각 `node_id`를 `ansible_host`·`ansible_user`·키로 매핑한다. 즉:
 
 ```
 plan.targetNodeId ─┐
@@ -421,7 +421,7 @@ L3 후에는 **재스캔으로 상태 변경을 확인한다**(§4.3). Deploy가
 프로비저닝 *전* 상태를 보존해 **롤백**을 가능케 한다(§1.3 행위 계열·§4.3 단계경계=롤백지점).
 
 - **`CryptoState`**(before/after)는 특정 시점 애플리케이션의 암호 상태다: `modules`(모듈+버전, 예 `libcrypto.so.3@3.0.13`·`oqsprovider@0.6`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 config 원문 참조).
-- **`ProvisioningRecord`**는 프로비저닝 행위 1건의 **append-only 히스토리**다: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수다. 공유 라이브러리 교체는 그걸 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
+- **`ProvisioningRecord`**는 프로비저닝 행위 1건의 **append-only 히스토리**다: `(node_id, app_keys, action_id, plan_id)` + `before`(롤백 기준)·`after` + `ProvisioningStatus`(staged/installed/activated/rolled_back/failed). `app_keys`는 복수다. 공유 라이브러리 교체는 그것을 로드한 앱 전부에 영향이라 영향 범위를 온전히 기록한다(Finding.app_keys 유래).
 - **이 리포가 쓰는 것은 `before` + `STAGED`까지다.** 그것도 `--dsn`을 준 경우에 한한다. 주지 않으면 캡처도 영속도 하지 않고 플레이북만 낸다(`pqcota-provision`이 그 사실을 stderr로 알린다). `after`와 나머지 상태(installed·activated·rolled_back·failed)는 **적용을 실행하는 쪽**이 채운다. 이 리포는 Ansible을 돌리지 않으므로 적용 결과를 알 방법이 없다(§5 경계). 계약이 수명 전체를 모델링하는 것은 그 뒤를 받는 쪽을 위해서다.
 - **롤백** = `before` 복원(구 모듈·config 배치) + **통제된 재시작**. 부팅 검증에 실패했거나 사용자가 요청할 때 한다. 단계 경계마다 롤백 지점(§4.3).
 - **안전성**: 기존 암호 모듈을 *제자리 덮어쓰지 않고*(mmap 손상 위험) 새 모듈을 원자적 배치, before 모듈·config는 보존 → 언제든 복원. 활성화는 재시작 때만(동적 반영은 하지 않는다, §5).

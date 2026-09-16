@@ -60,7 +60,7 @@
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TP-GATE-1](../pkg/provisioning/plan_test.go) | `TestExecutable`: FINALIZED+승인 서명+조치 ≥1 / draft·in-review / 서명 없음 / 조치 0건 / `nil` / **대상 노드 없는 조치** / **`kind=UNSPECIFIED` 조치** | 첫째만 **실행 가능**, 나머지는 전부 **거부**. 뒤 둘은 `ErrNotActionable`로 사유가 갈린다 | 확정 전 계획으로 머신을 건드리지 못하게 하되, 정당한 계획까지 막으면 아무것도 배포할 수 없다. 잘못된 입력에서 터지면 게이트가 없는 것과 같다. 절차만 보고 내용을 안 보면 **확정 도장은 찍혔는데 실행할 수 없는 계획**이 지나간다 |
+| [TP-GATE-1](../pkg/provisioning/plan_test.go) | `TestExecutable`: FINALIZED+승인 서명+조치 ≥1 / draft·in-review / 서명 없음 / 조치 0건 / `nil` / **대상 노드 없는 조치** / **`kind=UNSPECIFIED` 조치** | 첫째만 **실행 가능**, 나머지는 전부 **거부**. 뒤 둘은 `ErrNotActionable`로 사유가 갈린다 | 확정 전 계획으로 머신을 건드리지 못하게 하되, 정당한 계획까지 막으면 아무것도 배포할 수 없다. 잘못된 입력에 크래시하면 게이트가 없는 것과 같다. 절차만 보고 내용을 안 보면 **확정 도장은 찍혔는데 실행할 수 없는 계획**이 지나간다 |
 | [TP-GATE-2](../pkg/provisioning/plan_test.go) | `TestProviderClassWarnings`: placeholder를 낳는 조치 | 경고 1건(provider 이름·해결책 포함). `Executable`은 **여전히 통과** | 조각 안 주석은 열어봐야 보이므로 경고로도 띄운다. 미확정과 실행 거부는 별개다 |
 | [TP-GATE-4](../pkg/provisioning/plan_test.go) | `TestTraceabilityWarnings`: `derived_from_snapshot_id`·`ruleset_version`·`finalized_at`·`finding_id`가 빈 계획 / 넷 다 채운 계획 | 앞은 항목마다 경고, 뒤는 경고 0건. 둘 다 `Executable`은 **통과** | 되짚을 수 없다는 사실은 되짚어야 할 때가 되어서야 드러난다. 실행을 막을 일은 아니지만 그대로 둘 일도 아니다(§1.2·§2.6) |
 | [TP-GATE-5](../pkg/provisioning/plan_test.go) | `TestTargetAlgorithmWarnings`: 목표가 하이브리드 KEM / 빈 목표 / 서명 알고리즘 / config로 안 내는 조치 | 첫째와 넷째는 경고 0건, 둘째·셋째는 경고 1건 | 그룹으로 안 풀리면 조각의 `Groups` 줄이 주석으로 나가 **배치해도 아무것도 켜지지 않는다.** 그 사실이 조각 안에만 적혀 있으면 열어보지 않는 한 모른다 |
@@ -71,7 +71,7 @@
 | [TP-GATE-15](../provisioning/cmd/pqcota-provision/main_test.go) | `TestIncompletePlanDoesNotExitZero`: 실행 근거는 되지만 목표 알고리즘·추적 근거가 빈 계획 | **플레이북은 나오고 종료 코드가 3이다.** `--allow-incomplete`면 0이고 경고는 그대로 나온다 | 생성물이 stdout으로 먼저 나가고 경고는 뒤에 stderr로 간다. 종료 상태까지 0이면 stderr를 모으지 않는 자동화에서 **불완전한 플레이북이 정상 산출물로 남는다.** 막지 않는 이유는 사람이 손으로 채우는 것이 정당한 경로여서다 |
 | [TP-GATE-16](../provisioning/cmd/pqcota-provision/main_test.go) | `TestRollbackAlsoReportsWhatIsMissing`: 같은 계획을 `--rollback`으로 | 추적성 경고가 나오고 종료 코드가 3이다. 목표 알고리즘 경고는 섞이지 않는다. 산출물에 「버전 롤백이 아니다」가 적힌다 | 롤백 경로가 생성 직후 반환해 **경고를 하나도 내지 않았다.** 되돌림도 이력에 남아야 하는 조치라 근거 공백은 정방향과 같은 무게다 |
 | [TP-GATE-17](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnverifiableApprovalsAreRefusedByDefault`: 승인 자리에 서명이 아니라 이름표가 있고 `PQCOTA_APPROVAL_KEYS`가 없다 | **거절되고 플레이북이 한 줄도 안 나온다.** 어떻게 열지(`--allow-unverified-approvals`)를 함께 알린다. 적으면 통과하되 「확인하지 않았다」가 그대로 남는다 | 전에는 경고하고 통과시켜, 승인 무결성이 **닫을 수 있는 수단**에 머물고 기본 경로는 열린 채였다. 여는 문을 명령줄 하나로 둔 것은 환경변수로 열리면 무엇이 검증됐는지가 셸 설정에 숨기 때문이다 |
-| [TP-GATE-18](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnknownLevelIsRefused`: `--level L3`·`l4`·`full` | **사용법 오류(2)로 끝나고 산출물이 없다** | 모르는 값을 알리지 않고 L2로 삼키면 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고 읽는다. 말한 것보다 낮게 도는 것도 잘못이다 |
+| [TP-GATE-18](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnknownLevelIsRefused`: `--level L3`·`l4`·`full` | **사용법 오류(2)로 끝나고 산출물이 없다** | 모르는 값을 알리지 않고 L2로 받아들이면 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고 읽는다. 말한 것보다 낮게 도는 것도 잘못이다 |
 | [TP-GATE-19](../provisioning/cmd/pqcota-provision/main_test.go) | `TestUnsetAutomationLevelCountsAsABlank`: 다른 빈칸은 없고 위임 수준만 말하지 않는 계획 | 이름으로 알리고 **종료 3**. 산출물은 나온다 | 말하지 않으면 실행 수준이 `--level`에서 오는데 그 플래그는 **승인 서명 밖이다.** 계획이 값을 적으면 그 자리가 닫힌다 |
 | [TP-GATE-9](../pkg/provisioning/approve_test.go) | `TestDraftAndUnspecifiedCannotBeApproved`·`TestStructureIsCheckedBeforeApproval`: `DRAFT`·`UNSPECIFIED`·`nil` / **`IN_REVIEW`와 `FINALIZED` 각각**에서 조치 0건·대상 노드 없음·종류 미정 | 전부 **승인 거부**(`ErrNotApprovable`). 거부하면서 상태·확정 시각·승인 목록을 바꾸지 않는다 | 전에는 `pqcota-approve`가 상태를 아예 보지 않아 `DRAFT`에도 서명이 찍혔다. 구조를 승인 전에 묻는 것은, 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생기기 때문이다. `FINALIZED`에서 건너뛰면 첫 승인 뒤 조치가 지워진 계획에 추가 승인이 붙는다. 처음 구현이 그랬다 |
 | **[TP-GATE-10](../pkg/provisioning/approve_test.go)** | `TestFirstApprovalFinalizesThenSigns`·`TestSecondApprovalKeepsStatusAndTime`: 깨끗한 `IN_REVIEW`를 승인하고 서명 / 이틀 뒤 두 번째 승인자가 더 서명 | 첫 승인이 `FINALIZED`로 올리고 시각을 찍은 **뒤에** 서명해 검증되고 `Executable`을 지난다. 두 번째 승인은 시각을 다시 찍지 않고 **둘 다 검증된다** | `CanonicalPlan`이 상태와 시각을 덮으므로 순서가 바뀌면 방금 만든 서명이 깨진다. 두 승인자가 같은 정준 바이트에 서명해야 둘 다 선다 |
@@ -96,7 +96,7 @@
 | [TP-RENDER-9](../pkg/provisioning/render_test.go) | `TestRenderJCAJarPlacementGuidance`: JAR 배치 안내 | 실제 배치 경로 + **JDK 9+** 세대 차이 | 안내가 실제 경로와 어긋나지 않게. `lib/ext`는 JDK 9에서 없어졌다 |
 | [TP-RENDER-10](../pkg/provisioning/render_test.go) | `TestBCDefaultClassStatesVersionAssumption`: BC 기본 클래스 | **버전 전제 명시**(`1.80+` · `BouncyCastlePQCProvider`). 클래스를 명시했거나 BCFIPS면 안 붙음 | 실측: 1.80/1.81엔 ML-KEM 서비스 17개, 1.78.1엔 0개. 계획은 JAR 버전을 알려주지 않는다 |
 | [TP-RENDER-11](../pkg/provisioning/render_test.go) | `TestProviderSlotReplacementIsStated`: `security.provider.2=` | **자리 대체**임을 조각과 `ProviderSlotWarnings` 양쪽에 명시. config-only엔 경고 없음 | 실측: JDK 21에서 목록은 12개 그대로고 원래 2번이던 SunRsaSign이 사라진다. 삽입처럼 읽히면 생성물이 거짓말을 한다 |
-| [TP-RENDER-12](../pkg/provisioning/render_test.go) | `TestNamedGroupsAlwaysKeepsClassicFallback`: config-only·주입 둘 다 | PQC 그룹 뒤에 **고전 폴백**을 항상 남긴다 | 실측: 미지 그룹만 주면 JDK 21 JSSE가 초기화에서 터진다. 생성물이 앱을 죽인다 |
+| [TP-RENDER-12](../pkg/provisioning/render_test.go) | `TestNamedGroupsAlwaysKeepsClassicFallback`: config-only·주입 둘 다 | PQC 그룹 뒤에 **고전 폴백**을 항상 남긴다 | 실측: 미지 그룹만 주면 JDK 21 JSSE가 초기화에 실패한다. 생성물이 앱을 죽인다 |
 | [TP-RENDER-13](../pkg/provisioning/render_test.go) | `TestFillPlan`: 혼합 계획에 계획 채움 | 모든 조치의 `config_artifact`가 채워짐 | 스냅샷과 ruleset만으로 같은 아티팩트가 다시 나와야 한다(§1.2) |
 
 ### TP-PLAYBOOK. 플레이북 생성: 단계적 배포 위임 (§5)
@@ -112,10 +112,10 @@
 | [TP-PLAYBOOK-6](../pkg/provisioning/stage_test.go) | `TestL3ActivationOrder`: 훅 4개 → L3 | pre → 배치 → activate → restart. 롤백은 정확한 역순. L2엔 새지 않음 | 순서가 곧 안전성이다. 내리고, 바꾸고, 참조되게 하고, 새로 로드한다 |
 | [TP-PLAYBOOK-7](../pkg/provisioning/stage_test.go) | `TestL3MissingHooksWarnButDoNotGuess`: 훅이 빈 계획 | shell 태스크 0개 + `ActivationWarnings`로 무엇이 안 일어나는지 고지 | 빈칸에 그럴듯한 명령을 채우면 도구가 모르는 것을 아는 척한다(§2.5) |
 | [TP-PLAYBOOK-8](../pkg/provisioning/stage_test.go) | `TestL3HooksGroupedAndDeduped`: 한 노드에 조치 여럿, 같은 재시작 | 단계별로 모으고 **같은 명령은 한 번만** | 조치별로 내면 서비스를 n번 흔들고, 활성화 사이에 재시작이 끼어 일부만 반영된 채 뜬다 |
-| [TP-PLAYBOOK-9](../pkg/provisioning/stage_test.go) | `TestConfigFragmentsNeverOverwriteEachOther`: 내용이 다른 조각 2개 | 조치별 경로로 분리 + `ConfigConflictWarnings`. 같으면 한 경로 | 같은 경로에 두 번 쓰면 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다 |
+| [TP-PLAYBOOK-9](../pkg/provisioning/stage_test.go) | `TestConfigFragmentsNeverOverwriteEachOther`: 내용이 다른 조각 2개 | 조치별 경로로 분리 + `ConfigConflictWarnings`. 같으면 한 경로 | 같은 경로에 두 번 쓰면 뒤가 앞을 경고 없이 덮어써 앞 조치가 사라진다 |
 | [TP-PLAYBOOK-10](../pkg/provisioning/stage_test.go) | `TestJCAClasspathHintInHeader`: JCA 주입이 섞인 계획 | classpath·`--module-path` 함정과 `activation.activate` 안내가 헤더에. openssl 전용엔 **안 뜸** | JAR 배치만으로는 provider가 로드되지 않는다. 먼저 짚되 무관한 노트로 어지럽히지 않는다 |
 | [TP-PLAYBOOK-11](../pkg/provisioning/stage_test.go) | `TestGeneratedPlaybooksAreValidYAML`: 따옴표·`#`·줄바꿈이 섞인 id·이름·훅 | 여섯 산출물이 전부 **YAML로 파싱된다** | 문법부터 깨지면 ansible이 파일을 읽지도 못한다. 실제로 여러 줄 명령에서 그렇게 깨졌다 |
-| [TP-PLAYBOOK-12](../pkg/provisioning/paths_test.go) | `TestModulePathAgreesAcrossGenerators`: config 렌더·L2 배치·L2 롤백 | 셋이 **같은 절대 경로** | 어긋나면 OpenSSL이 모듈을 못 찾고 조용히 실패한다 |
+| [TP-PLAYBOOK-12](../pkg/provisioning/paths_test.go) | `TestModulePathAgreesAcrossGenerators`: config 렌더·L2 배치·L2 롤백 | 셋이 **같은 절대 경로** | 어긋나면 OpenSSL이 모듈을 못 찾는데 오류를 내지 않는다 |
 | [TP-PLAYBOOK-13](../pkg/provisioning/paths_test.go) | `TestConfigNeverUsesRelativeModule`: 이름이 빈 값·기본·커스텀 | `module =` 줄이 항상 `/`로 시작 | 상대 경로면 OpenSSL이 모듈 디렉터리에서 찾다 실패한다 |
 | [TP-PLAYBOOK-14](../pkg/provisioning/paths_test.go) | `TestPerProviderModuleSourceVariable`: 이름에 비영숫자(`my-prov.1`) | `pqcota_module_src_my_prov_1` → 전역 → `files/` 순 폴백 | 한 플레이북에 여러 provider가 섞여도 각자 소스를 지정할 수 있게. 변수명은 Ansible 규칙에 맞춘다 |
 | [TP-PLAYBOOK-15](../pkg/provisioning/paths_test.go) | `TestChecksumGate`: 모듈 배치 | `checksum_algorithm: sha256` + `assert` + `… is defined` 가드 | 무엇을 심었는지 고정한다. 안 주면 검사만 건너뛴다 |
@@ -147,7 +147,7 @@
 | 4 | **경로·무결성**(삼자 일치·절대 경로·sha256·디렉터리) | TP-PLAYBOOK-12–17 | unit |
 | 5 | **before 캡처 · 레코드** | TP-RECORD-1–3 | unit + Postgres |
 
-**핵심 인수 기준**은 **TP-GATE-1(finalized+서명+조치 아니면 실행 거부)**이다. 확정되지 않은 계획으로 머신을 건드리지 못하게 하는 최강 게이트. 그리고 **TP-RENDER-4·TP-PLAYBOOK-2(config로 못 넣는 조치는 정직하게 주석·L2에서는 재시작을 만들지 않음)**. 단계 경계가 코드로 강제됨을 보장. **TP-PLAYBOOK-6–9**는 L3 훅의 의미 순서·롤백 대칭, 빈 훅에서 명령을 지어내지 않음, 그리고 **조각·재시작이 서로를 덮어쓰지 않음**을 못박는다.
+**핵심 인수 기준**은 **TP-GATE-1(finalized+서명+조치 아니면 실행 거부)**이다. 확정되지 않은 계획으로 머신을 건드리지 못하게 하는 최강 게이트다. 그리고 **TP-RENDER-4·TP-PLAYBOOK-2(config로 못 넣는 조치는 정직하게 주석·L2에서는 재시작을 만들지 않음)**. 단계 경계가 코드로 강제됨을 보장한다. **TP-PLAYBOOK-6–9**는 L3 훅의 의미 순서·롤백 대칭, 빈 훅에서 명령을 지어내지 않음, 그리고 **조각·재시작이 서로를 덮어쓰지 않음**을 못박는다.
 
 **실제 장비에서 잡힌 회귀**는 따로 못 박아 뒀다. TP-PLAYBOOK-12(경로 삼자 일치)·TP-PLAYBOOK-17(깨끗한 노드의 디렉터리)·TP-PLAYBOOK-11(YAML 문법)·TP-RENDER-11(JSSE 초기화)·TP-RENDER-10(provider 자리 대체). 생성만 보면 통과하고 적용에서 깨지던 것들이다.
 

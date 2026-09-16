@@ -105,7 +105,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 | **`MachineEndpoint`** | discovery 재접속용 **재사용 연결 메타데이터** | `node_id`·`name`·`ip`·`port`: ★**비밀 필드 없음**(키·계정·암호는 사용자 파일에만, §1.5) |
 
 ### `decision.proto`: 리뷰 판정 (스키마만 있고 판정 엔진은 없다)
-`FinalizedPlan`(provisioning)의 인벤토리 짝. 판정이 finalize되면 확정 계획으로 이어진다.
+`FinalizedPlan`(provisioning)의 인벤토리 짝. 판정이 확정되면 확정 계획으로 이어진다.
 
 | 메시지/enum | 목적 | 핵심 필드 |
 |---|---|---|
@@ -164,7 +164,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 
 > **`app_key`가 늘 채워지는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 관측한 프로세스에서
 > 바로 나오므로 앱이 항상 붙는다. **`ObservedEdge`도 앱까지 가되, 조회하는 순간 소켓이
-> 살아 있어야 된다**. 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없어서, 캡처 시점에 소켓
+> 살아 있어야 한다**. 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없어서, 캡처 시점에 소켓
 > inode를 `/proc/*/fd`와 대조해 채우기 때문이다.
 >
 > 그래서 짧게 붙었다 끊긴 연결은 비고, 권한이 모자라 남의 프로세스를 못 읽어도 빈다. **빈

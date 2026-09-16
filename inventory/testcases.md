@@ -45,7 +45,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TV-INGEST-1](../pkg/inventory/ingest/central_test.go) | `TestIngestResults`: 스코프 게이트 + Normalize + 히스토리 적재 + 엣지 부착 종단 | 통과분이 스냅샷으로, 엣지가 붙어서 | 관문 하나가 네 일을 순서대로 하는지. 하나라도 빠지면 뒤가 조용히 빈다 |
+| [TV-INGEST-1](../pkg/inventory/ingest/central_test.go) | `TestIngestResults`: 스코프 게이트 + Normalize + 히스토리 적재 + 엣지 부착 종단 | 통과분이 스냅샷으로, 엣지가 붙어서 | 관문 하나가 네 일을 순서대로 하는지. 하나라도 빠지면 뒤가 오류 없이 빈다 |
 | [TV-INGEST-2](../pkg/inventory/ingest/central_test.go) | `TestIngestSignatureReject`: 서명 검증 실패 | **거부**(§2.6) | 손댄 결과가 인벤토리에 들어오지 않게 한다 |
 | [TV-INGEST-3](../pkg/inventory/ingest/central_test.go) | `TestIngestNoMaster`: 스코프 마스터가 없을 때(로컬·데모) | 게이트 생략, 전부 수용 | 스코프를 안 쓰는 사용자를 막지 않는다 |
 | [TV-INGEST-4](../pkg/inventory/render_test.go) | `TestRenderEndToEnd`: collector 산출물(CycloneDX) → Normalize → 읽기전용 뷰 | 관측이 자산 표와 등급 집계까지 이어진다 | 적재와 뷰가 따로는 되는데 이어지지 않으면 사용자에게는 아무것도 안 보인다 |
@@ -59,7 +59,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-HISTORY-2](../pkg/inventory/history_view_test.go) | `TestByID` · `TestRenderDetailShowsEdges`: 스냅샷 단건 조회(`-snapshot`) | 자산 표 + **그 스냅샷의 관측 엣지**. 없는 id는 `(nil, nil)` | 그 시점의 자산과 엣지를 함께 편다. 누적 뷰는 합계만 내므로 여기서만 볼 수 있다 |
 | [TV-HISTORY-3](../pkg/inventory/history_view_test.go) | `TestRenderDiff`: 버전이 바뀐 자산으로 두 스냅샷 diff | finding id가 (node, name, runtime, fork) 해시라 유지 → **"변경"** 한 줄. 판정 어휘 없음 | 버전만 바뀐 자산이 추가+삭제로 흩어지면 무엇이 달라졌는지 읽을 수 없다. 그리고 관측 사실만 서술한다(§2.1) |
 | [TV-HISTORY-4](../pkg/inventory/history_view_test.go) | `TestRenderDiffNoChange`: 같은 스냅샷끼리 diff | "변화 없음"을 **명시**(빈 출력 아님) | 변화가 없을 때 없다고 말한다. 빈 출력은 "안 봤다"와 구분되지 않는다 |
-| [TV-HISTORY-5](../pkg/inventory/render_test.go) | `TestRenderDiffDirection`: 인자를 **시간 역순**으로 준 diff | `added`·`removed`가 뒤집혀 읽히므로 **역순 경고**를 낸다 | 인자 순서를 잘못 주면 결과가 정반대로 읽힌다. 조용히 뒤집히지 않게 한다 |
+| [TV-HISTORY-5](../pkg/inventory/render_test.go) | `TestRenderDiffDirection`: 인자를 **시간 역순**으로 준 diff | `added`·`removed`가 뒤집혀 읽히므로 **역순 경고**를 낸다 | 인자 순서를 잘못 주면 결과가 정반대로 읽힌다. 경고 없이 뒤집히지 않게 한다 |
 | [TV-HISTORY-6](../pkg/inventory/render_test.go) | `TestRenderDiffWarnsOnRulesetChange`: `ruleset`이 다른/같은 두 스냅샷 diff | 다르면 재계산 경고, 같으면 안 뜸(§1.2) | 파생값 차이를 실제 변화로 읽으면 없던 변경을 쫓게 된다. 매번 뜨는 경고는 읽히지 않는다 |
 | **[TV-HISTORY-7](../pkg/discovery/history/fingerprint_v1_test.go)** | `TestContentHashV1IsFrozen` · `TestContentHashV1CoversWhatDedupHashDoesNot` · `TestContentHashV1IsOrderInvariant` · `TestContentHashV1SortsEdgesByFullIdentity`: 고정 입력의 v1 지문 / 규칙 판·제외 수·본 계층·엣지의 앱을 하나씩 바꾸기 / finding·엣지·계층·앱 키 순서 섞기 / 암호군만 다른 두 엣지의 순서 | **v1 은 고정값과 같다**(바뀌면 v2 를 만든다). 넷 다 v1 만 달라지고 중복 억제 지문은 그대로다. 순서를 섞어도 같다. 암호군만 다른 두 엣지는 순서에 안 흔들리고 하나가 빠지면 달라진다 | 참조용 지문은 다운스트림이 같은 스냅샷을 같은 규칙으로 만들어 **같은 값을 내야** 이력에서 찾힌다. 그러려면 닫혀 있어야 하고, 중복 억제가 못 보던 것(규칙 판·제외 수·본 계층·앱)을 봐야 하며, 입력 순서에 흔들리면 안 된다. 두 용도를 한 함수에 섞지 않는다 |
 | **[TV-HISTORY-8](../pkg/discovery/history/lookup_test.go)** | `TestDedupFoldsOnV1NotOnLegacyHash` · `TestByContentHashV1`: 같은 내용 재적재 / 같은 내용·다른 규칙 판 / v1이 빈 옛 행 뒤에 같은 내용 / `(node, ruleset, digest)` 조회 | 접힌다 / **접히지 않고 새 행** / **옛 행을 재사용하지 않고 새 행** / 찾는다. 규칙 판이 다르거나 노드가 다르거나 지문이 비면 못 찾는다 | 중복 억제를 옛 지문으로 계속 하면 v1 이 빈 옛 행이 재사용되어 v1 열이 영원히 비고, 다운스트림의 참조를 영원히 못 찾는다. 열을 보존하는 것과 그 열로 접는 것은 다른 결정이다 |
@@ -75,7 +75,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-RETENTION-4](../pkg/discovery/history/prune_test.go) | `TestPruneDryRun`: 기본 실행 | 계획만 산출, **아무것도 지우지 않음**, 절단 기록도 없음 | 지우는 일은 명시적으로만 일어나야 한다 |
 | [TV-RETENTION-5](../pkg/discovery/history/prune_test.go) | `TestPruneNeverDeletesLatest`: 400일 지난 스냅샷이 노드별 최신 | **지우지 않음**(최신 불가침) | 노드별 최신은 인벤토리 뷰와 before 캡처의 근거다 |
 | [TV-RETENTION-6](../pkg/discovery/history/prune_test.go) | `TestPruneConservativeWithBothAxes`: `older-than` + `keep-last` 동시 | **보수적**: 최근 N개 안이면 오래돼도 보존 | 두 축이 부딪히면 더 많이 남기는 쪽으로. 지운 것은 되돌릴 수 없다 |
-| [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent`: 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 구멍이 "관측 안 함"과 구분되지 않는다 |
+| [TV-RETENTION-7](../pkg/discovery/history/prune_test.go) | `TestPruneRecordsEvent`: 절단 실행(`-apply`) | 스냅샷·관측 기록 삭제 + **절단 기록 영속** | 절단한 사실이 없으면 이력의 빈자리가 "관측 안 함"과 구분되지 않는다 |
 | [TV-RETENTION-8](../pkg/discovery/history/pg_test.go) | `TestPgStore`: Postgres 영속(`PQCOTA_TEST_DSN` 있을 때) | 2층 저장·조회가 인메모리와 같은 계약 | 저장소를 바꿔도 이력의 뜻이 달라지지 않는다 |
 | [TV-ATTR-0](../pkg/inventory/edge_app_test.go) | `TestUnattributedEdgeIsMarkedNotBlank`: 앱이 붙은 엣지·exe 경로로 붙은 엣지·못 잡은 엣지 셋 | `@app` · `@app(exe-path)` · **`@?`**. 완전성 노트도 함께 나온다 | 빈칸은 "그런 열이 없다"와 구별되지 않는다. 무엇을 모르는지 보여야 선언으로 채울지 판단한다 |
 | [TV-ATTR-5](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverEntersTheTimeline`: 선언을 적재하고 노드 목록·스냅샷 수를 본다 | 노드가 안 생기고 스냅샷도 0. 선언 저장소에만 들어간다 | 타임라인에 넣으면 조회·이력·diff가 저마다 걸러 내야 한다. **실제로 기본 조회와 이력에서 두 번 샜다** |
@@ -90,7 +90,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-ORG-5](../pkg/org/org_test.go) | `TestScopedIsSatisfiedByTheStores`: 저장소 다섯을 `org.Scoped`로 받아 본다 | 전부 만족하고, `history.Store`에서도 타입 단언으로 물을 수 있다 | 인터페이스에 메서드를 더하면 밖의 구현체가 깨진다. 별도 인터페이스로 두되 **실제로 만족하는지**는 잠가 둔다 |
 | [TV-ORG-3](../pkg/discovery/history/org_test.go) | `TestStoreIsBoundToAnOrg` · `TestOrgsDoNotSeeEachOther`: 두 인메모리 저장소가 같은 `web-01` | `Nodes()`·`ByID()`·`Latest()`가 남의 것을 안 준다 | **모양만 확인한다.** 객체가 다르므로 통과해도 격리를 증명하지 않는다. TV-ORG-4가 그 일을 한다 |
 | [TV-ORG-4](../pkg/discovery/history/org_pg_test.go) | `TestPgOrgsShareATableAndStillDoNotSeeEachOther`: **한 테이블을 공유하는** 두 조직(`PQCOTA_TEST_DSN` 있을 때) | 서로를 못 보고, 자기 것은 보인다 | `web-01` 충돌은 예외가 아니라 기본값에 가깝다. 섞이면 한 노드의 이력으로 병합되어 되돌릴 수 없다 |
-| [TV-REJECT-1](../pkg/inventory/ingest/rejection_test.go) | `TestRequiredModeRefusesToIngestWithoutAVerifier`: 서명 필수인데 검증기 없음 | 결과별 거절이 아니라 **적재가 시작되지 않는다** | 조용히 통과하는 경로가 열려 있는지가 문제이지 어떤 결과가 왔는지가 아니다 |
+| [TV-REJECT-1](../pkg/inventory/ingest/rejection_test.go) | `TestRequiredModeRefusesToIngestWithoutAVerifier`: 서명 필수인데 검증기 없음 | 결과별 거절이 아니라 **적재가 시작되지 않는다** | 검증 없이 통과하는 경로가 열려 있는지가 문제이지 어떤 결과가 왔는지가 아니다 |
 | [TV-REJECT-2](../pkg/inventory/ingest/rejection_test.go) | `TestUnverifiedIsNotTheSameAsPassed`: 검증기 없이 적재 | `Unverified` 1 · `Rejected` 0 · `Accepted` 1 | "검증했고 통과했다"와 "검증할 키가 없었다"를 한 숫자로 합치면 리포트가 실제보다 강한 말을 한다 |
 | [TV-REJECT-3](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionsOutliveTheProcess`: 미등재·앵커없음 결과 적재 | 저장소에 사유·collector·지문·시각이 남는다 | 남기지 않으면 "계속 거절당하고 있었다"와 "아무 일도 없었다"가 구분되지 않는다 |
 | [TV-REJECT-4](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionStoreIsOptional`: 남길 곳 없이 적재 | v0.1.x와 같은 결과 | 기록을 더한 것이 적재 자체를 바꾸면 안 된다 |
@@ -102,9 +102,9 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-SCOPE-2](../pkg/kernel/scope/asset_test.go) | `TestExcludeByAppKeyGlob`: `exclude`가 app_key glob에 매치 | 그 finding 제외 | 잡음을 앱 이름으로 걸러낸다. 없으면 인벤토리가 못 쓰게 된다 |
 | [TV-SCOPE-3](../pkg/kernel/scope/asset_test.go) | `TestIncludeOverridesExclude`: `exclude` **뒤에** `include` | **뒤 규칙이 이긴다**(순서 기반) | "계열 전부 빼되 이것만 예외"를 쓸 수 있어야 한다 |
 | [TV-SCOPE-4](../pkg/kernel/scope/asset_test.go) | `TestMultiAppAttribution`: 공유 `.so`(쓰는 앱 여럿) 중 하나만 매치 | 매치로 판정 | 공유 `.so`는 쓰는 앱이 여럿이라 하나만 걸려도 규칙이 걸린다 |
-| [TV-SCOPE-5](../pkg/kernel/scope/asset_test.go) | `TestBadAction`: `action`에 오타(`drop` 등) | 오류 | 조용히 무시하면 정책이 안 먹은 걸 모른다 |
+| [TV-SCOPE-5](../pkg/kernel/scope/asset_test.go) | `TestBadAction`: `action`에 오타(`drop` 등) | 오류 | 오류 없이 무시하면 정책이 적용되지 않은 것을 모른다 |
 | [TV-SCOPE-6](../pkg/kernel/scope/asset_test.go) | `TestSharedLibExcludeRescuedByTrailingInclude`: 공유 `.so`를 한 앱만 겨냥해 exclude | 그 `.so`를 함께 쓰는 **운영 앱까지 제외됨**. 운영 앱 `include`를 뒤에 두어 구제 | 겨냥한 앱만 빠질 것 같지만 영향 범위가 넓다는 것을 드러낸다 |
-| [TV-SCOPE-7](../pkg/inventory/ingest/central_test.go) | `TestIngestReportsScopeExclusions`: 정책이 자산을 뺀 적재 | 적재 요약·스냅샷·인벤토리 뷰 **셋 다** 건수 고지, 제외한 자산은 남지 않음 | 스코프가 조용히 자산을 지우면 인벤토리가 거짓말을 한다(§2.6·§8.3) |
+| [TV-SCOPE-7](../pkg/inventory/ingest/central_test.go) | `TestIngestReportsScopeExclusions`: 정책이 자산을 뺀 적재 | 적재 요약·스냅샷·인벤토리 뷰 **셋 다** 건수 고지, 제외한 자산은 남지 않음 | 스코프가 고지 없이 자산을 지우면 인벤토리가 거짓말을 한다(§2.6·§8.3) |
 
 ## 2. 구현 순서 (unit 먼저)
 

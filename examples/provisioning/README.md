@@ -32,7 +32,7 @@
 | [`openssl-3.0-provider-inject`](plans/openssl-3.0-provider-inject.json) | 3.0–3.4 (provider API 있음) | `PROVIDER_INJECT` | 모듈 배치 `/opt/pqcota/oqsprovider.so` + 그 **절대 경로를 참조**하는 config |
 | [`openssl-1.1.1-fork-replace`](plans/openssl-1.1.1-fork-replace.json) | 1.1.1·1.0.2 (provider API 없음) | `FORK_REPLACE` | **아무것도 배치 안 함**. `# config로 배포 불가: 수동 단계` 주석 |
 
-**핵심**: 버전이 낮을수록 도구가 해줄 수 있는 게 줄어든다. 1.1.1은 조용히 빠지지 않고 **왜 수동인지가 플레이북에 남는다.**
+**핵심**: 버전이 낮을수록 도구가 해줄 수 있는 것이 줄어든다. 1.1.1은 표시 없이 빠지지 않고 **왜 수동인지가 플레이북에 남는다.**
 
 ## JVM/JCA: provider 상황이 조치를 정한다
 
@@ -43,7 +43,7 @@
 | [`jca-fips-bcfips`](plans/jca-fips-bcfips.json) | **규제 자산** | `PROVIDER_INJECT` · `BCFIPS` | 같은 흐름이나 **등록 클래스가 다르다**(`BouncyCastleFipsProvider`): FIPS 라우팅 |
 | [`jca-eol-jdk-upgrade`](plans/jca-eol-jdk-upgrade.json) | EOL JDK | `JDK_UPGRADE` | **아무것도 배치 안 함**. 수동 단계 주석 |
 
-**핵심**: `providerChoice`가 **등록 클래스명을 정한다.** 규제 여부에 따라 BC ↔ BC-FJA가 갈리는 게 계획 단계의 판정이다.
+**핵심**: `providerChoice`가 **등록 클래스명을 정한다.** 규제 여부에 따라 BC ↔ BC-FJA가 갈리는 것이 계획 단계의 판정이다.
 
 > JCA `PROVIDER_INJECT`는 항상 **우선순위 2**에 등록한다. JCA는 목록에서 앞선 provider가 먼저 서비스하므로, 뒤에 넣으면 JAR이 있어도 **아무것도 바뀌지 않는다**(수용 원칙 §2.2(d)).
 
@@ -124,7 +124,7 @@ L1/L2는 놓기만 한다. **L3는 놓은 것이 실제로 참조되게 만들�
 흔들고, 활성화 사이에 재시작이 끼어 일부만 반영된 채 뜬다.
 
 `l3-activation-hooks`는 JCA 케이스라 **JAR 배치≠로드** 함정을 훅으로 닫는 모습을 보인다. 그 안의
-경로·변수명은 예시일 뿐이니 당신 앱의 기동 방식으로 바꿔 적는다.
+경로·변수명은 예시일 뿐이니 자기 앱의 기동 방식으로 바꿔 적는다.
 
 ### 훅이 없으면: 지어내지 않는다
 

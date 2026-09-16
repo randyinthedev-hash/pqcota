@@ -68,19 +68,19 @@
   <span class="en">An open-source platform that handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) in three stages: <b>observe → inventory → generate</b>.</span>
 </p>
 <p class="lede">
-  <span class="ko">이 소프트웨어는 교향악의 <i>단원</i>이지 마에스트로가 아니다 — 무엇을·언제 이관할지 지휘하는 것은 이 도구를 쓰는 사용자다.</span>
+  <span class="ko">이 소프트웨어는 교향악의 <i>단원</i>이지 마에스트로가 아니다. 무엇을·언제 이관할지 지휘하는 것은 이 도구를 쓰는 사용자다.</span>
   <span class="en">This software is a <i>player</i> in the orchestra, not the maestro — what to migrate and when is conducted by whoever wields it.</span>
 </p>
 
 <div class="cards">
   <a class="card wide" href="architectures/platform-structure.html">
     <b><span class="ko">📐 플랫폼 구조와 이해관계자</span><span class="en">📐 Platform structure and stakeholders</span></b>
-    <span class="ko">누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가 — 그림 두 장.</span>
+    <span class="ko">누가 무엇을 주고, 플랫폼이 무엇을 내고, 실행은 어디서 일어나는가를 그림 두 장으로 보인다.</span>
     <span class="en">Who supplies what, what the platform produces, and where execution happens — in two figures.</span>
   </a>
   <a class="card wide" href="https://www.youtube.com/watch?v=2KMcxjZ_7kQ">
     <b><span class="ko">▶ 시연영상 (2분 55초)</span><span class="en">▶ Demo video (2 min 55 s)</span></b>
-    <span class="ko">관측 · 전환물 생성 · 정직성 — 노드에서 ML-KEM이 0개에서 14개가 되고 다시 0개로 돌아간다.</span>
+    <span class="ko">관측 · 전환물 생성 · 정직성: 노드에서 ML-KEM이 0개에서 14개가 되고 다시 0개로 돌아간다.</span>
     <span class="en">Observe, generate, stay honest — ML-KEM goes 0 → 14 → 0 on a real node.</span>
   </a>
   <a class="card" href="https://github.com/randyinthedev-hash/pqcota">
@@ -103,7 +103,7 @@
 <div class="stages">
   <div class="stage">
     <b><span class="ko">① 관측 (Discovery)</span><span class="en">① Discovery</span></b>
-    <span class="ko">실행 중인 시스템이 <b>실제로</b> 어떤 암호를 쓰는지 본다 — 로드된 라이브러리, 살아있는 JVM의 provider 체인, 핸드셰이크에서 협상된 알고리즘.</span>
+    <span class="ko">실행 중인 시스템이 <b>실제로</b> 어떤 암호를 쓰는지 본다: 로드된 라이브러리, 살아있는 JVM의 provider 체인, 핸드셰이크에서 협상된 알고리즘.</span>
     <span class="en">Sees what cryptography a running system <b>actually</b> uses — loaded libraries, a live JVM's provider chain, the algorithms negotiated in the handshake.</span>
   </div>
   <div class="stage">
@@ -113,7 +113,7 @@
   </div>
   <div class="stage">
     <b><span class="ko">③ 전환물 생성 (Provisioning)</span><span class="en">③ Provisioning</span></b>
-    <span class="ko">확정된 계획에서 config 조각과 Ansible 플레이북을 만든다 — 적용용과 되돌림용이 <b>함께</b> 나온다. 돌리는 것은 사용자의 Ansible이다.</span>
+    <span class="ko">확정된 계획에서 config 조각과 Ansible 플레이북을 만든다. 적용용과 되돌림용이 <b>함께</b> 나온다. 돌리는 것은 사용자의 Ansible이다.</span>
     <span class="en">Generates config fragments and Ansible playbooks from a finalized plan — apply and rollback come out <b>together</b>. Running them is your Ansible's job.</span>
   </div>
 </div>

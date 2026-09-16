@@ -7,7 +7,7 @@
 | `CryptoApp.java` | **pay-app** | BouncyCastle provider를 `java.security`에 등록하고 주기적으로 서명(JVM을 살아있게 유지) | `pqcota-jvmscan`이 **JCA provider 체인(BC 포함)** 관측 |
 | `pqc-echo/` (Go) | **pay-app** :8443 서버 + 타 노드가 client로 접속 | Go `crypto/tls`가 **X25519MLKEM768 하이브리드**를 협상 | `pqcota-netcap`이 **🟢 PQC 엣지**(`web-gw → pay-app`) 관측 |
 
-즉 각 워크로드가 "관측될 무언가"를 만들고, collector가 그걸 복호화 없이 관측한다:
+즉 각 워크로드가 "관측될 무언가"를 만들고, collector가 그것을 복호화 없이 관측한다:
 - 🟢 PQC 엣지 ← **pqc-echo**의 X25519MLKEM768 핸드셰이크
 - JCA BouncyCastle provider 체인 ← **CryptoApp**의 provider 등록
 - (🔴 고전 엣지·OpenSSL 자산은 노드 base 이미지의 `sshd`·`openssl s_server`에서: 워크로드 아님)
