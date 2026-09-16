@@ -31,7 +31,7 @@
 | 요구 수집 능력 (규정서 근거) | 기술적 제약 |
 |---|---|
 | `/proc/*/maps`·`lsof`·`ss`, `ldd`/`readelf` (§2.3 OpenSSL) | 시스템 콜·네이티브 툴링. Go/Rust/C 계열 |
-| 정적 ELF 심볼·문자열 시그니처로 fork·version 판별 (§2.3, §2.3) | ELF 파서. Go(`debug/elf`)·Rust(`goblin`) 둘 다 강함 |
+| 정적 ELF 심볼·문자열 시그니처로 fork·version 판별 (§2.3) | ELF 파서. Go(`debug/elf`)·Rust(`goblin`) 둘 다 강함 |
 | **JVM attach → `Security.getProviders()` 실체 조회 (§2.2, §2.3)** | **JVM 내부에서만 가능하다. JVM이 강제된다(플랫폼 언어 Java). 우회할 수 없다** |
 | CycloneDX CBOM(ECMA-424) 입출력 (§2.4, §3.2) | 성숙 라이브러리 필요. JVM·JS·Go 순으로 성숙 |
 | Ansible/Salt substrate 오케스트레이션 (§4.4) | 서브프로세스·SSH. 언어 무관, Go 편함 |
@@ -178,7 +178,7 @@
 }
 ```
 
-### 3.2 Finding 스키마 (런타임 추상, 수용 원칙 §2.4, §2.4)
+### 3.2 Finding 스키마 (런타임 추상, 수용 원칙 §2.4)
 
 ```go
 // 런타임 무관 1급 필드 + 런타임별 분기 필드

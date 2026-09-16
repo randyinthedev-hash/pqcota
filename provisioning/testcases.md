@@ -41,7 +41,7 @@
 
 #### SP-5. 규제 자산: FIPS 라우팅
 - **상황**: `fips_validation`을 요구하는 자산.
-- **생성물**: provider 선택을 **FIPS 검증 provider로 강제 라우팅**한 config 조각(Java=BC-FJA `BouncyCastleFipsProvider`, 설계 §4.2 · 규정서 §4.10).
+- **생성물**: provider 선택을 **FIPS 검증 provider로 강제 라우팅**한 config 조각(Java=BC-FJA `BouncyCastleFipsProvider`, 설계 §4.2).
 
 #### SP-6. 롤백: before 캡처와 되돌림
 - **상황**: 조치 후 검증 실패, 또는 되돌리기로 결정.
@@ -147,7 +147,7 @@
 | 4 | **경로·무결성**(삼자 일치·절대 경로·sha256·디렉터리) | TP-PLAYBOOK-12–17 | unit |
 | 5 | **before 캡처 · 레코드** | TP-RECORD-1–3 | unit + Postgres |
 
-**핵심 인수 기준**은 **TP-GATE-1(finalized+서명+조치 아니면 실행 거부)**이다. 확정되지 않은 계획으로 머신을 건드리지 못하게 하는 최강 게이트. 그리고 **TP-RENDER-3·A2(config로 못 넣는 조치는 정직하게 주석·L2에서는 재시작을 만들지 않음)**. 단계 경계가 코드로 강제됨을 보장. **TP-PLAYBOOK-6–A9**는 L3 훅의 의미 순서·롤백 대칭, 빈 훅에서 명령을 지어내지 않음, 그리고 **조각·재시작이 서로를 덮어쓰지 않음**을 못박는다.
+**핵심 인수 기준**은 **TP-GATE-1(finalized+서명+조치 아니면 실행 거부)**이다. 확정되지 않은 계획으로 머신을 건드리지 못하게 하는 최강 게이트. 그리고 **TP-RENDER-4·TP-PLAYBOOK-2(config로 못 넣는 조치는 정직하게 주석·L2에서는 재시작을 만들지 않음)**. 단계 경계가 코드로 강제됨을 보장. **TP-PLAYBOOK-6–9**는 L3 훅의 의미 순서·롤백 대칭, 빈 훅에서 명령을 지어내지 않음, 그리고 **조각·재시작이 서로를 덮어쓰지 않음**을 못박는다.
 
 **실제 장비에서 잡힌 회귀**는 따로 못 박아 뒀다. TP-PLAYBOOK-12(경로 삼자 일치)·TP-PLAYBOOK-17(깨끗한 노드의 디렉터리)·TP-PLAYBOOK-11(YAML 문법)·TP-RENDER-11(JSSE 초기화)·TP-RENDER-10(provider 자리 대체). 생성만 보면 통과하고 적용에서 깨지던 것들이다.
 

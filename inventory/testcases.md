@@ -95,7 +95,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-REJECT-3](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionsOutliveTheProcess`: 미등재·앵커없음 결과 적재 | 저장소에 사유·collector·지문·시각이 남는다 | 남기지 않으면 "계속 거절당하고 있었다"와 "아무 일도 없었다"가 구분되지 않는다 |
 | [TV-REJECT-4](../pkg/inventory/ingest/rejection_test.go) | `TestRejectionStoreIsOptional`: 남길 곳 없이 적재 | v0.1.x와 같은 결과 | 기록을 더한 것이 적재 자체를 바꾸면 안 된다 |
 
-### TV-SCOPE. 자산 스코프 (설계 §14)
+### TV-SCOPE. 자산 스코프 (설계 §8)
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
 | [TV-SCOPE-1](../pkg/kernel/scope/asset_test.go) | `TestNoPolicyKeepsEverything`: 정책 없음(nil) | 관측된 자산 **전부 관리 대상** | 정책을 안 쓰는 사용자를 막지 않는다 |
