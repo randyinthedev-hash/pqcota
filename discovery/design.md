@@ -156,7 +156,7 @@ attach를 기본 차단**할 수 있다. 3단 전략은 다음과 같다:
 > 비-agent 경로(JMX/JVMTI)는 후속 검토. JMX도 대개 비활성이고 JVMTI 네이티브 agent도 기동 플래그가
 > 필요해 "레거시 지배 케이스"를 완전히 풀지 못한다. 그래서 **이 리포의 보장 폴백은 정적 열화**로 확정했다.
 
-**provider 레지스트리 매핑** → `pqc_readiness`·`fips_validation`·알고리즘 커버리지. **SLH-DSA는 JDK 네이티브에 없음 → BC/jostle 의존 태깅**(§2.3).
+**provider 레지스트리 매핑**으로 `pqc_readiness`·`fips_validation`·알고리즘 커버리지를 정한다. **SLH-DSA는 JDK 네이티브에 없으므로 BC/jostle 의존으로 태깅한다**(§2.3).
 
 ### 2.3 network-collector (Go, AF_PACKET): 네트워크 계층 (Phase 1)
 

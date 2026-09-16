@@ -320,7 +320,7 @@ not fit.
 
 ### 4.3 The same mechanism as GPL isolation
 
-This gRPC/CLI boundary *is* the **GPL contagion barrier**. A GPL collector (CipherIQ's `cbom-generator`, for instance) **runs as a separate process and exchanges only CycloneDX on stdout** → no library linking. The `gpl-adapter` wraps the subprocess and exposes it through the intake contract. → **the three isolation principles from the license notes hold automatically in code.**
+This gRPC/CLI boundary *is* the **GPL contagion barrier**. A GPL collector (CipherIQ's `cbom-generator`, for instance) **runs as a separate process and exchanges only CycloneDX on stdout** → no library linking. The `gpl-adapter` wraps the subprocess and exposes it through the intake contract. So **the three isolation principles from the license notes hold automatically in code.**
 
 ---
 
