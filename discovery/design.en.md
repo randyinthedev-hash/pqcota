@@ -158,7 +158,7 @@ type ForkSignature struct {
 > a startup flag, so neither fully solves the "legacy dominant case". Hence **this repo's guaranteed fallback is fixed
 > as static degradation.**
 
-**Provider registry mapping** → `pqc_readiness`, `fips_validation`, algorithm coverage. **SLH-DSA is not in the JDK natively → tag it as depending on BC/jostle** (§2.3).
+**Provider registry mapping** determines `pqc_readiness`, `fips_validation` and algorithm coverage. **SLH-DSA is not in the JDK natively, so it is tagged as depending on BC/jostle** (§2.3).
 
 ### 2.3 network-collector (Go, AF_PACKET) — the network layer (Phase 1)
 

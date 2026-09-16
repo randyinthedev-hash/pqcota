@@ -314,7 +314,7 @@ type ProviderSignature struct {
 
 ### 4.3 GPL 격리와 동일 메커니즘
 
-이 gRPC/CLI 경계가 곧 **GPL 전염 차단 경계**다. GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스로 실행 + stdout CycloneDX만 교환** → 라이브러리 링크 없음. `gpl-adapter`가 서브프로세스를 감싸 intake 계약으로 노출한다. → **라이선스 정리의 격리 3원칙이 코드에서 자동 성립.**
+이 gRPC/CLI 경계가 곧 **GPL 전염 차단 경계**다. GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스로 실행 + stdout CycloneDX만 교환** → 라이브러리 링크 없음. `gpl-adapter`가 서브프로세스를 감싸 intake 계약으로 노출한다. 그래서 **라이선스 정리의 격리 3원칙이 코드에서 자동으로 성립한다.**
 
 ---
 
