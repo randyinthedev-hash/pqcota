@@ -221,7 +221,7 @@ type PlanItem struct {
 
 이력 뷰(`-history`)는 이제 "변화 지점 + 그 상태를 몇 번·언제까지 재확인했는지(obs·observed)"를 보인다.
 
-### 7.3 동등성 정의: 이 설계의 핵심 (`pkg/discovery/history/fingerprint.go`)
+### 7.3 동등성 정의: 이 설계에서 가장 민감한 자리 (`pkg/discovery/history/fingerprint.go`)
 
 "같은 상태인가"를 무엇으로 판정하느냐가 전부를 좌우한다. **휘발 필드를 포함하면 항상 "변화"가 되어 분리가 무력해진다.**
 
