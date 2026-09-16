@@ -18,7 +18,7 @@
 
 ## 취약점 신고
 
-**공개 이슈·PR·토론으로 올리지 말 것.** 다음 비공개 경로로 알린다:
+**공개 이슈·PR·토론으로 올리지 않는다.** 다음 비공개 경로로 알린다:
 
 1. **GitHub 비공개 신고 (권장)**: 리포 **Security 탭 → "Report a vulnerability"**. 조율된 공개(coordinated disclosure) 절차로 진행된다.
 2. 위가 불가하면 **메인테이너에게 직접** 연락한다. <randyinthedev@gmail.com>. 제목에 `[security]`를 달아주면 빨리 눈에 띈다.

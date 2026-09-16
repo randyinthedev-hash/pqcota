@@ -1,6 +1,6 @@
 # discovery/ansible/: 참조 플레이북
 
-준비된 노드들에서 collector를 한꺼번에 돌리는 **참조 구현**이다. 데모가 이걸 그대로 쓰고, 자기 인프라에도 그대로 이식하라고 둔 것이다.
+준비된 노드들에서 collector를 한꺼번에 돌리는 **참조 구현**이다. 데모가 이것을 그대로 쓰고, 자기 인프라에도 그대로 이식하라고 둔 것이다.
 
 ```bash
 pqcota-hosts --ansible-out targets.ini hosts.csv     # ① 접근 준비
@@ -25,7 +25,7 @@ Windows 노드는 **관리자 계정으로 접속해야** 다른 사용자로 �
 
 접속 방법은 `hosts.csv`의 `connection` 열이 정한다(`ssh` 또는 `winrm`): `targets.ini`는 매 실행 덮어써지므로 손으로 더한 설정은 남지 않는다 → [작성법](../../examples/discovery/README.md). 사이트마다 갈리는 값(WinRM transport·인증서 검증, sshd 기본 셸이 cmd인 경우)만 `group_vars/targets_windows.yml`에 둔다.
 
-> **한 번은 실물로 돌렸다**(TD-WIN-1·2): Win32-OpenSSH + 키로 붙어 반입·관측·회수·정리가 끝까지 돌았고 노드엔 아무것도 남지 않았다. 다만 **데모가 이 경로를 덮지는 못한다**. 데모는 리눅스 컨테이너뿐이라 Windows 분기에는 매 실행 확인되는 게이트가 없다.
+> **한 번은 실물로 돌렸다**(TD-WIN-1·2): Win32-OpenSSH + 키로 붙어 반입·관측·회수·정리가 끝까지 돌았고 노드엔 아무것도 남지 않았다. 다만 **데모가 이 경로를 검증하지는 못한다**. 데모는 리눅스 컨테이너뿐이라 Windows 분기에는 매 실행 확인되는 게이트가 없다.
 
 **노드에 아무것도 남기지 않는다.** collector는 상주 에이전트가 아니라 실행 후 종료하는 CLI라 이 일회성 패턴이 맞다.
 
@@ -35,4 +35,4 @@ Windows 노드는 **관리자 계정으로 접속해야** 다른 사용자로 �
 
 `collector_bin_dir`(리눅스)·`collector_bin_dir_win`(Windows)을 자기 빌드 산출로 바꾸면 된다 → [루트 README · 빌드](../../README.md#빌드). 리눅스 블록에만 `become: true`가 붙는 이유는 `pqcota-netcap`의 `CAP_NET_RAW`와 `/proc` 전 프로세스 커버리지다.
 
-**fleet 규모로 플레이북을 찍어 주는 생성기는 없다.** 자체 원격 실행 엔진을 만들지 않고 사용자의 기존 substrate(Ansible·Salt 등)가 실행하는 모델이다 → [collector 배포 설계](../collector-deployment.md).
+**fleet 규모로 플레이북을 만들어 주는 생성기는 없다.** 자체 원격 실행 엔진을 만들지 않고 사용자의 기존 substrate(Ansible·Salt 등)가 실행하는 모델이다 → [collector 배포 설계](../collector-deployment.md).

@@ -49,7 +49,7 @@ PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
 | `id` | ✅ | 계획 식별자 |
 | `status` | ✅ | 판정을 끝낸 계획은 **`PLAN_STATUS_IN_REVIEW`로 온다.** `pqcota-approve`가 첫 승인에서 `FINALIZED`로 올리고, 생성기는 **`FINALIZED`가 아니면 거부한다.** 승인받지 않은 계획으로 배포하는 일을 막는 게이트다. `DRAFT`는 승인 자체가 거부된다 |
 | `scope` | | 계획의 적용 범위 라벨(예: `ring-0`) |
-| `approvalSignatures` | | **비워서 온다.** 실행 승인의 자리라 판정한 쪽이 채우지 않고, [`pqcota-approve`](../../../provisioning/cmd/README.md)가 승인자의 키로 서명해 넣는다. 생성기는 **비어 있으면 거부한다.** `IN_REVIEW`인데 값이 있으면 승인이 「이 상태에 대한 서명」이라며 손상으로 거부한다 |
+| `approvalSignatures` | | **비워서 온다.** 실행 승인의 자리라 판정한 쪽이 채우지 않고, [`pqcota-approve`](../../../provisioning/cmd/README.md)가 승인자의 키로 서명해 넣는다. 생성기는 **비어 있으면 거부한다.** `IN_REVIEW`인데 값이 있으면 승인은 「이 상태에 대한 서명」이므로 손상으로 거부한다 |
 | `derivedFromSnapshotId` | | **이전 판 호환 경로.** 계획 전체가 스냅샷 하나에서 나왔을 때 그 id. 조치에 `evidenceSources`가 있으면 그것이 우선이고 이 값은 읽지 않는다. 둘 다 비면 경고한다(실행은 되지만 이력에 근거가 남지 않는다) |
 | `rulesetVersion` | | 계획을 만든 규칙 버전. 비면 경고한다 |
 | `finalizedAt` | | **비워서 온다.** 첫 승인이 찍는다. `IN_REVIEW`인데 값이 있으면 손상으로 거부한다. 승인된 계획에서 비어 있으면 생성기가 경고한다 |
@@ -100,7 +100,7 @@ JCA에서 아는 이름이 아닌데 `providerClass`도 없으면, 등록 줄이
 ❌ 인 것을 받으려면 도구가 그 모양을 알아야 한다. [검토 중인 설계](../../../docs/under-review.md)에서 다룬다.
 모듈 파일 자체는 어느 경우든 사용자가 구해 [`files/`](../files/README.md)에 둔다.
 
-**이름은 Ansible 변수명으로도 쓰인다.** `pqcota_module_src_<이름>`·`pqcota_module_sha256_<이름>`에서 `<이름>`은 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`): Ansible 변수명에 하이픈을 쓸 수 없어서다. 하이픈을 그대로 준 변수는 **인식되지 않고 조용히 무시된다**(무결성 검사가 통째로 skip된다).
+**이름은 Ansible 변수명으로도 쓰인다.** `pqcota_module_src_<이름>`·`pqcota_module_sha256_<이름>`에서 `<이름>`은 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`): Ansible 변수명에 하이픈을 쓸 수 없어서다. 하이픈을 그대로 준 변수는 **인식되지 않고 오류 없이 무시된다**(무결성 검사를 통째로 건너뛴다).
 
 ### `kind`: 무엇이 생성되는지를 가른다
 

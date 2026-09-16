@@ -19,7 +19,7 @@
 > (스냅샷 간 변화 diff는 관측 사실이라 이 리포에 있습니다. 아키텍처 §6 기준.)
 
 📊 **실행 전 예상 결과**는 [`expected-output/`](expected-output/)에 있습니다. 콘솔 출력·토폴로지 SVG 샘플과
-실제로 실행하면 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)의 설명.
+실제로 실행하면 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)도 설명합니다.
 
 ## 요구 사항
 - Docker (Compose v2) · 인터넷(최초 이미지 빌드) · 사용자 `docker` 그룹 (루트/KVM 불필요)
@@ -51,14 +51,14 @@
 | [`workloads/`](workloads) | 노드에 배포되는 **데모 크립토 워크로드**(스캔·관측 대상): `CryptoApp.java`(JCA/BouncyCastle) · `pqc-echo/`(PQC TLS 트래픽 생성기, Go) | ❌ |
 | [`expected-output/`](expected-output) | 실행 전 **예상 결과** 미리보기(콘솔·토폴로지 SVG) | ❌ |
 | [`topology/`](topology) | **데모 환경 정의**: `topology.yaml`(첫 실행 시 샘플 복사)과 생성기 | ✏️ 이 파일을 고쳐 구성 변경 |
-| [`recording/`](recording/README.md) | 데모를 **스크린캐스트로 만들 때**의 절차와 편집 뼈대. 제품을 쓰는 데는 필요 없고, 발표·출품용 영상을 다시 만들 때 쓴다 | ❌ |
+| [`recording/`](recording/README.md) | 데모를 **스크린캐스트로 만들 때**의 절차와 편집 틀. 제품을 쓰는 데는 필요 없고, 발표·출품용 영상을 다시 만들 때 씁니다 | ❌ |
 | `Dockerfile` | 컨테이너 **빌드** 정의(노드 종류별 스테이지) | ❌(스크립트가 호출) |
 
 > 처음이면 **`scripts/`의 up → demo → down** 세 개만 보면 됩니다. 나머지는 그 뒤에서 도는 부품입니다.
 
 ## 산출물은 어디에 생기나
 
-**대부분은 컨테이너 안**에 생기고, 리포에 떨어지는 건 **`demo/.generated/` 한 곳뿐**입니다(gitignore). `down.sh`가 그 폴더를 통째로 지우고, 컨테이너 것은 컨테이너와 함께 사라집니다.
+**대부분은 컨테이너 안**에 생기고, 리포에 생기는 것은 **`demo/.generated/` 한 곳뿐**입니다(gitignore). `down.sh`가 그 폴더를 통째로 지우고, 컨테이너 것은 컨테이너와 함께 사라집니다.
 
 | 어디 | 무엇 | 정리 |
 |---|---|---|
@@ -75,7 +75,7 @@ docker exec pqcota-ctl cat /work/ansible/provision.yml   # 생성된 플레이�
 docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # 인벤토리 테이블
 ```
 
-> **호스트 파일시스템은 거의 안 건드립니다**. 리포에 남는 건 위 그림·생성물뿐이고, 그마저 gitignore입니다.
+> **호스트 파일시스템은 거의 안 건드립니다**. 리포에 남는 것은 위 그림·생성물뿐이고, 그마저 gitignore입니다.
 > 접속 키(`/work/id_demo`)와 `targets.ini`는 **컨트롤러 안에만** 있고 인벤토리에 적재되지 않습니다(§1.5).
 
 ## 리포는 어디서 빌드되나. **ctl 머신에서**
@@ -98,12 +98,12 @@ docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # 인벤토리 �
      [ctl] make generate …  go build -o /usr/local/bin/ …  GOARCH=amd64 go build -o dist/linux-amd64/ …
 ```
 
-**당신 환경도 같습니다.** 빌드 머신은 리눅스면 되고(Go 1.26.4+·buf·JDK 11+는 선택), collector만 **노드 arch에
+**사용자 환경도 같습니다.** 빌드 머신은 리눅스면 되고(Go 1.26.4+·buf·JDK 11+는 선택), collector만 **노드 arch에
 맞춰** 만들면 됩니다. `CGO_ENABLED=0` 정적 링크라 배포판·libc를 가리지 않습니다. 이 데모에서도
 Ubuntu 24.04에서 빌드한 바이너리가 20.04 노드에서 그대로 돕니다.
 
 이미지 빌드(1단계)가 만드는 것은 OS·툴체인과 관측 **대상** 워크로드뿐입니다(`pqc-echo` = 현실에선
-사용자의 앱, `topogen` = 컨테이너보다 먼저 필요). **pqcota 소프트웨어는 굽지 않습니다.**
+사용자의 앱, `topogen` = 컨테이너보다 먼저 필요). **pqcota 소프트웨어는 이미지에 넣지 않습니다.**
 
 ## 실행 시점: 도는 컨테이너 (기본 토폴로지)
 
@@ -132,7 +132,7 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 ## 디스커버리 (Ansible/SSH, 모두 실물)
 1. **OpenSSL 자산**은 `pqcota-nodescan`이 냅니다. `/proc` 스캔으로 로드된 libssl/libcrypto를 봅니다.
-2. **JCA provider 체인**은 `pqcota-jvmscan`이 냅니다. **정찰→attach** 순서입니다. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 봅니다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡습니다. java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach 불가 시 정적 프로브로 정직히 폴백.
+2. **JCA provider 체인**은 `pqcota-jvmscan`이 냅니다. **정찰→attach** 순서입니다. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 봅니다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡습니다. java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach가 안 되면 정적 프로브로 내려가되, 관측하지 못한 것은 갭으로 남깁니다.
 3. **통신 엣지**는 `pqcota-netcap`이 냅니다. AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측합니다.
 
 `pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**을 냅니다:
@@ -161,11 +161,11 @@ node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps
 
 > **왜 적용까지 하나**: 생성만 하고 안 돌리면 **문법은 맞는데 실제로는 깨지는** 플레이북이 통과합니다. 실제로 그런 결함이 있었습니다(config 디렉터리를 안 만들어 `copy`가 실패). 이 단계가 그 부류를 상시로 잡습니다.
 >
-> **provider 모듈은 도구가 주지 않습니다.** 데모는 배포 경로만 보이려 **빈 파일**을 씁니다. 실제 암호 기능은 없습니다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입합니다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 건 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서입니다.
+> **provider 모듈은 도구가 주지 않습니다.** 데모는 배포 경로만 보이려 **빈 파일**을 씁니다. 실제 암호 기능은 없습니다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입합니다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 것은 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서입니다.
 
 - **L2는 조각을 놓기만 합니다**. 참조되게 만들지 않으므로 모든 산출물이 완전히 가역입니다.
 - **L3는 여기에 활성화·재시작을 더합니다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 씁니다. 환경마다 활성화 지점이 다르므로 도구가 추측하지 않습니다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킵니다(현실의 systemd unit·사내 기동 스크립트에 해당).
-- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**입니다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않습니다**. 그 노드의 실제 조치는 fork 교체이고, 그건 config로 배포되지 않는다고 플레이북 주석에 적혀 있습니다.
+- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**입니다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않습니다**. 그 노드의 실제 조치는 fork 교체이고, 그것은 config로 배포되지 않는다고 플레이북 주석에 적혀 있습니다.
 
 ### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
 
@@ -191,10 +191,10 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 
 ## 내 환경(실제 자산)에 적용하려면
 
-데모는 컨테이너를 세워 주지만, 실제 자산에선 **환경이 이미 있고** 당신이 세 가지를 준비합니다.
+데모는 컨테이너를 세워 주지만, 실제 자산에선 **환경이 이미 있고** 사용자가 세 가지를 준비합니다.
 순서대로 무엇이 나오는지는 [여정](../journey.md)이 컨테이너 없이 처음부터 끝까지 따라갑니다.
 머신 구분은 위 [실행 시점: 도는 컨테이너](#실행-시점-도는-컨테이너-기본-토폴로지)와 같습니다.
-**`pqcota-ctl`이 곧 당신이 리포를 클론·빌드하는 머신**이고, 노드에는 아무것도 미리 깔지 않습니다.
+**`pqcota-ctl`이 곧 사용자가 리포를 클론·빌드하는 머신**이고, 노드에는 아무것도 미리 깔지 않습니다.
 `hosts.csv` 하나로 끝나지 않습니다:
 
 | # | 준비물 | 필수? | 무엇 |

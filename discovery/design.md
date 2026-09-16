@@ -115,7 +115,7 @@ type ForkSignature struct {
 ```
 **산출**: CycloneDX 컴포넌트(lib) + `pqcota:` properties(crypto_runtime=openssl, detection_method, openssl.fork, binding_mode) + raw_capture(네이티브 JSON) + Envelope. **Finding 파생은 코어**(§2.4 계약).
 
-### 2.2 jvm-collector (순수 Java 사이드카): SD-2 ★킬러
+### 2.2 jvm-collector (순수 Java 사이드카): SD-2 ★핵심
 
 **책임**: 살아있는 JVM의 provider 체인 **실체** 조회. 전용 OSS 공백(§2.2)이라 자체 구현.
 
@@ -131,10 +131,10 @@ type ForkSignature struct {
 4. detach     : 원상 복귀 (읽기 전용, 상태 변경 없음)
 ```
 
-**정찰이 선행한다. openssl(§2.1)과 대칭이다.** openssl의 `ScanHost`가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, jvm도 `ScanJVMs`가 실행 중 JVM을 **직접 조사한다**(호출자가 PID·JDK를 미리 알아 넘기던 비대칭 제거). 접근 불가 프로세스는 `Denied`로 세어 완전성 갭의 원천으로 삼는다(§2.5). `AttachAll`이 발견한 각 JVM에 attach하고, **attach 실패도 조용히 버리지 않고 갭으로** 센다(openssl의 프로세스별 탐지 합산과 대칭). 구현: `collectors/jvm/{procscan,attach}.go`.
+**정찰이 선행한다. openssl(§2.1)과 대칭이다.** openssl의 `ScanHost`가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, jvm도 `ScanJVMs`가 실행 중 JVM을 **직접 조사한다**(호출자가 PID·JDK를 미리 알아 넘기던 비대칭 제거). 접근 불가 프로세스는 `Denied`로 세어 완전성 갭의 원천으로 삼는다(§2.5). `AttachAll`이 발견한 각 JVM에 attach하고, **attach 실패도 버리지 않고 갭으로** 센다(openssl의 프로세스별 탐지 합산과 대칭). 구현: `collectors/jvm/{procscan,attach}.go`.
 
 **다중 JVM 식별은 앱 단위로 하고 PID로는 하지 않는다.** 한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이어야 한다(하나가 dedup으로 사라지면 §2.6 정직성 위반이고 실제 자산을 은폐하는 셈이다). 식별자는 **앱**(cmdline의 main 클래스·`-jar`) 우선, 없으면 JAVA_HOME. **PID는 쓰지 않는다.** 매 스캔 달라져 finding id가 흔들리고 이력이 "매번 새 자산"으로 깨진다(같은 JDK의 두 앱도 앱 키로 갈린다).
-**동봉물**: `introspect-agent.jar`(attach 사이드카)뿐. **런타임은 동봉하지 않는다.** attach 클라이언트는 대상의 java일 필요가 없어 **머신에 있는 JDK를 재사용**한다(대상이 JRE여도 무방). attach 가능 JDK가 전무하면 정적 폴백으로 정직히 강등 → [collector 배포 설계](collector-deployment.md).
+**동봉물**: `introspect-agent.jar`(attach 사이드카)뿐. **런타임은 동봉하지 않는다.** attach 클라이언트는 대상의 java일 필요가 없어 **머신에 있는 JDK를 재사용**한다(대상이 JRE여도 무방). attach 가능 JDK가 전무하면 정적 폴백으로 강등하고 그 사실을 적는다 → [collector 배포 설계](collector-deployment.md).
 
 **정책·아티팩트 병행 수집**(온호스트 파일):
 - `java.security` 등록 순서 + `jdk.tls.*` + `disabledAlgorithms` 파싱.
@@ -194,7 +194,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 - **남의 프로세스 fd는 못 읽는다.** 앱을 짚는 데는 `CAP_NET_RAW`로 부족하다.
 
 **빈 `app_key`는 「앱 없음」이 아니라 「어느 앱인지 밝히지 못함」이다.** 사유를 넷으로 갈라 완전성
-노트에 낸다(소켓이 닫혔나 · 권한이 없나 · 안정 키를 못 뽑았나 · 모호한가). 사유는 정렬해서 내는데,
+노트에 낸다(소켓이 닫혔나 · 권한이 없나 · 안정 키를 만들지 못했나 · 모호한가). 사유는 정렬해서 내는데,
 순서가 흔들리면 같은 관측이 내용 지문 차이로 다른 스냅샷이 되어 변화가 없는데 이력이 늘어난다.
 **모호하면 고르지 않는다.** 같은 상대로 두 앱이 통신 중이면 기계가 하나를 찍지 않는다. 앱을 잘못
 짚으면 조치 대상이 바뀌므로 비워 두는 것보다 나쁘다(§2.6).
@@ -261,14 +261,14 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 | **상관 지문** | `Envelope.MachineIdentity`: `machine_id`(/etc/machine-id)·`hardware_uuid`·`cloud_instance_id`·`fqdn` | 사용자 라벨을 **물리 머신에 앵커링·검증**(생성 아님) |
 | **로케이터** | IP | ID가 아니다. 네트워크 관측을 노드로 잇기만 한다 |
 
-- **자동 self-id (폴백)**: CMDB 없이 bare 실행 시 지문에서 **결정론적** 파생(`machineid.SelfAssign`: cloud>machine-id>hw>fqdn 우선순위 → `"node:"+sha256[:16]`). 같은 머신이면 같은 값이 나오므로 스캔마다 중복이 생기지 않는다. §1.4에 따르면 권위 ID가 아니므로 RegistrationRequest로 간다.
+- **자동 self-id (폴백)**: CMDB 없이 단독 실행 시 지문에서 **결정론적** 파생(`machineid.SelfAssign`: cloud>machine-id>hw>fqdn 우선순위 → `"node:"+sha256[:16]`). 같은 머신이면 같은 값이 나오므로 스캔마다 중복이 생기지 않는다. §1.4에 따르면 권위 ID가 아니므로 RegistrationRequest로 간다.
 - **사용자 입력 중복/충돌 검증**: 사용자 node_id는 오류 가능 → 지문으로 교차검증(`ingest.CheckIdentity`). 한 물리머신키→여러 node_id=**중복**(한 머신 여러 이름), 한 node_id→여러 키=**충돌**(한 이름 여러 머신·재이미지). 판정하지 않고 드러내기만 한다(§2.5, 사람·reconcile 몫).
 
 ### 4A.2 자산 계층 Machine → Application → Process
 
 식별 안정성이 계층마다 다르다:
 - **Machine** = node_id (안정).
-- **Application**은 `(node_id, app_key)`다. app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다. 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸친다**(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 뭉개지 않는다.
+- **Application**은 `(node_id, app_key)`다. app_key는 머신 스코프 안정 키(systemd 유닛명·exe 경로·CMDB 선언). node_id가 전역 유일이라 **다른 머신 동명 앱과 충돌 없음.** Finding은 `app_keys`(복수)로 앱에 붙는다. 보통 1개지만, host-wide 스캔에서 하나의 공유 라이브러리(예: `libcrypto.so.3`)를 **여러 앱이 로드하면 여러 앱에 걸친다**(`ScanHost`가 경로별 dedup 시 app_key를 합집합). 그 .so 교체는 로더 앱 전부에 영향이므로 하나로 합치지 않는다.
 - **Process** = **PID 휘발 → 저장 안 함.** `ProcessMatch`(systemd_unit>exe_path>cmdline_regex)로 **프로비저닝 직전에 그때그때 이어 붙인다**(`LiveProcess`). 저장된 PID는 이미 낡았다.
 
 ### 4A.3 접근: 사용자 hosts 파일 → Ansible (비밀 미영속)
@@ -297,9 +297,9 @@ jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는�
 
 ### 6.1 collector 배포 저작권 ≠ remediation 저작권 (경계 원칙)
 
-collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/design.md)(§4.5)가 정한 "스크립트를 저작하고 서명하는 것은 사용자다"와 다르다. 그건 *앱 재시작 로직이 사용자의 도메인 지식이자 책임*이라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
+collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립트 경계](../provisioning/design.md)(§4.5)가 정한 "스크립트를 저작하고 서명하는 것은 사용자다"와 다르다. 그것은 *앱 재시작 로직이 사용자의 도메인 지식이자 책임*이라서다. **collector 설치는 read-only 바이너리를 놓는 일**이라 도메인 지식이 불필요하고 GPL 전염과도 무관(플레이북=데이터). 단 §2.3 **RCE 대칭성**으로 서명검증·최소권한·멱등은 T1부터 적용한다.
 
-**T1 가드레일(self-service)**: ① 최소 caps다. root가 아니고, `CAP_NET_RAW`(network-collector)·`CAP_SYS_PTRACE`(/proc)만. ② 번들 digest 핀 + 서명 검증 + 멱등(포크 가능한 투명 아티팩트). 번들이 올바른 호출(caps·co-location·버전 핀·재시도)을 한 번 인코딩한다. ③ 대상은 사용자 스코프 마스터(§1.4). 실행 주체가 pqcota가 되면 T3(상주 에이전트)가 되는데, 그건 만들지 않는다.
+**T1 가드레일(self-service)**: ① 최소 caps다. root가 아니고, `CAP_NET_RAW`(network-collector)·`CAP_SYS_PTRACE`(/proc)만. ② 번들 digest 핀 + 서명 검증 + 멱등(포크 가능한 투명 아티팩트). 번들이 올바른 호출(caps·co-location·버전 핀·재시도)을 한 번 인코딩한다. ③ 대상은 사용자 스코프 마스터(§1.4). 실행 주체가 pqcota가 되면 T3(상주 에이전트)가 되는데, 그것은 만들지 않는다.
 
 ---
 
@@ -337,7 +337,7 @@ collector 배포(호스트 도달)를 누가 저작하든 Deploy의 [스크립�
 
 | 시나리오 | 필요 능력 | 기존 도구 | 새로 만들 것 | 신규성 |
 |---|---|---|---|---|
-| **SD-2** JVM attach | `getProviders()` 실체 | **없음**(§2.2 공백) | ★ `jvm-collector` | **높음·킬러** |
+| **SD-2** JVM attach | `getProviders()` 실체 | **없음**(§2.2 공백) | ★ `jvm-collector` | **높음·핵심** |
 | **SD-3** 바이너리 | fork·version 시그니처 판별 | strings/readelf 원시만 | ★ **fork 시그니처 매처**(동일 soname 구분 수용 원칙 §2.2) | **높음·IP** |
 | **전 시나리오** | evidence_strength·완전성 맵·provider 레지스트리·Envelope·히스토리 | 없음 | ★ **정직한 증거 계층 + 정규화 파이프라인** | **높음·코어** |
 | **SD-5** 스코프 밖 | 게이트+판정요청 라우팅 | 없음 | 스코프 게이트·라우터(코어) | 중간·코어 |

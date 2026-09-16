@@ -84,7 +84,7 @@ PQC 마이그레이션 관리 플랫폼 **pqcota**([OSS](https://opensource.org/
 
 **빌드**
 - Go 1.26.4+
-- buf (+`protoc-gen-go`·`protoc-gen-go-grpc`): **proto를 고칠 때만** 쓴다. `gen/`이 커밋돼 있어 그냥 빌드하는 데는 필요 없다
+- buf (+`protoc-gen-go`·`protoc-gen-go-grpc`): **proto를 고칠 때만** 쓴다. `gen/`이 커밋돼 있어 빌드만 하는 데는 필요 없다
 - JDK 11+: **선택**이다. JVM attach 사이드카를 만들 때만 쓰고, 없으면 그 단계만 건너뛴다
 
 **실행**

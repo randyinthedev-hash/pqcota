@@ -132,7 +132,7 @@
 | 프로비저닝 | `pkg/provisioning/render.go`(분기) + `renderXxx` + `paths.go` | render + stage + **롤백 대칭** |
 
 각 층 최소 테스트 1. **흡수는 은폐가 아니다**: Python을 openssl로 흡수해도 뷰엔 "이 Python 앱이 쓴다"로
-보이고, Go를 `REBUILD`로 흡수해도 "정적이라 재빌드 필요"로 정직히 고지된다. 안 보이는 걸
+보이고, Go를 `REBUILD`로 흡수해도 "정적이라 재빌드 필요"로 그대로 고지된다. 안 보이는 것을
 없다고 하지 않는다.
 
 **(a) 수집 · (b) 스키마 oneof · (c) taxonomy 어휘는 확장점으로 설계돼 있어** 새 런타임을 코어 변경

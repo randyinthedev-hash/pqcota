@@ -125,7 +125,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 
 > **외부 collector 주의: `pqcota:detection_method`를 반드시 실어라.** `evidence_strength`는 코어가
 > `detection_method`에서 결정론적으로 파생한다(§2.3 표). 이 키가 없으면 코어는 증거 강도를 지어내지
-> 않고 `UNSPECIFIED`로 정직히 떨어뜨린다(§2.5: unknown 1급, 추측 금지). 즉 **빠뜨린 벌점이 아니라
+> 않고 `UNSPECIFIED`로 둔다(§2.5: unknown 1급, 추측 금지). 즉 **빠뜨린 벌점이 아니라
 > 규정된 결과**다. CBOMkit 등 표준 CycloneDX만 내는 collector는 그 `cryptoProperties`를 이 키로
 > 매핑하는 import 어댑터를 거쳐야 강도가 온전히 산다. 매핑 없이 들어온 자산은 강도 미상으로 남는다.
 
@@ -137,14 +137,14 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 
 ## 계약을 바꿀 때: 파급 점검
 
-proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 코드에 있고, 둘 다 잊으면 조용히 깨진다.**
+proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 코드에 있고, 둘 다 잊어도 빌드는 통과하고 동작만 깨진다.**
 
 | 함께 볼 것 | 언제 | 잊으면 |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | `CollectionResult`·`Envelope`·`MachineIdentity`·`Completeness`·`ObservedEdge`에 **필드 추가** | 새 필드가 **서명 사각지대**가 된다. 변조해도 검증이 통과.<br>범위를 넓히면 **기존 서명은 전부 무효**가 되므로 릴리스 후엔 마이그레이션 필요 |
-| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에서 조용히 사라진다**([인벤토리 설계 §7.3](../inventory/design.md)) |
+| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에 남지 않는다**([인벤토리 설계 §7.3](../inventory/design.md)) |
 
-둘 다 **테스트가 지켜본다**. 필드 수가 바뀌면 `TestCanonicalCoversAllFields`가 실패하며 무엇을 해야 하는지 알려준다. 실패를 기대값 수정만으로 넘기지 말 것. 그게 바로 사각지대를 만드는 경로다.
+둘 다 **테스트가 지켜본다**. 필드 수가 바뀌면 `TestCanonicalCoversAllFields`가 실패하며 무엇을 해야 하는지 알려준다. 실패를 기대값 수정만으로 넘기지 않는다. 그것이 바로 사각지대를 만드는 경로다.
 
 **판정 규칙을 바꿨다면** `ruleset_version`을 올리고, 과거 스냅샷은 원본에서 **재계산**해 새 판정을 얻는다(§1.2). 파생값은 저장된 값이 아니라 규칙의 함수다.
 

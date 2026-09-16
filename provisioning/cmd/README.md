@@ -71,11 +71,11 @@ ansible-playbook -i targets.ini -e pqcota_module_sha256_oqsprovider=<sha256> pro
 | `pqcota_module_src_<provider>` | 그 모듈의 컨트롤러 로컬 경로. 없으면 `pqcota_module_src`, 그것도 없으면 `files/<모듈파일>` |
 | `pqcota_module_sha256_<provider>` | **무결성 게이트**: 배치 후 타깃에서 sha256을 재고 다르면 중단한다. 없으면 `pqcota_module_sha256`, 둘 다 없으면 확인을 건너뛴다 |
 
-`<provider>`는 계획의 `providerChoice`에서 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`): Ansible 변수명 규칙이라 그렇다. 하이픈을 그대로 주면 **변수가 인식되지 않아 검사가 조용히 건너뛰어진다.**
+`<provider>`는 계획의 `providerChoice`에서 **영숫자만 남기고 나머지를 `_`로** 바꾼 것이다(`acme-pqc` → `acme_pqc`): Ansible 변수명 규칙이라 그렇다. 하이픈을 그대로 주면 **변수가 인식되지 않아 검사를 오류 없이 건너뛴다.**
 
 해시는 **복사 후 타깃에서** 잰다. 컨트롤러의 원본이 아니라 실제로 노드에 놓인 파일을 재므로 전송 손상·경로 착오도 함께 잡힌다. 불일치면 그 노드에서 중단한다.
 
-sha256을 주는 것을 권한다. 타깃에서 암호 연산을 할 네이티브 코드를 심는 일이라 **무엇을 심었는지 고정할 수단**이 필요하다. 주지 않으면 오류가 아니라 **검사 태스크가 통째로 skip된다.**
+sha256을 주는 것을 권한다. 타깃에서 암호 연산을 할 네이티브 코드를 심는 일이라 **무엇을 심었는지 고정할 수단**이 필요하다. 주지 않으면 오류가 아니라 **검사 태스크를 통째로 건너뛴다.**
 
 ### 되돌리기
 
@@ -151,6 +151,6 @@ pqcota-records [node]
 - 계획에 승인 서명 붙이기 → **②**. 계획을 다 고친 **뒤에** 한다.
 - 무엇이 어떤 before로 스테이징됐나 → **③**.
 
-> 로직은 `pkg/provisioning/`(계획 게이트·taxonomy→config 생성기·`GenerateProvisioningPlaybook`·`CaptureState`·`RecordStore` Mem/Pg)에 있고, 이 커맨드들은 그걸 조립하는 얇은 진입점이다.
+> 로직은 `pkg/provisioning/`(계획 게이트·taxonomy→config 생성기·`GenerateProvisioningPlaybook`·`CaptureState`·`RecordStore` Mem/Pg)에 있고, 이 커맨드들은 그것을 조립하는 얇은 진입점이다.
 
 설계: [프로비저닝 설계](../design.md).

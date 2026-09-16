@@ -57,9 +57,9 @@
 |---|---|---|---|---|
 | [TD-JVM-1](../pkg/kernel/registry/provider_test.go) | unit | `TestMatchProvider`: provider 체인(BC · JDK 네이티브 · 미등록) → 레지스트리 매핑 | BC=ML-KEM·ML-DSA·SLH-DSA·fips=none, JDK 네이티브는 **SLH-DSA 갭 태깅**, 모르는 이름은 미매칭 | 등록된 provider에서 PQC 능력을 읽어내고, 못 하는 것을 할 수 있다고 보지 않는다 |
 | [TD-JVM-2](collectors/jvm/nativeattach_parse_test.go) | unit | `TestLoadAgentRequest` · `ParseAttachResponse` · `ParseNSpid`: attach 프로토콜 조립·응답·컨테이너 PID | 인자 슬롯 3개, 리턴 코드 0만 성공, `NSpid` 마지막 값 | 침묵을 성공으로 치지 않는다(§2.5). 컨테이너는 **네임스페이스 내부 PID**로 찾아야 만난다 |
-| [TD-JVM-3](collectors/jvm/procscan_test.go) | unit | `TestDeriveJavaHome` · `ParseReleaseVersion` · `JavaBinFor` · `IsJavaExe` · `ParseMainId` · `Ident` · `AttachCapable`: 정찰 파싱 | JAVA_HOME·버전·앱 식별자를 뽑고, 못 짚으면 빈 값 | 정찰이 못 짚은 값을 뒤 단계가 사실로 이어받지 않게 한다 |
-| [TD-JVM-4](collectors/jvm/attach_test.go) | unit | `TestAttachAll` · `AttachAllEmpty` · `AttachClient`: 발견 JVM 여럿에 주입된 attach 실행 | 성공은 체인 수집, 실패는 **갭으로 카운트**. 클라이언트는 머신의 attach 가능 JDK를 재사용 | attach에 실패한 JVM이 조용히 사라져 "깨끗함"으로 남지 않게 한다(§2.6) |
-| [TD-JVM-5](collectors/jvm/attach_test.go) | unit | `TestBuildResultForDistinguishesJVMs` · `IdentIsStable`: 서로 다른 JDK 둘 | 각 JVM이 **구별되는 finding**. 식별자는 PID가 아니라 앱(main·jar, 없으면 JAVA_HOME) | 한 노드의 JVM 여럿이 뭉개지지 않게, 그리고 재기동마다 새 자산이 되어 이력이 끊기지 않게 한다 |
+| [TD-JVM-3](collectors/jvm/procscan_test.go) | unit | `TestDeriveJavaHome` · `ParseReleaseVersion` · `JavaBinFor` · `IsJavaExe` · `ParseMainId` · `Ident` · `AttachCapable`: 정찰 파싱 | JAVA_HOME·버전·앱 식별자를 얻고, 못 짚으면 빈 값 | 정찰이 못 짚은 값을 뒤 단계가 사실로 이어받지 않게 한다 |
+| [TD-JVM-4](collectors/jvm/attach_test.go) | unit | `TestAttachAll` · `AttachAllEmpty` · `AttachClient`: 발견 JVM 여럿에 주입된 attach 실행 | 성공은 체인 수집, 실패는 **갭으로 카운트**. 클라이언트는 머신의 attach 가능 JDK를 재사용 | attach에 실패한 JVM이 세지지 않은 채 사라져 "깨끗함"으로 남지 않게 한다(§2.6) |
+| [TD-JVM-5](collectors/jvm/attach_test.go) | unit | `TestBuildResultForDistinguishesJVMs` · `IdentIsStable`: 서로 다른 JDK 둘 | 각 JVM이 **구별되는 finding**. 식별자는 PID가 아니라 앱(main·jar, 없으면 JAVA_HOME) | 한 노드의 JVM 여럿이 하나로 합쳐지지 않게, 그리고 재기동마다 새 자산이 되어 이력이 끊기지 않게 한다 |
 | [TD-JVM-6](collectors/jvm/staticfallback_test.go) | unit | `TestParseJavaSecurity` · `Empty` · `StaticFallbackNoJavaHome`: attach가 막혔을 때 | `java.security`를 **N 순서대로** 파싱. 빈 목록도 오류가 아님. JAVA_HOME 미상이면 오류 + 강등 | attach가 막힌 노드가 "provider 없음"이 아니라 "관측하지 못했음"으로 남게 한다. 순서가 곧 우선순위다 |
 | [TD-JVM-7](collectors/jvm/jvm_test.go) | unit | `TestParseProviders` · `BuildResult` · `JvmServiceContract`: 사이드카 출력 → 정규화·계약 노출 | provider 순서 보존, 원본(`Raw`) 보관, Describe/Collect 왕복 | 사이드카가 본 것이 순서와 원본을 잃지 않고 코어까지 간다 |
 | TD-JVM-8 | **integration**([데모 2/6](../demo/integration-verification.md)) | 정찰→실 agent attach 종단 (`PQCOTA_JVM_AGENT`) | 발견된 PID에 실제 attach해 provider 체인 관측 | 정찰과 attach가 실물에서 하나로 이어지는지 확인한다 |
@@ -101,7 +101,7 @@
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
-| [TD-SCOPE-1](../pkg/kernel/scope/gate_test.go) | unit | `TestScopeGate`: 미등재 노드가 대상에 섞였을 때, 수집 중 미등재 노드를 관측했을 때 | 대상에서 **필터 제외**하고, 관측된 미등재 노드는 **수집하지 않고** 등재 판정 큐로 라우팅(PROPOSE) | 스코프 밖 노드를 동의 없이 건드리지 않으면서, 발견한 사실을 삼키지도 임의로 등재하지도 않는다 |
+| [TD-SCOPE-1](../pkg/kernel/scope/gate_test.go) | unit | `TestScopeGate`: 미등재 노드가 대상에 섞였을 때, 수집 중 미등재 노드를 관측했을 때 | 대상에서 **필터 제외**하고, 관측된 미등재 노드는 **수집하지 않고** 등재 판정 큐로 라우팅(PROPOSE) | 스코프 밖 노드를 동의 없이 건드리지 않으면서, 발견한 사실을 감추지도 임의로 등재하지도 않는다 |
 
 ### SD-6. 완전성 맵 갭≠부재
 
@@ -123,11 +123,11 @@
 |---|---|---|---|---|
 | [TD-SIGN-1](../pkg/kernel/sign/sign_test.go) | unit | `TestSignVerify`: 서명 후 검증 | 왕복이 통과 | 검증이 정상 반입까지 막으면 격리망에서 아무것도 들일 수 없다. 거부만 시험하면 이쪽을 놓친다 |
 | [TD-SIGN-2](../pkg/inventory/ingest/central_test.go) | unit | `TestIngestSignatureReject`: 서명 검증에 실패한 결과를 적재 시도 | **거부**, 저장하지 않음 | 손댄 결과가 인벤토리에 들어오지 않게 한다 |
-| [TD-SIGN-3](../pkg/kernel/sign/coverage_test.go) | unit | `TestTamperBreaksVerification` · `EdgeOrderDoesNotMatter` · `CanonicalCoversAllFields`: 필드를 하나씩 변조, 엣지 순서 뒤섞기, 계약 필드 수 가드 | 어느 필드를 건드려도 검증이 깨지고, 순서만 다른 같은 관측은 통과. 계약에 필드가 늘면 **실패** | 완전성 선언과 `raw_capture`까지 서명이 덮는지, 그리고 **서명 사각지대가 조용히 생기지 않는지** |
+| [TD-SIGN-3](../pkg/kernel/sign/coverage_test.go) | unit | `TestTamperBreaksVerification` · `EdgeOrderDoesNotMatter` · `CanonicalCoversAllFields`: 필드를 하나씩 변조, 엣지 순서 뒤섞기, 계약 필드 수 가드 | 어느 필드를 건드려도 검증이 깨지고, 순서만 다른 같은 관측은 통과. 계약에 필드가 늘면 **실패** | 완전성 선언과 `raw_capture`까지 서명이 덮는지, 그리고 **서명 사각지대가 알아채지 못하는 사이에 생기지 않는지** |
 | [TD-SIGN-4](../pkg/inventory/ingest/central_test.go) | unit | `TestIngestAcceptsValidSignature`: 서명한 결과를 검증기와 함께 적재 | 거부 0, 수용 1, 스냅샷 1 | 거부만 시험하면 게이트가 정상 반입까지 막는 것을 못 잡는다 |
 | [TD-SIGN-5](../pkg/kernel/sign/sign_test.go) | unit | `TestVerifyFromBindsKeysToCollectors`: A의 키로 서명한 결과에 **B의 collector 이름**을 달아 검증 | `Verify`는 통과시키고 `VerifyFrom`은 거절. 모르는 collector도 거절 | `Verify`는 넘긴 키를 전부 시도해 "누군가는 냈다"까지만 답한다. 서명은 **누가 냈나**를 답해야 한다 |
 | [TD-ATTR-1](../pkg/discovery/procs/socket_test.go) | unit | `TestAttributionPicksTheProcessThatOpenedTheSocket`: 한 소켓을 부모와 자식 둘이 쥔 상태 | **연결을 연 부모**의 유닛으로 짚는다. 먼저 찾은 자식이 아니다 | fd는 상속된다. 실제 장비에서 한 inode에 PID 셋이 걸렸고, 첫 PID를 쓰면 앱을 잘못 짚게 된다 |
-| [TD-ATTR-2](../pkg/discovery/procs/socket_test.go) | unit | `TestUnattributedIsNotNoApp`: 소켓이 닫힌 경우·안정 키를 못 뽑는 경우 | 빈 키 + **사유가 남는다** | 빈 `app_key`가 "이 통신에 앱이 없다"로 읽히면 안 된다. 관측 갭과 같은 규칙 |
+| [TD-ATTR-2](../pkg/discovery/procs/socket_test.go) | unit | `TestUnattributedIsNotNoApp`: 소켓이 닫힌 경우·안정 키를 만들지 못하는 경우 | 빈 키 + **사유가 남는다** | 빈 `app_key`가 "이 통신에 앱이 없다"로 읽히면 안 된다. 관측 갭과 같은 규칙 |
 | [TD-ATTR-3](../pkg/discovery/procs/socket_test.go) | unit | `TestAmbiguousIsNotGuessed` · `TestSameAppOnBothSocketsIsNotAmbiguous`: 같은 상대로 두 앱 / 한 앱이 연결 둘 | 앞은 **고르지 않고**, 뒤는 잡는다 | 앱을 잘못 짚으면 조치 대상이 바뀐다. 비워 두는 것이 낫다. 다만 과하게 비우면 쓸모가 없다 |
 | [TD-ATTR-4](../discovery/cmd/pqcota-netcap/note_test.go) | unit(linux) | `TestAttributionNoteSaysWhatItDoesNotMean`: 못 잡은 엣지가 있는 결과 | 완전성 노트에 건수·사유가 남고 **순서가 흔들리지 않는다** | 사유 순서가 흔들리면 같은 관측이 내용 지문 차이로 다른 스냅샷이 된다 |
 | [TD-PROVENANCE-1](../discovery/collectors/network/collected_at_test.go) | unit | `TestEveryResultCarriesCollectedAt`(network·jvm) · `TestBuildResultCarriesCollectedAt`(openssl): 세 collector가 내는 모든 결과 | 주입한 시계가 `collected_at`에 실린다. 관측 실패(`DegradedResult`)도 예외 아님 | 비어 있으면 서명이 빈 값을 덮는다. "언제 봤는지 모른다"에 서명하는 것이다. 갭 기록도 **언제 시도했는지**가 근거다 |
@@ -144,7 +144,7 @@
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
 | [TD-CNG-1](collectors/cng/cng_test.go) | unit | `TestProviderOrderIsPreserved`: 관측 순서가 있는 provider 셋 | `pqcota:cng.provider_set`이 **그 순서 그대로** | **관측한 대로 적는다**. 정렬하면 관측을 고치는 것이 된다. (그 순서가 우선순위인지는 CNG에서 미확인: 실측에서 알고리즘 50개가 전부 provider 하나씩이라 다툼이 없었다) |
-| [TD-CNG-2](collectors/cng/cng_test.go) | unit | `TestUnobservedIsNotAbsence`: 열거 실패 / 봤는데 0건 | 앞은 계층 미커버 + 사유 노트, 뒤는 **커버**로 센다 | 못 본 것과 없는 것을 같은 얼굴로 내보내면 "이 노드엔 CNG가 없다"로 읽힌다(§2.6) |
+| [TD-CNG-2](collectors/cng/cng_test.go) | unit | `TestUnobservedIsNotAbsence`: 열거 실패 / 봤는데 0건 | 앞은 계층 미커버 + 사유 노트, 뒤는 **커버**로 센다 | 못 본 것과 없는 것을 같은 모양으로 내보내면 "이 노드엔 CNG가 없다"로 읽힌다(§2.6) |
 | [TD-CNG-3](collectors/cng/cng_test.go) | unit | `TestRawFormatEmptyWithoutRaw`: 원본이 없는 결과 | 형식 이름도 빈다 | 재정규화할 것이 없는데 있다고 적으면 §1.2의 약속이 거짓이 된다 |
 | [TD-CNG-4](collectors/cng/cng_test.go) | unit | `TestAlgorithmsRideOnBothLanes`: 알고리즘까지 관측한 결과 | 파생 레인(`pqcota:cng.algorithms`)과 원본 **양쪽**에 남는다 | provider 이름 9개가 전부 Microsoft라, 알고리즘이 파생까지 가지 않으면 "이 노드가 ML-DSA를 하나"에 답할 수 없다 |
 | TD-CNG-5 | **실물로 확인** | Windows 11 Pro 25H2(26200)에서 `pqcota-cngscan --output json` | provider 9개가 **순서대로**, 알고리즘 50개. `CNG_INTROSPECTION` 커버, 노트 없음 | 스키마만 있고 채우는 코드가 없던 자리를 실측으로 닫는다 |

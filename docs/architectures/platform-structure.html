@@ -147,7 +147,7 @@
   <text x="852" y="216" font-size="10" fill="var(--accent)" class="en">executes</text>
 
   <path d="M844 82 L844 40 L480 40 L480 48" fill="none" stroke="currentColor" stroke-dasharray="5 4" marker-end="url(#ar)"/>
-  <text x="662" y="34" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">조치 뒤 재관측 — 변화가 인벤토리에 남는다</text>
+  <text x="662" y="34" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">조치 뒤 재관측: 변화가 인벤토리에 남는다</text>
   <text x="662" y="34" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">re-observe after the change — the delta lands in the inventory</text>
 
   <line x1="700" y1="60" x2="700" y2="460" stroke="var(--accent)" stroke-dasharray="7 5"/>
@@ -157,7 +157,7 @@
   <text x="700" y="497" text-anchor="middle" font-size="10" fill="var(--muted)" class="en">left of it: generation · right of it: you run it</text>
 </svg>
 <figcaption>
-  <span class="ko">플랫폼은 <b>관측하고 쌓고 생성</b>한다. 붉은 선 오른쪽 — 노드를 실제로 바꾸는 일 — 은
+  <span class="ko">플랫폼은 <b>관측하고 쌓고 생성</b>한다. 붉은 선 오른쪽, 곧 노드를 실제로 바꾸는 일은
   사용자의 배포 도구가 한다. pqcota는 원격 실행 엔진을 두지 않는다.</span>
   <span class="en">The platform <b>observes, accumulates, and generates</b>. Everything right of the red
   line — actually changing a node — is done by your deployment tooling. pqcota ships no remote execution engine.</span>
@@ -168,7 +168,7 @@
   <li><b>자산 등록부</b>가 관리 대상 경계를 정한다. 등재되지 않은 노드는 수집·실행 대상이 아니다.</li>
   <li><b>운영자·리뷰어</b>가 접근 정보를 관리하고 계획을 확정한다. 확정되지 않은 계획으로는 아무것도 생성되지 않는다.</li>
   <li><b>provider 공급처</b>는 도구 밖이다. 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 사용자다.</li>
-  <li><b>대상 노드</b>는 관측되기만 한다 — collector는 읽고, 상태를 바꾸지 않는다.</li>
+  <li><b>대상 노드</b>는 관측되기만 한다. collector는 읽기만 하고 상태를 바꾸지 않는다.</li>
 </ul>
 <ul class="en">
   <li>The <b>asset registry</b> defines the managed boundary. A node that isn't registered is neither collected from nor acted on.</li>
@@ -245,7 +245,7 @@
   <path d="M860 132 L860 190 L91 190 L91 134" fill="none" stroke="currentColor"
         stroke-dasharray="5 4" marker-end="url(#ar2)"/>
   <text x="475" y="208" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="ko">
-    적용 뒤 다시 관측 — 바뀐 것이 인벤토리에 이력으로 남는다</text>
+    적용 뒤 다시 관측: 바뀐 것이 인벤토리에 이력으로 남는다</text>
   <text x="475" y="208" text-anchor="middle" font-size="10.5" fill="var(--muted)" class="en">
     observe again after applying — the change becomes history in the inventory</text>
   <text x="475" y="228" text-anchor="middle" font-size="10" fill="var(--muted)" class="ko">
@@ -254,7 +254,7 @@
     (the applying in between is done by your own tooling)</text>
 </svg>
 <figcaption>
-  <span class="ko">원본은 덮이지 않는다 — 관측은 그대로 쌓이고, 등급·조치는 그 위에서 계산된다.
+  <span class="ko">원본은 덮이지 않는다. 관측은 그대로 쌓이고, 등급·조치는 그 위에서 계산된다.
   규칙이 좋아지면 원본에서 다시 계산한다.</span>
   <span class="en">Raw observations are never overwritten — grades and remediations are computed on top of them,
   so improving a rule means recomputing from the original.</span>

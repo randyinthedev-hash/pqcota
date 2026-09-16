@@ -34,7 +34,7 @@ flowchart LR
 | **[jvm](collectors/jvm/README.md)** ★ | 살아있는 JCA provider 체인의 **실체**(등록 순서 포함) | JVM attach → `getProviders()` (순수 Java 사이드카) |
 | **[network](collectors/network/README.md)** | TLS/SSH 핸드셰이크 협상 그룹 → 통신 엣지 | AF_PACKET 수동 캡처(Linux), 복호화 없음 |
 
-★ 정적 스캔으론 불가능한 **동적 등록 provider**(런타임 `addProvider`된 BouncyCastle 등)를 jvm attach가 잡는 게 이 단계의 **킬러 기능**이다. 전용 OSS가 없던 공백이다.
+★ 정적 스캔으론 불가능한 **동적 등록 provider**(런타임 `addProvider`된 BouncyCastle 등)를 jvm attach가 잡는 것이 이 단계의 **핵심 기능**이다. 전용 OSS가 없던 공백이다.
 
 ## 간단히 써보기
 
