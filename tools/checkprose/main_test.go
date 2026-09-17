@@ -463,3 +463,23 @@ func TestHTMLCommentsAreNotCounted(t *testing.T) {
 		t.Fatalf("주석 밖의 엠대시 하나만 3행에서 잡혀야 한다: %d건 %v", len(got), got)
 	}
 }
+
+// **다시 돌리는 안내는 명령을 지어내지 않고 인자만 적는다.** 이 도구는 `go run ./tools/checkprose`
+// 로도 `go run <모듈>@<판>` 으로도 돌아 실행 명령을 알 수 없고, 실행 파일 이름이 있다고 보장할
+// 수도 없다. 기본 디렉터리면 플래그만, 지정했으면 -dir 을 보존하고, 공백이 든 경로는 인용한다.
+func TestRerunHintNamesArgumentsOnly(t *testing.T) {
+	cases := map[string]string{
+		"":                "rerun the same command with: -list",
+		"tools/checkprose": "rerun the same command with: -list",
+		"cfg":             "rerun the same command with: -dir \"cfg\" -list",
+		"my config/prose": "rerun the same command with: -dir \"my config/prose\" -list",
+	}
+	for dir, want := range cases {
+		if got := rerun(dir, "-list"); got != want {
+			t.Errorf("rerun(%q): got %q, want %q", dir, got, want)
+		}
+		if strings.Contains(rerun(dir, "-list"), "checkprose -") || strings.Contains(rerun(dir, "-list"), "go run") {
+			t.Errorf("rerun(%q) names a command: %q", dir, rerun(dir, "-list"))
+		}
+	}
+}
