@@ -82,7 +82,36 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.9.0 — Tracing an action back to the snapshot state it came from (2026-09-11)
+## v0.9.1 — This repo owns the prose gate (2026-09-17)
+
+**Goal** — keep `tools/checkprose`, the checker that stops once-removed Korean expressions from
+creeping back into documents, HTML and tool output, in this repo, and let other repos run it with
+`go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1` instead of copying the code.
+Contracts and binaries are the same as v0.9.0.
+
+### Built
+
+- **`make check-prose`**: fails when a word listed in `rules.tsv` grows past the baseline, and also
+  when it shrinks, so the baseline gets lowered. Markdown is read with code blocks and inline code
+  masked, HTML with code·pre·script·style and comments masked, Go with string literals only. English
+  twins (`*.en.md`) are not read. The 128 hits that remain today are carried by `baseline.tsv`.
+- **Notices (`notices.tsv`) are not a gate.** Things a machine cannot separate from legitimate use
+  (a spaced hyphen that is a proper separator in headings and tables) are only reported as candidates.
+  They never fail the run and never enter the baseline.
+- **All configuration lives in one directory and the code knows nothing about the repo.** Rules,
+  notices, overlap words, the baseline, and the list of non-Markdown files to read (`files.txt`) come
+  from `-dir`. Another repo only needs its own configuration directory.
+
+### Learned
+
+- **Rules kept by eye do not survive.** Em dashes were removed from `.md` on 2026-08-25 but stayed in
+  `.html`, and "조용히" (silently) piled up past fifty lines afterwards. Only rules a machine enforces
+  remained.
+- **A checker belongs to the repo that originates it, not to the repos that use it.** Copying the same
+  code into every repo means every rule change has to land in three places in lockstep, and which copy
+  is the original becomes a licensing question. With this repo owning it and others pinning a version,
+  both problems disappear.
+
 
 **Goal** — make `derived_from_snapshot_id` fillable. The side producing the plan normalizes the same
 results under the same rules and gets the same fingerprint; the history finds the snapshot by it and
