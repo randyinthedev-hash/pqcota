@@ -92,7 +92,7 @@
 후보가 걸리는 자리는 언제나 축이 아니라 이 조건이다.
 
 1. **provider 동형성**: "provider로 알고리즘 능력을 주입한다"가 성립해야 `PROVIDER_INJECT`·
-   `CONFIG_ONLY`가 의미를 갖는다. 없으면 remediation은 `REBUILD` 한 방향으로 붕괴한다.
+   `CONFIG_ONLY`가 성립한다. 없으면 remediation은 `REBUILD` 한 방향으로 붕괴한다.
    (OpenSSL·JCA가 어떻게 동형인지는 [§2.1](#21-provider-동형성) 표.)
 2. **POSIX 파일 substrate**: 아티팩트가 파일이고, 경로에 스테이징되고, 제거로 가역이다
    (`ModulePath` → `/opt/pqcota/*.so|*.jar`, Ansible `copy`, `state: absent`).

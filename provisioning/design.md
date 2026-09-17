@@ -111,7 +111,7 @@
 
 ### 3.1 판정과 실행 승인은 다른 단계다
 
-계획을 만드는 쪽(판정)과 실행을 승인하는 쪽은 서로 다른 물음에 답한다. **판정한 쪽은 `status=IN_REVIEW`, `approval_signatures`와 `finalized_at`을 비운 채 넘기고, 승인이 `FINALIZED`로 올린다.** 계약이 이미 두 상태를 갖고 있어 새 상태는 필요 없다. `FinalizedPlan`은 이름과 달리 두 상태를 다 운반하는 봉투다(계약 주석).
+계획을 만드는 쪽(판정)과 실행을 승인하는 쪽은 서로 다른 물음에 답한다. **판정한 쪽은 `status=IN_REVIEW`, `approval_signatures`와 `finalized_at`을 비운 채 넘기고, 승인이 `FINALIZED`로 올린다.** 계약에 이미 두 상태가 있어 새 상태는 필요 없다. `FinalizedPlan`은 이름과 달리 두 상태를 다 운반하는 봉투다(계약 주석).
 
 `pqcota-approve`가 서명 **전에** `provisioning.PrepareApproval`을 거친다. 상태별로:
 
@@ -138,7 +138,7 @@ SnapshotReference = { source_node_id, snapshot_id | content: { format_version, d
 
 **복수 단위가 「스냅샷」이 아니라 「근거」인 이유.** 같은 자산을 원천 노드 여럿이 봤을 때 스냅샷만 여럿 두면 `finding_id`가 하나라 둘째 스냅샷의 어느 finding이 근거인지 말할 수 없다. 근거 하나에는 finding과 그 스냅샷이 한 쌍으로 들어간다. 주 근거가 앞이고, 호환용 `finding_id`는 `evidence_sources[0].finding_id`와 같아야 한다.
 
-**노드가 두 이름을 갖는다.** `target_node_id`는 계획을 만든 쪽의 선언 이름이고, `source_node_id`는 이력이 그 스냅샷을 저장한 이름(봉투의 `target_node_id`)이다. 여러 관측 이름이 선언 노드 하나에 걸리는 구성에서 둘은 다르다. 생성기는 **둘이 같아야 한다는 조건을 두지 않는다.** 그 대응은 계획을 만든 쪽이 정한 것이라 여기서 검증하지 못한다. 실제 id 참조에서는 찾은 스냅샷의 노드가 `source_node_id`와 같은지만 본다.
+**노드의 이름이 둘이다.** `target_node_id`는 계획을 만든 쪽의 선언 이름이고, `source_node_id`는 이력이 그 스냅샷을 저장한 이름(봉투의 `target_node_id`)이다. 여러 관측 이름이 선언 노드 하나에 걸리는 구성에서 둘은 다르다. 생성기는 **둘이 같아야 한다는 조건을 두지 않는다.** 그 대응은 계획을 만든 쪽이 정한 것이라 여기서 검증하지 못한다. 실제 id 참조에서는 찾은 스냅샷의 노드가 `source_node_id`와 같은지만 본다.
 
 **내용 지문은 `pqcota-snapshot-content/v1`** 이다(인벤토리 설계 §7.3.1). 해시 알고리즘이 아니라 어떤 필드를 어떤 순서로 해시했는지의 판이고, 참조가 **스냅샷의** 규칙 판(`pqcota-enrich/…`, 계획의 규칙 판이 아니다)을 함께 든다. 이력은 `(org, source_node_id, ruleset_version, digest)`로 찾는다.
 

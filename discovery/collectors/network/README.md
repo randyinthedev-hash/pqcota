@@ -35,7 +35,7 @@ collector는 협상 그룹을 **이름으로 관측**하는 데서 멈춘다. �
 
 ## 순수 부분과 부수 부분을 갈랐다
 
-프레임 해체(`DissectTCPPayload`)와 핸드셰이크 파싱(`ParseHandshakePayload`)은 **순수 함수**다. 소켓을 여는 `LiveSource`만 부수효과를 갖는다. 덕분에 파싱 로직 전체가 **캡처 권한·libpcap 없이 TDD**되고, 라이브 캡처는 얇은 조립층으로 남는다.
+프레임 해체(`DissectTCPPayload`)와 핸드셰이크 파싱(`ParseHandshakePayload`)은 **순수 함수**다. 소켓을 여는 `LiveSource`에만 부수효과가 있다. 덕분에 파싱 로직 전체가 **캡처 권한·libpcap 없이 TDD**되고, 라이브 캡처는 얇은 조립층으로 남는다.
 
 ## 전제
 
