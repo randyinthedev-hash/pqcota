@@ -876,7 +876,7 @@ github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한�
 - **CNG 뒤로 미뤄 뒀던 것을 앞으로 당겼다.** 미뤄 둔 근거가 「파일·레지스트리 두 substrate를 다 본
   뒤에 앱을 짚는 모델을 정하자」였는데 축이 달랐다. substrate는 생성물을 어디에 놓느냐는 프로비저닝
   개념이고, 앱을 짚는 것은 소켓 inode를 프로세스에 대는 디스커버리다. Windows에서 달라지는 것은
-  *수집 방법*(`GetExtendedTcpTable`)이지 앱을 짚는 방식이 아니다. 게다가 재료가 이미 있었다.
+  *수집 방법*(`GetExtendedTcpTable`)이지 앱을 짚는 방식이 아니다. 게다가 필요한 것이 이미 있었다.
   `/proc/net/tcp`와 `/proc/*/fd`뿐이고 netcap이 이미 그 노드에서 돈다. 반면 CNG는 실제 Windows
   장비가 있어야 하고, 없이 먼저 하면 v0.1.0의 `CngAxes` 예약처럼 **스키마는 있는데 돌려본 바 없는**
   자리를 하나 더 만든다.
