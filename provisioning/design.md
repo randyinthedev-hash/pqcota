@@ -145,7 +145,7 @@ SnapshotReference = { source_node_id, snapshot_id | content: { format_version, d
 **해석 순서**(`provisioning.ResolveReference` · `ResolveAction`). 이력 계층은 참조의 형식을 모른다. 좁은 조회(`history.SnapshotLookup`)만 있고, 형식은 여기서 푼다.
 
 1. **모양을 검사한다.** 원천 노드가 없거나, 참조 종류가 없거나, id가 비었거나, 내용 참조의 셋 중 하나라도 비었거나, 지문이 소문자 16진수 64자가 아니거나, 규격 판을 모르면 잘못된 참조다. **이력이 없어도(`--dsn` 없이) 한다.** 틀린 참조는 이력이 있든 없든 틀린 것이고, DSN이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다. 불완전으로 세고 종료 3이다.
-2. **조치의 근거를 우선한다.** 근거마다 각각 찾는다. 근거가 하나도 없으면 계획 단위 `derived_from_snapshot_id`를 **legacy 분기**로 읽는다. `SnapshotReference`로 합성하지 않는다(원천 노드가 없어 1을 지나지 못한다). 둘 다 없으면 `TraceabilityWarnings`가 말한다.
+2. **조치의 근거를 우선한다.** 근거마다 각각 찾는다. 근거가 하나도 없으면 계획 단위 `derived_from_snapshot_id`를 **legacy 분기**로 읽는다. `SnapshotReference`로 합성하지 않는다(원천 노드가 없어 1을 지나지 못한다). 둘 다 없으면 `TraceabilityWarnings`가 알린다.
 3. **실제 id면** `ByID`로 찾고 스냅샷의 노드가 `source_node_id`와 같은지 본다.
 4. **내용 지문이면** `ByContentHashV1(source_node_id, ruleset_version, digest)`로 찾는다.
 5. **찾은 스냅샷에 그 finding이 있어야 한다.** 스냅샷 id·노드·지문만 맞고 finding이 그 안에 없으면 잘못 짝지어진 근거다. 실제 id 참조와 내용 지문 참조 양쪽에서 본다.
@@ -380,7 +380,7 @@ plan.targetNodeId ─┐
 targets.ini 항목 ──┘         (node_id → ip·ssh 접속을 여기서 잇는다)
 ```
 
-그래서 도구는 접속 비밀을 알 필요도, 영속할 필요도 없다. 플레이북은 `node_id`만 말하고, 그 node를 어떻게 접속할지는 인벤토리가 안다([discovery 예제](../examples/discovery/README.md)의 `pqcota-hosts` 참고).
+그래서 도구는 접속 비밀을 알 필요도, 영속할 필요도 없다. 플레이북은 `node_id`만 적고, 그 node를 어떻게 접속할지는 인벤토리가 안다([discovery 예제](../examples/discovery/README.md)의 `pqcota-hosts` 참고).
 
 
 ### 5.2 활성화: L2에서 멈추거나, L3로 끝내거나
