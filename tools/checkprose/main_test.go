@@ -30,7 +30,7 @@ func hitsOf(rel string, orig []byte, masked []byte, rs []rule) []hit {
 // 파일이 비어도 케이스가 통과한다.
 func useShippedOverlap(t *testing.T) {
 	t.Helper()
-	w, err := loadWords(filepath.Join("..", "..", overlapFile))
+	w, err := loadWords(filepath.Join("..", "..", "tools", "checkprose", overlapName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +203,7 @@ func TestBaselineRoundTrips(t *testing.T) {
 // **규칙표가 실제로 읽힌다.** 탭이 하나 빠지거나 정규식이 깨지면 관문이 아예
 // 서지 않는데, 그 사실을 빌드가 알려 주지 않는다.
 func TestShippedRulesLoad(t *testing.T) {
-	rs, err := loadRules(filepath.Join("..", "..", rulesFile))
+	rs, err := loadRules(filepath.Join("..", "..", "tools", "checkprose", rulesName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,9 +228,19 @@ func TestShippedRulesLoad(t *testing.T) {
 // **덮는 자리가 목록에 적혀 있다.** 도구 메시지가 든 Go 파일과 HTML 페이지는 규약으로
 // 두면 새 파일이 슬그머니 관문 밖이 된다. 목록에 있는 파일이 실제로 있는지 잰다.
 func TestListedScreenFilesExist(t *testing.T) {
-	for _, rel := range append(append([]string{}, extraGo...), extraHTML...) {
+	files, err := loadWords(filepath.Join("..", "..", "tools", "checkprose", filesName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) == 0 {
+		t.Fatal("files.txt 가 비어 있다")
+	}
+	for _, rel := range files {
 		if _, err := os.Stat(filepath.Join("..", "..", rel)); err != nil {
 			t.Errorf("목록에 있는데 없는 파일이다: %s (%v)", rel, err)
+		}
+		if !strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, ".html") {
+			t.Errorf("Go·HTML 만 적을 수 있다: %s", rel)
 		}
 	}
 }
@@ -311,7 +321,7 @@ func TestSpacedParticleAfterCodeIsCaughtButAttachedIsNot(t *testing.T) {
 // 「뿐」·「만」을 잘못 잡지 않는지. 규칙을 테스트 안에 따로 적으면 파일이 바뀌어도
 // 케이스가 통과한다.
 func TestShippedSpacedParticleRule(t *testing.T) {
-	all, err := loadRules(filepath.Join("..", "..", rulesFile))
+	all, err := loadRules(filepath.Join("..", "..", "tools", "checkprose", rulesName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +380,7 @@ func TestShippedSpacedParticleRule(t *testing.T) {
 // 제목은 비켜 가며, 관문 규칙과 섞이지 않는다. 막는 규칙으로 두면 제목·표의 정당한 구분
 // 기호까지 예외 목록에 쌓이므로 후보로만 알린다.
 func TestShippedNoticesFlagCandidatesWithoutGating(t *testing.T) {
-	ns, err := loadRules(filepath.Join("..", "..", noticesFile))
+	ns, err := loadRules(filepath.Join("..", "..", "tools", "checkprose", noticesName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -387,7 +397,7 @@ func TestShippedNoticesFlagCandidatesWithoutGating(t *testing.T) {
 	if len(got) != 1 || got[0].line != 1 {
 		t.Fatalf("본문의 띄운 붙임표 하나만 걸려야 한다(표·제목은 제외): %d건 %v", len(got), got)
 	}
-	rs, err := loadRules(filepath.Join("..", "..", rulesFile))
+	rs, err := loadRules(filepath.Join("..", "..", "tools", "checkprose", rulesName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -411,18 +421,17 @@ func TestNoticesPassTheGateAndStayOutOfTheBaseline(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	put(rulesFile, "엠대시\t—\t콜론으로 푼다\n")
-	put(noticesFile, "띄운 붙임표\t(?m)^[^|#\\n]*[가-힣][ \\t]+-[ \\t]+[가-힣]\t마침표나 콜론으로 푼다\n")
-	put(overlapFile, "# 없음\n")
+	cfg := filepath.Join("tools", "checkprose")
+	put(filepath.Join(cfg, rulesName), "엠대시\t—\t콜론으로 푼다\n")
+	put(filepath.Join(cfg, noticesName), "띄운 붙임표\t(?m)^[^|#\\n]*[가-힣][ \\t]+-[ \\t]+[가-힣]\t마침표나 콜론으로 푼다\n")
+	put(filepath.Join(cfg, overlapName), "# 없음\n")
+	put(filepath.Join(cfg, filesName), "# 없음\n")
 	put("a.md", "노드 수로 셉니다 - 관측 대상입니다.\n")
-	oldGo, oldHTML := extraGo, extraHTML
-	extraGo, extraHTML = nil, nil
-	t.Cleanup(func() { extraGo, extraHTML = oldGo, oldHTML })
 
-	if code := run(false, true); code != 0 {
+	if code := run(cfg, false, true); code != 0 {
 		t.Fatalf("알림만 있는 입력의 -baseline 이 실패했다: %d", code)
 	}
-	b, err := os.ReadFile(baselineFile)
+	b, err := os.ReadFile(filepath.Join(cfg, baselineName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,11 +440,11 @@ func TestNoticesPassTheGateAndStayOutOfTheBaseline(t *testing.T) {
 			t.Fatalf("알림이 기준선에 들어갔다: %q", line)
 		}
 	}
-	if code := run(false, false); code != 0 {
+	if code := run(cfg, false, false); code != 0 {
 		t.Fatalf("알림만 있는 입력이 관문을 막았다: %d", code)
 	}
 	put("a.md", "노드 수로 셉니다 - 관측 대상입니다.\n관측 — 실행 중인 것을 본다.\n")
-	if code := run(false, false); code != 1 {
+	if code := run(cfg, false, false); code != 1 {
 		t.Fatalf("관문 규칙에 걸리는 줄을 더했는데 막지 않았다: %d", code)
 	}
 }
