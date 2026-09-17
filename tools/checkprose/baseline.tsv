@@ -1,7 +1,6 @@
 # checkprose baseline. count<TAB>rule<TAB>file
 # To rewrite, rerun the same command with: -baseline
 1	갈리다	CONTRIBUTING.md
-1	말하다	CONTRIBUTING.md
 1	박히다	CONTRIBUTING.md
 1	갈리다	RELEASE_NOTES.md
 3	갖다	RELEASE_NOTES.md
@@ -18,21 +17,15 @@
 1	인간의 결론	docs/regulation.md
 1	갖다	docs/runtime-acceptance.md
 1	갖다	docs/under-review.md
-4	말하다	docs/under-review.md
 3	재료	docs/under-review.md
 1	끊다	examples/discovery/README.md
 1	이기다	examples/discovery/README.md
 1	갈리다	examples/provisioning/README.md
 1	끊다	inventory/cmd/README.md
-1	말하다	inventory/cmd/README.md
-1	말하다	inventory/design.md
 4	이기다	inventory/design.md
-1	말하다	inventory/testcases.md
 2	이기다	inventory/testcases.md
 2	갖다	provisioning/design.md
-2	말하다	provisioning/design.md
 1	재료	provisioning/design.md
 2	갈리다	provisioning/testcases.md
-1	말하다	provisioning/testcases.md
 2	박히다	provisioning/testcases.md
 1	이기다	provisioning/testcases.md
