@@ -135,14 +135,14 @@ func run(dir string, list, write bool) int {
 			return failed(err)
 		}
 		fmt.Printf("✓ baseline rewritten: %d entries, %d hits\n", len(counts), len(hits))
-		printNoticeCount(noted)
+		printNoticeCount(dir, noted)
 		return 0
 	}
 
 	base, err := readBaseline(baselineFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗ no usable baseline:", err)
-		fmt.Fprintln(os.Stderr, "  run: go run ./tools/checkprose -baseline")
+		fmt.Fprintln(os.Stderr, "  run:", rerun(dir, "-baseline"))
 		return 1
 	}
 	grown, shrunk := compare(base, counts)
@@ -151,7 +151,7 @@ func run(dir string, list, write bool) int {
 		for _, l := range grown {
 			fmt.Fprintln(os.Stderr, "   ", l)
 		}
-		fmt.Fprintln(os.Stderr, "\nSee them with: go run ./tools/checkprose -list")
+		fmt.Fprintln(os.Stderr, "\nSee them with:", rerun(dir, "-list"))
 		fmt.Fprintln(os.Stderr, "Each rule in", rulesFile, "says what to write instead.")
 		return 1
 	}
@@ -160,17 +160,27 @@ func run(dir string, list, write bool) int {
 		for _, l := range shrunk {
 			fmt.Fprintln(os.Stderr, "   ", l)
 		}
-		fmt.Fprintln(os.Stderr, "\nLock the win in: go run ./tools/checkprose -baseline")
+		fmt.Fprintln(os.Stderr, "\nLock the win in:", rerun(dir, "-baseline"))
 		return 1
 	}
 	fmt.Printf("✓ prose check passed (%d hits, all at the baseline)\n", len(hits))
-	printNoticeCount(noted)
+	printNoticeCount(dir, noted)
 	return 0
 }
 
 func failed(err error) int {
 	fmt.Fprintln(os.Stderr, "✗ checkprose:", err)
 	return 1
+}
+
+// rerun — 안내문에 적는 「다시 돌리는 법」. 이 도구는 자기 리포에서 `go run ./tools/checkprose`
+// 로도, 다른 리포에서 `go run <모듈 경로>@<판>` 으로도 돌므로 실행한 명령을 알 수 없다. 그래서
+// 플래그만 적되, 사용자가 준 -dir 은 잃지 않는다.
+func rerun(dir, flag string) string {
+	if dir == "" || dir == "tools/checkprose" {
+		return "checkprose " + flag
+	}
+	return "checkprose -dir " + dir + " " + flag
 }
 
 // ── 규칙 ───────────────────────────────────────────────────────────────────
@@ -502,7 +512,7 @@ func tally(hits []hit) map[key]int {
 func writeBaseline(path string, counts map[key]int) error {
 	var b strings.Builder
 	b.WriteString("# checkprose baseline. count<TAB>rule<TAB>file\n")
-	b.WriteString("# Rewrite with: go run ./tools/checkprose -baseline\n")
+	fmt.Fprintf(&b, "# Rewrite with: %s\n", rerun(filepath.Dir(path), "-baseline"))
 	for _, k := range sortedKeys(counts) {
 		fmt.Fprintf(&b, "%d\t%s\t%s\n", counts[k], k.rule, k.file)
 	}
@@ -595,9 +605,9 @@ func printNotices(noted []hit) {
 }
 
 // printNoticeCount — 관문 결과 뒤에 알림 건수만 한 줄. 0 이면 아무것도 찍지 않는다.
-func printNoticeCount(noted []hit) {
+func printNoticeCount(dir string, noted []hit) {
 	if len(noted) == 0 {
 		return
 	}
-	fmt.Printf("  %d notices to review (not gated): go run ./tools/checkprose -list\n", len(noted))
+	fmt.Printf("  %d notices to review (not gated): %s\n", len(noted), rerun(dir, "-list"))
 }
