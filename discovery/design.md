@@ -207,7 +207,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 - **어느 노드인가**: 스코프 밖 IP·NAT·프록시 → "등재 판정 요청"(§5).
 
 > **Phase 1 기능**(관측 병행 + `UNDECLARED` 엣지 발견, 곧 선언에 없는 통신이다). 이 엣지 관측이 인벤토리 reconciliation의
-> 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/design.md) §12).
+> 관측 소스가 되어 **크립토 통신 토폴로지**를 완성한다([인벤토리 설계](../inventory/design.md) §6).
 
 ### 2.4 cng-collector (Go, `bcrypt.dll`): CNG 계층
 

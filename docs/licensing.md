@@ -52,7 +52,7 @@ GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다**.
 `gopkg.in/yaml.v3`(MIT)는 위 목록에 없다. 데모 토폴로지 생성기와 테스트에서만 쓰여 collector·CLI에 링크되지 않는다.
 
 **정리**: 링크되는 카피레프트는 **없다**. Apache-2.0/MIT/BSD-3은 상호 호환이며 Apache-2.0 배포에 문제 없다.
-BSD-3·MIT는 저작권 고지 유지 의무만 있으므로 배포물에 `THIRD-PARTY-NOTICES` 동봉을 권장한다(§6).
+BSD-3·MIT는 저작권 고지 유지 의무만 있으므로 배포물에 `THIRD-PARTY-NOTICES` 동봉을 권장한다.
 
 ---
 

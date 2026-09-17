@@ -46,7 +46,7 @@ Dependencies **compiled and linked** into the static Go binaries built from this
 `gopkg.in/yaml.v3` (MIT) is not in the list above — it is used only by the demo topology generator and by tests, so it is not linked into the collectors or CLIs.
 
 **Summary**: **no** copyleft is linked. Apache-2.0, MIT, and BSD-3 are mutually compatible and pose no problem for an Apache-2.0 distribution.
-(BSD-3 and MIT only require preserving the copyright notice → shipping `THIRD-PARTY-NOTICES` with the distribution is recommended, §6.)
+(BSD-3 and MIT only require preserving the copyright notice → shipping `THIRD-PARTY-NOTICES` with the distribution is recommended.)
 
 ---
 
