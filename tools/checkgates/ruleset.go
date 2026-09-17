@@ -65,7 +65,7 @@ func rulesetPlaceholders(files []string) ([]string, error) {
 			if err != nil || !looksLikeRuleset(v) {
 				return true
 			}
-			out = append(out, fmt.Sprintf("%s:%d: %q — `normalize.RulesetVersion`을 쓸 것",
+			out = append(out, fmt.Sprintf("%s:%d: %q 대신 `normalize.RulesetVersion`을 쓸 것",
 				f, fset.Position(lit.Pos()).Line, v))
 			return true
 		})

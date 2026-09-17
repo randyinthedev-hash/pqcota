@@ -15,7 +15,7 @@
 
 동일 라이선스가 이 프로젝트의 [`LICENSE`](LICENSE)에 전문으로 포함되어 있습니다. 다음 컴포넌트가 이를 따릅니다:
 
-- **google.golang.org/grpc** — Copyright The gRPC Authors (Google LLC 외)
+- **google.golang.org/grpc** — Copyright The gRPC Authors (Google LLC et al.)
 - **google.golang.org/genproto/googleapis/rpc** — Copyright Google LLC
 
 전문: [`LICENSE`](LICENSE) 또는 https://www.apache.org/licenses/LICENSE-2.0
