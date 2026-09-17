@@ -80,7 +80,7 @@ ansible-playbook -i targets.ini provision-rollback.yml
 
 ## 결과를 가르는 두 축
 
-**`kind`가 "무엇을", `automationLevel`이 "어디까지"** 를 정한다. 둘의 조합이 산출물을 결정한다.
+**`kind`가 "무엇을", `automationLevel`이 "어디까지"**를 정한다. 둘의 조합이 산출물을 결정한다.
 
 | `kind` | 그 조치로 놓이는 것 (L1) | (L2) | (L3) |
 |---|---|---|---|
@@ -106,7 +106,7 @@ ansible-playbook -i targets.ini provision-rollback.yml
 | 플레이북에 config 조각이 없다 | `--level l1`이다. config는 L2부터 |
 | 조각에 `Groups`/`namedGroups`가 주석으로만 있다 | `targetAlgorithm`이 KEM이 아니거나 인식되지 않았다 |
 | 플레이북에 조치가 주석으로만 있다 | 그 `kind`는 config로 배포할 수 없다(포크 교체·재빌드 등) |
-| provider 클래스명이 `<…확인>` 으로 나온다 | `providerChoice`가 BC 계열이 아니다. 정식 클래스명으로 교체해야 한다 |
+| provider 클래스명이 `<…확인>`으로 나온다 | `providerChoice`가 BC 계열이 아니다. 정식 클래스명으로 교체해야 한다 |
 | `Could not find or access '…so'` (실행 시) | 모듈 소스를 못 찾았다. `files/`에 두거나 `-e pqcota_module_src_<이름>=` 지정 |
 | 여러 provider인데 전부 같은 파일이 배치됐다 | 전역 `pqcota_module_src`를 썼다. provider별 변수나 `files/` 관례로 |
 | 적용했는데 여전히 고전으로 협상된다 | 조각이 **배치만** 됐고 참조·재시작(L3)이 안 됐거나, JCA라면 provider 우선순위가 뒤에 있다 |

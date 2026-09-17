@@ -30,7 +30,7 @@
 ## 2. provenance: 전달 방식 ≠ 증거 의미론
 
 "임포트됐다"는 **사실**이 provenance를 정하지 않는다. provenance는 Envelope의 `detection_method`로 결정된다.
-- 같은 "파일 임포트"라도 **CBOM(관측 레인)** 과 **CMDB 선언(선언 레인 → 인벤토리 `pkg/inventory/declaration`)** 은 다른 레인이다.
+- 같은 "파일 임포트"라도 **CBOM(관측 레인)**과 **CMDB 선언(선언 레인 → 인벤토리 `pkg/inventory/declaration`)**은 다른 레인이다.
 - CBOM 수신 = **관측 레인**, `evidence_strength`는 `confirmed`–`inferred-high`(소스/아티팩트 기반).
 
 ## 3. 메커니즘: 파일 기반 intake (SV-2·SD-7 공용)

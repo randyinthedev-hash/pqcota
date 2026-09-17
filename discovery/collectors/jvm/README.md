@@ -45,7 +45,7 @@
 
 ### 배포에 미치는 영향
 
-①이 있으므로 노드엔 **Go 바이너리 + `collector.jar`(에이전트)** 만 있으면 된다. **미니 JDK 동봉은 불필요**하다 → [collector 배포 설계 §2](../../collector-deployment.md).
+①이 있으므로 노드엔 **Go 바이너리 + `collector.jar`(에이전트)**만 있으면 된다. **미니 JDK 동봉은 불필요**하다 → [collector 배포 설계 §2](../../collector-deployment.md).
 
 ---
 
