@@ -32,11 +32,17 @@
 // Co., Ltd.)이고, 권리자가 2026-09-17에 이 복사본을 이 리포의 LICENSE(Apache-2.0)로 제공하기로
 // 결정했다. 원본 리포의 라이선스는 바뀌지 않는다.
 //
+// **설정은 전부 한 디렉터리(-dir, 기본 tools/checkprose)에 있고 코드는 리포를 가리지 않는다.**
+// rules.tsv(규칙) · notices.tsv(알림) · overlap.txt(잘못 잡는 말) · files.txt(마크다운 밖에서
+// 볼 Go·HTML 파일) · baseline.tsv(기준선). 다른 리포는 이 코드를 복사하지 않고 자기 설정
+// 디렉터리를 두고 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@<판>` 으로 돌린다.
+//
 // usage:
 //
 //	go run ./tools/checkprose             # 관문
 //	go run ./tools/checkprose -list       # 걸린 자리를 줄 번호까지(알림 포함)
 //	go run ./tools/checkprose -baseline   # 기준선을 다시 찍는다
+//	go run ./tools/checkprose -dir <설정 디렉터리>
 package main
 
 import (
@@ -54,32 +60,13 @@ import (
 	"strings"
 )
 
-// extraGo — 마크다운 밖에서 사람이 읽는 한국어가 있는 Go 소스. 이 리포에는 화면이 없고,
-// 도구가 찍는 메시지만 한국어다. **경로로 적는다**: 규약으로 두면 새 파일이 슬그머니
-// 들어오거나 빠진다.
-var extraGo = []string{
-	"tools/checkgates/gates.go",
-	"tools/checkgates/ruleset.go",
-}
-
-// extraHTML — 같은 이유로 적어 두는 HTML. 소개 페이지·구조도·시연영상 카드다. **새 파일이
-// 생기면 여기에 더한다.** 목록이라야 빠진 것이 보인다.
-var extraHTML = []string{
-	"docs/index.html",
-	"docs/architectures/platform-structure.html",
-	"demo/recording/browser-frame.html",
-	"demo/recording/intro-slides.html",
-	"demo/recording/outro-card.html",
-	"demo/recording/section-cards.html",
-	"demo/recording/title-card.html",
-	"demo/recording/topology-frame.html",
-}
-
+// 설정 파일 이름. 디렉터리는 -dir 로 받는다(기본 tools/checkprose).
 const (
-	rulesFile    = "tools/checkprose/rules.tsv"
-	noticesFile  = "tools/checkprose/notices.tsv"
-	baselineFile = "tools/checkprose/baseline.tsv"
-	overlapFile  = "tools/checkprose/overlap.txt"
+	rulesName    = "rules.tsv"
+	noticesName  = "notices.tsv"
+	baselineName = "baseline.tsv"
+	overlapName  = "overlap.txt"
+	filesName    = "files.txt"
 )
 
 // overlap — 규칙이 잘못 잡는 말. 재기 전에 같은 길이로 덮는다. 「헷갈리다」의 "갈리"가
@@ -102,32 +89,39 @@ type hit struct {
 }
 
 func main() {
+	dir := flag.String("dir", "tools/checkprose", "directory holding rules.tsv, notices.tsv, overlap.txt, files.txt and baseline.tsv")
 	list := flag.Bool("list", false, "print every hit with its line")
 	write := flag.Bool("baseline", false, "rewrite the baseline file")
 	flag.Parse()
-	os.Exit(run(*list, *write))
+	os.Exit(run(*dir, *list, *write))
 }
 
 // run — 관문 한 번. 종료 코드를 돌려주고 os.Exit 은 main 이 한다: 실제 실행 경로(알림만
 // 있는 입력이 통과하는지, 기준선에 알림이 섞이지 않는지)를 테스트가 그대로 밟기 위해서다.
-func run(list, write bool) int {
+func run(dir string, list, write bool) int {
+	rulesFile := filepath.Join(dir, rulesName)
+	baselineFile := filepath.Join(dir, baselineName)
 	rules, err := loadRules(rulesFile)
 	if err != nil {
 		return failed(err)
 	}
-	overlap, err = loadWords(overlapFile)
+	overlap, err = loadWords(filepath.Join(dir, overlapName))
 	if err != nil {
 		return failed(err)
 	}
-	hits, err := scan(".", rules)
+	extra, err := loadWords(filepath.Join(dir, filesName))
 	if err != nil {
 		return failed(err)
 	}
-	notices, err := loadRules(noticesFile)
+	hits, err := scan(".", extra, rules)
 	if err != nil {
 		return failed(err)
 	}
-	noted, err := scan(".", notices)
+	notices, err := loadRules(filepath.Join(dir, noticesName))
+	if err != nil {
+		return failed(err)
+	}
+	noted, err := scan(".", extra, notices)
 	if err != nil {
 		return failed(err)
 	}
@@ -228,7 +222,8 @@ func loadWords(path string) ([]string, error) {
 
 // ── 훑기 ───────────────────────────────────────────────────────────────────
 
-func scan(root string, rules []rule) ([]hit, error) {
+// scan — root 아래의 마크다운 전부와, extra 에 적힌 Go·HTML 파일을 잰다.
+func scan(root string, extra []string, rules []rule) ([]hit, error) {
 	var out []hit
 	seen := map[string]bool{}
 
@@ -277,19 +272,25 @@ func scan(root string, rules []rule) ([]hit, error) {
 		return nil, err
 	}
 
-	for _, rel := range extraGo {
-		orig, masked, err := maskGo(filepath.Join(root, rel))
-		if err != nil {
-			return nil, err
+	// files.txt — 마크다운 밖에서 사람이 읽는 한국어가 있는 파일. **경로로 적는다**: 규약으로
+	// 두면 새 파일이 슬그머니 들어오거나 빠진다. 확장자로 덮는 법을 고른다.
+	for _, rel := range extra {
+		switch {
+		case strings.HasSuffix(rel, ".go"):
+			orig, masked, err := maskGo(filepath.Join(root, rel))
+			if err != nil {
+				return nil, err
+			}
+			add(rel, orig, masked)
+		case strings.HasSuffix(rel, ".html"):
+			b, err := os.ReadFile(filepath.Join(root, rel))
+			if err != nil {
+				return nil, err
+			}
+			add(rel, b, maskHTML(b))
+		default:
+			return nil, fmt.Errorf("%s: only .go and .html can be listed in %s", rel, filesName)
 		}
-		add(rel, orig, masked)
-	}
-	for _, rel := range extraHTML {
-		b, err := os.ReadFile(filepath.Join(root, rel))
-		if err != nil {
-			return nil, err
-		}
-		add(rel, b, maskHTML(b))
 	}
 
 	sort.Slice(out, func(i, j int) bool {
