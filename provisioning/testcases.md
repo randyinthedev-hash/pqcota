@@ -119,7 +119,7 @@
 | [TP-PLAYBOOK-13](../pkg/provisioning/paths_test.go) | `TestConfigNeverUsesRelativeModule`: 이름이 빈 값·기본·커스텀 | `module =` 줄이 항상 `/`로 시작 | 상대 경로면 OpenSSL이 모듈 디렉터리에서 찾다 실패한다 |
 | [TP-PLAYBOOK-14](../pkg/provisioning/paths_test.go) | `TestPerProviderModuleSourceVariable`: 이름에 비영숫자(`my-prov.1`) | `pqcota_module_src_my_prov_1` → 전역 → `files/` 순 폴백 | 한 플레이북에 여러 provider가 섞여도 각자 소스를 지정할 수 있게. 변수명은 Ansible 규칙에 맞춘다 |
 | [TP-PLAYBOOK-15](../pkg/provisioning/paths_test.go) | `TestChecksumGate`: 모듈 배치 | `checksum_algorithm: sha256` + `assert` + `… is defined` 가드 | 무엇을 심었는지 고정한다. 안 주면 검사만 건너뛴다 |
-| [TP-PLAYBOOK-16](../pkg/provisioning/paths_test.go) | `TestJCAModuleIsJar`: JCA 주입 | 배치 경로가 `.jar`로 끝나고 조각 안내와 일치 | 런타임에 따라 갈리는 확장자·경로를 한 곳에서 정한다 |
+| [TP-PLAYBOOK-16](../pkg/provisioning/paths_test.go) | `TestJCAModuleIsJar`: JCA 주입 | 배치 경로가 `.jar`로 끝나고 조각 안내와 일치 | 런타임에 따라 달라지는 확장자·경로를 한 곳에서 정한다 |
 | [TP-PLAYBOOK-17](../pkg/provisioning/paths_test.go) | `TestL2CreatesConfigDirectory`: 깨끗한 노드에 L2 | 디렉터리를 `state: directory`로 **배치보다 먼저**. L1은 만들지 않음 | 실 ansible에서 잡힌 회귀: `copy`는 대상 디렉터리가 없으면 실패한다 |
 | [TP-PLAYBOOK-18](../pkg/provisioning/stage_test.go) | `TestPerAssetAutomationLevelSurvivesTheGlobalFlag`: 한 계획에 L1 자산과 L3 자산 | 전역 기본값을 어느 쪽으로 주든 **조치별 수준이 이긴다.** 롤백도 같은 규칙으로 갈린다 | 이 값은 승인 서명이 덮는다. 전역 하나로 평탄화하면 **승인자가 서명한 위임 수준과 실제 실행 수준이 갈린다** |
 | [TP-PLAYBOOK-19](../pkg/provisioning/stage_test.go) | `TestActivationWarningsFollowThePlansLevel`: 전역은 L2인데 계획이 L3로 확정한 조치 | 훅 누락이 경고로 나온다 | 전역만 보던 동안 그런 조치는 **경고조차 되지 않았다** |

@@ -85,7 +85,7 @@
 
 > **플랫폼 제약**: **전 바이너리가 Go**다(collector도 운영자 CLI도). 유일한 비-Go는 jvm-collector의 Java 사이드카뿐이다. 그래서 **OS 갈림은 언어가 아니라 "무엇을 만지느냐"로 정해진다**:
 > - **OS API를 만지는 것 = 그 OS 전용**. openssl(§2.1)·procs는 `/proc`·ELF, network(§2.3)는 AF_PACKET, cng(§2.4)는 `bcrypt.dll`이다. 다른 OS에는 **거부 스텁**을 둬 빈 결과가 아니라 갭을 낸다(§2.6).
-> - **같은 축을 OS마다 다른 API로 보는 것도 있다**. jvm(§2.2)의 정찰이 그렇다. 리눅스는 `/proc`, Windows는 Toolhelp32다. 이때 갈리는 것은 **커버의 깊이**이지 되고 안 되고가 아니다.
+> - **같은 축을 OS마다 다른 API로 보는 것도 있다**. jvm(§2.2)의 정찰이 그렇다. 리눅스는 `/proc`, Windows는 Toolhelp32다. 이때 달라지는 것은 **커버의 깊이**이지 되고 안 되고가 아니다.
 > - **파일·DB만 만지는 것 = 크로스플랫폼**. 중앙·운영자 CLI(ingest·inventory·provision 등)는 OS 프리미티브를 안 만져 어디서든 돈다.
 >
 > collector별 대응 OS는 [커맨드 레퍼런스](cmd/README.md)에 있다. 배포 바이너리는 정적(`CGO_ENABLED=0`)이라 OS×arch 교차 컴파일이 자명하다.
@@ -100,7 +100,7 @@
 | 프로세스 | `/proc/<pid>/maps` 파싱(로드된 libssl, **dlopen·벤더링 포착**), `/proc/<pid>/fd`, netlink로 TLS 등급 | runtime-introspection | 실제 로드 |
 | 심볼(정적/스트립) | ELF `.rodata` 문자열 + 심볼 시그니처 → **fork 매처**(§2.2) | symbol-analysis | fork·version 추정 |
 
-> **provider 층은 보지 않는다.** 여기까지가 lib 경로·fork·버전이고, 그 위에 얹힌 provider(예: `oqsprovider`가 이미 깔려 있는지)는 관측 대상이 아니다. jvm-collector가 attach로 provider 체인 전부를 보는 것(§2.2)과 갈리는 지점이다. 프로비저닝을 막지는 않는다: 어떤 provider를 쓸지는 계획에 사용자가 적고, 버전 근거는 인벤토리에 있다. 조치 뒤 재관측해도 이 층의 변화는 인벤토리에 나타나지 않는다.
+> **provider 층은 보지 않는다.** 여기까지가 lib 경로·fork·버전이고, 그 위에 얹힌 provider(예: `oqsprovider`가 이미 깔려 있는지)는 관측 대상이 아니다. jvm-collector가 attach로 provider 체인 전부를 보는 것(§2.2)과 다른 지점이다. 프로비저닝을 막지는 않는다: 어떤 provider를 쓸지는 계획에 사용자가 적고, 버전 근거는 인벤토리에 있다. 조치 뒤 재관측해도 이 층의 변화는 인벤토리에 나타나지 않는다.
 
 **fork 시그니처 매처 (SD-3 핵심 IP).** 동일 soname 문제(수용 원칙 §2.2)를 푼다:
 ```go
