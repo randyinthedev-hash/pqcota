@@ -896,7 +896,7 @@ github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한�
 - **`pkg/org`**: 조직 이름의 어휘. 소문자·숫자·하이픈 2–64자(`Acme`와 `acme`가 다른 조직이 되지 않게),
   빈 조직 금지, `PQCOTA_REQUIRE_ORG=1`이면 조직 없이 저장소를 열 수 없다. `default`는 **예약**이다.
   모양 규칙을 통과하므로, 막지 않으면 실제 조직 이름으로 배정돼 단일 조직 시절 데이터와 한 조직이 된다.
-- **DDL 자동 실행 안전장치**: `PQCOTA_AUTO_DDL=0`이면 스키마를 만들지 않고, 없으면 끊는다.
+- **DDL 자동 실행 안전장치**: `PQCOTA_AUTO_DDL=0`이면 스키마를 만들지 않고, 없으면 오류로 중단한다.
   가리키는 곳이 어긋났을 때 **빈 테이블이 새로 생기고 거기에 쓰던** 자리를 막는다.
 - **거절 이력**(`pqcota_rejections`): 서명 실패·미확인·오프스코프·신원충돌을 남긴다. 원문은
   담지 않고 canonical 지문만 남긴다. 검증하지 않은 데이터를 저장소가 쥐지 않으면서 같은 것이
@@ -1001,7 +1001,7 @@ github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한�
 두었는데 정작 그 어휘를 import할 수 없었다. 첫 외부 소비가 생기며 드러났다.
 
 - **`gen/` 커밋**: `go get` 만으로 `commonv1`·`discoveryv1`·`inventoryv1`·`provisioningv1`을 쓴다.
-  손으로 고친 생성 코드는 CI의 generate 드리프트 검사가 끊는다(이제 그 검사가 실제로 구실을 한다).
+  손으로 고친 생성 코드는 CI의 generate 드리프트 검사가 막는다(이제 그 검사가 실제로 구실을 한다).
 - **buf 버전 고정**(CI, 1.69.0): 생성 코드를 커밋했으므로, 도구 버전이 바뀌어 출력이 달라지면
   코드 변경 없이도 드리프트 검사가 실패한다.
 - 소비 방법과 모듈 경로 우회를 [contracts/README](contracts/README.md#소비자가-쓰는-법)에 적었다.
