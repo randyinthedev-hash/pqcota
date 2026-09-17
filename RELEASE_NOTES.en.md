@@ -82,7 +82,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.9.1 — This repo owns the prose gate (2026-09-17)
+## v0.9.1 — The prose gate lives in this repo (2026-09-17)
 
 **Goal** — keep `tools/checkprose`, the checker that stops once-removed Korean expressions from
 creeping back into documents, HTML and tool output, in this repo, and let other repos run it with
