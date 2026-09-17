@@ -66,6 +66,12 @@ Where it breaks is the artifact. What `Render` has to emit is not `[openssl_init
 
 **What is undecided** — where to draw the seam of the substrate abstraction (File-Stage vs Registry/GPO vs Config-Only). It is not decided until a Windows implementation is actually in hand.
 
+**The v0.6.0 measurement supplied the evidence.** Once the discovery half ran for real, three things were settled:
+of the nine registered providers, the one that actually serves algorithms is **`Microsoft Primitive Provider` alone**;
+all fifty algorithms have **exactly one provider each**, so **there is no priority contention** (the premise inherited
+from JCA does not hold for CNG); and this build has `ML-DSA` but not `ML-KEM`, so the place that needs remediation is
+**key exchange, not signatures**. Those three are the inputs when the provisioning seam is drawn.
+
 ### 2.3 HSM / PKCS#11 — it touches none of the conditions
 
 The remediation is usually ***pointing* openssl (`pkcs11-provider`) or jca (`SunPKCS11`) at the HSM**. Rendering means putting a parameter on the existing `PROVIDER_INJECT` saying "this provider's target is an HSM slot", and the substrate (file staging + a config fragment) is used unchanged.
@@ -643,8 +649,8 @@ announcing it every run — so that what was deferred does not go quiet.
 
 ## 9. Observing communication on Windows
 
-Both [`capture_linux.go`](../discovery/collectors/network/capture_linux.go) and
-[the CLI](../discovery/cmd/pqcota-netcap/main.go) carry `//go:build linux`. Cross-compiling for Windows
+`pqcota-netcap` is `//go:build linux` in both [`capture_linux.go`](../discovery/collectors/network/capture_linux.go)
+and [the CLI](../discovery/cmd/pqcota-netcap/main.go). Cross-compiling for Windows
 drops the package entirely, so **no `.exe` is produced.** The reference playbook likewise ships only
 `cngscan` and `jvmscan` to Windows nodes.
 
@@ -678,7 +684,7 @@ table, and requiring Administrator sits in the same place as Linux requiring `CA
 
 **The reason for not taking ㉠ is not the licence.** Npcap is indeed not permissively licensed, but that
 matters only if this repo redistributes it — and it does not have to, exactly as with Ansible and Temurin
-in the demo ([licence notes §4](licensing.en.md) (Korean)). **The real reason is that the driver stays on
+in the demo ([license notes §4](licensing.en.md)). **The real reason is that the driver stays on
 the node.** A collector is a CLI that runs and exits, and ship → run → retrieve → clean up, leaving
 nothing, is the premise of T1 self-service. Installing a driver on a legacy Windows server is a
 change-approval matter, so observing it would mean altering it.

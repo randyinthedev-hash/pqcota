@@ -175,7 +175,7 @@ Where the other collectors see a node's **capability** (the loaded library = whe
 capture : pure Go AF_PACKET (x/sys/unix, CAP_NET_RAW), a BPF filter for handshake records only (payload excluded → privacy)
 parse   : ClientHello/ServerHello, SSH KEXINIT → the negotiated algorithms and KEX group
 output  : communication edges (src→dst:port, negotiated_group, role, tls/ssh version)
-return  : a CollectionResult (the observed lane). crypto_runtime=UNSPECIFIED (TLS≠OpenSSL, weak attribution, §2.2)
+return  : a CollectionResult (the observed lane). crypto_runtime=UNSPECIFIED (TLS cannot be assumed to be OpenSSL, §2.2)
           — it fills in **communication edges**, not node crypto Findings (inventory §2 ObservedEdge)
 ```
 

@@ -112,6 +112,7 @@ Contracts and binaries are the same as v0.9.0.
   is the original becomes a licensing question. With this repo owning it and others pinning a version,
   both problems disappear.
 
+## v0.9.0 — Tracing an action back to the snapshot state it came from (2026-09-11)
 
 **Goal** — make `derived_from_snapshot_id` fillable. The side producing the plan normalizes the same
 results under the same rules and gets the same fingerprint; the history finds the snapshot by it and
@@ -395,7 +396,7 @@ and the approval handoff itself, are still open.
 ### Learned
 
 - **What a signature protects and what execution follows can diverge.** The approval signature covers
-  `automation_level`, but the generator did not read it. An approver signed "the payments DB goes no further
+  `automation_level`, but the generator did not read it. An approver signed "the payment server goes no further
   than L1" while execution flattened everything with `--level l3`. When the judgement that split delegation
   by risk disappears at execution time, the stage boundary stops working as a gate.
 - **Closing a default moves every place that command is written down.** Making approval checks mandatory
@@ -584,7 +585,8 @@ result back.** Reach a real Windows machine with Ansible and run the whole loop.
   name, stays empty. That fact is carried as a value and reported on screen.
 - **`pqcota-windows-amd64.zip` is attached to the release** — until now you had to build it yourself.
 - **The command reference is complete again** — `pqcota-cngscan` (added in v0.6.0 but never listed) and
-  `pqcota-keygen` are in, and the per-collector OS table now lives in **one** place.
+  `pqcota-keygen` are in, and the per-collector OS table now lives in **one** place. It also points to
+  where `hosts.csv` is explained.
 
 > **The contract is unchanged; one more kind of result appears.** Not a line of `.proto` was touched.
 > But the jvm-collector can now emit a `CollectionResult` **carrying only a completeness gap, with no
@@ -1135,7 +1137,7 @@ The contract itself (proto) did not change — the `buf breaking` baseline is un
 ### What was established
 
 - **Minimum supported kernel = 3.2** (the floor the Go toolchain sets — it became this in 1.24 and has held since. Building needs Go 1.26.4, per `go.mod`). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.en.md).
-- **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real.
+- **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real. 3.2 has no systemd, so app attribution by executable path was observed as well.
 
 ---
 

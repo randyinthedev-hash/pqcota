@@ -348,7 +348,7 @@ the value the action carries. `pqcota-provision --level` is only the **default f
 unset** (`provisioning.LevelFor`).
 
 It used not to read that value at all and emitted every action at one global level. A plan finalized as
-"payments DB = L1, stateless worker = L3" was therefore flattened by a single `--level l3`. The value is
+"payment server = L1, stateless worker = L3" was therefore flattened by a single `--level l3`. The value is
 **covered by the approval signature** (`sign.CanonicalPlan`), so the level the approver signed and the level
 actually executed could differ. When the judgement that split delegation by risk disappears at execution
 time, the stage boundary stops working as a gate.

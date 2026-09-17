@@ -6,6 +6,9 @@ English · [한국어](licensing.md)
 
 **What this document is**: an accounting of **every license `pqcota` uses internally** as of today, organized by how it is consumed. The consumption form matters because license obligations change completely depending on whether something is linked into a distributed binary.
 
+> This is the **licensing axis**. Which component adopted what, why, and what was not built is covered by
+> "What we lean on" in [governance](governance.md) (Korean).
+
 > **§ notation**: unless stated otherwise, these are section numbers in the [process regulation](regulation.en.md).
 
 > ⚠️ **Disclaimer**: this document is not legal advice. Before distribution, due diligence by counsel specializing in OSS licensing (GPL vs AGPL, or-later, the exact per-version conditions) is required.
