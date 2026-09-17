@@ -91,7 +91,7 @@ type CommunicationEdge struct {
 }
 type ReconState string // "confirmed" | "undeclared" | "unobserved"
 
-// 판정 — "인간의 결론"(§3.6). 엣지 상태가 아니라 결론이라 재수집에도 부착 유지.
+// 판정 — "사람의 결론"(§3.6). 엣지 상태가 아니라 결론이라 재수집에도 부착 유지.
 type Decision struct {
     Subject     string     // 엣지 ID 또는 정책 템플릿 ID (정책단위 §3.4)
     Conclusion  string     // 실존/stale/제외/승인 등

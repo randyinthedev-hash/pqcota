@@ -24,7 +24,7 @@
 |---|---|---|---|
 | [TK-EVIDENCE-1](../pkg/discovery/normalize/evidence_test.go) | `TestEvidenceStrength`: 계약(`common.proto`)의 `detection_method` 여섯 값 | `runtime_introspection` · `source` · `dynamic_trace`→`CONFIRMED`, `artifact`→`INFERRED_HIGH`, `symbol_analysis`→`INFERRED_LOW`, 미지정→`UNSPECIFIED` | 규정서 §2.3 표를 코드로 고정한다. 지금 그 값을 내는 곳이 없어도 답이 정해져 있어야, 생산자가 생겼을 때 그 자리에서 지어내거나 `default`로 흘러 오류 없이 `UNSPECIFIED`가 되지 않는다 |
 | [TK-EVIDENCE-2](../pkg/discovery/normalize/finding_test.go) | `TestParseDetectionMethod`: 자산 프로퍼티 / 수집 Envelope 두 자리, 복합·미지 어휘 포함 | 프로퍼티가 Envelope를 이기고(더 약해도), 복합이면 가장 강한 것(적힌 순서 무관), 없거나 모르면 Envelope로 폴백 | 강도를 파생하기 전에 방법이 정해져야 한다. 모르는 어휘를 그럴듯한 값으로 옮기지 않는다(§2.5) |
-| [TK-EVIDENCE-3](../pkg/discovery/normalize/finding_test.go) | `TestDetectionMethodVocabularyDoesNotOverlap`: 어휘 다섯 개의 상호 포함 | 어느 것도 다른 것을 품지 않는다 | 어휘를 부분 문자열로 찾으므로, 한 어휘가 다른 어휘를 품으면 짧은 쪽이 영영 안 잡힌다. 어휘를 늘릴 때 걸리라고 둔다 |
+| [TK-EVIDENCE-3](../pkg/discovery/normalize/finding_test.go) | `TestDetectionMethodVocabularyDoesNotOverlap`: 어휘 다섯 개의 상호 포함 | 어느 것도 다른 것을 포함하지 않는다 | 어휘를 부분 문자열로 찾으므로, 한 어휘가 다른 어휘를 포함하면 짧은 쪽이 영영 안 잡힌다. 어휘를 늘릴 때 걸리라고 둔다 |
 
 ### TK-PIPELINE. 정규화: CycloneDX에서 Finding으로
 
