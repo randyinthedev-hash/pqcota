@@ -55,7 +55,7 @@ node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,win
 | `ssh` (기본) | 리눅스면 그대로. **Windows면 `ansible_shell_type=powershell`**: 셸이 sh가 아니다 | `ssh_key`(권장) 또는 `ssh_pass` |
 | `winrm` | `ansible_connection=winrm`, 포트 기본 **5985** | `ssh_pass` → `ansible_password`. **키로는 붙지 않는다** |
 
-`port`를 적었으면 그것이 이긴다(HTTPS면 `5986`). `connection=winrm`인데 `os`가 `windows`가 아니거나 `ssh_key`가 있으면 **오류**다. 접속 시점에야 드러날 어긋남을 파일 읽는 자리에서 끊는다.
+`port`를 적었으면 그것이 우선한다(HTTPS면 `5986`). `connection=winrm`인데 `os`가 `windows`가 아니거나 `ssh_key`가 있으면 **오류**다. 접속 시점에야 드러날 어긋남을 파일 읽는 자리에서 끊는다.
 
 > **사이트마다 달라지는 값 둘은 지어내지 않는다**. SSH의 `ansible_shell_type=cmd`(sshd 기본 셸이 cmd일 때만)와 WinRM의 `ansible_winrm_transport`다. 생성된 ini의 주석이 그 자리를 알려 주고, 값은 `group_vars/targets_windows.yml`에 둔다.
 >
