@@ -17,8 +17,8 @@
 
 | 파일 | 패키지 | 정의 | 규정서 근거 |
 |---|---|---|---|
-| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | 수용 원칙 §2.4, §2.7, §3.1 |
-| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | 수용 원칙 §2.4, §3.2 |
+| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | 공유 어휘: Envelope·완전성·통제 어휘 enum (전 단계 가로지름) | 수용 원칙 §2.4 · 규정서 §2.6, §3.1 |
+| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | 파생 Finding · OpensslAxes · JcaAxes | 수용 원칙 §2.4 · 규정서 §3.2 |
 | `proto/pqcota/discovery/v1/collector.proto` | `pqcota.discovery.v1` | Collector intake gRPC 서비스 · CollectionResult | §1.6 |
 | `proto/pqcota/discovery/v1/edge.proto` | `pqcota.discovery.v1` | 통신 엣지 관측 · ObservedEdge · QuantumPosture | 인벤토리 설계 §6 |
 | `proto/pqcota/discovery/v1/asset.proto` | `pqcota.discovery.v1` | 자산 계층 · Application · ProcessMatch · LiveProcess (Machine→App→Process) | §1.4, §2 |
@@ -133,7 +133,7 @@ GPL collector(CipherIQ `cbom-generator` 등)는 **별도 프로세스**로 실�
 
 - 패키지 `pqcota.{common,discovery,inventory,provisioning}.v1`. **호환 파괴 변경은 `v2` 신설**: `v1` 필드 재사용/의미 변경 금지.
 - 필드를 삭제하면 그 번호를 `reserved`로 처리한다. enum 값 추가는 하위호환이다(항상 끝에 추가한다).
-- 이 계약은 이 리포(Apache-2.0)에 속한다. 정규화된 CBOM 스키마·프로파일은 공개다(§5.1).
+- 이 계약은 이 리포(Apache-2.0)에 속한다. 정규화된 CBOM 스키마·프로파일은 공개다([라이선스 정리 §5](../docs/licensing.md)).
 
 ## 계약을 바꿀 때: 파급 점검
 

@@ -19,8 +19,8 @@ The namespaces split into the **three product stages plus a shared vocabulary** 
 
 | File | Package | Defines | Basis in the regulation |
 |---|---|---|---|
-| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | shared vocabulary: Envelope, completeness, controlled-vocabulary enums (crosses all stages) | acceptance principles §2.4, §2.7, §3.1 |
-| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | derived Finding · OpensslAxes · JcaAxes | acceptance principles §2.4, §3.2 |
+| `proto/pqcota/common/v1/common.proto` | `pqcota.common.v1` | shared vocabulary: Envelope, completeness, controlled-vocabulary enums (crosses all stages) | acceptance principles §2.4 · regulation §2.6, §3.1 |
+| `proto/pqcota/discovery/v1/cbom.proto` | `pqcota.discovery.v1` | derived Finding · OpensslAxes · JcaAxes | acceptance principles §2.4 · regulation §3.2 |
 | `proto/pqcota/discovery/v1/collector.proto` | `pqcota.discovery.v1` | collector intake gRPC service · CollectionResult | §1.6 |
 | `proto/pqcota/discovery/v1/edge.proto` | `pqcota.discovery.v1` | communication edge observation · ObservedEdge · QuantumPosture | inventory design §6 |
 | `proto/pqcota/discovery/v1/asset.proto` | `pqcota.discovery.v1` | asset hierarchy · Application · ProcessMatch · LiveProcess (Machine→App→Process) | §1.4, §2 |
@@ -134,7 +134,7 @@ The core pipeline reads those keys and maps them into a typed `Finding`.
 
 - Packages are `pqcota.{common,discovery,inventory,provisioning}.v1`. **A breaking change means a new `v2`** — never reuse a `v1` field number or change its meaning.
 - When a field is removed, mark its number `reserved`. Adding an enum value is backward compatible (always append at the end).
-- This contract belongs to this repo (Apache-2.0) — the canonical CBOM schema and profiles are public (§5.1).
+- This contract belongs to this repo (Apache-2.0) — the canonical CBOM schema and profiles are public ([licensing notes §5](../docs/licensing.en.md)).
 
 ## When you change the contract — ripple check
 
