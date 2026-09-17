@@ -191,7 +191,7 @@ flowchart LR
     C3 --> R3["주석: 수동. 레거시를 건드려야 함"]
 ```
 
-**`CONFIG_ONLY` (3.5+)**은 레거시·provider를 건드리지 않고 그룹만 켠다:
+**`CONFIG_ONLY` (3.5+)**는 레거시·provider를 건드리지 않고 그룹만 켠다:
 
 ```ini
 # pqcota 생성: OpenSSL 3.5+ config-only — ML-KEM (FIPS 203) 하이브리드 활성화(§4.3)
@@ -209,7 +209,7 @@ Groups = X25519MLKEM768:x25519
 `OPENSSL_CONF`로 직접 가리키는 환경에서 배치도 되고 sha256 게이트도 통과하는데 능력만 그대로인
 상태가 된다. 시스템 cnf에서 `.include` 하는 환경에서는 같은 값이 한 번 더 대입될 뿐이라 무해하다.
 
-**`PROVIDER_INJECT` (3.0–3.4)**은 **버전을 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
+**`PROVIDER_INJECT` (3.0–3.4)**는 **버전을 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
 
 ```ini
 [provider_sect]
