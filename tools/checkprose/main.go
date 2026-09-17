@@ -142,7 +142,7 @@ func run(dir string, list, write bool) int {
 	base, err := readBaseline(baselineFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗ no usable baseline:", err)
-		fmt.Fprintln(os.Stderr, "  run:", rerun(dir, "-baseline"))
+		fmt.Fprintln(os.Stderr, " ", rerun(dir, "-baseline"))
 		return 1
 	}
 	grown, shrunk := compare(base, counts)
@@ -151,7 +151,7 @@ func run(dir string, list, write bool) int {
 		for _, l := range grown {
 			fmt.Fprintln(os.Stderr, "   ", l)
 		}
-		fmt.Fprintln(os.Stderr, "\nSee them with:", rerun(dir, "-list"))
+		fmt.Fprintln(os.Stderr, "\nTo see them,", rerun(dir, "-list"))
 		fmt.Fprintln(os.Stderr, "Each rule in", rulesFile, "says what to write instead.")
 		return 1
 	}
@@ -160,7 +160,7 @@ func run(dir string, list, write bool) int {
 		for _, l := range shrunk {
 			fmt.Fprintln(os.Stderr, "   ", l)
 		}
-		fmt.Fprintln(os.Stderr, "\nLock the win in:", rerun(dir, "-baseline"))
+		fmt.Fprintln(os.Stderr, "\nTo lock the win in,", rerun(dir, "-baseline"))
 		return 1
 	}
 	fmt.Printf("✓ prose check passed (%d hits, all at the baseline)\n", len(hits))
@@ -174,13 +174,15 @@ func failed(err error) int {
 }
 
 // rerun — 안내문에 적는 「다시 돌리는 법」. 이 도구는 자기 리포에서 `go run ./tools/checkprose`
-// 로도, 다른 리포에서 `go run <모듈 경로>@<판>` 으로도 돌므로 실행한 명령을 알 수 없다. 그래서
-// 플래그만 적되, 사용자가 준 -dir 은 잃지 않는다.
+// 로도, 다른 리포에서 `go run <모듈 경로>@<판>` 으로도 돌므로 실행한 명령을 알 수 없고, 실행
+// 파일 이름을 지어내지도 않는다. **같은 명령에 줄 인자만** 적되, 사용자가 준 -dir 은 잃지 않는다.
+// 경로에 공백이 있을 수 있어 인용해 보인다.
 func rerun(dir, flag string) string {
-	if dir == "" || dir == "tools/checkprose" {
-		return "checkprose " + flag
+	args := flag
+	if dir != "" && dir != "tools/checkprose" {
+		args = "-dir " + strconv.Quote(dir) + " " + flag
 	}
-	return "checkprose -dir " + dir + " " + flag
+	return "rerun the same command with: " + args
 }
 
 // ── 규칙 ───────────────────────────────────────────────────────────────────
@@ -512,7 +514,7 @@ func tally(hits []hit) map[key]int {
 func writeBaseline(path string, counts map[key]int) error {
 	var b strings.Builder
 	b.WriteString("# checkprose baseline. count<TAB>rule<TAB>file\n")
-	fmt.Fprintf(&b, "# Rewrite with: %s\n", rerun(filepath.Dir(path), "-baseline"))
+	fmt.Fprintf(&b, "# To rewrite, %s\n", rerun(filepath.Dir(path), "-baseline"))
 	for _, k := range sortedKeys(counts) {
 		fmt.Fprintf(&b, "%d\t%s\t%s\n", counts[k], k.rule, k.file)
 	}
@@ -609,5 +611,5 @@ func printNoticeCount(dir string, noted []hit) {
 	if len(noted) == 0 {
 		return
 	}
-	fmt.Printf("  %d notices to review (not gated): %s\n", len(noted), rerun(dir, "-list"))
+	fmt.Printf("  %d notices to review (not gated). To see them, %s\n", len(noted), rerun(dir, "-list"))
 }
