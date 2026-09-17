@@ -469,10 +469,10 @@ func TestHTMLCommentsAreNotCounted(t *testing.T) {
 // 수도 없다. 기본 디렉터리면 플래그만, 지정했으면 -dir 을 보존하고, 공백이 든 경로는 인용한다.
 func TestRerunHintNamesArgumentsOnly(t *testing.T) {
 	cases := map[string]string{
-		"":                "rerun the same command with: -list",
+		"":                 "rerun the same command with: -list",
 		"tools/checkprose": "rerun the same command with: -list",
-		"cfg":             "rerun the same command with: -dir \"cfg\" -list",
-		"my config/prose": "rerun the same command with: -dir \"my config/prose\" -list",
+		"cfg":              "rerun the same command with: -dir \"cfg\" -list",
+		"my config/prose":  "rerun the same command with: -dir \"my config/prose\" -list",
 	}
 	for dir, want := range cases {
 		if got := rerun(dir, "-list"); got != want {

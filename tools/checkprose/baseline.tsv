@@ -1,5 +1,5 @@
 # checkprose baseline. count<TAB>rule<TAB>file
-# Rewrite with: checkprose -baseline
+# To rewrite, rerun the same command with: -baseline
 2	엠대시	CODE_OF_CONDUCT.md
 2	갈리다	CONTRIBUTING.md
 1	말하다	CONTRIBUTING.md

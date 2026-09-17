@@ -152,7 +152,7 @@ func run(dir string, list, write bool) int {
 			fmt.Fprintln(os.Stderr, "   ", l)
 		}
 		fmt.Fprintln(os.Stderr, "\nTo see them,", rerun(dir, "-list"))
-		fmt.Fprintln(os.Stderr, "Each rule in", rulesFile, "says what to write instead.")
+		fmt.Fprintln(os.Stderr, "Each rule in", strconv.Quote(rulesFile), "says what to write instead.")
 		return 1
 	}
 	if len(shrunk) > 0 {
