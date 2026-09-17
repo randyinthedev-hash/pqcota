@@ -2,7 +2,7 @@
 
 # cng-collector: Windows CNG provider 관측
 
-Windows에 **등록된 CNG provider(KSP/SSP)** 와 그 머신이 열거하는 알고리즘을 본다. provider
+Windows에 **등록된 CNG provider(KSP/SSP)**와 그 머신이 열거하는 알고리즘을 본다. provider
 아키텍처라 JCA와 같은 축을 보되([수용 원칙](../../../docs/runtime-acceptance.md) §2.1), 수집
 수단은 하나도 겹치지 않는다. `/proc`도 ELF도 attach도 아닌 `bcrypt.dll`의 열거 API다.
 
@@ -82,8 +82,8 @@ Windows Client Key Protection Provider
 바뀌었다. 그 결과 **같은 머신의 node_id도 바뀌었다**(호스트명 기반 → 설치 기반). Windows 노드를
 적재한 적이 없어 이행할 것은 없지만, 이름에 기댄 앵커가 어떻게 어긋나는지가 여기 남는다.
 
-**JCA에서 물려받은 전제 하나가 CNG에서는 서지 않는다.** 알고리즘 50개가 **전부 provider 하나씩**
-이었다. 같은 알고리즘을 둘이 서비스하는 경우가 없으니 **우선순위 다툼 자체가 일어나지 않는다.**
+**JCA에서 물려받은 전제 하나가 CNG에서는 서지 않는다.** 알고리즘 50개가 **전부 provider
+하나씩**이었다. 같은 알고리즘을 둘이 서비스하는 경우가 없으니 **우선순위 다툼 자체가 일어나지 않는다.**
 그래서 `provider_set`의 순서를 우선순위로 읽지 않는다. 순서를 보존하는 이유는 따로다: 관측한 대로
 적기 때문이다. 서드파티 provider(스마트카드 벤더 등)가 깔린 머신에서 둘이 겹치면 그때 순서가
 무엇을 뜻하는지 다시 재야 한다. **지금은 확인되지 않았다고 적는다.**

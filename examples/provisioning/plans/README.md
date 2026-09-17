@@ -64,7 +64,7 @@ PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY" \
 | `id` | ✅ | 조치 식별자. 경고 메시지가 이 값으로 어느 조치인지 가리킨다 |
 | `targetNodeId` | ✅ | 이 조치가 갈 노드. 플레이북의 `hosts:`가 된다. **비면 거부한다.** 빈 항목이 들어가 어디에도 닿지 않는 play가 나온다 |
 | `findingId` | | 근거가 된 관측. 인벤토리의 자산과 잇는다. 비면 경고한다 |
-| `evidenceSources[]` | | **이 조치의 근거들**: 어느 finding이, 어느 스냅샷 상태에서 나왔는지. `{findingId, snapshot: {sourceNodeId, snapshotId \| content: {formatVersion, digest, rulesetVersion}}}`. `sourceNodeId`는 이력이 그 스냅샷을 저장한 이름(봉투의 노드)이라 `targetNodeId`와 다를 수 있다. 대개 하나이고 주 근거가 앞이다. **모양이 틀리면 `--dsn` 없이도 불완전(종료 3)** 이고, `--dsn`이 있으면 생성기가 이력에서 실제로 찾아 레코드에 남긴다. 못 찾거나 찾은 스냅샷에 그 finding이 없어도 불완전이다. [`openssl-3.5-config-only`](openssl-3.5-config-only.json)가 내용 지문 꼴을 보인다 |
+| `evidenceSources[]` | | **이 조치의 근거들**: 어느 finding이, 어느 스냅샷 상태에서 나왔는지. `{findingId, snapshot: {sourceNodeId, snapshotId \| content: {formatVersion, digest, rulesetVersion}}}`. `sourceNodeId`는 이력이 그 스냅샷을 저장한 이름(봉투의 노드)이라 `targetNodeId`와 다를 수 있다. 대개 하나이고 주 근거가 앞이다. **모양이 틀리면 `--dsn` 없이도 불완전(종료 3)**이고, `--dsn`이 있으면 생성기가 이력에서 실제로 찾아 레코드에 남긴다. 못 찾거나 찾은 스냅샷에 그 finding이 없어도 불완전이다. [`openssl-3.5-config-only`](openssl-3.5-config-only.json)가 내용 지문 꼴을 보인다 |
 | `cryptoRuntime` | ✅ | `CRYPTO_RUNTIME_OPENSSL` \| `CRYPTO_RUNTIME_JCA`: config 조각의 문법을 가른다 |
 | `kind` | ✅ | 조치 종류(아래). **`UNSPECIFIED`면 거부한다.** 생성기가 분기하지 못해, 계획이 말하지 않은 것을 「config로는 넣을 수 없다」고 적은 조각이 나가기 때문이다 |
 | `targetAlgorithm` | | 목표 알고리즘. KEM이면 하이브리드 그룹 줄이 나가고, **서명이면 그룹 줄 대신 주석**이 나간다 |

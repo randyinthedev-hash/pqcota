@@ -191,7 +191,7 @@ flowchart LR
     C3 --> R3["주석: 수동. 레거시를 건드려야 함"]
 ```
 
-**`CONFIG_ONLY` (3.5+)** 은 레거시·provider를 건드리지 않고 그룹만 켠다:
+**`CONFIG_ONLY` (3.5+)**은 레거시·provider를 건드리지 않고 그룹만 켠다:
 
 ```ini
 # pqcota 생성: OpenSSL 3.5+ config-only — ML-KEM (FIPS 203) 하이브리드 활성화(§4.3)
@@ -209,7 +209,7 @@ Groups = X25519MLKEM768:x25519
 `OPENSSL_CONF`로 직접 가리키는 환경에서 배치도 되고 sha256 게이트도 통과하는데 능력만 그대로인
 상태가 된다. 시스템 cnf에서 `.include` 하는 환경에서는 같은 값이 한 번 더 대입될 뿐이라 무해하다.
 
-**`PROVIDER_INJECT` (3.0–3.4)** 은 **버전을 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
+**`PROVIDER_INJECT` (3.0–3.4)**은 **버전을 그대로 두고** provider 모듈로 알고리즘 능력만 보강한다. `providerChoice`를 비우면 `oqsprovider`가 기본값:
 
 ```ini
 [provider_sect]
@@ -268,14 +268,14 @@ flowchart LR
     C5 --> R3
 ```
 
-**`CONFIG_ONLY`** 은 provider를 등록하지 않고 협상 그룹만 낸다:
+**`CONFIG_ONLY`**는 provider를 등록하지 않고 협상 그룹만 낸다:
 
 ```properties
 # pqcota 생성: JDK 네이티브 PQC config-only — ML-KEM (FIPS 203)(§4.4)
 jdk.tls.namedGroups=X25519MLKEM768,x25519
 ```
 
-**`PROVIDER_INJECT`** 는 JAR 배치와 `java.security` 등록을 낸다. `providerChoice`가 클래스명을 정한다:
+**`PROVIDER_INJECT`**는 JAR 배치와 `java.security` 등록을 낸다. `providerChoice`가 클래스명을 정한다:
 
 | `providerChoice` | 등록되는 클래스 |
 |---|---|
@@ -364,7 +364,7 @@ jdk.tls.namedGroups=X25519MLKEM768,x25519
 | provider 모듈 | `/opt/pqcota/<provider>.so` (JCA는 `.jar`) | `PROVIDER_INJECT`일 때. 소스는 [컨트롤러에서 푸시](#6b-커스텀-provider) |
 | OpenSSL config 조각 | `/etc/pqcota/openssl-pqc.cnf` | L2 |
 | JCA config 조각 | `/etc/pqcota/java.security.pqcota` | L2 |
-| (조각이 여럿일 때) | `…/openssl-pqc.<조치id>.cnf` 처럼 조치별로 분리 | 한 노드·같은 런타임에 **내용이 다른** 조각이 둘 이상 |
+| (조각이 여럿일 때) | `…/openssl-pqc.<조치id>.cnf`처럼 조치별로 분리 | 한 노드·같은 런타임에 **내용이 다른** 조각이 둘 이상 |
 
 한 경로에 두 번 배치하면 뒤가 앞을 덮어써 앞 조치가 경고 없이 사라지므로, 그럴 때는 경로를 나누고 그 사실을 알린다. 한 파일로 합치지는 않는다. 섹션이 충돌할 수 있어 병합 순서를 도구가 정하면 판단이 된다. 어느 조각을 참조할지는 `activation.activate`가 정한다.
 

@@ -152,7 +152,7 @@
 
 ## 3. 핵심 데이터 모델: 정규화된 CBOM Envelope
 
-규정서 §3.2가 확정한 **"CycloneDX CBOM(표준 본문) + Envelope(provenance) + evidence 메타데이터(확장)"** 를 코드 스키마로 고정한다.
+규정서 §3.2가 확정한 **"CycloneDX CBOM(표준 본문) + Envelope(provenance) + evidence 메타데이터(확장)"**를 코드 스키마로 고정한다.
 
 ### 3.1 Envelope(Envelope) 스키마
 
@@ -292,7 +292,7 @@ type ProviderSignature struct {
 
 ## 4. Collector Intake 계약 (§1.6, 플러그형 인터페이스)
 
-코어가 Collector에 대해 아는 것은 이 계약 하나뿐이다. **"노드를 주면 정규화된 CBOM Envelope를 반환한다"** 만 안다. 백엔드가 자체 collector/CipherIQ/CBOMkit인지 **몰라야 한다.**
+코어가 Collector에 대해 아는 것은 이 계약 하나뿐이다. **"노드를 주면 정규화된 CBOM Envelope를 반환한다"**만 안다. 백엔드가 자체 collector/CipherIQ/CBOMkit인지 **몰라야 한다.**
 
 > **이 gRPC는 서드파티 collector를 위해 준비해 둔 seam이다.** 계약과 참조 구현이 있고 테스트가 왕복을 확인하지만, **지금 운영 경로는 파일 회수**다. 레퍼런스 collector는 결과 JSON을 내고 `pqcota-ingest`가 그 디렉터리를 읽는다. 서드파티가 이 seam으로 들어오면 코어는 그 사실을 모르는 채로 같은 계약을 받는다.
 
