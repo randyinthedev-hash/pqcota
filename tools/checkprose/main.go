@@ -26,11 +26,10 @@
 // 통과하고 기준선에도 넣지 않는다. 막는 규칙으로 두면 예외 목록이 쌓이고, 예외가 쌓이면
 // 진짜 위반도 함께 묻힌다.
 //
-// **출처와 권리.** 이 디렉터리(main.go · main_test.go · rules.tsv · notices.tsv · overlap.txt)는
-// https://github.com/sntsoftgit/pqcaton 의 tools/checkprose(커밋 118970a~15ac503, 2026-08-25~09-16,
-// 그 리포는 BUSL-1.1)를 옮겨 이 리포에 맞게 고친 것이다. 권리자는 (주)에스앤티소프트(SNT Soft
-// Co., Ltd.)이고, 권리자가 2026-09-17에 이 복사본을 이 리포의 LICENSE(Apache-2.0)로 제공하기로
-// 결정했다. 원본 리포의 라이선스는 바뀌지 않는다.
+// **출처와 권리.** 이 도구는 https://github.com/sntsoftgit/pqcaton 의 tools/checkprose(커밋
+// 118970a~15ac503, 2026-08-25~09-16, 그 리포는 BUSL-1.1)에서 시작했다. 권리자 (주)에스앤티소프트
+// (SNT Soft Co., Ltd.)가 2026-09-17에 이것을 이 리포의 LICENSE(Apache-2.0)로 제공하기로 결정했고,
+// **그때부터 이 리포가 원본이다.** 다른 리포는 코드를 복사하지 않고 판을 지정해 돌린다.
 //
 // **설정은 전부 한 디렉터리(-dir, 기본 tools/checkprose)에 있고 코드는 리포를 가리지 않는다.**
 // rules.tsv(규칙) · notices.tsv(알림) · overlap.txt(잘못 잡는 말) · files.txt(마크다운 밖에서

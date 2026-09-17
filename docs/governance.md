@@ -12,8 +12,8 @@
 
 | | 지금 | 세는 법 |
 |---|---|---|
-| 커밋 | 325 (2026-08-05 이후, 2026-09-16 기준) | `git log --oneline \| wc -l` |
-| 릴리스 | 25 | `gh release list` |
+| 커밋 | 329 (2026-08-05 이후, 2026-09-17 기준) | `git log --oneline \| wc -l` |
+| 릴리스 | 26 | `gh release list` |
 | 자동 게이트 | 13 | `Makefile`의 `all` 타깃 |
 | 테스트 함수 | 298 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
 | 케이스 그룹 | 4 (`TD`·`TV`·`TP`·`TK`) | [테스트 맵](test-map.md) |
