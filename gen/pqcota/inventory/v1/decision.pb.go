@@ -86,7 +86,7 @@ func (DecisionStatus) EnumDescriptor() ([]byte, []int) {
 
 // 선언(CMDB)과 관측을 대조한 결과 (§3.3①).
 //
-// 스키마만 여기 둔다 — **대조 엔진은 구현하지 않는다**(§6.2). DecisionConclusion·FinalizedPlan과
+// 스키마만 여기 둔다 — **대조 엔진은 구현하지 않는다**(아키텍처 §6.2). DecisionConclusion·FinalizedPlan과
 // 같은 논리다: 소비자 엔진이 같은 어휘를 쓰게 하려는 것.
 type ReconState int32
 

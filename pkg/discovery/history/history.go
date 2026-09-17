@@ -45,7 +45,7 @@ type ObsStat struct {
 	Last  time.Time
 }
 
-// Store — append-only 히스토리. 원본은 절대 in-place 수정하지 않는다(§1.2). 2층 구조는 설계 §7.2.
+// Store — append-only 히스토리. 원본은 절대 in-place 수정하지 않는다(§1.2). 2층 구조는 인벤토리 설계 §7.2.
 //
 // 두 층으로 나뉜다:
 //   - **스냅샷**(무거움) — 실질 내용이 **바뀔 때만** 쌓인다. 변화 추적·재계산 재현의 근거.
