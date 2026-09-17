@@ -77,7 +77,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "· "+n)
 	}
 	if len(stale) > 0 {
-		fmt.Println("✗ 규칙 판을 자기 문자열로 찍는다 — 이력 비교가 조용히 무의미해지는 자리다:")
+		fmt.Println("✗ 규칙 판을 자기 문자열로 찍는다. 이력 비교를 아무 표시 없이 무의미하게 만드는 자리다:")
 		for _, s := range stale {
 			fmt.Println("    " + s)
 		}
@@ -86,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 	if len(miss) > 0 {
-		fmt.Println("✗ 규칙은 있는데 제품 경로가 부르지 않는다 — 배선하거나, 왜 미루는지 `GATE: 보류`로 적을 것:")
+		fmt.Println("✗ 규칙은 있는데 제품 경로가 부르지 않는다. 배선하거나, 왜 미루는지 `GATE: 보류`로 적을 것:")
 		for _, m := range miss {
 			fmt.Println("    " + m)
 		}
@@ -144,11 +144,11 @@ func check(files []string) (miss []string, notes []string, err error) {
 
 	for _, g := range gates {
 		if g.Pending {
-			notes = append(notes, fmt.Sprintf("배선 보류: %s.%s — %s (%s)", g.Pkg, g.Name, g.Note, g.File))
+			notes = append(notes, fmt.Sprintf("배선 보류: %s.%s (%s): %s", g.Pkg, g.Name, g.File, g.Note))
 			continue
 		}
 		if !calledOutsideTests(parsed, g) {
-			miss = append(miss, fmt.Sprintf("%s: `%s.%s`를 부르는 제품 코드가 없다 — 테스트만 부른다", g.File, g.Pkg, g.Name))
+			miss = append(miss, fmt.Sprintf("%s: `%s.%s`를 부르는 제품 코드가 없다. 테스트만 부른다", g.File, g.Pkg, g.Name))
 		}
 	}
 	return miss, notes, nil

@@ -1,6 +1,5 @@
 # checkprose baseline. count<TAB>rule<TAB>file
 # To rewrite, rerun the same command with: -baseline
-2	엠대시	CODE_OF_CONDUCT.md
 2	갈리다	CONTRIBUTING.md
 1	말하다	CONTRIBUTING.md
 1	박히다	CONTRIBUTING.md
@@ -9,21 +8,13 @@
 2	끊다	RELEASE_NOTES.md
 1	이기다	RELEASE_NOTES.md
 1	재료	RELEASE_NOTES.md
-1	엠대시	THIRD-PARTY-NOTICES.md
 1	갈리다	contracts/data-model.md
-1	엠대시	demo/recording/intro-slides.html
-1	엠대시	demo/recording/outro-card.html
-4	엠대시	demo/recording/section-cards.html
-2	엠대시	demo/recording/title-card.html
-1	엠대시	demo/recording/topology-frame.html
 1	갈리다	discovery/ansible/README.md
 1	갖다	discovery/collectors/network/README.md
 2	갈리다	discovery/design.md
 1	갖다	discovery/design.md
 1	갖다	docs/architecture.md
-8	엠대시	docs/architectures/platform-structure.html
 2	갈리다	docs/governance.md
-1	엠대시	docs/index.html
 1	이기다	docs/kernel-testcases.md
 1	품다	docs/kernel-testcases.md
 1	끊다	docs/regulation.md
@@ -51,6 +42,3 @@
 1	말하다	provisioning/testcases.md
 2	박히다	provisioning/testcases.md
 1	이기다	provisioning/testcases.md
-4	엠대시	tools/checkgates/gates.go
-1	조용히	tools/checkgates/gates.go
-1	엠대시	tools/checkgates/ruleset.go

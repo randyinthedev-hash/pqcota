@@ -1,6 +1,6 @@
 # 행동 강령 (Code of Conduct)
 
-> [English below](#english) — 국문이 원본이고, 아래 영문은 번역이다.
+> [English below](#english): 국문이 원본이고, 아래 영문은 번역이다.
 
 ## 서약
 
@@ -34,7 +34,7 @@
 위반을 목격하거나 겪었다면 **메인테이너에게 비공개로** 알린다. 신고자의 신원은 보호하며, 사안과
 무관한 제3자에게 공유하지 않는다.
 
-> **연락처**: <randyinthedev@gmail.com> — 메인테이너에게 직접 닿는다. GitHub 계정을 통해 알려도 된다.
+> **연락처**: <randyinthedev@gmail.com>. 메인테이너에게 직접 닿는다. GitHub 계정을 통해 알려도 된다.
 
 메인테이너 본인이 문제의 당사자인 경우 GitHub의 [남용 신고](https://github.com/contact/report-abuse)
 경로를 쓸 수 있다.
