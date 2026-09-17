@@ -82,7 +82,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 | [TV-ATTR-6](../pkg/inventory/attribution_overlay_test.go) | `TestRedeclaringOverwrites`: 같은 엣지를 두 번 선언 | 뒤엣것으로 덮인다 | 선언은 사람이 고치는 것이라 append-only가 아니다. 관측(불변)과 규칙이 다르다 |
 | [TV-ATTR-7](../pkg/discovery/history/attribution_pg_test.go) | `TestPgAttributionsShareATableAndStillDoNotSeeEachOther`: 두 조직이 **같은 (node, dst)**를 선언한다(`PQCOTA_TEST_DSN` 있을 때) | 각자 자기 것만 본다 | 키가 겹치는 최악의 경우다. 인메모리 케이스는 객체가 달라 통과해도 격리를 증명하지 못한다 |
 | [TV-ATTR-8](../pkg/discovery/history/attribution_pg_test.go) | `TestPgRedeclaringOverwrites`: 같은 엣지를 Postgres에 두 번 선언 | 덮이고, 선언 시각이 남는다 | Pg의 `ON CONFLICT` 경로는 인메모리와 구현이 다르다. 저장소를 바꿔도 규칙이 유지되는지 따로 본다 |
-| [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation`: 관측이 이미 채운 칸을 노리는 선언을 함께 넣는다 | 관측이 이긴다. 빈칸만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다. 선언 레인을 따로 둔 이유가 사라진다 |
+| [TV-ATTR-1](../pkg/inventory/attribution_overlay_test.go) | `TestDeclarationNeverOverwritesObservation`: 관측이 이미 채운 칸을 노리는 선언을 함께 넣는다 | 관측이 우선한다. 빈칸만 `(declared)`로 메워지고, 몇 개가 선언인지 화면이 밝힌다 | 덮게 두면 사람이 적은 것과 기계가 본 것이 섞인다. 선언 레인을 따로 둔 이유가 사라진다 |
 | [TV-ATTR-2](../pkg/inventory/attribution_overlay_test.go) | `TestOverlayDoesNotMutateTheStoredEdge`: 얹어서 렌더한 뒤 원본 확인 | 저장된 엣지의 `app_key`가 그대로 비어 있다 | 서명이 `app_key`를 덮는다. 적재·조회가 관측을 고치면 collector가 서명한 것과 달라지고, 원본에서 재계산할 때도 갈린다 |
 | [TV-ATTR-4](../pkg/inventory/attribution_overlay_test.go) | `TestAttributionCSVRefusesWhatItCannotPlace`: 포트가 숫자가 아님 · app_key 없음 · node_id 없음 | 전부 에러 | 어느 엣지를 가리키는지 모르는 줄을 추측으로 붙이면 앱을 잘못 짚게 된다 |
 | [TV-ORG-1](../pkg/org/org_test.go) | `TestParseRejectsWhatCannotBeToldApart` · `TestEmptyIsNotAChoice` · `TestResolveFallsBackButNeverGuesses`: `Acme`·`ACME`·빈 값·`acme_corp` 등 | 전부 거절. 소문자·숫자·하이픈 2–64자만 | 사람은 같게 읽고 기계는 다르게 읽는 이름이 있으면 한 조직이 둘로 갈린다 |
@@ -100,7 +100,7 @@ TV-ORG-4·TV-ATTR-7이 스킵되면 **격리를 확인하지 못한 것이다.**
 |---|---|---|---|
 | [TV-SCOPE-1](../pkg/kernel/scope/asset_test.go) | `TestNoPolicyKeepsEverything`: 정책 없음(nil) | 관측된 자산 **전부 관리 대상** | 정책을 안 쓰는 사용자를 막지 않는다 |
 | [TV-SCOPE-2](../pkg/kernel/scope/asset_test.go) | `TestExcludeByAppKeyGlob`: `exclude`가 app_key glob에 매치 | 그 finding 제외 | 잡음을 앱 이름으로 걸러낸다. 없으면 인벤토리가 못 쓰게 된다 |
-| [TV-SCOPE-3](../pkg/kernel/scope/asset_test.go) | `TestIncludeOverridesExclude`: `exclude` **뒤에** `include` | **뒤 규칙이 이긴다**(순서 기반) | "계열 전부 빼되 이것만 예외"를 쓸 수 있어야 한다 |
+| [TV-SCOPE-3](../pkg/kernel/scope/asset_test.go) | `TestIncludeOverridesExclude`: `exclude` **뒤에** `include` | **뒤 규칙이 우선한다**(순서 기반) | "계열 전부 빼되 이것만 예외"를 쓸 수 있어야 한다 |
 | [TV-SCOPE-4](../pkg/kernel/scope/asset_test.go) | `TestMultiAppAttribution`: 공유 `.so`(쓰는 앱 여럿) 중 하나만 매치 | 매치로 판정 | 공유 `.so`는 쓰는 앱이 여럿이라 하나만 걸려도 규칙이 걸린다 |
 | [TV-SCOPE-5](../pkg/kernel/scope/asset_test.go) | `TestBadAction`: `action`에 오타(`drop` 등) | 오류 | 오류 없이 무시하면 정책이 적용되지 않은 것을 모른다 |
 | [TV-SCOPE-6](../pkg/kernel/scope/asset_test.go) | `TestSharedLibExcludeRescuedByTrailingInclude`: 공유 `.so`를 한 앱만 겨냥해 exclude | 그 `.so`를 함께 쓰는 **운영 앱까지 제외됨**. 운영 앱 `include`를 뒤에 두어 구제 | 겨냥한 앱만 빠질 것 같지만 영향 범위가 넓다는 것을 드러낸다 |
