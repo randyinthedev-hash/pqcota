@@ -3,23 +3,16 @@
 1	갈리다	CONTRIBUTING.md
 1	박히다	CONTRIBUTING.md
 1	갈리다	RELEASE_NOTES.md
-3	갖다	RELEASE_NOTES.md
 2	끊다	RELEASE_NOTES.md
 1	재료	RELEASE_NOTES.md
 1	갈리다	contracts/data-model.md
-1	갖다	discovery/collectors/network/README.md
-1	갖다	discovery/design.md
-1	갖다	docs/architecture.md
 1	품다	docs/kernel-testcases.md
 1	끊다	docs/regulation.md
 1	인간의 결론	docs/regulation.md
-1	갖다	docs/runtime-acceptance.md
-1	갖다	docs/under-review.md
 3	재료	docs/under-review.md
 1	끊다	examples/discovery/README.md
 1	갈리다	examples/provisioning/README.md
 1	끊다	inventory/cmd/README.md
-2	갖다	provisioning/design.md
 1	재료	provisioning/design.md
 2	갈리다	provisioning/testcases.md
 2	박히다	provisioning/testcases.md

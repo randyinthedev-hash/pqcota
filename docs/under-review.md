@@ -98,7 +98,7 @@ target**으로 모델링한다. 진짜 peer인 경우는 앱이 벤더 `.so`를 
 그마저 provider 동형 대상이라 openssl-계열 render로 근사된다.
 
 > **정직성 각주다.** HSM 하드웨어가 PQC를 아직 지원 안 하는 건은 억지 아티팩트를 지어내지 않고
-> `DECOMMISSION`·`APP_RECONFIG` 주석으로 처리된다. taxonomy가 이미 이 비-config 종류를 갖고 있다.
+> `DECOMMISSION`·`APP_RECONFIG` 주석으로 처리된다. taxonomy에 이미 이 비-config 종류가 있다.
 
 **정하지 않은 것이 있다.** HSM axis의 실제 필드(슬롯·모듈 경로·펌웨어 버전 등)는 정하지 않았다. 실물 PKCS#11 관측
 사례가 있을 때 정한다.

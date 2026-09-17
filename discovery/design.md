@@ -213,7 +213,7 @@ dynamic-trace(PROPOSE)보다 가볍다. 단 데이터 평면을 건드리므로 
 
 **책임**: Windows에 등록된 CNG provider와 그 머신이 열거하는 알고리즘을 본다. provider 아키텍처라
 jvm(§2.2)과 같은 축을 보되 수집 수단은 하나도 겹치지 않는다. `/proc`도 ELF도 attach도 아닌
-열거 API다. 그래서 **자기 계층**(`COLLECTION_LAYER_CNG_INTROSPECTION`)을 갖는다: 무엇을 못 봤는지가
+열거 API다. 그래서 **자기 계층**(`COLLECTION_LAYER_CNG_INTROSPECTION`)이 따로 있다: 무엇을 못 봤는지가
 다른 계층과 다르다.
 
 **외부 도구를 부르지 않는다.** `certutil`·PowerShell·WMI 대신 `bcrypt.dll` 직접 호출(§2.3).
