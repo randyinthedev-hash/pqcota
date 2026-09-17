@@ -19,7 +19,7 @@ You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refu
 Once the repo builds, the [examples](examples/) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
-Runtime requirements (Ansible, SSH) are in the [root README](README.en.md#requirements); demo requirements in [demo/](demo/README.en.md#requirements).
+This document covers **contributing to the repo**. If you only use it, building and running are covered by the [root README](README.en.md#build).
 
 ### Which OS can you build on
 
@@ -31,7 +31,7 @@ Runtime requirements (Ansible, SSH) are in the [root README](README.en.md#requir
 
 Linux-only code (`/proc`, AF_PACKET, attach) sits behind `//go:build linux`, with a refusing stub on
 other platforms. So on macOS and Windows that code is excluded from compilation and breaking it would
-still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**; the CNG collector will grow on that target.
+still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**. Windows is included because the CNG collector is built and verified there.
 
 ## Development loop
 
@@ -50,11 +50,14 @@ without one. Tests run without a real JVM.
 > The `go get github.com/randyinthedev-hash/pqcota/gen/...` that Go suggests alongside it is **not the fix** —
 > that is not a fetchable module but code this repo generates. Run `make generate` first.
 
-If you changed a contract, run `make lint` (buf lint) and check compatibility **from the repo root**:
+If you changed a contract, run `make lint` (buf lint) and check backward compatibility:
 
 ```bash
-buf breaking contracts --against '.git#branch=main,subdir=contracts'
+make breaking                  # against the last release tag — does it break a contract already shipped (what CI runs)
+make breaking AGAINST=main     # compare the branch you are working on against main
 ```
+
+While there is no release tag (before v0.1.0) there is no baseline, so the first one skips and says so in the log.
 
 Also read [the ripple checklist for contract changes](contracts/README.en.md) (signature coverage, change detection).
 
@@ -183,9 +186,6 @@ correct and unreadable. These are real examples from this repository.
 Words like `축` (axis) that have settled into Korean technical writing are fine — the problem is not
 vocabulary but **carrying English sentence structure across**. Nominalising verbs into `~을 가진다`
 or `~을 제공한다` is usually a sign that a sentence was translated rather than written.
-
-**No gate catches this.** `make check-docs` checks links, anchors and scope wording, not the grain of a
-sentence. Read it aloud; if it sounds off, that is the evidence.
 
 ### When you write "it does not", attach the reason on the spot
 

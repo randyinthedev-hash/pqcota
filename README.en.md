@@ -18,6 +18,8 @@ A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-
 
 [demo video (2 min 55 s)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — from observation through applying and rolling back the generated artifacts: ML-KEM goes **0 → 14 → 0** on a real node.
 
+**Read on** → [design documents](docs/README.en.md) · [how this repo is run](docs/governance.md) (Korean) · [roadmap](RELEASE_NOTES.en.md#roadmap--upcoming-releases-planned) · [contributing](CONTRIBUTING.en.md)
+
 ---
 
 ## What it looks like

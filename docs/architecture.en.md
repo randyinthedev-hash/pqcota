@@ -31,7 +31,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 | Capability required (basis in the regulation) | Technical constraint |
 |---|---|
-| Reading `/proc/*/maps` and `/proc/*/exe` (§2.3 OpenSSL) | syscalls and native tooling. The Go/Rust/C family |
+| `/proc/*/maps`, `lsof`, `ss`, `ldd`/`readelf` (§2.3 OpenSSL) | syscalls and native tooling. The Go/Rust/C family |
 | Determining fork and version from static ELF symbols and string signatures (§2.3) | an ELF parser. Both Go (`debug/elf`) and Rust (`goblin`) are strong |
 | **JVM attach → querying the reality of `Security.getProviders()` (§2.2, §2.3)** | **possible only from inside the JVM — the JVM is forced (its platform language is Java). No way around it** |
 | CycloneDX CBOM (ECMA-424) input/output (§2.4, §3.2) | needs mature libraries. Maturity runs JVM > JS > Go |
@@ -49,12 +49,12 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 
 | Layer | Language/technology | Rationale |
 |---|---|---|
-| **Core services** (normalization, inventory, API) | **Go** | single static binary distribution, gRPC, concurrency, systems tooling, a permissive license (no contagion) |
+| **Core services** (normalization, review queue, inventory, API) | **Go** | single static binary distribution, gRPC, concurrency, systems tooling, a permissive license (no contagion) |
 | **The OpenSSL/system collector** | **Go** | the same language as the core. `/proc` and ELF (`debug/elf`) are parsed directly — no dependency on external tools such as `ldd` or `readelf` |
 | **The JVM collector** (a separate sidecar) | **Java** (pure) | attaches to a live JVM through the JVM Attach API (JVMTI/Attach) and queries `getProviders()`. **The unavoidable polyglot point is the JVM**, not a language — written in the platform language Java, built with `javac`, no Kotlin or Gradle |
 | ~~**UI**~~ | ~~TypeScript + React~~ | **Not in this repository** (§6.2). The review queue and sign-off governance are out of scope, so their UI is too |
 | **Storage** | **PostgreSQL** (JSONB) | the four append-only history lanes + CBOM JSONB. Friendly to event sourcing |
-| **The contract between runtimes** | **gRPC + Protobuf** (+ a CLI/stdout fallback) | the intake contract and subprocess isolation through one mechanism |
+| **The contract between runtimes** | **gRPC + Protobuf** (+ a CLI/stdout fallback) | the intake contract (see the license notes) and subprocess isolation (see the license notes) through one mechanism |
 
 **In one line**: **a Go core + Go system collectors + a JVM collector sidecar (pure Java) + Postgres.** — what is forced is *the JVM*, not a particular language (the polyglot point is the JVM). The sidecar is written in the platform language Java with no Kotlin or Gradle dependency.
 
@@ -69,7 +69,7 @@ The stack is forced by **the nature of the targets (the runtimes)**, not by tast
 - **It digs into `/proc` and ELF on its own**: `debug/elf` is in the standard library. Never calling `ldd`
   or `readelf` means observation does not wobble when the target host lacks those tools — or has them with
   a different output format.
-- **Alignment with orchestration and cloud-native**: Ansible/Salt subprocesses, and gRPC for the contract. Transport authentication (mTLS and the like) is whatever the substrate already has.
+- **Alignment with orchestration and the contract**: Ansible/Salt are called as subprocesses, and the contract is specified in gRPC. Transport authentication (mTLS and the like) is whatever the substrate already has.
 - **Where does Rust fit?** The ELF symbol analyzer (§2.3) is a pure, isolated module and therefore **a clear candidate for later replacement in Rust**. It only has to honour the intake contract, so it can be swapped without touching the core. Start in Go and replace it when the need arises.
 
 ---
@@ -314,7 +314,7 @@ not fit.
 
 ### 4.2 The contract's three invariants
 
-1. **The output is always a canonical CBOM Envelope** — whatever the backend, everything downstream (reconciliation, review, provisioning) behaves identically.
+1. **The output is always a canonical CBOM Envelope** — whatever the backend, everything downstream (reconciliation, review, provisioning) behaves identically (see the license notes).
 2. **The scope master gate is the core's responsibility** — the core filters the target nodes before handing them to a collector (§1.4). A collector collects only what it was given.
 3. **Completeness is declared per layer** — a collector declares the layers it covers with `Describe` and reports what it actually covered with `Collect`. The core records "what was not observed" as a gap (§2.6).
 

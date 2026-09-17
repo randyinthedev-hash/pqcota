@@ -219,7 +219,7 @@ No arguments. It generates an **ed25519 key pair** for signing collector reports
 
 **The private key goes to stdout.** Redirect it into a file and the file stays behind; paste it into a shell and it stays in the history.
 
-**Signing is optional.** Without a key nothing is blocked; instead the centre reports *"unverified signatures: N — this does not mean they are wrong, it means they were never checked."* To refuse to ingest at all when there is no key to verify with, set `PQCOTA_REQUIRE_SIGNATURE=1`.
+**Signing is optional.** Without a key nothing is blocked; instead the centre reports *"unverified signatures: N"*. That does not mean they are wrong; it means **they were never checked**. To refuse to ingest at all when there is no key to verify with, set `PQCOTA_REQUIRE_SIGNATURE=1`.
 
 ### `pqcota-procs`
 

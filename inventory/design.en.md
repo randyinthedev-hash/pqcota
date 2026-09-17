@@ -316,7 +316,7 @@ Implementation: `AssetPolicy` in `pkg/kernel/scope/asset.go`. It applies **right
 
 Letting a policy-excluded asset quietly disappear makes the inventory **lie that "there is no such thing"** — exactly what §2.6 forbids. So the excluded items are counted into `Snapshot.ExcludedByScope`, and **both the ingest summary and the inventory view report the count**.
 
-For the same reason, applying scope shows up in a history diff as "gone", which means **the asset did not vanish; it was taken out of management** (the demo states that distinction in a caption).
+For the same reason, applying scope shows up in a history diff as `removed`, which means **the asset did not vanish; it was taken out of management** (the demo states that distinction in a caption).
 
 ### 8.4 Scope boundary
 

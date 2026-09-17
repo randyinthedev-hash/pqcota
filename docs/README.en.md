@@ -60,6 +60,7 @@ On the side: [crypto runtime acceptance principles](runtime-acceptance.en.md) (w
 | [Kernel test cases](kernel-testcases.md) (Korean) | the **derivation rules** crossing stages — evidence strength, normalization, posture, the remediation taxonomy, app attribution |
 | [Discovery test cases](../discovery/testcases.md) · [inventory test cases](../inventory/testcases.md) · [provisioning test cases](../provisioning/testcases.md) (Korean) | per-situation acceptance criteria + implementation order (TDD) |
 | [What the demo verifies](../demo/integration-verification.md) (Korean) | the six demo steps take on the cases that need the real thing. What it does not cover is written down too |
+| [**Governance**](governance.md) (Korean) | gates, records and lifetimes in one place — what is blocked automatically, what is recorded, and how a decision lives on |
 
 ## Contracts and the data model
 | Document | Contents |
