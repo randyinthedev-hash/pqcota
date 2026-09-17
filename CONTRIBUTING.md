@@ -213,7 +213,7 @@ bash discovery/collectors/openssl/integration/run.sh      # openssl collector �
 - 환경: OS·Go 버전(리눅스면 `uname -r`·배포판). 리눅스 collector는 **커널 3.2 이상**을 가정한다
 - 관측 쪽이면 대상 런타임(OpenSSL 버전·JDK 배포판)
 
-**큰 변경은 PR보다 이슈가 먼저다.** 이 리포는 계약(`contracts/`)이 단일 진실이라 스키마·경계가 걸리는 변경은 설계 합의가 먼저 있어야 한다. 코드를 다 쓴 뒤에 방향이 갈리면 서로 손해다.
+**큰 변경은 PR보다 이슈가 먼저다.** 이 리포는 계약(`contracts/`)이 단일 진실이라 스키마·경계가 걸리는 변경은 설계 합의가 먼저 있어야 한다. 코드를 다 쓴 뒤에 방향이 어긋나면 서로 손해다.
 
 ## 설계를 먼저
 
