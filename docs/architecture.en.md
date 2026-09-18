@@ -368,7 +368,7 @@ The practical consequence is **the distinction between diff and reconcile**. **C
 | `jvm-collector`: JVM attach → `getProviders()` | §2.2, §2.3 ★ | AUTO (while running); not running is a gap |
 | Declaration import (loading a CMDB/asset registry) | §1.4 | AUTO |
 | The six-step normalization pipeline + attaching `evidence_strength` | §2.4, §2.3 | AUTO |
-| **Provider signature registry enrichment** (JCA provider_set → pqc_readiness, fips, algorithms, tagging the SLH-DSA gap) | §2.3 | AUTO |
+| **Provider signature registry enrichment** (JCA provider_set → pqc_readiness, fips, algorithms, tagging the SLH-DSA gap) | acceptance principles §2.3 | AUTO |
 | The completeness map (per layer) | §2.6 | AUTO |
 | The discovery history (append-only) + **browsing history and diffing change between snapshots** (a description of observed fact, not a verdict — per §6) | §2.4-6 | AUTO |
 | **The two-layer split of observation records and snapshots** — snapshots only when the substantive content changes, an observation record on every ingest. Repeated observation of the same state does not grow storage, yet "when we looked" is preserved | §2.4-6, §1.2 | AUTO |

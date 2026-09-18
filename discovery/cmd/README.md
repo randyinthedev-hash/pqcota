@@ -1,3 +1,5 @@
+한국어 · [English](README.en.md)
+
 # discovery/cmd/: 디스커버리 실행 진입점
 
 디스커버리 단계의 CLI(Go 바이너리)들. 이름이 비슷하니 **어느 걸 언제 쓰는지**를 세 범주로 나눠 정리한다. 관측은 전부 ②의 collector가 대상 머신에서 하고, 낸 결과를 중앙에 쌓는 일은 [inventory/cmd](../../inventory/cmd/README.md)가 맡는다.
