@@ -72,7 +72,7 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다**. `pqc
 
 넷 다 `CollectionResult`를 낸다. **표에 없는 OS에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 0이다. "그것이 없는 노드"와 "그것을 못 본 노드"가 구별돼야 한다(§2.6).
 
-**릴리스에 정적 바이너리가 붙는 것은 리눅스 셋뿐**이다. `pqcota-cngscan`은 쓰는 쪽이 직접 만든다([아래](#pqcota-cngscan)). 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다. 코어는 그대로다.
+**릴리스에는 정적 바이너리가 붙는다**: 리눅스 셋은 `pqcota-linux-{amd64,arm64}.tar.gz`, Windows 둘(`pqcota-cngscan`·`pqcota-jvmscan`)은 `pqcota-windows-amd64.zip`이다. 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다. 코어는 그대로다.
 
 여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음-만든-인벤토리로-collector-돌리기).
 
@@ -139,7 +139,7 @@ pqcota-cngscan [--output json|table] [node-id]
 | `[node-id]` | 머신 지문에서 파생한 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
 | `--output` | `json` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
 
-**릴리스에 바이너리가 붙지 않는다**. 노드에 올리는 셋이 리눅스 전용이라 그 묶음에 없다. 쓰려면 직접 만든다:
+**릴리스의 `pqcota-windows-amd64.zip`에 `pqcota-jvmscan`과 함께 들어 있다**(v0.6.3부터). 직접 만들려면:
 
 ```bash
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
