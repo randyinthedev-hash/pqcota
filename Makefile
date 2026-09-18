@@ -130,7 +130,7 @@ check-boundary:
 
 # 문서 게이트 — 링크·앵커 무결성 + 낡은 범위 표현 + 역할분담 산문 + 개인정보 + 라이선스 표 대조.
 # 코드는 테스트가 지키는데 문서는 아무도 안 지켜서 조용히 썩는다. 여기서 막는다.
-# 검사기는 Go다 — 이 리포를 빌드하려면 Go가 이미 필요하므로 새 런타임 전제가 없다(§2.4).
+# 검사기는 Go다 — 이 리포를 빌드하려면 Go가 이미 필요하므로 새 런타임 전제가 없다(§2.3).
 # go run 대신 빌드해서 실행: go run은 실패 시 "exit status 1"을 덧붙여 게이트 출력이 지저분해진다.
 check-docs:
 	@go build -o build/checkdocs ./tools/checkdocs && ./build/checkdocs
