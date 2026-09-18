@@ -92,7 +92,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "[jvmscan] recon: reachable %d · denied %d (not observed) · JVMs %d\n", st.Accessible, st.Denied, st.WithJVM)
 	deniedHint(st.Denied)
 
-	// --pid: 그 JVM 하나만. 정찰에 없으면 조용히 전부 훑지 않고 실패한다 — 사용자가 지목한
+	// --pid: 그 JVM 하나만. 정찰에 없으면 알리지 않은 채 전부 훑지 않고 실패한다 — 사용자가 지목한
 	// 대상을 관측하지 못한 것은 갭이지 "전부 보기"로 갈아탈 이유가 아니다(§2.5).
 	if *pidOnly > 0 {
 		var only []jvm.JVMProc
@@ -270,7 +270,7 @@ func nz(s string) string {
 }
 
 // attachAll — 발견된 각 JVM에 attach(agent JAR)해 provider 체인을 관측하고 JVM별로 구별되는
-// CollectionResult를 모아 돌려준다. attach 실패는 갭으로 센다(조용히 0이 되지 않게 §2.5).
+// CollectionResult를 모아 돌려준다. attach 실패는 갭으로 센다(표시 없이 0이 되지 않게 §2.5).
 func attachAll(node string, jvms []jvm.JVMProc, agent string) (res []*discoveryv1.CollectionResult, observed int) {
 	// attach 경로는 3계층이다(collector 배포 설계 §2) — 앞이 막히면 뒤로, 다 막히면 정직히 갭.
 	//   ① Go 네이티브: JDK 없이 HotSpot 프로토콜로 직접. JRE·jlink·최소 컨테이너까지 커버.

@@ -21,14 +21,14 @@ const KindDeclared = "declared"
 type EdgeAttribution struct {
 	NodeID string // 관측 호스트(엣지의 src)
 	// Dst — 엣지에 찍힌 상대 주소 그대로. 계약이 `dst_addr`를 `"ip:port"`로 정하므로 포트가
-	// 이미 들어 있다 — 따로 받으면 같은 정보를 두 번 적게 되고, 한쪽만 틀리면 조용히 안 맞는다.
+	// 이미 들어 있다 — 따로 받으면 같은 정보를 두 번 적게 되고, 한쪽만 틀리면 표시 없이 안 맞는다.
 	Dst    string
 	AppKey string
 }
 
 // ImportAttributionCSV — 선언 CSV(node_id,dst,app_key)를 선언 레인 CollectionResult로 임포트.
 //
-// **관측 결과를 고치지 않는다.** 이건 자기 레인으로 따로 쌓이고(detection_method=UNSPECIFIED),
+// **관측 결과를 고치지 않는다.** 이것은 자기 레인으로 따로 쌓이고(detection_method=UNSPECIFIED),
 // 관측 엣지와 합치는 일은 화면에서 한다 — 적재가 관측을 고치면 collector의 서명과 어긋나고,
 // raw_capture에서 다시 계산할 때 저장된 값과 달라진다(검토 중인 설계 §5.2).
 func ImportAttributionCSV(r io.Reader) ([]*discoveryv1.CollectionResult, error) {

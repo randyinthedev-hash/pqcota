@@ -67,7 +67,7 @@ func actionable(p *provisioningv1.FinalizedPlan) error {
 		}
 		if a.GetKind() == provisioningv1.RemediationKind_REMEDIATION_KIND_UNSPECIFIED {
 			// 생성기는 분기할 수 없어 「config로는 넣을 수 없는 조치」라고 적은 조각을 낸다.
-			// 그건 사실이 아니다 — 계획이 무엇을 할지 **말하지 않은** 것이다. 도구가 계획을
+			// 그것은 사실이 아니다 — 계획이 무엇을 할지 **말하지 않은** 것이다. 도구가 계획을
 			// 대신 추측하지 않으므로, 거짓을 적은 산출물을 내느니 여기서 막는다(§2.5).
 			return fmt.Errorf("%w: %s (node=%s) has kind=UNSPECIFIED, so there is nothing to generate",
 				ErrNotActionable, where, a.GetTargetNodeId())
@@ -80,15 +80,15 @@ func actionable(p *provisioningv1.FinalizedPlan) error {
 //
 // ★ Executable이 아니다 — 이 값들이 비어도 계획은 그대로 실행된다. 다만 실행하고 나면
 // append-only 이력에 **무엇을 근거로 한 조치였는지**가 남지 않는다. 되짚을 수 없다는 사실은
-// 되짚어야 할 때가 되어서야 드러나므로, 그전에 알린다(§2.6 — 빠진 것을 조용히 두지 않는다).
+// 되짚어야 할 때가 되어서야 드러나므로, 그전에 알린다(§2.6 — 빠진 것을 알리지 않은 채 두지 않는다).
 func TraceabilityWarnings(p *provisioningv1.FinalizedPlan) []string {
 	var out []string
 	if p.GetId() == "" {
 		out = append(out, "the plan has no id — provisioning records point back with plan_id, so this run cannot be tied to the plan that caused it.")
 	}
 	// 스냅샷 참조는 **조치마다** 본다. 조치에 근거(evidence_sources)가 있으면 그것이 참조이고, 없으면
-	// 계획 단위 derived_from_snapshot_id 가 호환 경로다. 둘 다 없는 조치만 알린다. 참조의 모양이
-	// 맞는지·찾히는지는 ResolveAction 이 따로 말한다 — 여기는 「있는가」만 본다.
+	// 계획 단위 derived_from_snapshot_id가 호환 경로다. 둘 다 없는 조치만 알린다. 참조의 모양이
+	// 맞는지·찾히는지는 ResolveAction이 따로 알린다 — 여기는 「있는가」만 본다.
 	if p.GetDerivedFromSnapshotId() == "" {
 		for _, a := range p.GetActions() {
 			if len(a.GetEvidenceSources()) == 0 {
@@ -172,13 +172,13 @@ func TargetAlgorithmWarnings(p *provisioningv1.FinalizedPlan) []string {
 // ProviderClassWarnings — 계획을 훑어, JCA provider 주입인데 provider_class를 확정할 수 없어
 // java.security 조각에 **placeholder가 들어가는** 조치를 찾아 경고로 돌린다.
 //
-// ★ 이건 Executable(거버넌스 게이트)이 **아니다** — 계획은 유효하고 플레이북도 정상 생성된다.
+// ★ 이것은 Executable(거버넌스 게이트)이 **아니다** — 계획은 유효하고 플레이북도 정상 생성된다.
 // placeholder는 의도된 정직 경로다(FQCN을 추측하지 않고 사람이 채운다 — jca.go). 다만 산출물이
-// 그대로는 불완전하므로, 도구가 조용히 통과시키지 않도록 호출부(pqcota-provision)가 이걸 stderr에
+// 그대로는 불완전하므로, 도구가 알리지 않고 통과시키지 않도록 호출부(pqcota-provision)가 이걸 stderr에
 // 크게 알린다(§2.5 — 불명을 삼키지 않는다). 하드 블록은 "생성→사람이 FQCN 기입→적용"이라는
 // 정당한 워크플로를 막으므로 하지 않는다.
 // ProviderSlotWarnings — provider 주입은 java.security의 **한 자리를 대체**한다. 조각 안 주석은
-// 열어봐야 보이므로, 무엇이 밀려나는지 여기서 크게 알린다(§2.6 — 유실을 조용히 두지 않는다).
+// 열어봐야 보이므로, 무엇이 밀려나는지 여기서 크게 알린다(§2.6 — 유실을 알리지 않은 채 두지 않는다).
 func ProviderSlotWarnings(p *provisioningv1.FinalizedPlan) []string {
 	var out []string
 	for _, a := range p.GetActions() {

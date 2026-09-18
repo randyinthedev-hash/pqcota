@@ -76,7 +76,7 @@ func jcaProviderInject(group, target, choice, explicitClass string) string {
 		b.WriteString("# ⚠ the class name below is a placeholder — replace it with the exact class from your provider build, or\n")
 		b.WriteString("#   put the FQCN in the plan's provider_class and it is filled in automatically.\n")
 	}
-	// 계획이 클래스를 명시하지 않아 BC 기본값을 쓴 경우에만 — 명시했다면 그건 저자의 결정이다.
+	// 계획이 클래스를 명시하지 않아 BC 기본값을 쓴 경우에만 — 명시했다면 그것은 저자의 결정이다.
 	if explicitClass == "" && (choice == "BC" || choice == "") {
 		b.WriteString("# ⚠ assumes BouncyCastle **1.80+**. On 1.78.x and older, BouncyCastleProvider has no KEM and\n")
 		b.WriteString("#   Kyber lives separately in org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider.\n")

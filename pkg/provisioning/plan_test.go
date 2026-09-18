@@ -152,7 +152,7 @@ func TestTargetAlgorithmWarnings(t *testing.T) {
 	}
 }
 
-// ProviderClassWarnings — placeholder를 낳는 조치는 경고로 표면화되어야 한다(조용히 통과 금지).
+// ProviderClassWarnings — placeholder를 낳는 조치는 경고로 표면화되어야 한다(표시 없는 통과 금지).
 // 단, Executable(거버넌스 게이트)은 여전히 통과시킨다 — 둘은 별개다.
 func TestProviderClassWarnings(t *testing.T) {
 	jca := func(kind provisioningv1.RemediationKind, choice, class string) *provisioningv1.RemediationAction {

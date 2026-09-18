@@ -14,7 +14,7 @@ import (
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
 )
 
-// v0.8 모양 — content_hash_v1 이 **없는** 표. 그 판이 실제로 만들던 열 그대로다.
+// v0.8 모양 — content_hash_v1이 **없는** 표. 그 판이 실제로 만들던 열 그대로다.
 const v08Snapshots = `
 CREATE TABLE pqcota_snapshots (
     seq               BIGSERIAL PRIMARY KEY,
@@ -30,14 +30,14 @@ CREATE TABLE pqcota_snapshots (
     org               TEXT NOT NULL DEFAULT 'default'
 );`
 
-// ★ TV-HISTORY-10 — 옛 행이 쌓인 DB 를 v0.9 코드로 연다.
+// ★ TV-HISTORY-10 — 옛 행이 쌓인 DB를 v0.9 코드로 연다.
 //
-// D8 의 완료 조건이다. 중복 억제 기준을 v1 로 옮겼으므로, 옛 행(v1 이 빈 행)을 재사용하지 않고
+// D8의 완료 조건이다. 중복 억제 기준을 v1로 옮겼으므로, 옛 행(v1이 빈 행)을 재사용하지 않고
 // 새 행을 만들어야 그 행부터 참조가 찾힌다. 옛 지문으로 계속 접으면 v1 열이 영원히 비고
 // 다운스트림의 참조가 영원히 해결되지 않는다.
 //
-// **전용 스키마에서 돈다.** 공유 표의 모양을 흔들지 않으려는 것이고, 그래야 「v0.8 표에 v0.9 가
-// 열과 인덱스를 더한다」를 실제로 재현할 수 있다. PQCOTA_TEST_DSN 이 있을 때만.
+// **전용 스키마에서 돈다.** 공유 표의 모양을 흔들지 않으려는 것이고, 그래야 「v0.8 표에 v0.9가
+// 열과 인덱스를 더한다」를 실제로 재현할 수 있다. PQCOTA_TEST_DSN이 있을 때만.
 func TestPgUpgradeFromV08(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
@@ -140,7 +140,7 @@ func TestPgUpgradeFromV08(t *testing.T) {
 	}
 }
 
-// withSearchPath — 그 스키마만 보도록 DSN 에 옵션을 붙인다.
+// withSearchPath — 그 스키마만 보도록 DSN에 옵션을 붙인다.
 func withSearchPath(t *testing.T, dsn, schema string) string {
 	t.Helper()
 	u, err := url.Parse(dsn)

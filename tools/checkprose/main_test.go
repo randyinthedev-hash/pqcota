@@ -26,7 +26,7 @@ func hitsOf(rel string, orig []byte, masked []byte, rs []rule) []hit {
 	return match(rel, orig, masked, rs)
 }
 
-// useShippedOverlap — 실제로 함께 나가는 overlap.txt 를 쓴다. 테스트에만 목록을 적어 두면
+// useShippedOverlap — 실제로 함께 나가는 overlap.txt를 쓴다. 테스트에만 목록을 적어 두면
 // 파일이 비어도 케이스가 통과한다.
 func useShippedOverlap(t *testing.T) {
 	t.Helper()
@@ -72,7 +72,7 @@ func TestInlineCodeIsNotCounted(t *testing.T) {
 
 // **「헷갈리다」를 「갈리다」로 잡지 않는다.**
 //
-// RE2 에 뒤보기가 없어 「갈리는」 하나로 재면 「헷갈리는」이 함께 걸린다. 실제 문서에
+// RE2에 뒤보기가 없어 「갈리는」 하나로 재면 「헷갈리는」이 함께 걸린다. 실제 문서에
 // 그 자리가 여섯 곳 있었다. 잘못 잡는 관문은 목록에 예외를 쌓게 만들고, 예외가 쌓이면
 // 진짜 위반도 함께 묻힌다.
 func TestHetgalliDoesNotTripGalli(t *testing.T) {
@@ -88,7 +88,7 @@ func TestHetgalliDoesNotTripGalli(t *testing.T) {
 	}
 }
 
-// **Go 는 문자열 리터럴만 본다.**
+// **Go는 문자열 리터럴만 본다.**
 //
 // 주석은 한국어로 적는 것이 이 리포의 규칙이다(CONTRIBUTING 「주석은 "왜"를 국문으로」).
 // 주석까지 막으면 판단 근거를 적어 두는 방식이 통째로 막힌다.
@@ -262,7 +262,7 @@ func TestHideOverlapKeepsLength(t *testing.T) {
 // **한국어가 없는 줄은 보지 않는다.**
 //
 // 지침은 한국어를 명확하게 쓰라는 것이지 외국어를 고치라는 것이 아니다(「동작 범위」 1항).
-// 소개 페이지가 KO 와 EN 을 나란히 적는 자리라, 이 선이 없으면 영어 문장의 엠대시까지
+// 소개 페이지가 KO와 EN을 나란히 적는 자리라, 이 선이 없으면 영어 문장의 엠대시까지
 // 세어 고칠 수 없는 것을 요구하게 된다.
 func TestLinesWithoutKoreanAreNotCounted(t *testing.T) {
 	rs := mustRules(t, "엠대시\t—\t콜론으로")
@@ -276,9 +276,9 @@ func TestLinesWithoutKoreanAreNotCounted(t *testing.T) {
 	}
 }
 
-// **한 줄에 KO 와 EN 이 나란히 있어도 한국어만 잰다.**
+// **한 줄에 KO와 EN이 나란히 있어도 한국어만 잰다.**
 //
-// 두 말을 `T{KO: …, EN: …}` 처럼 한 줄에 적는 Go 파일이 있을 수 있다. 줄 단위로만 보면 영어
+// 두 말을 `T{KO: …, EN: …}`처럼 한 줄에 적는 Go 파일이 있을 수 있다. 줄 단위로만 보면 영어
 // 문장의 엠대시까지 세는데, 영어에서 그것은 맞는 문장부호다. 그래서 **문자열 하나 단위로**
 // 한국어가 들었는지 본다.
 func TestEnglishStringOnTheSameLineIsNotCounted(t *testing.T) {
@@ -300,7 +300,7 @@ func TestEnglishStringOnTheSameLineIsNotCounted(t *testing.T) {
 
 // **코드 뒤에 띄운 조사는 잡고, 붙인 조사는 잡지 않는다.** 인라인 코드를 공백으로
 // 지우면 「`x` 에」와 「`x`에」가 똑같이 「   에」가 되어 둘을 가르지 못한다. 그래서 같은 길이의
-// 채움 글자로 가린다. HTML 의 `<code>` 도 같다.
+// 채움 글자로 가린다. HTML의 `<code>`도 같다.
 func TestSpacedParticleAfterCodeIsCaughtButAttachedIsNot(t *testing.T) {
 	rs := mustRules(t, "띄운 조사\t(?m)(^|[ \\t])(가|은|는|을|를|에|의)([ \\t.,)]|$)\t붙여 쓴다")
 	src := []byte("`go.mod` 가 판을 고정한다. `go.mod`가 판을 고정한다. pqcota 의 것. pqcota의 것.\n")
@@ -315,7 +315,7 @@ func TestSpacedParticleAfterCodeIsCaughtButAttachedIsNot(t *testing.T) {
 	}
 }
 
-// **함께 나가는 rules.tsv 의 띄운 조사 규칙**을 실제 문장으로 잰다. 「에만」·「나」·
+// **함께 나가는 rules.tsv의 띄운 조사 규칙**을 실제 문장으로 잰다. 「에만」·「나」·
 // 「까지만」·「로만」·「뿐」·「라」·「라고」·「였습니다」·「여야」처럼 뒤늦게 더한 조사가 잡히는지,
 // 조사 뒤에 `**`·`<`·「」」가 와도 잡히는지, 그리고 「할 뿐」·「쓰다 만」처럼 낱말로 서는
 // 「뿐」·「만」을 잘못 잡지 않는지. 규칙을 테스트 안에 따로 적으면 파일이 바뀌어도
@@ -376,7 +376,7 @@ func TestShippedSpacedParticleRule(t *testing.T) {
 	}
 }
 
-// **알림표는 관문이 아니다.** notices.tsv 가 읽히고 실제 문장에 걸리되, 표 행과
+// **알림표는 관문이 아니다.** notices.tsv가 읽히고 실제 문장에 걸리되, 표 행과
 // 제목은 비켜 가며, 관문 규칙과 섞이지 않는다. 막는 규칙으로 두면 제목·표의 정당한 구분
 // 기호까지 예외 목록에 쌓이므로 후보로만 알린다.
 func TestShippedNoticesFlagCandidatesWithoutGating(t *testing.T) {
@@ -406,9 +406,9 @@ func TestShippedNoticesFlagCandidatesWithoutGating(t *testing.T) {
 	}
 }
 
-// **실제 실행 경로에서 알림은 통과하고 기준선에 섞이지 않는다.** IC-K16 은 규칙
+// **실제 실행 경로에서 알림은 통과하고 기준선에 섞이지 않는다.** IC-K16은 규칙
 // 분리를 재지만 명령의 종료 코드와 기준선 파일은 재지 않는다. 알림만 있는 입력으로 -baseline
-// 을 찍으면 기준선이 비고, 관문을 돌리면 0 으로 끝나며, 관문 규칙에 걸리는 줄을 더하면 1 이 된다.
+// 을 찍으면 기준선이 비고, 관문을 돌리면 0으로 끝나며, 관문 규칙에 걸리는 줄을 더하면 1이 된다.
 func TestNoticesPassTheGateAndStayOutOfTheBaseline(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
@@ -465,8 +465,8 @@ func TestHTMLCommentsAreNotCounted(t *testing.T) {
 }
 
 // **다시 돌리는 안내는 명령을 지어내지 않고 인자만 적는다.** 이 도구는 `go run ./tools/checkprose`
-// 로도 `go run <모듈>@<판>` 으로도 돌아 실행 명령을 알 수 없고, 실행 파일 이름이 있다고 보장할
-// 수도 없다. 기본 디렉터리면 플래그만, 지정했으면 -dir 을 보존하고, 공백이 든 경로는 인용한다.
+// 로도 `go run <모듈>@<판>`으로도 돌아 실행 명령을 알 수 없고, 실행 파일 이름이 있다고 보장할
+// 수도 없다. 기본 디렉터리면 플래그만, 지정했으면 -dir을 보존하고, 공백이 든 경로는 인용한다.
 func TestRerunHintNamesArgumentsOnly(t *testing.T) {
 	cases := map[string]string{
 		"":                 "rerun the same command with: -list",

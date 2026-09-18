@@ -55,7 +55,7 @@ echo "── ingest (pqcota-ingest, JSONL) — was the dynamic BC observed ─�
 mkdir -p /tmp/res && cp /tmp/jca.jsonl /tmp/res/
 /x/pqcota-ingest /tmp/res 2>&1 | grep -E 'ingest result|•' | sed 's/^/   /'
 # CBOM은 base64로 실려 있다. 이 이미지엔 python도 jq도 없으므로 **있는 것**으로 꺼낸다 —
-# 없는 도구로 확인하면 검사가 조용히 죽는다(실제로 죽어 있었다: python3가 없어 이 줄이 늘 실패했다).
+# 없는 도구로 확인하면 검사가 표시 없이 죽는다(실제로 죽어 있었다: python3가 없어 이 줄이 늘 실패했다).
 if grep -oE '"cbomCyclonedx": *"[^"]*"' /tmp/jca.jsonl | head -1 | cut -d'"' -f4 \
      | base64 -d 2>/dev/null | grep -q '"BC"\|,BC'; then
   echo "   ✅ attach caught a dynamic BC that is nowhere in the static java.security — the value of recon → attach"

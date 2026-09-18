@@ -35,8 +35,8 @@ func v1Fixture() *history.Snapshot {
 	}
 }
 
-// ★ v1 은 닫혀 있다. 이 값이 바뀌면 이미 저장된 v1 참조가 같은 규칙으로 다시 계산되지 않는다.
-// 바꿔야 하면 v2 를 만든다 — 이 상수와 이 테스트를 고치는 것이 아니라.
+// ★ v1은 닫혀 있다. 이 값이 바뀌면 이미 저장된 v1 참조가 같은 규칙으로 다시 계산되지 않는다.
+// 바꿔야 하면 v2를 만든다 — 이 상수와 이 테스트를 고치는 것이 아니라.
 const frozenV1 = "7818cb766fc54daeb8eaf602addd430e7830038d7421dcd8afee35e40b775e15"
 
 func TestContentHashV1IsFrozen(t *testing.T) {
@@ -49,7 +49,7 @@ func TestContentHashV1IsFrozen(t *testing.T) {
 	}
 }
 
-// v1 이 중복 억제 지문(ContentHash)이 못 보던 것을 본다. 각각 v1 만 달라지고 옛 지문은 그대로여야
+// v1이 중복 억제 지문(ContentHash)이 못 보던 것을 본다. 각각 v1만 달라지고 옛 지문은 그대로여야
 // 두 용도가 실제로 갈린 것이다.
 func TestContentHashV1CoversWhatDedupHashDoesNot(t *testing.T) {
 	base := v1Fixture()
@@ -82,7 +82,7 @@ func TestContentHashV1IsOrderInvariant(t *testing.T) {
 		r.Shuffle(len(s.Edges), func(a, b int) { s.Edges[a], s.Edges[b] = s.Edges[b], s.Edges[a] })
 		c := s.Completeness.LayersCovered
 		r.Shuffle(len(c), func(a, b int) { c[a], c[b] = c[b], c[a] })
-		// AppKeys 는 finding 의 값이라 그 순서도 흔들어 본다.
+		// AppKeys는 finding의 값이라 그 순서도 흔들어 본다.
 		for _, f := range s.Findings {
 			r.Shuffle(len(f.AppKeys), func(a, b int) { f.AppKeys[a], f.AppKeys[b] = f.AppKeys[b], f.AppKeys[a] })
 		}

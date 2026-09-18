@@ -9,7 +9,7 @@ import (
 )
 
 // TD-JVM-6 — 정찰→attach 오케스트레이션. 실 JVM·agent 없이 attach를 주입해 검증한다.
-// 실패한 JVM은 조용히 버리지 않고 갭으로 세어야 한다(§2.6).
+// 실패한 JVM은 표시 없이 버리지 않고 갭으로 세어야 한다(§2.6).
 func TestAttachAll(t *testing.T) {
 	jvms := []jvm.JVMProc{
 		{PID: 10, JavaHome: "/opt/jdk17"},
@@ -30,7 +30,7 @@ func TestAttachAll(t *testing.T) {
 	if len(results) != 3 {
 		t.Fatalf("one result per JVM found (3, failures included): %d", len(results))
 	}
-	// 실패한 JVM도 결과에 남아야 한다(갭으로 보고할 근거) — 조용히 사라지면 안 됨.
+	// 실패한 JVM도 결과에 남아야 한다(갭으로 보고할 근거) — 표시 없이 사라지면 안 됨.
 	var sawFail bool
 	for _, r := range results {
 		if r.JVM.PID == 20 {

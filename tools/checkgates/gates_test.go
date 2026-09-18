@@ -78,7 +78,7 @@ func TestMethodsAreNotRegistered(t *testing.T) {
 	}
 }
 
-// 규칙 판을 자기 문자열로 찍으면 막는다. 아무것도 실패하지 않고 이력 비교만 조용히
+// 규칙 판을 자기 문자열로 찍으면 막는다. 아무것도 실패하지 않고 이력 비교만 표시 없이
 // 무의미해지는 자리라, 사람 눈으로는 릴리스 두 번을 지나도 안 보였다.
 func TestRulesetPlaceholderIsBlocked(t *testing.T) {
 	hits, err := rulesetPlaceholders([]string{"testdata/ruleset/main.go"})
@@ -136,9 +136,9 @@ func TestTheCheckerPassesItsOwnRule(t *testing.T) {
 
 // ★ 지금 판만 잡으면 판이 오른 다음이 빈다.
 //
-// 상수가 `v2` 로 올라가면 어딘가 남은 `v1` 복사본은 「지금 값과 다르다」로 지나간다. 그것이
+// 상수가 `v2`로 올라가면 어딘가 남은 `v1` 복사본은 「지금 값과 다르다」로 지나간다. 그것이
 // 바로 잡아야 하는 것이다: 베낀 값은 상수를 고쳐도 따라오지 않으므로, 옛 판을 찍는 코드가
-// 조용히 남는다. **이 검사는 지금 상수의 값에 기대지 않는다** — 계열의 다른 판을 넣어 본다.
+// 표시 없이 남는다. **이 검사는 지금 상수의 값에 기대지 않는다** — 계열의 다른 판을 넣어 본다.
 func TestPastAndFutureRulesetsAreCaughtToo(t *testing.T) {
 	for _, v := range []string{"pqcota-enrich/v0", "pqcota-enrich/v9", "pqcota-enrich/"} {
 		if !looksLikeRuleset(v) {

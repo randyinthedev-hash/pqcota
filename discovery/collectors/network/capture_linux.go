@@ -20,7 +20,7 @@ type LiveSource struct {
 	Window     time.Duration   // 관측 구간(0이면 3초)
 	MaxPackets int             // 상한(0=구간으로만 종료)
 
-	// Truncated — 구간을 다 채우지 못하고 읽기 오류로 중단됐나. 중단을 조용히 "관측 없음"으로
+	// Truncated — 구간을 다 채우지 못하고 읽기 오류로 중단됐나. 중단을 알리지 않고 "관측 없음"으로
 	// 보고하면 **결함이 갭처럼 보인다**(§2.6) — 호출자가 완전성 노트에 반영하라고 남긴다.
 	Truncated bool
 	TruncErr  error
@@ -61,7 +61,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 			// ★ EINTR을 반드시 재시도한다. Go 런타임은 고루틴 선점을 위해 스레드에 SIGURG를 보내는데,
 			// 그 시그널이 블로킹 syscall을 깨우면 EINTR이 돌아온다(netpoller가 감싸주지 않는 원시
 			// syscall이라 자동 재시도가 없다). 이걸 치명적 오류로 보고 break 하면 관측 구간이 **무작위
-			// 시점에 조용히 끝난다** — 실측: 25초 구간이 0·0·14·25초에 끝났고, 그때마다 "핸드셰이크
+			// 시점에 오류 없이 끝난다** — 실측: 25초 구간이 0·0·14·25초에 끝났고, 그때마다 "핸드셰이크
 			// 없음"으로 보고돼 결함이 갭처럼 보였다(§2.6).
 			if err == unix.EAGAIN || err == unix.EWOULDBLOCK || err == unix.EINTR {
 				continue // 구간 내 타임아웃·시그널 인터럽트 — 계속 관측

@@ -59,7 +59,7 @@ func inspectProcess(pid int, st *JVMScanStats) (JVMProc, bool) {
 	st.Accessible++
 
 	// java.exe면 그것으로 끝. 아니면 모듈 목록에서 jvm.dll을 찾는다 — 네이티브 런처가
-	// JVM을 품고 도는 경우(리눅스의 libjvm.so 판별과 같은 자리)를 놓치지 않기 위해서다.
+	// JVM을 포함해 도는 경우(리눅스의 libjvm.so 판별과 같은 자리)를 놓치지 않기 위해서다.
 	jvmDLL := ""
 	if !isJavaExeWindows(exe) {
 		if jvmDLL = findJVMDLL(pid); jvmDLL == "" {

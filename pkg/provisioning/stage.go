@@ -310,7 +310,7 @@ func hookCmds(as []*provisioningv1.RemediationAction, get func(*provisioningv1.A
 }
 
 // writeHooks — 사용자가 적은 명령을 태스크로 낸다. 없으면 **아무것도 만들지 않는다**(추측 금지).
-// 무엇이 비었는지는 ActivationWarnings가 따로 고지한다 — 조용히 넘어가지 않게.
+// 무엇이 비었는지는 ActivationWarnings가 따로 고지한다 — 알리지 않고 넘어가지 않게.
 //
 // 명령은 **리터럴 블록 스칼라**(`|-`)로 낸다. 사용자가 적은 임의 텍스트라 줄바꿈·`:`·`#`·인용부호가
 // 들어올 수 있고, 그대로 한 줄 스칼라에 붙이면 플레이북이 깨진다(실제로 깨졌다 — 여러 줄 명령).
@@ -341,7 +341,7 @@ func yamlScalar(s string) string {
 }
 
 // ActivationWarnings — L3인데 훅이 비어 무엇이 일어나지 **않는지** 알린다(§2.5·§2.6).
-// 생성을 막지는 않는다 — 사용자가 일부러 일부 단계만 맡길 수 있다. 다만 조용히 두지 않는다.
+// 생성을 막지는 않는다 — 사용자가 일부러 일부 단계만 맡길 수 있다. 다만 알리지 않은 채 두지 않는다.
 // level은 조치가 automation_level을 말하지 않을 때의 기본값이다 — 전역이 L2여도 계획이 L3로
 // 확정한 조치는 여기서 걸린다. 전에는 전역만 보아 그런 조치의 훅 누락이 경고조차 되지 않았다.
 func ActivationWarnings(p *provisioningv1.FinalizedPlan, level provisioningv1.DeployAutomationLevel) []string {

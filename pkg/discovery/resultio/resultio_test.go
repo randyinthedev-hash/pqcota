@@ -59,7 +59,7 @@ func TestDecodeLines(t *testing.T) {
 	}
 }
 
-// ★ 못 읽은 줄을 **버리지 않고 돌려준다.** 예전에는 조용히 건너뛰어서, 손상된 결과가
+// ★ 못 읽은 줄을 **버리지 않고 돌려준다.** 예전에는 알리지 않고 건너뛰어서, 손상된 결과가
 // 처음부터 없었던 것과 구별되지 않았다(§2.6).
 func TestDecodeReportsBadLines(t *testing.T) {
 	mixed := `{"envelope":{"targetNodeId":"ok"},"rawFormat":"x"}

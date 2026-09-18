@@ -16,9 +16,9 @@ import (
 
 // 노드별 병합은 입력 순서에 기대지 않는다. 결과 파일이 어떤 순서로 오든 같은 스냅샷이 나와야
 // 다른 자리(다운스트림)가 같은 결과 집합으로 같은 지문을 낸다. 전에는 같은 finding·같은 엣지·
-// 완전성 note 모두 「먼저 온 것이 이긴다」였다.
+// 완전성 note 모두 「먼저 온 것이 우선한다」였다.
 
-// result — 한 수집기의 결과. version 이 다르면 같은 finding id 에 다른 내용이 된다.
+// result — 한 수집기의 결과. version이 다르면 같은 finding id에 다른 내용이 된다.
 func result(collector, version string, at int64, edges ...*discoveryv1.ObservedEdge) *discoveryv1.CollectionResult {
 	cbom := fmt.Sprintf(`{"bomFormat":"CycloneDX","specVersion":"1.6","components":[
       {"type":"cryptographic-asset","name":"libcrypto","properties":[
@@ -74,10 +74,10 @@ func TestNormalizeIsOrderInvariant(t *testing.T) {
 	}
 }
 
-// TK-PIPELINE-3 — 같은 finding 을 두 수집기가 다르게 보면, 최근 것을 남기되 조용히 고르지 않는다.
+// TK-PIPELINE-3 — 같은 finding을 두 수집기가 다르게 보면, 최근 것을 남기되 알리지 않고 고르지 않는다.
 // 「최근」은 수집 시각이지 수집기 이름순이 아니다.
 func TestConflictingFindingKeepsTheLatestAndSaysSo(t *testing.T) {
-	// 이름순으로는 a 가 앞이지만 시각은 b 가 앞이다 — 최근은 a 다.
+	// 이름순으로는 a가 앞이지만 시각은 b가 앞이다 — 최근은 a 다.
 	rs := []*discoveryv1.CollectionResult{
 		result("b-collector", "3.0.2", 100),
 		result("a-collector", "3.5.0", 200),
@@ -123,7 +123,7 @@ func TestEdgeIdentityIsEveryStableField(t *testing.T) {
 	}
 }
 
-// TK-PIPELINE-3 — 완전성 note 는 하나도 버리지 않고, 계층은 정렬돼 나온다.
+// TK-PIPELINE-3 — 완전성 note는 하나도 버리지 않고, 계층은 정렬돼 나온다.
 func TestCompletenessMergeKeepsEveryNote(t *testing.T) {
 	rs := []*discoveryv1.CollectionResult{result("b", "3.0.2", 1), result("a", "3.0.2", 2)}
 	snap, _ := normalize.Normalize(rs, "s", "n1", normalize.RulesetVersion, nil, nil)

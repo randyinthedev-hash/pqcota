@@ -11,7 +11,7 @@ import (
 )
 
 // 참조 해석 — 레코드 → 계획 → 스냅샷 사슬의 마지막 고리. 모양 검사는 이력이 없어도 하고, 찾는
-// 것은 이력이 있을 때만 하며, 찾은 스냅샷에 그 finding 이 실제로 있어야 한다.
+// 것은 이력이 있을 때만 하며, 찾은 스냅샷에 그 finding이 실제로 있어야 한다.
 
 const digest64 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
@@ -61,7 +61,7 @@ func TestReferenceShapeIsCheckedWithoutHistory(t *testing.T) {
 	}
 }
 
-// ★ TP-GATE-14 — 실제 id 와 내용 지문 양쪽으로 찾고, 찾은 스냅샷에 finding 이 있어야 한다.
+// ★ TP-GATE-14 — 실제 id와 내용 지문 양쪽으로 찾고, 찾은 스냅샷에 finding이 있어야 한다.
 func TestResolveFindsAndChecksFindingMembership(t *testing.T) {
 	m, s := stored(t)
 	digest := history.ContentHashV1(s)
@@ -74,7 +74,7 @@ func TestResolveFindsAndChecksFindingMembership(t *testing.T) {
 		if ok.GetResolvedSnapshotId() != s.ID {
 			t.Errorf("%s: 찾지 못했다: %q", name, ok.GetReason())
 		}
-		// 스냅샷은 맞는데 finding 이 그 안에 없다 — 잘못 짝지어진 근거.
+		// 스냅샷은 맞는데 finding이 그 안에 없다 — 잘못 짝지어진 근거.
 		bad := provisioning.ResolveReference(m, r, "f-9")
 		if bad.GetResolvedSnapshotId() != "" || !strings.Contains(bad.GetReason(), "mispaired") {
 			t.Errorf("%s: finding 이 없는데 통과했다: %q", name, bad.GetReason())
@@ -88,7 +88,7 @@ func TestResolveFindsAndChecksFindingMembership(t *testing.T) {
 	if other.GetResolvedSnapshotId() != "" || !strings.Contains(other.GetReason(), "belongs to node") {
 		t.Errorf("다른 노드의 스냅샷을 찾았다고 했다: %q", other.GetReason())
 	}
-	// 규칙 판이 다르면 못 찾고, 사유가 규칙 판을 말한다.
+	// 규칙 판이 다르면 못 찾고, 사유에 규칙 판이 적힌다.
 	rs := provisioning.ResolveReference(m, contentRef("web-01.corp", "pqcota-enrich/v1", digest), "f-1")
 	if rs.GetResolvedSnapshotId() != "" || !strings.Contains(rs.GetReason(), "ruleset") {
 		t.Errorf("규칙 판이 다른데 사유가 그것을 말하지 않는다: %q", rs.GetReason())
@@ -113,21 +113,21 @@ func TestResolveActionWalksEvidenceThenLegacy(t *testing.T) {
 		t.Error("못 찾은 항목이 제출된 참조를 잃었다")
 	}
 
-	// 호환용 finding_id 가 주 근거와 다르다 — 옛 소비자와 새 소비자가 다른 근거를 읽는다.
+	// 호환용 finding_id가 주 근거와 다르다 — 옛 소비자와 새 소비자가 다른 근거를 읽는다.
 	two := &provisioningv1.RemediationAction{Id: "a2", FindingId: "f-9", EvidenceSources: a.EvidenceSources[:1]}
 	if r := provisioning.ResolveAction(m, plan, two)[0]; r.GetResolvedSnapshotId() != "" || !strings.Contains(r.GetReason(), "does not equal the primary evidence") {
 		t.Errorf("호환 finding_id 와 주 근거의 불일치를 잡지 않았다: %q", r.GetReason())
 	}
 
-	// ★ 호환용 finding_id 가 **비어 있어도** 예외가 아니다. 계약이 「같아야 하고 검사한다」고 적었다.
-	// 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 f-1 로 읽는다.
+	// ★ 호환용 finding_id가 **비어 있어도** 예외가 아니다. 계약이 「같아야 하고 검사한다」고 적었다.
+	// 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 f-1로 읽는다.
 	blank := &provisioningv1.RemediationAction{Id: "a5", EvidenceSources: a.EvidenceSources[:1]}
 	r0 := provisioning.ResolveAction(m, plan, blank)[0]
 	if r0.GetResolvedSnapshotId() != "" || !provisioning.IsInvalidReference(r0) {
 		t.Errorf("빈 호환 finding_id 를 예외로 두었다: %q", r0.GetReason())
 	}
 
-	// ★ 근거 자체에 finding_id 가 없으면, 참조가 맞아도 아무것도 가리키지 못한다.
+	// ★ 근거 자체에 finding_id가 없으면, 참조가 맞아도 아무것도 가리키지 못한다.
 	noFinding := &provisioningv1.RemediationAction{Id: "a6", EvidenceSources: []*provisioningv1.ActionEvidenceSource{
 		{Snapshot: idRef("web-01.corp", s.ID)},
 	}}
@@ -139,7 +139,7 @@ func TestResolveActionWalksEvidenceThenLegacy(t *testing.T) {
 		t.Error("finding 없는 근거를 불완전으로 세지 않았다")
 	}
 
-	// 근거가 없으면 계획 단위 id 를 legacy 분기로 — 참조로 합성하지 않는다.
+	// 근거가 없으면 계획 단위 id를 legacy 분기로 — 참조로 합성하지 않는다.
 	old := &provisioningv1.RemediationAction{Id: "a3", FindingId: "f-1"}
 	lr := provisioning.ResolveAction(m, plan, old)
 	if len(lr) != 1 || lr[0].GetLegacyPlanSnapshotId() != s.ID || lr[0].GetResolvedSnapshotId() != s.ID {
@@ -153,13 +153,13 @@ func TestResolveActionWalksEvidenceThenLegacy(t *testing.T) {
 	if r := provisioning.ResolveAction(m, plan, oldBad)[0]; r.GetResolvedSnapshotId() != "" {
 		t.Error("legacy 분기에서 finding 소속을 보지 않았다")
 	}
-	// 근거도 계획 단위 id 도 없으면 빈 목록 — 추적성 경고의 몫이다.
+	// 근거도 계획 단위 id도 없으면 빈 목록 — 추적성 경고의 몫이다.
 	if got := provisioning.ResolveAction(m, &provisioningv1.FinalizedPlan{}, old); len(got) != 0 {
 		t.Errorf("아무 참조도 없는데 결과가 있다: %+v", got)
 	}
 }
 
-// TP-GATE-14 — 추적성 경고는 조치의 근거를 우선한다. 근거가 있으면 계획 단위 id 가 비어도 경고하지 않는다.
+// TP-GATE-14 — 추적성 경고는 조치의 근거를 우선한다. 근거가 있으면 계획 단위 id가 비어도 경고하지 않는다.
 func TestTraceabilityPrefersActionEvidence(t *testing.T) {
 	with := &provisioningv1.FinalizedPlan{Id: "p", RulesetVersion: "r", Actions: []*provisioningv1.RemediationAction{
 		{Id: "a1", TargetNodeId: "n", FindingId: "f-1", EvidenceSources: []*provisioningv1.ActionEvidenceSource{{FindingId: "f-1", Snapshot: idRef("n", "s")}}},

@@ -115,7 +115,7 @@ echo "   ── snapshot detail (-snapshot): assets + that snapshot's observed e
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
 # 엣지의 앱 — 관측은 캡처하는 순간 소켓이 살아 있어야 앱을 알아낸다. 짧게 붙었다 끊긴 연결은
-# 그 구간을 벗어나 `@?`로 남는다. **그건 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 그 자리를
+# 그 구간을 벗어나 `@?`로 남는다. **그것은 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 그 자리를
 # 사람이 선언으로 메운다. 관측을 고치지 않고 자기 레인으로 들어가며, 메운 것은 (declared)로 표시된다.
 # dst는 **엣지에 찍힌 그대로** 적는다(이 데모에서는 "ip:port" 모양이다) — 화면에서 보이는 값을
 # 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
@@ -195,9 +195,9 @@ approve() {
     "pqcota-approve --approver reviewer-1 $1 > $1.signed && mv $1.signed $1"
 }
 
-# 계획을 **무엇에서 뽑았는지** 조치마다 적는다(§1.2 재현) — 어느 finding 이, 어느 스냅샷 상태에서
+# 계획을 **무엇에서 뽑았는지** 조치마다 적는다(§1.2 재현) — 어느 finding이, 어느 스냅샷 상태에서
 # (evidenceSources). 비면 pqcota-provision이 경고한다: 실행은 되지만 이력에 근거가 남지 않아, 나중에
-# 이 조치가 어느 스냅샷 상태에서 나왔는지 되짚을 수 없다. --dsn 을 주면 생성기가 그 참조를 이력에서
+# 이 조치가 어느 스냅샷 상태에서 나왔는지 되짚을 수 없다. --dsn을 주면 생성기가 그 참조를 이력에서
 # 실제로 찾아 레코드에 남긴다 — 아래 pqcota-records 출력에 그것이 보인다.
 # 확정 시각은 적지 않는다 — 판정을 끝낸 계획은 IN_REVIEW로 넘기고, 승인(pqcota-approve)이
 # FINALIZED로 올리며 그때 시각을 찍는다.
@@ -337,7 +337,7 @@ JSON
 approve /work/plan-real.json 2>&1 | sed 's/^/   /'
 # 이 계획만 automationLevel을 비워 둔다. 같은 계획을 L2로 올린 뒤 L3로 escalate하는 것이 이
 # 단계의 서사라, 수준이 계획이 아니라 명령줄에서 오는 것이 맞다. 그래서 빈칸을 알고 넘긴다
-# (--allow-incomplete). 한 수준으로만 쓰는 plan.json·plan-l3.json은 계획이 수준을 말한다.
+# (--allow-incomplete). 한 수준으로만 쓰는 plan.json·plan-l3.json은 계획에 수준이 적혀 있다.
 echo "   ── L2 staging (a real .so, sha256 gate) + L3 activation ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --allow-incomplete --dsn '$DSN' /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV -e pqcota_module_sha256_oqsprovider=$RSHA provision-real.yml" \

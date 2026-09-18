@@ -8,7 +8,7 @@ import (
 	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
 )
 
-// L2 롤백: forward가 배치한 config 조각 + 스테이지한 모듈을 제거(state: absent). 재시작은 하지 않는다 — 그건 L3.
+// L2 롤백: forward가 배치한 config 조각 + 스테이지한 모듈을 제거(state: absent). 재시작은 하지 않는다 — 그것은 L3.
 func TestRollbackPlaybookL2(t *testing.T) {
 	pb := provisioning.GenerateRollbackPlaybook(samplePlan(), provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	for _, want := range []string{

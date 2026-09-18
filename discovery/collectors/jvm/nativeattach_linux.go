@@ -72,7 +72,7 @@ func NativeAttach(pid int, agentJar, outPath string) (Collected, error) {
 
 // createTriggerFile — `.attach_pid<nspid>`를 대상이 보는 위치에 만든다.
 //
-// ★ 이 파일과 SIGQUIT은 **둘 다, 이 순서로** 필요하다. 파일이 "이건 attach 요청"이라는 표시이고,
+// ★ 이 파일과 SIGQUIT은 **둘 다, 이 순서로** 필요하다. 파일이 "이것은 attach 요청"이라는 표시이고,
 // 없으면 JVM은 평범한 스레드 덤프 요청으로 보고 앱 stdout에 덤프를 쏟는다. 그리고 신호 처리가
 // 비동기라 **소켓이 열릴 때까지 지우면 안 된다**(호출부가 defer로 지운다).
 //

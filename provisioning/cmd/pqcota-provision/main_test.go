@@ -239,7 +239,7 @@ func TestUnverifiableApprovalsAreRefusedByDefault(t *testing.T) {
 	if err := cmd.Run(); err == nil {
 		t.Fatalf("확인할 키가 없는데 통과했다:\n%s", stderr.String())
 	}
-	// 거절이므로 산출물이 한 줄도 나오면 안 된다 — 불완전(3)과 달리 이건 근거 자체가 없다.
+	// 거절이므로 산출물이 한 줄도 나오면 안 된다 — 불완전(3)과 달리 이것은 근거 자체가 없다.
 	if stdout.Len() != 0 {
 		t.Errorf("거절하면서 플레이북을 함께 냈다:\n%s", stdout.String())
 	}
@@ -259,7 +259,7 @@ func TestUnverifiableApprovalsAreRefusedByDefault(t *testing.T) {
 	}
 }
 
-// ★ 모르는 `--level`을 조용히 L2로 삼키지 않는다.
+// ★ 모르는 `--level`을 알리지 않고 L2로 삼키지 않는다.
 //
 // `--level L3`처럼 대소문자만 틀려도 전에는 기본값 L2로 돌았다. 그러면 활성화·재시작이 빠진
 // 산출물을 받고도 **시킨 대로 됐다고 읽는다.** 수준은 위험도에 따른 위임이라, 말한 것보다 낮게
@@ -310,7 +310,7 @@ func TestUnsetAutomationLevelCountsAsABlank(t *testing.T) {
 }
 
 // TP-GATE-13 — 참조의 모양은 이력이 없어도 본다. 원천 노드가 없는 참조는 --dsn 없이도 불완전이고
-// 종료 3이다. DSN 이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다.
+// 종료 3이다. DSN이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다.
 func TestMalformedSnapshotReferenceIsIncompleteWithoutDSN(t *testing.T) {
 	bin := buildCLI(t)
 	var stdout, stderr strings.Builder

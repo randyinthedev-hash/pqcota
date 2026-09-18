@@ -10,7 +10,7 @@
 #   provision  도구가 만든 config가 실제 암호 알고리즘으로 반영되고, 되돌리면 원상복귀한다
 #   gap        관측하지 못한 것을 "없음"으로 적지 않는다
 #
-# 전제: `./demo/scripts/up.sh` 와 `DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh` 가 한 번 돌아
+# 전제: `./demo/scripts/up.sh`와 `DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh`가 한 번 돌아
 # 관측 결과와 생성물이 컨트롤러에 있어야 한다. 그것들을 **다시 만들지 않고 그대로 쓰므로**
 # 촬영을 몇 번 다시 해도 같은 화면이 나온다. provision 컷은 끝에 롤백해 노드를 원래대로 둔다.
 set -euo pipefail

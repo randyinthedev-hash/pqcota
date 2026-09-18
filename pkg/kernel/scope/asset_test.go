@@ -46,7 +46,7 @@ exclude,*,*,/usr/bin/python*,python runtime — not in scope
 	}
 }
 
-// include가 exclude를 이긴다 — "이 계열은 전부 빼되 이것만 예외"를 쓸 수 있어야 한다.
+// include가 exclude보다 우선한다 — "이 계열은 전부 빼되 이것만 예외"를 쓸 수 있어야 한다.
 func TestIncludeOverridesExclude(t *testing.T) {
 	p, _ := scope.LoadAssetPolicy(strings.NewReader(`
 exclude,openssl,libcrypto.so.*,*,exclude all
@@ -77,7 +77,7 @@ func TestMultiAppAttribution(t *testing.T) {
 
 // ★ 리뷰 지적 — 공유 .so의 영향 반경(blast radius): 테스트 앱 하나를 빼려다 그 .so를 함께
 // 쓰는 운영 앱까지 빠진다. 규칙은 순서대로·뒤가 이기므로, 운영 앱을 되살리는 include를 exclude
-// 뒤에 두어 구제한다. include는 "무조건 우선"이 아니라 순서 기반임을 함께 못박는다(TV-SCOPE-3×TV-SCOPE-4).
+// 뒤에 두어 구제한다. include는 "무조건 우선"이 아니라 순서 기반임을 함께 못 박는다(TV-SCOPE-3×TV-SCOPE-4).
 func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
 	// libcrypto.so.3을 테스트 앱과 운영 앱이 함께 로드(여러 앱에 걸침).
 	shared := func() *discoveryv1.Finding {
@@ -91,7 +91,7 @@ func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
 		t.Fatalf("one matching app drops the whole shared .so (blast radius): kept=%d excl=%d", len(kept), excl)
 	}
 
-	// (2) 구제: 운영 앱을 되살리는 include를 exclude '뒤에' 두면 보존된다(뒤가 이긴다).
+	// (2) 구제: 운영 앱을 되살리는 include를 exclude '뒤에' 두면 보존된다(뒤가 우선한다).
 	p2, _ := scope.LoadAssetPolicy(strings.NewReader(
 		"exclude,openssl,libcrypto.so.*,/opt/apps/internal-test-*,catches test apps\n" +
 			"include,openssl,libcrypto.so.3,/opt/apps/payment-gw,production app — keep the shared .so\n"))
@@ -99,7 +99,7 @@ func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
 		t.Fatalf("a later include must rescue the production app shared .so: kept=%d excl=%d", len(kept), excl)
 	}
 
-	// (3) 순서 의존성: include를 exclude '앞에' 두면 뒤의 exclude가 이긴다 — 무조건 우선이 아니다.
+	// (3) 순서 의존성: include를 exclude '앞에' 두면 뒤의 exclude가 우선한다 — 무조건 우선이 아니다.
 	p3, _ := scope.LoadAssetPolicy(strings.NewReader(
 		"include,openssl,libcrypto.so.3,/opt/apps/payment-gw,\n" +
 			"exclude,openssl,libcrypto.so.*,/opt/apps/internal-test-*,\n"))

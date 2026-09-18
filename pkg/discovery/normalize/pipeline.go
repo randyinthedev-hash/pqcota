@@ -18,7 +18,7 @@ import (
 // 히스토리 append 한다.
 //
 // policy가 nil이면 전부 관리 대상이다. 제외분은 버려지되 **세어서 스냅샷에 남긴다** —
-// 조용히 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다(§2.6 제외 ≠ 부재).
+// 표시 없이 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다(§2.6 제외 ≠ 부재).
 //
 // 결정론적: 같은 입력 + 같은 rulesetVersion → 같은 finding id(§1.2 재현성).
 // RulesetVersion — **이 리포의 강화 규칙 판**이다. 파생값(`evidence_strength`·`pqc_readiness`·
@@ -43,12 +43,12 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 	// 「뒤의 것 = 가장 최근」이 수집기를 가리지 않고 선다.
 	results = sortResults(results)
 
-	byID := make(map[string]int) // finding id → findings 의 자리
+	byID := make(map[string]int) // finding id → findings의 자리
 	var findings []*discoveryv1.Finding
 	var comp *commonv1.Completeness
 	var conflicts []string
 
-	byEdge := make(map[string]int) // 엣지 동일성 키 → edges 의 자리
+	byEdge := make(map[string]int) // 엣지 동일성 키 → edges의 자리
 	var edges []*discoveryv1.ObservedEdge
 
 	for _, res := range results {
@@ -63,9 +63,9 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 				findings = append(findings, f)
 				continue
 			}
-			// 같은 finding id 가 두 결과에 있다(§2.4⑤ dedup). 내용이 같으면 하나다. 다르면
-			// **최근 것**을 남기되 **조용히 고르지 않는다** — 두 수집기가 같은 자산을 다르게 봤다는
-			// 사실은 완전성 note 에 남아 사람이 본다.
+			// 같은 finding id가 두 결과에 있다(§2.4⑤ dedup). 내용이 같으면 하나다. 다르면
+			// **최근 것**을 남기되 **알리지 않고 고르지 않는다** — 두 수집기가 같은 자산을 다르게 봤다는
+			// 사실은 완전성 note에 남아 사람이 본다.
 			if !proto.Equal(findings[i], f) {
 				conflicts = append(conflicts, fmt.Sprintf("finding %s differs between collectors; kept the most recent (%s)",
 					f.GetId(), res.GetEnvelope().GetCollectorId()))
@@ -118,7 +118,7 @@ func Normalize(results []*discoveryv1.CollectionResult, snapshotID, nodeID, rule
 // 엣지를 다시 본 사실이지 다른 엣지가 아니다.
 //
 // 전에는 방향·프로토콜·협상 그룹뿐이었다. 그러면 암호군이나 앱이 다른 두 관측이 하나로
-// 접혀 먼저 온 것만 남았고, 결과 순서가 바뀌면 남는 것이 바뀌었다. history 의 지문도 이 키로
+// 접혀 먼저 온 것만 남았고, 결과 순서가 바뀌면 남는 것이 바뀌었다. history의 지문도 이 키로
 // 정렬하므로 두 자리가 같은 것을 「같은 엣지」로 본다.
 func EdgeIdentity(e *discoveryv1.ObservedEdge) string {
 	return strings.Join([]string{
@@ -140,7 +140,7 @@ func mergeEdge(into, e *discoveryv1.ObservedEdge) {
 }
 
 // sortResults — 정규화 전에 결과를 (collected_at, collector_id, 정준 바이트)로 정렬한다. 같은 입력
-// 집합이면 같은 순서다. 정렬하지 않으면 같은 finding 이 다르게 왔을 때 무엇이 남는지가 파일
+// 집합이면 같은 순서다. 정렬하지 않으면 같은 finding이 다르게 왔을 때 무엇이 남는지가 파일
 // 순서에 달린다.
 func sortResults(in []*discoveryv1.CollectionResult) []*discoveryv1.CollectionResult {
 	out := append([]*discoveryv1.CollectionResult(nil), in...)
@@ -196,8 +196,8 @@ func mergeCompleteness(a, b *commonv1.Completeness) *commonv1.Completeness {
 			missingSet[l] = true
 		}
 	}
-	// note 는 **하나도 버리지 않는다.** 전에는 먼저 비지 않은 것을 남겨, 뒤에 온 수집기의
-	// 갭 설명이 사라졌고 결과 순서에 따라 남는 note 가 달라졌다. 정렬해 이으면 순서와 무관하다.
+	// note는 **하나도 버리지 않는다.** 전에는 먼저 비지 않은 것을 남겨, 뒤에 온 수집기의
+	// 갭 설명이 사라졌고 결과 순서에 따라 남는 note가 달라졌다. 정렬해 이으면 순서와 무관하다.
 	notes := map[string]bool{}
 	for _, n := range append(strings.Split(a.GetNote(), "; "), strings.Split(b.GetNote(), "; ")...) {
 		if n = strings.TrimSpace(n); n != "" {
@@ -216,7 +216,7 @@ func mergeCompleteness(a, b *commonv1.Completeness) *commonv1.Completeness {
 	}
 }
 
-// keys — map 을 **정렬해** 꺼낸다. map 순서로 두면 같은 입력에서 계층 순서가 흔들려 스냅샷이
+// keys — map을 **정렬해** 꺼낸다. map 순서로 두면 같은 입력에서 계층 순서가 흔들려 스냅샷이
 // 달라진다.
 func keys(m map[commonv1.CollectionLayer]bool) []commonv1.CollectionLayer {
 	out := make([]commonv1.CollectionLayer, 0, len(m))

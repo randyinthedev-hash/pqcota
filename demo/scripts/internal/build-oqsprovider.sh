@@ -8,7 +8,7 @@
 # 노드 이미지와 **같은 베이스**에서 빌드해야 ABI가 맞는다(노드 = ubuntu:24.04).
 #
 # liboqs는 **정적으로 링크한다**. 프로비저닝이 노드에 놓는 것은 `.so` 하나뿐이라, 기본값대로
-# 공유 liboqs에 링크하면 노드에서 `liboqs.so.9 => not found`로 조용히 안 뜬다(실제로 그랬다).
+# 공유 liboqs에 링크하면 노드에서 `liboqs.so.9 => not found`로 표시 없이 안 뜬다(실제로 그랬다).
 set -euo pipefail
 
 OUT="${1:?usage: build-oqsprovider.sh <output .so path>}"
@@ -33,7 +33,7 @@ RUN git clone -q --depth 1 https://github.com/open-quantum-safe/oqs-provider.git
     cmake -S oqs-provider -B oqs-provider/build -GNinja -DCMAKE_BUILD_TYPE=Release >/dev/null && \
     cmake --build oqs-provider/build >/dev/null && \
     find oqs-provider/build -name oqsprovider.so -exec cp {} /oqsprovider.so \;
-# 미해결 의존이 남은 모듈은 여기서 끊는다 — 노드에 가서야 조용히 안 뜨면 원인을 찾기 어렵다.
+# 미해결 의존이 남은 모듈은 여기서 막는다 — 노드에 가서야 표시 없이 안 뜨면 원인을 찾기 어렵다.
 RUN ldd /oqsprovider.so | grep -q 'not found' \
       && { echo "✗ unresolved dependencies remain:"; ldd /oqsprovider.so | grep 'not found'; exit 1; } || true
 EOF

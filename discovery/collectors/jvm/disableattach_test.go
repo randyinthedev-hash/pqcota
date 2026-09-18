@@ -39,7 +39,7 @@ func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
 // TD-JVM-9 — attach가 막힌 실물 JVM(-XX:+DisableAttachMechanism). 폴백 로직만 unit으로
 // 덮여 있었고, **막힌 실물에서 그 경로를 타는지**는 확인된 적이 없었다.
 //
-// 확인하는 것 둘: ① attach 시도가 실패하고 그 실패가 갭으로 세어진다(조용히 버리지
+// 확인하는 것 둘: ① attach 시도가 실패하고 그 실패가 갭으로 세어진다(표시 없이 버리지
 // 않는다, §2.6). ② java.security 정적 폴백이 provider를 실제로 읽어낸다 — attach가
 // 막혔다고 "provider 없음"이 되면 안 된다.
 func TestDisabledAttachFallsBackToJavaSecurity(t *testing.T) {

@@ -51,7 +51,7 @@ func TestParseHostsNoNodeID(t *testing.T) {
 	}
 }
 
-// os 열 — 빈 칸은 리눅스, 오타는 오류. 조용히 리눅스로 삼키면 Windows 노드에 리눅스
+// os 열 — 빈 칸은 리눅스, 오타는 오류. 알리지 않고 리눅스로 삼키면 Windows 노드에 리눅스
 // collector가 올라가고, 실패는 반입이 아니라 실행에서야 드러난다.
 func TestParseHostsOSColumn(t *testing.T) {
 	hosts, err := inventory.ParseHosts(strings.NewReader(
@@ -84,7 +84,7 @@ func TestParseHostsConnection(t *testing.T) {
 	if hosts[0].Port != 5985 {
 		t.Errorf("port %d — winrm must not fall back to the SSH port", hosts[0].Port)
 	}
-	// port를 적었으면 그것이 이긴다.
+	// port를 적었으면 그것이 우선한다.
 	given, _ := inventory.ParseHosts(strings.NewReader(
 		"node_id,ip,port,os,connection\nwin-01,10.0.0.9,5986,windows,winrm\n"))
 	if given[0].Port != 5986 {
@@ -120,7 +120,7 @@ func TestRenderAnsibleInventoryGroupsByOS(t *testing.T) {
 	if !strings.Contains(inv, "win-01 ansible_host=10.0.0.9 ansible_port=22 ansible_user=deploy ansible_ssh_private_key_file=/k ansible_shell_type=powershell") {
 		t.Errorf("the Windows-over-SSH line is wrong:\n%s", inv)
 	}
-	// 사이트마다 갈리는 값은 지어내지 않고 자리만 알려 준다.
+	// 사이트마다 다른 값은 지어내지 않고 자리만 알려 준다.
 	if !strings.Contains(inv, "group_vars/targets_windows.yml") {
 		t.Errorf("the note about site-specific settings is missing:\n%s", inv)
 	}

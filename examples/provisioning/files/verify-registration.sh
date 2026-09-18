@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # 생성한 java.security 조각이 **정말로 provider를 등록하는가**를 실제 JVM에서 확인한다.
 #
-# 빈 파일로 플레이북을 돌리면 "Ansible이 파일을 복사했다"까지만 확인된다. 그건 생성물이 의도한
+# 빈 파일로 플레이북을 돌리면 "Ansible이 파일을 복사했다"까지만 확인된다. 그것은 생성물이 의도한
 # 일을 하는지에 대해 아무 말도 하지 않는다 — 조각이 적용조차 되지 않는 경우가 실제로 있다
 # (레거시 OpenSSL에서 그랬다). 그래서 여기서 진짜 JAR과 진짜 JVM으로 끝까지 본다.
 #
 #   ./verify-registration.sh                       기본: jca-provider-inject-bc 케이스
 #   ./verify-registration.sh jca-fips-bcfips       다른 케이스
 #
-# 전제: ./fetch-example-provider.sh 로 BC.jar을 먼저 받아둘 것. JDK는 있으면 쓰고, 없으면 Docker.
+# 전제: ./fetch-example-provider.sh로 BC.jar을 먼저 받아둘 것. JDK는 있으면 쓰고, 없으면 Docker.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"

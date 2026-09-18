@@ -11,8 +11,8 @@ import (
 	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
 )
 
-// TV-HISTORY-7 — Postgres 에서 중복 억제가 v1 로 접히고, (node, ruleset, digest) 로 찾힌다.
-// PQCOTA_TEST_DSN 이 있을 때만. CI 가 Postgres 서비스로 돌린다.
+// TV-HISTORY-7 — Postgres에서 중복 억제가 v1로 접히고, (node, ruleset, digest)로 찾힌다.
+// PQCOTA_TEST_DSN이 있을 때만. CI가 Postgres 서비스로 돌린다.
 func TestPgDedupAndLookupOnV1(t *testing.T) {
 	dsn := os.Getenv("PQCOTA_TEST_DSN")
 	if dsn == "" {
@@ -26,7 +26,7 @@ func TestPgDedupAndLookupOnV1(t *testing.T) {
 	defer st.Close()
 	var _ history.SnapshotLookup = st
 
-	// append-only 라 정리하지 않는다. 실행마다 유일한 노드로 다른 실행과 섞이지 않게 한다.
+	// append-only라 정리하지 않는다. 실행마다 유일한 노드로 다른 실행과 섞이지 않게 한다.
 	node := "v1test-" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	mk := func(id, ruleset, alg string) *history.Snapshot {
 		return &history.Snapshot{ID: id, NodeID: node, RulesetVersion: ruleset,

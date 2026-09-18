@@ -27,7 +27,7 @@ type Snapshot struct {
 	CreatedAt      time.Time
 
 	// ExcludedByScope — 자산 스코프 정책으로 **관리 대상에서 뺀** finding 수.
-	// 조용히 0으로 두면 인벤토리가 "그런 자산은 없다"고 거짓말한다 — 제외는 부재가 아니므로
+	// 알리지 않고 0으로 두면 인벤토리가 "그런 자산은 없다"고 거짓말한다 — 제외는 부재가 아니므로
 	// 반드시 세어서 뷰가 고지한다(§2.6).
 	ExcludedByScope int
 
@@ -64,15 +64,15 @@ type Store interface {
 	ObservationStats(nodeID string) (map[string]ObsStat, error)
 }
 
-// SnapshotLookup — 참조로 스냅샷을 찾는 좁은 조회. **Store 와 별개다.** Store 를 넓히면 그것을
+// SnapshotLookup — 참조로 스냅샷을 찾는 좁은 조회. **Store와 별개다.** Store를 넓히면 그것을
 // 구현한 외부 코드가 깨진다. 이 리포는 부가 기능을 별도 인터페이스로 갈라 왔다.
 //
 // 참조의 **형식**은 모른다 — 그것은 프로비저닝 계약(SnapshotReference)의 일이고, 이력 계층이
 // 하류 계약을 알면 안 된다. 여기는 키로만 찾는다. 두 저장소(Postgres·메모리)가 구현한다.
 type SnapshotLookup interface {
 	ByID(id string) (*Snapshot, error)
-	// ByContentHashV1 — (org, node, ruleset, digest). org 는 핸들이 든다. 없으면 (nil, nil).
-	// ruleset 이 지문 안에도 들어 있어 조건이 겹치지만, 참조가 규칙 판을 밝히면 못 찾았을 때
+	// ByContentHashV1 — (org, node, ruleset, digest). org는 핸들이 든다. 없으면 (nil, nil).
+	// ruleset이 지문 안에도 들어 있어 조건이 겹치지만, 참조가 규칙 판을 밝히면 못 찾았을 때
 	// 「규칙 판이 다르다」를 추측이 아니라 값으로 말할 수 있다.
 	ByContentHashV1(node, ruleset, digest string) (*Snapshot, error)
 }
@@ -126,8 +126,8 @@ func (m *MemStore) Append(s *Snapshot) error {
 	now := time.Now().UTC()
 
 	// 실질 내용이 직전과 같으면 스냅샷을 새로 만들지 않는다 — 관측 사실만 기록.
-	// **v1 지문으로 접는다.** 옛 지문(ContentHash)으로 접으면 v1 이 없는 옛 행이 재사용되어
-	// v1 참조가 영원히 찾히지 않는다. v1 이 빈 옛 행은 같은 행이 아니다 — 새 행을 만든다.
+	// **v1 지문으로 접는다.** 옛 지문(ContentHash)으로 접으면 v1이 없는 옛 행이 재사용되어
+	// v1 참조가 영원히 찾히지 않는다. v1이 빈 옛 행은 같은 행이 아니다 — 새 행을 만든다.
 	if prev := m.latestLocked(s.NodeID); prev != nil && m.hashV1[prev.ID] != "" && m.hashV1[prev.ID] == ContentHashV1(s) {
 		s.ID, s.Seq, s.CreatedAt, s.Created = prev.ID, prev.Seq, prev.CreatedAt, false
 		m.observeLocked(s.NodeID, prev.ID, now)

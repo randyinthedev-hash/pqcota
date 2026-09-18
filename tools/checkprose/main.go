@@ -15,18 +15,18 @@
 //
 // **코드는 보지 않는다.** 변수명·주석·커밋·로그처럼 코드에 속하는 텍스트는 프로젝트
 // 관례를 따르는 자리다. 그래서 마크다운은 코드 블록과 인라인 코드를 덮고 나서 보며,
-// Go 는 go/ast 로 **문자열 리터럴만** 본다(주석은 한국어다). HTML 은 code·pre·script·
-// style 과 주석 안을 덮는다.
+// Go는 go/ast로 **문자열 리터럴만** 본다(주석은 한국어다). HTML은 code·pre·script·
+// style과 주석 안을 덮는다.
 //
-// **규칙은 rules.tsv 에, 잘못 잡는 말은 overlap.txt 에 있다.** 두 목록 모두 지적받을 때마다
+// **규칙은 rules.tsv에, 잘못 잡는 말은 overlap.txt에 있다.** 두 목록 모두 지적받을 때마다
 // 늘어나므로 코드 밖에 있어야 한다.
 //
-// **알림표 notices.tsv 는 관문이 아니다.** 맞는 용법이 섞여 있어 기계가 가르지 못하는 것
+// **알림표 notices.tsv는 관문이 아니다.** 맞는 용법이 섞여 있어 기계가 가르지 못하는 것
 // (제목·표에서는 구분 기호인 띄운 붙임표 같은 것)은 막지 않고 후보로만 알린다. 걸려도
 // 통과하고 기준선에도 넣지 않는다. 막는 규칙으로 두면 예외 목록이 쌓이고, 예외가 쌓이면
 // 진짜 위반도 함께 묻힌다.
 //
-// **출처와 권리.** 이 도구는 https://github.com/sntsoftgit/pqcaton 의 tools/checkprose(커밋
+// **출처와 권리.** 이 도구는 https://github.com/sntsoftgit/pqcaton의 tools/checkprose(커밋
 // 118970a~15ac503, 2026-08-25~09-16, 그 리포는 BUSL-1.1)에서 시작했다. 권리자 (주)에스앤티소프트
 // (SNT Soft Co., Ltd.)가 2026-09-17에 이것을 이 리포의 LICENSE(Apache-2.0)로 제공하기로 결정했고,
 // **그때부터 이 리포가 원본이다.** 다른 리포는 코드를 복사하지 않고 판을 지정해 돌린다.
@@ -34,7 +34,7 @@
 // **설정은 전부 한 디렉터리(-dir, 기본 tools/checkprose)에 있고 코드는 리포를 가리지 않는다.**
 // rules.tsv(규칙) · notices.tsv(알림) · overlap.txt(잘못 잡는 말) · files.txt(마크다운 밖에서
 // 볼 Go·HTML 파일) · baseline.tsv(기준선). 다른 리포는 이 코드를 복사하지 않고 자기 설정
-// 디렉터리를 두고 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@<판>` 으로 돌린다.
+// 디렉터리를 두고 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@<판>`으로 돌린다.
 //
 // usage:
 //
@@ -59,7 +59,7 @@ import (
 	"strings"
 )
 
-// 설정 파일 이름. 디렉터리는 -dir 로 받는다(기본 tools/checkprose).
+// 설정 파일 이름. 디렉터리는 -dir로 받는다(기본 tools/checkprose).
 const (
 	rulesName    = "rules.tsv"
 	noticesName  = "notices.tsv"
@@ -69,9 +69,9 @@ const (
 )
 
 // overlap — 규칙이 잘못 잡는 말. 재기 전에 같은 길이로 덮는다. 「헷갈리다」의 "갈리"가
-// 「갈리다」 규칙에 걸리는 것이 실제로 나온 자리라, 뒤보기 없는 RE2 에서는 이 편이 낫다.
+// 「갈리다」 규칙에 걸리는 것이 실제로 나온 자리라, 뒤보기 없는 RE2에서는 이 편이 낫다.
 //
-// 말 자체는 overlap.txt 에 있다. 지적받을 때마다 늘어나는 목록이라 코드 밖에 둔다.
+// 말 자체는 overlap.txt에 있다. 지적받을 때마다 늘어나는 목록이라 코드 밖에 둔다.
 var overlap []string
 
 type rule struct {
@@ -95,7 +95,7 @@ func main() {
 	os.Exit(run(*dir, *list, *write))
 }
 
-// run — 관문 한 번. 종료 코드를 돌려주고 os.Exit 은 main 이 한다: 실제 실행 경로(알림만
+// run — 관문 한 번. 종료 코드를 돌려주고 os.Exit은 main이 한다: 실제 실행 경로(알림만
 // 있는 입력이 통과하는지, 기준선에 알림이 섞이지 않는지)를 테스트가 그대로 밟기 위해서다.
 func run(dir string, list, write bool) int {
 	rulesFile := filepath.Join(dir, rulesName)
@@ -174,8 +174,8 @@ func failed(err error) int {
 }
 
 // rerun — 안내문에 적는 「다시 돌리는 법」. 이 도구는 자기 리포에서 `go run ./tools/checkprose`
-// 로도, 다른 리포에서 `go run <모듈 경로>@<판>` 으로도 돌므로 실행한 명령을 알 수 없고, 실행
-// 파일 이름을 지어내지도 않는다. **같은 명령에 줄 인자만** 적되, 사용자가 준 -dir 은 잃지 않는다.
+// 로도, 다른 리포에서 `go run <모듈 경로>@<판>`으로도 돌므로 실행한 명령을 알 수 없고, 실행
+// 파일 이름을 지어내지도 않는다. **같은 명령에 줄 인자만** 적되, 사용자가 준 -dir은 잃지 않는다.
 // 경로에 공백이 있을 수 있어 인용해 보인다.
 func rerun(dir, flag string) string {
 	args := flag
@@ -214,7 +214,7 @@ func loadRules(path string) ([]rule, error) {
 	return out, nil
 }
 
-// loadWords — 한 줄에 하나씩 적은 말 목록. 빈 줄과 # 로 시작하는 줄은 넘긴다.
+// loadWords — 한 줄에 하나씩 적은 말 목록. 빈 줄과 #로 시작하는 줄은 넘긴다.
 func loadWords(path string) ([]string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -233,7 +233,7 @@ func loadWords(path string) ([]string, error) {
 
 // ── 훑기 ───────────────────────────────────────────────────────────────────
 
-// scan — root 아래의 마크다운 전부와, extra 에 적힌 Go·HTML 파일을 잰다.
+// scan — root 아래의 마크다운 전부와, extra에 적힌 Go·HTML 파일을 잰다.
 func scan(root string, extra []string, rules []rule) ([]hit, error) {
 	var out []hit
 	seen := map[string]bool{}
@@ -254,9 +254,9 @@ func scan(root string, extra []string, rules []rule) ([]hit, error) {
 			return err
 		}
 		if d.IsDir() {
-			// `_workspace` 는 첨삭 도구가 만드는 작업 폴더다. **고칠 문장을 그대로
+			// `_workspace`는 첨삭 도구가 만드는 작업 폴더다. **고칠 문장을 그대로
 			// 인용해 둔 파일**이라 걸리는 것이 당연하고, 날짜별로 새 폴더가 생기니
-			// 기준선에 넣으면 날마다 썩는다. .gitignore 도 이미 이 폴더를 뺀다.
+			// 기준선에 넣으면 날마다 썩는다. .gitignore도 이미 이 폴더를 뺀다.
 			if n := d.Name(); n == ".git" || n == "node_modules" || n == "testdata" || n == "_workspace" {
 				return filepath.SkipDir
 			}
@@ -322,7 +322,7 @@ func match(rel string, orig, masked []byte, rules []rule) []hit {
 	for _, r := range rules {
 		for _, loc := range r.re.FindAllStringIndex(s, -1) {
 			// **한국어가 없는 줄은 보지 않는다.** 지침은 한국어를 명확하게 쓰라는 것이지
-			// 외국어를 고치라는 것이 아니다(「동작 범위」 1항). 소개 페이지는 KO 와 EN 을
+			// 외국어를 고치라는 것이 아니다(「동작 범위」 1항). 소개 페이지는 KO와 EN을
 			// 나란히 적는 자리라, 이 선이 없으면 EN 문장의 엠대시까지 세게 된다.
 			if !hasHangul(lineAt(s, loc[0])) {
 				continue
@@ -394,7 +394,7 @@ var (
 	htmlComment = regexp.MustCompile(`(?s)<!--.*?-->`)
 )
 
-// htmlBlockPattern — 여는 태그와 닫는 태그를 짝지어야 하는데 RE2 에는 역참조가 없다.
+// htmlBlockPattern — 여는 태그와 닫는 태그를 짝지어야 하는데 RE2에는 역참조가 없다.
 // 그래서 태그마다 따로 적어 이어 붙인다.
 func htmlBlockPattern() string {
 	parts := make([]string, 0, 4)
@@ -431,7 +431,7 @@ func fill(s string) string {
 }
 
 func maskHTML(b []byte) []byte {
-	// 코드 블록은 줄바꿈만 남기고 채움 글자로 가린다(fill 과 같은 이유 - 공백으로 지우면
+	// 코드 블록은 줄바꿈만 남기고 채움 글자로 가린다(fill과 같은 이유 - 공백으로 지우면
 	// 「<code>x</code>가」가 띄운 조사로 읽힌다). HTML 주석도 덮는다: 코드 주석과 같은 자리라
 	// 프로젝트 관례를 따르고, 화면에 보이지 않는다.
 	s := htmlBlock.ReplaceAllStringFunc(string(b), fillKeepNewlines)
@@ -466,7 +466,7 @@ func maskGo(path string) (orig, masked []byte, err error) {
 		if !ok || lit.Kind != token.STRING {
 			return true
 		}
-		// **한국어가 든 문자열만 남긴다.** 카탈로그는 KO 와 EN 을 나란히 적으므로, 줄 단위로
+		// **한국어가 든 문자열만 남긴다.** 카탈로그는 KO와 EN을 나란히 적으므로, 줄 단위로
 		// 보면 같은 줄의 영어 문장까지 재게 된다. 영어의 엠대시는 영어에서 맞는 문장부호다.
 		if !hasHangul(lit.Value) {
 			return true

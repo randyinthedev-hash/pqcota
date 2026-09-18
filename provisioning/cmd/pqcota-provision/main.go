@@ -85,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 모르는 값을 조용히 L2로 삼키지 않는다. `--level L3`처럼 대소문자만 틀려도 **말한 것보다 낮은
+	// 모르는 값을 알리지 않고 L2로 삼키지 않는다. `--level L3`처럼 대소문자만 틀려도 **말한 것보다 낮은
 	// 수준으로** 돌아 버리는데, 그러면 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고 읽는다.
 	var level provisioningv1.DeployAutomationLevel
 	switch *levelFlag {
@@ -170,12 +170,12 @@ func main() {
 		}
 		rec := provisioning.NewProvisioningRecord(
 			plan.GetId()+":"+a.GetId(), node, appKeys, plan.GetId(), a, before)
-		// 스냅샷 참조를 이력에서 **실제로 찾아** 레코드에 남긴다. 제출된 참조와 찾은 id 를 한 항목으로
+		// 스냅샷 참조를 이력에서 **실제로 찾아** 레코드에 남긴다. 제출된 참조와 찾은 id를 한 항목으로
 		// 짝짓는다. 못 찾은 것은 불완전이다 — 원장 연결이 닫히지 않은 것이라 「연결 완료」와 다르다.
 		rec.SnapshotResolutions = provisioning.ResolveAction(hist, plan, a)
 		for _, r := range provisioning.Unresolved(rec.SnapshotResolutions) {
 			if provisioning.IsInvalidReference(r) {
-				continue // 모양이 틀린 것은 reportWarnings 가 이미 알리고 셌다
+				continue // 모양이 틀린 것은 reportWarnings가 이미 알리고 셌다
 			}
 			fmt.Fprintf(os.Stderr, "⚠ [provision] action %s (node=%s): snapshot reference not resolved — %s\n", a.GetId(), node, r.GetReason())
 			unresolved++
@@ -192,7 +192,7 @@ func main() {
 		n++
 	}
 	fmt.Fprintf(os.Stderr, "[provision] persisted %d records (before capture · STAGED · rollback basis) · snapshot references resolved %d, unresolved %d.\n", n, resolved, unresolved)
-	// 찾지 못한 참조는 불완전이다. 모양이 틀린 것은 reportWarnings 가 이미 셌으므로 여기서는 세지 않았다.
+	// 찾지 못한 참조는 불완전이다. 모양이 틀린 것은 reportWarnings가 이미 셌으므로 여기서는 세지 않았다.
 	incomplete += unresolved
 	finish(incomplete, *allowIncomplete)
 }
@@ -217,7 +217,7 @@ func reportWarnings(plan *provisioningv1.FinalizedPlan, level provisioningv1.Dep
 	n := 0
 	if !rollback {
 		// 산출물이 그대로는 불완전한 조치(JCA provider_class 미확정 → java.security placeholder)를
-		// 조용히 통과시키지 않는다 — 조각 안 ⚠는 열어봐야 보이므로 여기서 stderr로 크게 알린다(§2.5).
+		// 알리지 않고 통과시키지 않는다 — 조각 안 ⚠는 열어봐야 보이므로 여기서 stderr로 크게 알린다(§2.5).
 		n += say(provisioning.ProviderClassWarnings(plan))
 		// provider 주입은 java.security의 한 자리를 대체한다 — 무엇이 밀려나는지 알린다.
 		// 이것은 안내라 불완전으로 세지 않는다.
@@ -235,7 +235,7 @@ func reportWarnings(plan *provisioningv1.FinalizedPlan, level provisioningv1.Dep
 	n += say(provisioning.AutomationLevelWarnings(plan))
 	// 무엇에서 뽑은 계획인지 되짚을 수 있는가(§1.2). 실행은 되지만 이력에 근거가 안 남는다.
 	n += say(provisioning.TraceabilityWarnings(plan))
-	// 스냅샷 참조의 **모양**은 이력이 없어도 본다. 틀린 참조는 이력이 있든 없든 틀린 것이고, DSN 이
+	// 스냅샷 참조의 **모양**은 이력이 없어도 본다. 틀린 참조는 이력이 있든 없든 틀린 것이고, DSN이
 	// 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다. 찾는 것은 아래 DSN 단계다.
 	for _, a := range plan.GetActions() {
 		for _, r := range provisioning.Unresolved(provisioning.ResolveAction(nil, plan, a)) {

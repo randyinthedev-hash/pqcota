@@ -6,7 +6,7 @@
 # 타임라인은 아래 SEG 표가 전부다 — 고칠 곳도 거기 하나다.
 #
 # 쓰는 법:  ./assemble.sh [작업폴더]     (기본: 현재 폴더)
-# 필요한 것: ffmpeg. clips/{intro,observe,provision,gap,outro}.mp4 와
+# 필요한 것: ffmpeg. clips/{intro,observe,provision,gap,outro}.mp4와
 #            .cap/{title,c1,c2,c3,topo}.png
 #
 # 규칙 둘 (편집 지시서와 같다):

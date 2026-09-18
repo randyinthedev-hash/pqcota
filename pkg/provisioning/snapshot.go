@@ -19,11 +19,11 @@ import (
 // 찾으면 우연히 맞거나 못 찾을 뿐 무엇도 말하지 못한다.
 var knownFormats = map[string]bool{history.SnapshotContentFormatV1: true}
 
-// reasonNotLookedUp — 찾지 않았다. --dsn 이 없다. 못 찾은 것이 아니라 불완전이 아니다.
+// reasonNotLookedUp — 찾지 않았다. --dsn이 없다. 못 찾은 것이 아니라 불완전이 아니다.
 const reasonNotLookedUp = "not looked up (no history to look in)"
 
 // ValidateReference — 참조의 **모양**. 이력이 있든 없든 틀린 것은 틀린 것이라 --dsn 없이도 본다.
-// 여기서 걸린 참조를 DSN 이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다.
+// 여기서 걸린 참조를 DSN이 있을 때만 알리면 로컬에서 만든 계획의 결함이 배포 직전에야 드러난다.
 func ValidateReference(r *provisioningv1.SnapshotReference) error {
 	if r == nil {
 		return fmt.Errorf("no snapshot reference")
@@ -60,14 +60,14 @@ func isHex64(s string) bool {
 	return strings.Trim(s, "0123456789abcdef") == ""
 }
 
-// ResolveReference — 참조 하나를 해석한다. lookup 이 nil 이면(--dsn 없음) 모양 검사까지만 한다.
+// ResolveReference — 참조 하나를 해석한다. lookup이 nil이면(--dsn 없음) 모양 검사까지만 한다.
 //
-// 실제 id 면 찾은 스냅샷의 노드가 참조의 source_node_id 와 같아야 한다 — 다른 노드의 스냅샷을 가리키면
-// 찾은 것이 아니다. **조치의 target_node_id 와 같아야 한다는 조건은 두지 않는다**: 원천 노드와 선언
+// 실제 id 면 찾은 스냅샷의 노드가 참조의 source_node_id와 같아야 한다 — 다른 노드의 스냅샷을 가리키면
+// 찾은 것이 아니다. **조치의 target_node_id와 같아야 한다는 조건은 두지 않는다**: 원천 노드와 선언
 // 노드는 다를 수 있고, 그 대응은 계획을 만든 쪽이 정한 것이라 여기서 검증하지 못한다.
 //
-// findingID 가 비어 있지 않으면 **찾은 스냅샷에 그 finding 이 있어야 한다.** 스냅샷 id·노드·지문만
-// 맞고 finding 이 그 안에 없는 짝이 통과하면, 참조는 맞는데 근거는 틀린 레코드가 남는다. 실제 id 참조와
+// findingID가 비어 있지 않으면 **찾은 스냅샷에 그 finding이 있어야 한다.** 스냅샷 id·노드·지문만
+// 맞고 finding이 그 안에 없는 짝이 통과하면, 참조는 맞는데 근거는 틀린 레코드가 남는다. 실제 id 참조와
 // 내용 지문 참조 양쪽에서 본다.
 func ResolveReference(lookup history.SnapshotLookup, r *provisioningv1.SnapshotReference, findingID string) *provisioningv1.SnapshotResolution {
 	out := &provisioningv1.SnapshotResolution{What: &provisioningv1.SnapshotResolution_Submitted{Submitted: r}}
@@ -109,7 +109,7 @@ func ResolveReference(lookup history.SnapshotLookup, r *provisioningv1.SnapshotR
 	return out
 }
 
-// notFoundReason — 못 찾았을 때 가능한 이유를 **값으로** 말한다. 추측을 사람에게 떠넘기지 않는다.
+// notFoundReason — 못 찾았을 때 가능한 이유를 **값으로** 알린다. 추측을 사람에게 떠넘기지 않는다.
 func notFoundReason(r *provisioningv1.SnapshotReference) string {
 	switch ref := r.GetReference().(type) {
 	case *provisioningv1.SnapshotReference_SnapshotId:
@@ -131,18 +131,18 @@ func hasFinding(s *history.Snapshot, id string) bool {
 	return false
 }
 
-// ResolveAction — 조치의 근거를 전부 돈다. 근거가 하나도 없으면 계획 단위 derived_from_snapshot_id 를
-// **legacy 분기**로 읽는다 — SnapshotReference 로 합성하지 않는다(source_node_id 가 없어 ValidateReference
-// 를 지나지 못한다). ByID 만 하고, 그때는 노드 일치도 finding 소속도 확인할 수 있는 것만 한다.
+// ResolveAction — 조치의 근거를 전부 돈다. 근거가 하나도 없으면 계획 단위 derived_from_snapshot_id를
+// **legacy 분기**로 읽는다 — SnapshotReference로 합성하지 않는다(source_node_id가 없어 ValidateReference
+// 를 지나지 못한다). ByID만 하고, 그때는 노드 일치도 finding 소속도 확인할 수 있는 것만 한다.
 //
-// **근거마다 finding_id 가 있어야 한다.** 없으면 「무엇의 근거인가」를 말하지 못하는 근거다 — 스냅샷
+// **근거마다 finding_id가 있어야 한다.** 없으면 「무엇의 근거인가」를 말하지 못하는 근거다 — 스냅샷
 // 참조만 맞으면 해결된 모양이 되는데, 그 해결은 아무것도 가리키지 않는다.
 //
-// **호환용 finding_id 는 evidence_sources[0].finding_id 와 무조건 같아야 한다.** 비어 있어도 예외가
+// **호환용 finding_id는 evidence_sources[0].finding_id와 무조건 같아야 한다.** 비어 있어도 예외가
 // 아니다: 계약이 「같아야 하고 생성기가 검사한다」고 적었고, 빈값을 봐주면 새 소비자가 읽는 주 근거와
 // 옛 소비자가 읽는 근거가 갈린다.
 //
-// 근거도 계획 단위 id 도 없으면 빈 목록이다. 그것은 추적성 불완전이고 TraceabilityWarnings 가 말한다.
+// 근거도 계획 단위 id도 없으면 빈 목록이다. 그것은 추적성 불완전이고 TraceabilityWarnings가 알린다.
 //
 // GATE: 배선 필수
 func ResolveAction(lookup history.SnapshotLookup, plan *provisioningv1.FinalizedPlan, a *provisioningv1.RemediationAction) []*provisioningv1.SnapshotResolution {
@@ -189,14 +189,14 @@ func ResolveAction(lookup history.SnapshotLookup, plan *provisioningv1.Finalized
 
 const invalidPrefix = "invalid reference: "
 
-// IsInvalidReference — 모양이 틀려서 해결되지 않은 것. 이력과 무관하게 틀린 것이라 DSN 이 없는
+// IsInvalidReference — 모양이 틀려서 해결되지 않은 것. 이력과 무관하게 틀린 것이라 DSN이 없는
 // 단계에서 이미 세어진다. DSN 단계가 이것을 다시 세면 한 결함을 두 번 센다.
 func IsInvalidReference(r *provisioningv1.SnapshotResolution) bool {
 	return strings.HasPrefix(r.GetReason(), invalidPrefix)
 }
 
 // Unresolved — 해결되지 않은 것 가운데 **불완전으로 셀 것**. 찾지 않은 것(--dsn 없음)은 세지 않는다 —
-// 찾지 않은 것이지 못 찾은 것이 아니다. 잘못된 참조는 DSN 과 무관하게 센다.
+// 찾지 않은 것이지 못 찾은 것이 아니다. 잘못된 참조는 DSN과 무관하게 센다.
 func Unresolved(rs []*provisioningv1.SnapshotResolution) []*provisioningv1.SnapshotResolution {
 	var out []*provisioningv1.SnapshotResolution
 	for _, r := range rs {
