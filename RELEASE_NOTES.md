@@ -377,7 +377,7 @@ github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한�
 
 ### 알아낸 것
 
-- **서명이 지키는 결정과 실행이 따르는 결정이 갈릴 수 있다.** `automation_level`을 승인 서명이 덮는데
+- **서명이 지키는 결정과 실행이 따르는 결정이 어긋날 수 있다.** `automation_level`을 승인 서명이 덮는데
   생성기가 읽지 않았다. 승인자는 「결제 서버는 L1까지만」에 서명하고, 실행은 `--level l3` 하나로
   평탄화됐다. 위험도로 위임을 나눈 판정이 실행에서 사라지면 단계 경계가 게이트 구실을 하지 못한다.
 - **안전한 기본값을 닫으면 그 명령을 적어 둔 자리가 함께 움직인다.** 승인을 기본으로 닫자 문서대로
@@ -958,7 +958,7 @@ github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한�
   **무엇이 잘못이었나**. 이 값을 채우는 곳이 openssl collector의 **gRPC 서비스 경로 하나뿐**이었다.
   jvm collector, network collector, 그리고 데모가 실제로 쓰는 openssl **CLI 경로**
   (`pqcota-nodescan` → `BuildResult`)는 비운 채로 결과를 냈다. 같은 collector인데 어느 문으로
-  나왔느냐에 따라 provenance가 갈렸다.
+  나왔느냐에 따라 provenance가 달라졌다.
 
   **무엇이 잘못 나왔나**. **아무것도 틀리게 나오지 않았다.** 이 리포 안에서 이 값을 읽는 곳은
   `sign.Canonical` 하나뿐이고, 인벤토리의 "언제 봤나"는 적재

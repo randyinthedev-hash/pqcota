@@ -36,7 +36,7 @@ pqcota-provision [--level l1|l2|l3] [--rollback] [--dsn <postgres>] <plan.json>
 
 서명은 [`pqcota-approve`](#pqcota-approve)가 붙이고 키쌍은 `pqcota-keygen`이 낸다. [예제 실행기](../../examples/provisioning/README.md)가 그 경로를 그대로 밟는다.
 
-**`--level`은 계획이 말하지 않은 조치의 기본값이다.** 위임 수준은 계약이 정한 **자산별 속성**이라(§4.3 "결제 서버=L2, 무상태 워커=L3"), 조치가 `automation_level`을 말하면 그것을 따른다. 그 값은 승인 서명이 덮는 것이라, 전역 플래그로 덮어쓰면 승인자가 서명한 위임 수준과 실제 실행 수준이 갈린다.
+**`--level`은 계획이 말하지 않은 조치의 기본값이다.** 위임 수준은 계약이 정한 **자산별 속성**이라(§4.3 "결제 서버=L2, 무상태 워커=L3"), 조치가 `automation_level`을 말하면 그것을 따른다. 그 값은 승인 서명이 덮는 것이라, 전역 플래그로 덮어쓰면 승인자가 서명한 위임 수준과 실제 실행 수준이 어긋난다.
 
 플레이북은 stdout으로 나온다. `> provision.yml`로 받는다.
 
