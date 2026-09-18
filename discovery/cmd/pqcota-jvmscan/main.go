@@ -3,8 +3,9 @@
 //
 // 먼저 이 머신의 **실행 중 JVM을 정찰**한다(/proc 스캔, openssl과 대칭) — 발견된 JVM·JDK를
 // stderr로 보이고, JAVA_BIN이 없으면 그 java 바이너리를 기본값으로 쓴다. 즉 호출자가 JDK
-// 경로를 미리 몰라도 된다. (PQCOTA_JVM_AGENT가 있으면 발견된 JVM에 attach해 동적 addProvider까지 보고,
-// 없으면 프로브 JVM으로 정적 등록 체인만 보는 경량 경로로 폴백한다, §2.2.)
+// 경로를 미리 몰라도 된다. (PQCOTA_JVM_AGENT가 있으면 발견된 JVM에 attach해 동적 addProvider까지 본다.
+// 없을 때 --pid가 있으면 그 JVM의 java.security를 Go가 직접 읽고, --pid도 없으면 프로브 JVM으로
+// 정적 등록 체인만 보는 경량 경로로 폴백한다, §2.2.)
 //
 // usage: pqcota-jvmscan [--output json|table] [--pid N] [node-id]
 //
