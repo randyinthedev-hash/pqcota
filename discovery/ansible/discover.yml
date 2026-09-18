@@ -8,13 +8,13 @@
 #   노드에 JVM이 있는지 먼저 관측하고, **있는 노드에만** 보낸다(배포 설계 §2: 추측 대신 정찰).
 #
 # ★ 노드 OS는 `gather_facts`가 이미 알려 준다(`ansible_facts.os_family`) — 알아내려고 무언가를
-#   먼저 올릴 필요가 없다. 리눅스면 collector 셋, Windows면 cngscan이다. 어느 쪽도 아니면
+#   먼저 올릴 필요가 없다. 리눅스면 collector 셋, Windows면 cngscan·jvmscan이다. 어느 쪽도 아니면
 #   아무것도 하지 않는다: 관측하지 못한 노드는 결과가 없을 뿐, "없는 노드"가 아니다.
 #   Windows 태스크는 `ansible.windows` 컬렉션이 필요하다 —
 #   `ansible-galaxy collection install ansible.windows`.
 #
 # 실환경에서 쓰려면 collector_bin_dir를 자기 빌드 산출 경로로 바꾸면 된다
-# (CONTRIBUTING "배포용 빌드" — arch별 dist/linux-amd64 등).
+# (루트 README 「빌드」 — arch별 dist/linux-amd64 등).
 - name: pqcota discovery over SSH (deploy → run → fetch → clean)
   hosts: targets
   gather_facts: true # ansible_env.PATH, 그리고 os_family로 노드를 가른다
@@ -24,7 +24,7 @@
     collector_bin_dir: "/work/dist/linux-{{ lookup('pipe', 'uname -m') | regex_replace('^x86_64$', 'amd64') | regex_replace('^aarch64$', 'arm64') }}"
     collector_agent: /work/dist/collector.jar # ctl이 빌드한 attach 사이드카 JAR
     stage_dir: /tmp/pqcota-collector # 노드에 잠깐 두는 곳(끝나면 삭제)
-    collector_bin_dir_win: /work/dist/windows-amd64 # Windows collector(릴리스에 없다 — 직접 빌드)
+    collector_bin_dir_win: /work/dist/windows-amd64 # Windows collector(릴리스의 pqcota-windows-amd64.zip, 또는 직접 빌드)
     stage_dir_win: 'C:\Windows\Temp\pqcota-collector'
   tasks:
     # ── 리눅스 노드 — openssl · jvm · network ──

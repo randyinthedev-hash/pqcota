@@ -2,7 +2,7 @@ package registry
 
 import "strings"
 
-// ProviderSignature — JCA provider 시그니처 → 능력 (설계 §3.3 v3, SD-2).
+// ProviderSignature — JCA provider 시그니처 → 능력 (아키텍처 §3.3, SD-2).
 // provider_set(관측)을 이 레지스트리와 대조해 pqc_readiness·fips·알고리즘 커버리지를 파생한다.
 type ProviderSignature struct {
 	Match          string   // provider JAR/모듈 시그니처(부분 문자열 매칭)

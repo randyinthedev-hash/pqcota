@@ -3,8 +3,8 @@
 //
 // 먼저 이 머신의 **실행 중 JVM을 정찰**한다(/proc 스캔, openssl과 대칭) — 발견된 JVM·JDK를
 // stderr로 보이고, JAVA_BIN이 없으면 그 java 바이너리를 기본값으로 쓴다. 즉 호출자가 JDK
-// 경로를 미리 몰라도 된다. (현 관측은 프로브 JVM으로 정적 등록 체인을 보는 경량 경로 — 실행 중
-// 앱의 동적 addProvider까지 보려면 사이드카 attach 경로가 필요하다, §2.2.)
+// 경로를 미리 몰라도 된다. (PQCOTA_JVM_AGENT가 있으면 발견된 JVM에 attach해 동적 addProvider까지 보고,
+// 없으면 프로브 JVM으로 정적 등록 체인만 보는 경량 경로로 폴백한다, §2.2.)
 //
 // usage: pqcota-jvmscan [--output json|table] [--pid N] [node-id]
 //
@@ -296,7 +296,7 @@ func attachAll(node string, jvms []jvm.JVMProc, agent string) (res []*discoveryv
 			}
 		}
 		// ③ 정적 폴백 — java.security는 텍스트 파일이라 Go가 직접 읽는다. 어떤 JVM·런타임이어도
-		// 최소한 정적 등록 체인은 낸다(강등·갭 고지). 관측 실패가 조용한 0이 되지 않게(§2.5).
+		// 최소한 정적 등록 체인은 낸다(강등·갭 고지). 관측 실패가 표시 없는 0이 되지 않게(§2.5).
 		c, err := jvm.StaticFallbackGo(j.PID, j.JavaHome)
 		if err != nil {
 			return jvm.Collected{}, fmt.Errorf("every attach path failed and the static fallback is unavailable: %w", err)

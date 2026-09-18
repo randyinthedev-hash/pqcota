@@ -67,8 +67,8 @@ func BuildResult(node string, obs Observation, obsErr error) *discoveryv1.Collec
 
 // buildCycloneDX — 관측을 CycloneDX 본문 + pqcota properties(§3.2)로.
 //
-// JCA와 같은 모양을 쓴다 — `provider_set`은 **등록 순서 CSV**이고 그 순서가 우선순위 판정의
-// 근거다(수용 원칙 §2.2). 알고리즘은 v0.6.0 실측 뒤에 계약에 자리가 생겨 함께 싣는다 —
+// JCA와 같은 모양을 쓴다 — `provider_set`은 **등록 순서 CSV**다. 관측된 순서 그대로 싣고, 그 순서가
+// 우선순위인지는 CNG에서 미확인이다(cbom.proto CngAxes). 알고리즘은 v0.6.0 실측 뒤에 계약에 자리가 생겨 함께 싣는다 —
 // provider 이름만으로는 "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없다.
 func buildCycloneDX(obs Observation) []byte {
 	type prop struct {

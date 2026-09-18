@@ -285,7 +285,7 @@ func TestUnknownLevelIsRefused(t *testing.T) {
 //
 // 말하지 않으면 실행 수준이 `--level`에서 오는데, 그 플래그는 **승인 서명 밖에 있다.** 서명은
 // 계획을 덮지 계획을 부르는 명령줄을 덮지 않는다. 그래서 승인자가 서명한 것과 실제 실행 수준이
-// 갈릴 수 있고, 계획이 값을 적으면 그 자리가 닫힌다.
+// 어긋날 수 있고, 계획이 값을 적으면 그 자리가 닫힌다.
 func TestUnsetAutomationLevelCountsAsABlank(t *testing.T) {
 	bin := buildCLI(t)
 	var stdout, stderr strings.Builder

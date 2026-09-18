@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// LiveSource — AF_PACKET 원시 소켓 캡처(§2.4, CAP_NET_RAW 필요). 관측 구간 동안 핸드셰이크
+// LiveSource — AF_PACKET 원시 소켓 캡처(디스커버리 설계 §2.3, CAP_NET_RAW 필요). 관측 구간 동안 핸드셰이크
 // 프레임을 읽어 통신 엣지 관측으로 바꾼다. 조립은 순수 부분(DissectTCPPayload·ParseHandshakePayload)의 합성.
 // 소켓을 못 열면(권한 등) ErrCaptureUnavailable로 감싸 반환 → 코어가 완전성 갭으로 강등(TD-NETWORK-13).
 type LiveSource struct {
@@ -43,7 +43,7 @@ func (s *LiveSource) Observe(_ []string, _ map[string]string) ([]Observation, er
 			_ = unix.Bind(fd, &unix.SockaddrLinklayer{Protocol: htons(unix.ETH_P_ALL), Ifindex: ifi.Index})
 		}
 	}
-	// 수신 타임아웃으로 관측 구간을 폴링한다(handshake-only 필터는 BPF로 확장 예정, §2.4).
+	// 수신 타임아웃으로 관측 구간을 폴링한다(handshake-only 필터는 BPF로 확장 예정, 디스커버리 설계 §2.3).
 	tv := unix.NsecToTimeval(int64(200 * time.Millisecond))
 	_ = unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
 

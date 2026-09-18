@@ -134,7 +134,7 @@ func TestDeriveJavaHomeWindows(t *testing.T) {
 	if got := deriveJavaHomeWindows(`C:\Program Files\Java\jdk-21\bin\java.exe`, ""); got != `C:\Program Files\Java\jdk-21` {
 		t.Errorf("from the launcher: %q", got)
 	}
-	// 네이티브 런처가 JVM을 품은 경우 — exe로는 못 짚고 jvm.dll 경로로 짚는다.
+	// 네이티브 런처가 JVM을 포함한 경우 — exe로는 못 짚고 jvm.dll 경로로 짚는다.
 	if got := deriveJavaHomeWindows(`C:\app\app.exe`, `C:\jdk-21\bin\server\jvm.dll`); got != `C:\jdk-21` {
 		t.Errorf("from jvm.dll: %q", got)
 	}

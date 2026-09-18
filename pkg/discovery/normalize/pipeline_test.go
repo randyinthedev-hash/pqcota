@@ -169,7 +169,7 @@ func TestDeriveFindings_CNG(t *testing.T) {
 	if f.GetCryptoRuntime() != commonv1.CryptoRuntime_CRYPTO_RUNTIME_WIN_CNG {
 		t.Errorf("crypto_runtime = %v, want WIN_CNG", f.GetCryptoRuntime())
 	}
-	// provider 순서는 우선순위다 — 파생에서 흔들리면 안 된다.
+	// provider 순서는 관측된 등록 순서다 — 파생에서 흔들리면 안 된다.
 	if got := f.GetCng().GetProviderSet(); len(got) != 3 || got[0] != "Microsoft Key Protection Provider" {
 		t.Errorf("provider_set did not arrive in order: %v", got)
 	}

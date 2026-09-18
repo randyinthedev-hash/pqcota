@@ -100,7 +100,7 @@ func TestResolveActionWalksEvidenceThenLegacy(t *testing.T) {
 	m, s := stored(t)
 	plan := &provisioningv1.FinalizedPlan{DerivedFromSnapshotId: s.ID}
 
-	// 근거 둘 — 하나는 찾히고 하나는 못 찾는다. 결과가 순서대로 짝지어진다.
+	// 근거 둘 — 하나는 찾아지고 하나는 못 찾는다. 결과가 순서대로 짝지어진다.
 	a := &provisioningv1.RemediationAction{Id: "a1", FindingId: "f-1", EvidenceSources: []*provisioningv1.ActionEvidenceSource{
 		{FindingId: "f-1", Snapshot: idRef("web-01.corp", s.ID)},
 		{FindingId: "f-2", Snapshot: idRef("db-01", "ingest-1:db-01")},

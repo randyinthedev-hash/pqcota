@@ -35,7 +35,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 단계적 배포 위임 레벨 (규정서 §4.3 v4). 자산별 1급 속성 `deploy_automation_level`.
+// 단계적 배포 위임 레벨 (규정서 §4.3). 자산별 1급 속성 `deploy_automation_level`.
 // ★ Discovery 산출물(Finding)이 아니다 — 리뷰어가 자산별로 판정하는 계획·자산 속성(MANUAL, §4.7).
 //
 //	Collector는 이 값을 채우지 않는다. 확정 계획(plan) 엔티티에 실린다.
@@ -145,7 +145,7 @@ func (PlanStatus) EnumDescriptor() ([]byte, []int) {
 	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{1}
 }
 
-// Remediation taxonomy 조치 종류 (프로비저닝 설계 §4.1 OpenSSL / §4.4 JCA 조치 컬럼).
+// Remediation taxonomy 조치 종류 (프로비저닝 설계 §4.1 OpenSSL / §4.2 JCA 조치 컬럼).
 // 리뷰어가 자산 상태에서 판정하는 "무엇을"(§4.1 계획 레이어). core 생성기가 이 값으로 아티팩트를 분기.
 type RemediationKind int32
 

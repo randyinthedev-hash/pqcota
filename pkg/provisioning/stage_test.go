@@ -265,7 +265,7 @@ func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 }
 
 // 생성물이 **정말 YAML인가** — 문자열 검사로는 못 잡는다. 사용자가 적은 훅에는 줄바꿈·`:`·`#`·
-// 인용부호가 들어올 수 있고, 그대로 한 줄 스칼라에 붙이면 ansible-playbook이 파일을 읽지도 못한다
+// 인용부호가 들어올 수 있고, 그대로 한 줄 스칼라에 붙이면 ansible-playbook이 파일을 읽지도 못한다.
 // 여러 줄 명령·따옴표·주석 기호가 훅에 들어오면 특히 위험하다. 그래서 실제로 파싱한다.
 func TestGeneratedPlaybooksAreValidYAML(t *testing.T) {
 	nasty := "printf 'OPENSSL_CONF=%s\\n' /etc/pqcota/x.cnf > /etc/pqcota/service.env\nsystemctl daemon-reload  # comment: it has a colon too"

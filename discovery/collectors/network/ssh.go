@@ -9,7 +9,7 @@ import (
 const sshMsgKexInit = 20
 
 // ParseSSHKexInit — SSH KEXINIT 패킷을 파싱해 제시된 KEX 알고리즘 목록을 뽑는다(TD-NETWORK-3).
-// SSH-2.0 바이너리 패킷: packet_length(4)+padding_length(1)+payload+padding. KEXINIT은 미암호화(§2.4).
+// SSH-2.0 바이너리 패킷: packet_length(4)+padding_length(1)+payload+padding. KEXINIT은 미암호화(디스커버리 설계 §2.3).
 // 버전 문자열("SSH-...\r\n")이 앞에 붙어 있으면 스킵한다.
 func ParseSSHKexInit(b []byte) (*Handshake, error) {
 	if bytes.HasPrefix(b, []byte("SSH-")) {

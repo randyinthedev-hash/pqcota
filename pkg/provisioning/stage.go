@@ -103,7 +103,7 @@ func GenerateProvisioningPlaybook(plan *provisioningv1.FinalizedPlan, level prov
 //
 // ★ 전에는 조치별 값을 아예 읽지 않고 전역 하나로 모든 조치를 냈다. 그래서 「결제 서버=L1 ·
 // 무상태 워커=L3」으로 확정한 계획이 `--level l3` 한 번에 평탄화됐다. 이 값은 승인 서명이
-// 덮는 것이라(sign.CanonicalPlan), **승인자가 서명한 위임 수준과 실제 실행 수준이 갈렸다.**
+// 덮는 것이라(sign.CanonicalPlan), **승인자가 서명한 위임 수준과 실제 실행 수준이 어긋났다.**
 // 위험도에 따라 위임을 나눈 판정이 실행에서 사라지는 자리였다.
 func LevelFor(a *provisioningv1.RemediationAction, fallback provisioningv1.DeployAutomationLevel) provisioningv1.DeployAutomationLevel {
 	if l := a.GetAutomationLevel(); l != provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_UNSPECIFIED {

@@ -1,7 +1,7 @@
 // Package cng — Windows CNG(Cryptography Next Generation) collector.
 //
 // **왜 별도 collector인가** — CNG는 provider(KSP/SSP) 아키텍처라 JCA와 동형이다(수용 원칙 §2.1).
-// 등록된 provider 목록이 곧 능력의 경계이고 **순서가 우선순위**라, JCA collector가 provider 체인을
+// 등록된 provider 목록이 곧 능력의 경계라, JCA collector가 provider 체인을
 // 보는 것과 같은 축을 본다. 다만 수집 수단은 하나도 겹치지 않는다 — `/proc`도 ELF도 attach도 아닌
 // `bcrypt.dll`의 열거 API다(검토 중인 설계 §2.2).
 //
@@ -21,7 +21,7 @@ var ErrNotWindows = errors.New("CNG can only be observed on Windows — this is 
 // 순수 데이터라 Windows 없이도 만들고 검사할 수 있다 — 실물 없이 단위 테스트되게 파싱·조립을
 // I/O에서 뗀 것이다.
 type Observation struct {
-	// Providers — 등록된 provider 이름. **순서를 보존한다**(우선순위 협상의 근거, 수용 원칙 §2.2).
+	// Providers — 등록된 provider 이름. **순서를 보존한다**(관측된 등록 순서 그대로. 우선순위인지는 미확인, cbom.proto CngAxes).
 	Providers []string `json:"providers"`
 	// Algorithms — 열거된 알고리즘. v0.6.0에서 CngAxes.algorithms가 생겨 파생 뷰까지 간다.
 	// 원본(raw_capture)에도 그대로 실어 보낸다 — 관측한 것을 버리지 않는다(§1.2 재계산 가능).

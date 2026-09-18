@@ -55,7 +55,7 @@ func (s *Service) Describe(_ context.Context, _ *discoveryv1.DescribeRequest) (*
 			commonv1.DetectionMethod_DETECTION_METHOD_RUNTIME_INTROSPECTION,
 		},
 		License:  collectorLicense,
-		Invasive: false, // 수동·비침습(핸드셰이크 평문만, 복호화 없음, §2.4)
+		Invasive: false, // 수동·비침습(핸드셰이크 평문만, 복호화 없음, 디스커버리 설계 §2.3)
 	}, nil
 }
 

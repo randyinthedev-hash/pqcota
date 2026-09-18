@@ -109,7 +109,7 @@ func ipv4Str(b []byte) string {
 }
 
 // ParseHandshakePayload — TCP 페이로드를 프로토콜 추정해 파싱한다(TLS 레코드 / SSH 배너·KEXINIT).
-// 핸드셰이크가 아니면 (nil,false). 복호화 없이 평문 핸드셰이크만 인식(§2.4).
+// 핸드셰이크가 아니면 (nil,false). 복호화 없이 평문 핸드셰이크만 인식(디스커버리 설계 §2.3).
 func ParseHandshakePayload(payload []byte) (*Handshake, bool) {
 	if len(payload) == 0 {
 		return nil, false

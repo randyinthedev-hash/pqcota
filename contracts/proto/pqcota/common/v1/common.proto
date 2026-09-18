@@ -24,9 +24,9 @@ enum CryptoRuntime {
   CRYPTO_RUNTIME_OPENSSL = 1;     // openssl
   CRYPTO_RUNTIME_JCA = 2;         // jca (Java JCE/JCA)
   // Windows CNG (Cryptography Next Generation) — provider(KSP/SSP) 아키텍처라 peer 런타임.
-  // 단계적 도입: 이 값은 v0.1.0에서 **스키마로만 예약**한다(디스커버리·프로비저닝 미구현).
-  // 디스커버리(콜렉터)는 다음 릴리스, 프로비저닝은 그 다음(substrate 일반화 선행).
-  // 상세: docs/런타임_확장_계약.md
+  // v0.1.0에서 **스키마로만 예약**했고, 디스커버리는 v0.6.0의 pqcota-cngscan이 채웠다.
+  // 프로비저닝은 substrate 일반화가 선행이라 로드맵에 있다.
+  // 상세: docs/under-review.md §2.2
   CRYPTO_RUNTIME_WIN_CNG = 3;
   // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG 쪽으로 묶인다(peer 아님) — 위 문서 참조.
 }
