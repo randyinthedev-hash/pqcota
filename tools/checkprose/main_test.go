@@ -407,8 +407,8 @@ func TestShippedNoticesFlagCandidatesWithoutGating(t *testing.T) {
 }
 
 // **실제 실행 경로에서 알림은 통과하고 기준선에 섞이지 않는다.** IC-K16은 규칙
-// 분리를 재지만 명령의 종료 코드와 기준선 파일은 재지 않는다. 알림만 있는 입력으로 -baseline
-// 을 찍으면 기준선이 비고, 관문을 돌리면 0으로 끝나며, 관문 규칙에 걸리는 줄을 더하면 1이 된다.
+// 분리를 재지만 명령의 종료 코드와 기준선 파일은 재지 않는다. 알림만 있는 입력으로 -baseline을
+// 찍으면 기준선이 비고, 관문을 돌리면 0으로 끝나며, 관문 규칙에 걸리는 줄을 더하면 1이 된다.
 func TestNoticesPassTheGateAndStayOutOfTheBaseline(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
