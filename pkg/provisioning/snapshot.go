@@ -132,8 +132,8 @@ func hasFinding(s *history.Snapshot, id string) bool {
 }
 
 // ResolveAction — 조치의 근거를 전부 돈다. 근거가 하나도 없으면 계획 단위 derived_from_snapshot_id를
-// **legacy 분기**로 읽는다 — SnapshotReference로 합성하지 않는다(source_node_id가 없어 ValidateReference
-// 를 지나지 못한다). ByID만 하고, 그때는 노드 일치도 finding 소속도 확인할 수 있는 것만 한다.
+// **legacy 분기**로 읽는다 — SnapshotReference로 합성하지 않는다(source_node_id가 없어 ValidateReference를
+// 지나지 못한다). ByID만 하고, 그때는 노드 일치도 finding 소속도 확인할 수 있는 것만 한다.
 //
 // **근거마다 finding_id가 있어야 한다.** 없으면 「무엇의 근거인가」를 말하지 못하는 근거다 — 스냅샷
 // 참조만 맞으면 해결된 모양이 되는데, 그 해결은 아무것도 가리키지 않는다.
