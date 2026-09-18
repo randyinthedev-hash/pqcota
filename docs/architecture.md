@@ -364,7 +364,7 @@ confidence)는 "무엇이 옳은가"를 가리는 판정이라 하지 않는다.
 | `jvm-collector`: JVM attach → `getProviders()` | §2.2, §2.3 ★ | AUTO(실행 중), 미실행은 갭 |
 | 선언 임포트(CMDB/자산 등록부 로드) | §1.4 | AUTO |
 | 정규화 파이프라인 6단계 + `evidence_strength` 부착 | §2.4, §2.3 | AUTO |
-| **provider 시그니처 레지스트리 강화**(JCA provider_set → pqc_readiness·fips·알고리즘, SLH-DSA 갭 태깅) | §2.3 v3 | AUTO |
+| **provider 시그니처 레지스트리 강화**(JCA provider_set → pqc_readiness·fips·알고리즘, SLH-DSA 갭 태깅) | 수용 원칙 §2.3 | AUTO |
 | 완전성 맵(계층별) | §2.6 | AUTO |
 | 디스커버리 히스토리(append-only) + **이력 열람·스냅샷 간 변화 diff**(관측 사실 서술이지 판정이 아니다, §6 기준) | §2.4-6 | AUTO |
 | **관측 기록/스냅샷 2층 분리.** 스냅샷은 실질 내용이 바뀔 때만, 관측 기록은 적재마다. 같은 상태 반복 관측이 저장을 늘리지 않되 "언제 봤나"는 보존 | §2.4-6, §1.2 | AUTO |
