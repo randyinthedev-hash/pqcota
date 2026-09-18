@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Service exposes openssl-collector via the intake 계약(§1.6, contracts/collector.proto).
+// Service — openssl-collector를 intake 계약(§1.6, contracts/collector.proto)으로 낸다.
 // 코어는 이 서비스 뒤가 openssl-collector인지 모른다 — 정규화된 CBOM Envelope만 받는다.
 type Service struct {
 	discoveryv1.UnimplementedCollectorServer

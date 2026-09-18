@@ -43,7 +43,7 @@ func BuildAttributionOverlay(store history.AttributionStore) *AttributionOverlay
 // 원본 엣지도 고치지 않는다 — 화면에 낼 값만 돌려준다.
 func (o *AttributionOverlay) Apply(e *discoveryv1.ObservedEdge) (key, kind string) {
 	if e.GetAppKey() != "" {
-		return e.GetAppKey(), e.GetAppKeyKind() // 관측이 이겼다
+		return e.GetAppKey(), e.GetAppKeyKind() // 관측이 우선한다
 	}
 	if o == nil {
 		return "", ""

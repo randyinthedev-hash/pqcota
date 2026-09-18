@@ -19,7 +19,7 @@ import (
 // 찾으면 우연히 맞거나 못 찾을 뿐 무엇도 말하지 못한다.
 var knownFormats = map[string]bool{history.SnapshotContentFormatV1: true}
 
-// reasonNotLookedUp — 찾지 않았다. --dsn이 없다. 못 찾은 것이 아니라 불완전이 아니다.
+// reasonNotLookedUp — 찾지 않았다. --dsn이 없다. 못 찾은 것이 아니므로 불완전이 아니다.
 const reasonNotLookedUp = "not looked up (no history to look in)"
 
 // ValidateReference — 참조의 **모양**. 이력이 있든 없든 틀린 것은 틀린 것이라 --dsn 없이도 본다.
@@ -140,7 +140,7 @@ func hasFinding(s *history.Snapshot, id string) bool {
 //
 // **호환용 finding_id는 evidence_sources[0].finding_id와 무조건 같아야 한다.** 비어 있어도 예외가
 // 아니다: 계약이 「같아야 하고 생성기가 검사한다」고 적었고, 빈값을 봐주면 새 소비자가 읽는 주 근거와
-// 옛 소비자가 읽는 근거가 갈린다.
+// 옛 소비자가 읽는 근거가 달라진다.
 //
 // 근거도 계획 단위 id도 없으면 빈 목록이다. 그것은 추적성 불완전이고 TraceabilityWarnings가 알린다.
 //

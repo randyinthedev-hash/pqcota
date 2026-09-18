@@ -76,7 +76,7 @@ func TestMultiAppAttribution(t *testing.T) {
 }
 
 // ★ 리뷰 지적 — 공유 .so의 영향 반경(blast radius): 테스트 앱 하나를 빼려다 그 .so를 함께
-// 쓰는 운영 앱까지 빠진다. 규칙은 순서대로·뒤가 이기므로, 운영 앱을 되살리는 include를 exclude
+// 쓰는 운영 앱까지 빠진다. 규칙은 순서대로·뒤가 우선하므로, 운영 앱을 되살리는 include를 exclude
 // 뒤에 두어 구제한다. include는 "무조건 우선"이 아니라 순서 기반임을 함께 못 박는다(TV-SCOPE-3×TV-SCOPE-4).
 func TestSharedLibExcludeRescuedByTrailingInclude(t *testing.T) {
 	// libcrypto.so.3을 테스트 앱과 운영 앱이 함께 로드(여러 앱에 걸침).

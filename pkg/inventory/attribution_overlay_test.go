@@ -89,7 +89,7 @@ func TestOverlayDoesNotMutateTheStoredEdge(t *testing.T) {
 	}
 }
 
-// TestDeclarationNeverEntersTheTimeline — **B안의 핵심이다.**
+// TestDeclarationNeverEntersTheTimeline — **선언을 스냅샷 밖에 두는 설계의 핵심이다.**
 //
 // 선언이 노드의 스냅샷 타임라인에 들어가면 조회·이력·diff가 저마다 그것을 걸러 내야 하고,
 // 화면이 늘 때마다 같은 자리가 다시 샌다. 실제로 기본 조회와 이력에서 두 번 샜다.

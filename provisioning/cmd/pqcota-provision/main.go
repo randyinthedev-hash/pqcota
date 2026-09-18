@@ -1,6 +1,6 @@
 // Command pqcota-provision — 확정 계획(FinalizedPlan JSON)에서 프로비저닝 산출물을 만든다:
 //
-//	(1) L1/L2 Ansible 플레이북 생성(프로비저닝 설계 §4.1 — core는 생성만, 실행은 사용자 Ansible)
+//	(1) L1/L2 Ansible 플레이북 생성(규정서 §4.4 — core는 생성만, 실행은 사용자 Ansible)
 //	    --rollback 시 역방향(롤백) 플레이북: forward가 배치한 파일 제거(§6A).
 //	(2) 조치별 before 상태 캡처 → append-only 레코드로 영속(§6A 롤백 근거)
 //
@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// §3.7 최강 게이트 — 실행 근거인지 판정하는 규칙은 provisioning.Executable 하나뿐이다.
-	// 여기서 조건을 다시 적으면 규칙이 두 곳에 생기고, 실제로 그렇게 갈렸다: 상태만 비교하던
+	// 여기서 조건을 다시 적으면 규칙이 두 곳에 생기고, 실제로 그렇게 어긋났다: 상태만 비교하던
 	// 동안 승인 서명·조치가 빈 FINALIZED 계획이 그대로 통과했다. 사유를 함께 싣는다 — 무엇이
 	// 모자란지 말하지 않고 거절하면 사용자가 계획을 고칠 수 없다.
 	if err := provisioning.Executable(plan); err != nil {

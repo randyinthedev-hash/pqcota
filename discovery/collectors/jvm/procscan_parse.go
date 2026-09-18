@@ -27,7 +27,7 @@ type JVMProc struct {
 }
 
 // Ident — 이 JVM을 자산으로 구별하는 안정 식별자. 앱(main·jar)이 있으면 그것 —
-// 한 JDK에 앱이 여럿이어도 구별되고, 재시작해도 같다(휘발 PID과 달리). 없으면 JAVA_HOME→Exe.
+// 한 JDK에 앱이 여럿이어도 구별되고, 재시작해도 같다(휘발 PID와 달리). 없으면 JAVA_HOME→Exe.
 func (j JVMProc) Ident() string {
 	switch {
 	case j.App != "":
@@ -155,7 +155,7 @@ func javaBinFor(home, exe string) string {
 }
 
 // parseMainId — cmdline(NUL 구분)에서 이 JVM이 도는 **앱**을 식별한다(main 클래스 또는 -jar).
-// 앱은 재시작해도 같아(휘발 PID과 달리) 이력의 안정 식별자로 맞다. 못 짚으면 "".
+// 앱은 재시작해도 같아(휘발 PID와 달리) 이력의 안정 식별자로 맞다. 못 짚으면 "".
 //
 // java 인자 문법을 최소 커버: -jar <x> → x 파일명, -m/--module <mod/Main> → 그대로,
 // -cp/-classpath/--class-path/-p/--module-path <v> → 값 건너뜀, 그 외 -플래그(-Xmx·-Dk=v·-XX:.. 단일

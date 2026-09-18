@@ -1,7 +1,7 @@
 // PQC 마이그레이션 플랫폼 — 통신 엣지 관측 스키마 (SSOT, DISCOVERY 단계)
 //
 // 인벤토리 설계 §6(크립토 통신 토폴로지) · 인벤토리 설계 §2(CommunicationEdge).
-// network-collector(디스커버리 §2.4)가 TLS/SSH 핸드셰이크를 수동 관측해
+// network-collector(디스커버리 설계 §2.3)가 TLS/SSH 핸드셰이크를 수동 관측해
 // 노드 간 통신 엣지(src→dst + 협상 KEX 그룹·cipher)를 채운다 → 관측 레인(observed).
 //
 // 책임 경계(§1.6 유지):

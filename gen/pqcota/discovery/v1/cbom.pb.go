@@ -318,7 +318,7 @@ type Finding struct {
 	RuntimeAxes isFinding_RuntimeAxes `protobuf_oneof:"runtime_axes"`
 	// ─ 공통 판정 축 (강화 단계 산출) ─
 	PqcReadiness     string `protobuf:"bytes,9,opt,name=pqc_readiness,json=pqcReadiness,proto3" json:"pqc_readiness,omitempty"`              // version→매핑 (§2.4 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
-	FipsValidation   string `protobuf:"bytes,10,opt,name=fips_validation,json=fipsValidation,proto3" json:"fips_validation,omitempty"`       // 내부 provider는 FIPS 140-3 미검증 태깅 (§4.7)
+	FipsValidation   string `protobuf:"bytes,10,opt,name=fips_validation,json=fipsValidation,proto3" json:"fips_validation,omitempty"`       // 내부 provider는 FIPS 140-3 미검증 태깅 (수용 원칙 §2.3)
 	RemediationClass string `protobuf:"bytes,11,opt,name=remediation_class,json=remediationClass,proto3" json:"remediation_class,omitempty"` // remediation taxonomy 분기 키 (프로비저닝 설계 §4.1·§4.2)
 	// ─ 파생 뷰 재현성 (§1.2) ─
 	DerivedFromSnapshotId string `protobuf:"bytes,12,opt,name=derived_from_snapshot_id,json=derivedFromSnapshotId,proto3" json:"derived_from_snapshot_id,omitempty"` // 어떤 원시 스냅샷에서 파생됐나

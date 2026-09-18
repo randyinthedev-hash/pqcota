@@ -30,7 +30,7 @@ type AttachResult struct {
 type AttachStats struct {
 	Discovered int
 	Attached   int
-	Failed     int // attach 실패 — 조용한 0이 아니라 갭(§2.6 갭≠부재)
+	Failed     int // attach 실패 — 표시 없는 0이 아니라 갭(§2.6 갭≠부재)
 }
 
 // AttachAll — 발견한 JVM들에 각각 attach한다. 실패한 JVM은 버리지 않고 Err로 담아 갭으로 센다.

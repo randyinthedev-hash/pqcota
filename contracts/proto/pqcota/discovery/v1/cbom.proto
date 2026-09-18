@@ -96,7 +96,7 @@ message Finding {
 
   // ─ 공통 판정 축 (강화 단계 산출) ─
   string pqc_readiness = 9;     // version→매핑 (§2.4 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
-  string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (§4.7)
+  string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (수용 원칙 §2.3)
   string remediation_class = 11;// remediation taxonomy 분기 키 (프로비저닝 설계 §4.1·§4.2)
 
   // ─ 파생 뷰 재현성 (§1.2) ─

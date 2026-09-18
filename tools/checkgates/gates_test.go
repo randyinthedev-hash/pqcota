@@ -56,7 +56,7 @@ func TestTestOnlyCallIsNotWiring(t *testing.T) {
 	}
 }
 
-// 보류는 통과시키되 조용하지 않다.
+// 보류는 통과시키되 화면에 낸다.
 func TestPendingPassesButIsAnnounced(t *testing.T) {
 	miss, notes := run(t, "testdata/pending/rule.go")
 	if len(miss) != 0 {

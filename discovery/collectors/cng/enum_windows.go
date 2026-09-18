@@ -78,7 +78,7 @@ func registeredProviders() ([]string, error) {
 	if buf == nil || buf.count == 0 {
 		return nil, nil
 	}
-	// 순서를 그대로 옮긴다 — 정렬하지 않는다. 우선순위가 목록 순서에 담겨 있다.
+	// 순서를 그대로 옮긴다 — 정렬하지 않는다. 관측된 등록 순서가 곧 기록이다(우선순위인지는 미확인).
 	names := unsafe.Slice(buf.providers, buf.count)
 	out := make([]string, 0, buf.count)
 	for _, p := range names {
@@ -159,7 +159,7 @@ func providersFor(alg string) []string {
 			out = append(out, n)
 		}
 	}
-	// 여기 순서는 우선순위가 아니라 열거 순서다 — 등록 목록(provider_set)이 우선순위를 들고 있다.
+	// 여기 순서는 우선순위가 아니라 열거 순서다 — 등록 목록(provider_set)이 관측된 등록 순서를 들고 있다.
 	// 실행마다 흔들리면 같은 관측이 다른 지문이 되므로 정렬해 결정론을 준다(§1.2).
 	sort.Strings(out)
 	return out

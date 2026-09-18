@@ -77,7 +77,7 @@ func TestNormalizeIsOrderInvariant(t *testing.T) {
 // TK-PIPELINE-3 — 같은 finding을 두 수집기가 다르게 보면, 최근 것을 남기되 알리지 않고 고르지 않는다.
 // 「최근」은 수집 시각이지 수집기 이름순이 아니다.
 func TestConflictingFindingKeepsTheLatestAndSaysSo(t *testing.T) {
-	// 이름순으로는 a가 앞이지만 시각은 b가 앞이다 — 최근은 a 다.
+	// 이름순으로는 a가 앞이지만 시각은 b가 앞이다 — 최근은 a다.
 	rs := []*discoveryv1.CollectionResult{
 		result("b-collector", "3.0.2", 100),
 		result("a-collector", "3.5.0", 200),

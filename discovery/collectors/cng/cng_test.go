@@ -12,7 +12,7 @@ import (
 func init() { now = func() time.Time { return time.Unix(1_700_000_000, 0).UTC() } }
 
 // TD-CNG-1 — 관측한 provider 순서를 그대로 싣는다.
-// 순서가 곧 우선순위라(수용 원칙 §2.2), 정렬하거나 집합으로 만들면 "어느 provider가 먼저
+// 관측된 순서가 근거라(cbom.proto CngAxes), 정렬하거나 집합으로 만들면 "어느 provider가 먼저
 // 서비스하나"라는 질문에 답할 수 없게 된다.
 func TestProviderOrderIsPreserved(t *testing.T) {
 	obs := Observation{Providers: []string{"Microsoft Primitive Provider", "Vendor KSP", "Microsoft Smart Card Key Storage Provider"}}
