@@ -241,7 +241,7 @@ func EvidenceStrength(method string) string {
 - **`ProviderSet` → provider 시그니처 레지스트리 매핑**: 강화 단계에서 `bcprov-jdk18on`/`BC-FJA`/`JDK-native`/`openssl-jostle`/내부를 식별해 알고리즘 커버리지(특히 **SLH-DSA는 JDK 네이티브에 없음**)를 태깅. → §3.3 신규.
 - **`deploy_automation_level`(L1/L2/L3)은 Finding 필드가 아니다.** Discovery 산출물이 아니라 **리뷰어가 자산별로 정하는 계획·자산 속성**(§4.3, MANUAL). 확정 계획(plan) 엔티티에 속한다. 단, 통제 어휘로서 SSOT(contracts)에는 등재한다(§3.3·contracts 참조).
 
-### 3.3 provider 시그니처 레지스트리 (§2.3): 강화 단계 참조 데이터
+### 3.3 provider 시그니처 레지스트리 (수용 원칙 §2.3): 강화 단계 참조 데이터
 
 Discovery 강화(§2.4 step 3)가 참조하는 결정론적 매핑 테이블. **파생 규칙이므로 개선 시 원본에서 재계산**(§1.2), `ruleset_version`으로 버전 고정.
 
