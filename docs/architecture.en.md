@@ -245,7 +245,7 @@ func EvidenceStrength(method string) string {
 - **`ProviderSet` → provider signature registry mapping**: at the enrichment step, identify `bcprov-jdk18on` / `BC-FJA` / `JDK-native` / `openssl-jostle` / in-house and tag the algorithm coverage (notably that **SLH-DSA is not in the JDK natively**). → new in §3.3.
 - **`deploy_automation_level` (L1/L2/L3) is not a Finding field** — it is not a Discovery output but a **plan/asset attribute a reviewer decides per asset** (§4.3, MANUAL). It belongs to the plan entity. It is still registered as controlled vocabulary in the SSOT (contracts) (§3.3 and the contracts).
 
-### 3.3 The provider signature registry (§2.3) — reference data for the enrichment step
+### 3.3 The provider signature registry (acceptance principles §2.3) — reference data for the enrichment step
 
 The deterministic mapping table discovery enrichment (§2.4 step 3) consults. **Being a derivation rule, when it improves you recompute from the original** (§1.2), and it is pinned by `ruleset_version`.
 
