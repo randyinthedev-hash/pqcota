@@ -131,7 +131,7 @@ func TestEdgeOrderDoesNotMatter(t *testing.T) {
 }
 
 // ★ 필드 수 가드 — 계약에 필드가 늘면 여기서 실패한다. Canonical을 함께 갱신하라는 신호다.
-// (서명 사각지대는 조용히 생기므로, 소리 나게 만든다.)
+// (서명 사각지대는 표시 없이 생기므로, 실패로 드러나게 만든다.)
 func TestCanonicalCoversAllFields(t *testing.T) {
 	want := map[string]int{
 		"CollectionResult": 7,  // envelope, raw_capture, raw_format, cbom_cyclonedx, spec_version, completeness, observed_edges

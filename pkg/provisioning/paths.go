@@ -8,7 +8,7 @@ import (
 // 배치 경로 — **여기서만 정의한다.**
 //
 // 생성기가 세 곳(플레이북 dest, config의 module 참조, 롤백 제거 대상)에서 같은 경로를 가리켜야
-// 하는데, 각자 문자열을 들고 있으면 조용히 어긋난다. 실제로 그랬다 — config는 `module =
+// 하는데, 각자 문자열을 들고 있으면 표시 없이 어긋난다. 실제로 그랬다 — config는 `module =
 // oqsprovider.so`(상대명)를 냈고 파일은 `/opt/pqcota/oqsprovider.so`에 놓여, OpenSSL이
 // 모듈 디렉터리에서 찾다 로드에 실패하는 구성이었다. 상수 한 벌로 묶어 재발을 막는다.
 const (
@@ -48,7 +48,7 @@ func ConfigPath(jca bool) string {
 }
 
 // SplitConfigPath — 한 노드·런타임에 **서로 다른 조각이 둘 이상**일 때 조치별로 나눈 경로.
-// 같은 경로에 두 번 copy하면 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(§2.6 — 유실을 조용히 두지 않는다).
+// 같은 경로에 두 번 copy하면 뒤가 앞을 알리지 않고 덮어써 앞 조치가 사라진다(§2.6 — 유실을 알리지 않은 채 두지 않는다).
 // 어느 조각을 살릴지는 도구가 정하지 않는다 — 둘 다 놓고, 무엇을 참조할지는 활성화 훅이 정한다(§2.1).
 func SplitConfigPath(jca bool, actionID string) string {
 	base := ConfigPath(jca)

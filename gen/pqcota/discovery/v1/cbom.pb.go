@@ -241,7 +241,7 @@ type CngAlgorithm struct {
 	// key-derivation. **모르면 빈 값**이다(§2.5 unknown은 1급) — 모르는 종류를 아는 것으로 적지 않는다.
 	Class string `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
 	// providers: 이 알고리즘을 **실제로 구현하는** provider들(`BCryptEnumProviders`). 등록 목록
-	// (CngAxes.provider_set)은 머신에 무엇이 있는지만 말하고, 어느 provider가 무엇을 서비스하는지는
+	// (CngAxes.provider_set)은 머신에 무엇이 있는지만 나타내고, 어느 provider가 무엇을 서비스하는지는
 	// 말하지 않는다 — 조치 대상을 고르려면 이쪽이 필요하다. 못 물었으면 **빈 목록**이다(§2.6).
 	Providers     []string `protobuf:"bytes,3,rep,name=providers,proto3" json:"providers,omitempty"`
 	unknownFields protoimpl.UnknownFields

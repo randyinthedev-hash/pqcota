@@ -207,7 +207,7 @@ func ParseKeyMap(s string) (map[string]string, error) {
 			return nil, fmt.Errorf("%q is not in <id>=<base64 public key> form", pair)
 		}
 		if _, dup := out[id]; dup {
-			// 같은 id에 키가 둘이면 어느 것이 그 사람의 키인지 말할 수 없다. 조용히 덮어쓰면
+			// 같은 id에 키가 둘이면 어느 것이 그 사람의 키인지 말할 수 없다. 알리지 않고 덮어쓰면
 			// 어느 쪽이 이겼는지 모른 채 검증이 돈다.
 			return nil, fmt.Errorf("%q appears twice — one id must have one key", id)
 		}

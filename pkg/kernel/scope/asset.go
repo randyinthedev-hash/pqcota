@@ -18,12 +18,12 @@ import (
 // 못 쓰게 된다. 무엇을 계속 볼지는 **사용자가 선언**하고, 도구는 그 선언을 집행한다(§1.1 —
 // 판단은 마에스트로, 집행은 단원).
 //
-// ★ 제외는 "없음"이 아니다. 정책으로 뺀 자산을 조용히 사라지게 하면 인벤토리는 "그런 게
+// ★ 제외는 "없음"이 아니다. 정책으로 뺀 자산을 표시 없이 사라지게 하면 인벤토리는 "그런 게
 // 없다"고 거짓말한다 — §2.6이 금지하는 바로 그것이다. 그래서 Apply는 제외분을 **세어서
 // 돌려주고**, 스냅샷·뷰가 "정책 제외 N건"으로 고지한다.
 
 // AssetRule — 자산 한 부류를 가리키는 규칙. 빈 칸은 "*"(모두)와 같다.
-// 패턴은 glob(path.Match) — `libcrypto.so.*`, `/usr/bin/python*` 처럼 쓴다.
+// 패턴은 glob(path.Match) — `libcrypto.so.*`, `/usr/bin/python*`처럼 쓴다.
 type AssetRule struct {
 	Exclude bool   // false면 include(제외를 되돌리는 예외)
 	Runtime string // openssl | jca | * — Finding.crypto_runtime
@@ -34,9 +34,9 @@ type AssetRule struct {
 
 // AssetPolicy — 자산 스코프 정책. 규칙이 없으면 **전부 관리 대상**이다(기본 포함).
 //
-// 판정 순서: 기본 포함 → 규칙을 **순서대로** 적용, **뒤 규칙이 이긴다**(매치되는 마지막 규칙이
+// 판정 순서: 기본 포함 → 규칙을 **순서대로** 적용, **뒤 규칙이 우선한다**(매치되는 마지막 규칙이
 // 결정). 그래서 include를 exclude "뒤에" 두면 "이 계열은 전부 빼되 이것만 예외"가 된다 — 무조건
-// 우선이 아니라 순서 기반이다(include를 앞에 두면 뒤의 exclude가 이긴다).
+// 우선이 아니라 순서 기반이다(include를 앞에 두면 뒤의 exclude가 우선한다).
 //
 // ★ 공유 .so 주의: 쓰는 앱이 여럿이라(§1.5) 한 앱만 겨냥해 exclude해도 그 .so를 함께 쓰는
 // 다른 앱 자산까지 빠진다(matches가 app_key 하나만 맞아도 참). 운영 앱을 지키려면 그 앱을
@@ -55,7 +55,7 @@ func (p *AssetPolicy) Managed(f *discoveryv1.Finding) bool {
 		if !r.matches(f) {
 			continue
 		}
-		managed = !r.Exclude // exclude면 false, include면 true(뒤 규칙이 이긴다)
+		managed = !r.Exclude // exclude면 false, include면 true(뒤 규칙이 우선한다)
 	}
 	return managed
 }

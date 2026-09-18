@@ -150,7 +150,7 @@ func TestParseSSHKexInit(t *testing.T) {
 		t.Errorf("the kex list is missing sntrup761x25519-sha512: %v", hs.OfferedGroups)
 	}
 	// ★ KEXINIT 하나는 **제안**일 뿐이다 — 협상 결과로 채우면 안 된다(§2.1·§2.5).
-	// (이전엔 "최선호 → 🟢"를 단언해 버그를 정답으로 못박고 있었다. 그 단언을 뒤집는다.)
+	// (이전엔 "최선호 → 🟢"를 단언해 버그를 정답으로 못 박고 있었다. 그 단언을 뒤집는다.)
 	if hs.NegotiatedGroup != "" {
 		t.Errorf("a single KEXINIT must not fill negotiated (offered != negotiated): %q", hs.NegotiatedGroup)
 	}

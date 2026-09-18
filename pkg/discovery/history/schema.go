@@ -16,7 +16,7 @@ import (
 // 조직을 담는 저장소라면 남의 자리에 쓴다. 스키마 배포를 의도적 행위로 만들어야 하는 배포는
 // 이것을 끄고, 스키마는 마이그레이션으로 미리 올린다.
 //
-// 끈 상태에서 스키마가 없으면 [ErrSchemaMissing]으로 끊는다 — 조용히 만들어 주지 않는다.
+// 끈 상태에서 스키마가 없으면 [ErrSchemaMissing]으로 중단한다 — 알리지 않고 만들어 주지 않는다.
 const AutoDDLEnv = "PQCOTA_AUTO_DDL"
 
 // ErrSchemaMissing — 자동 DDL이 꺼져 있는데 테이블이 없다.

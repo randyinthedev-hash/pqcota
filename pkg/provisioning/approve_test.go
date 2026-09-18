@@ -25,7 +25,7 @@ var t0 = time.Unix(1700000000, 0).UTC()
 
 // TP-GATE-9 — 승인할 대상이 아닌 상태는 거부한다.
 //
-// 전에는 approve 가 상태를 아예 보지 않아 DRAFT 계획에도 서명이 찍혔다. 뒤에서 Executable 이
+// 전에는 approve가 상태를 아예 보지 않아 DRAFT 계획에도 서명이 찍혔다. 뒤에서 Executable이
 // 막아 악용되지는 않았지만, 승인이라는 행위가 무엇에 대한 것인지 확인하지 않는 자리였다.
 func TestDraftAndUnspecifiedCannotBeApproved(t *testing.T) {
 	for _, st := range []provisioningv1.PlanStatus{
@@ -49,7 +49,7 @@ func TestDraftAndUnspecifiedCannotBeApproved(t *testing.T) {
 
 // TP-GATE-9 — 승인 전에 물을 수 있는 구조는 승인 전에 묻는다. **두 상태 모두.**
 //
-// 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생긴다. FINALIZED 에서
+// 여기서 걸리는 계획에 서명이 붙으면 **승인은 됐는데 실행할 수 없는 계획**이 생긴다. FINALIZED에서
 // 건너뛰면 첫 승인 뒤에 조치가 지워진 계획에도 추가 승인이 붙는다. 거부할 때는 상태·시각·승인
 // 목록이 들어온 그대로여야 한다 — 거부하면서 계획을 만지면 그 계획이 무엇인지 말할 수 없다.
 func TestStructureIsCheckedBeforeApproval(t *testing.T) {
@@ -64,7 +64,7 @@ func TestStructureIsCheckedBeforeApproval(t *testing.T) {
 			p.Actions[0].Kind = provisioningv1.RemediationKind_REMEDIATION_KIND_UNSPECIFIED
 		}},
 	}
-	// 두 상태의 깨끗한 출발점. FINALIZED 는 실제로 한 번 승인을 거친 모양이다.
+	// 두 상태의 깨끗한 출발점. FINALIZED는 실제로 한 번 승인을 거친 모양이다.
 	starts := map[string]func() *provisioningv1.FinalizedPlan{
 		"IN_REVIEW": judged,
 		"FINALIZED": func() *provisioningv1.FinalizedPlan {
@@ -102,7 +102,7 @@ func TestStructureIsCheckedBeforeApproval(t *testing.T) {
 
 // ★ TP-GATE-10 — 첫 승인이 상태를 올리고 시각을 찍은 **뒤에** 서명한다.
 //
-// CanonicalPlan 이 status 와 finalized_at 을 덮으므로, 순서가 바뀌면 방금 만든 서명이 깨진다.
+// CanonicalPlan이 status와 finalized_at을 덮으므로, 순서가 바뀌면 방금 만든 서명이 깨진다.
 // 상류 검증(VerifyApprovals)이 그 서명을 실제로 받아들이는지까지 본다.
 func TestFirstApprovalFinalizesThenSigns(t *testing.T) {
 	pub, priv, err := sign.Generate()

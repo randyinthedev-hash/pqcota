@@ -228,7 +228,7 @@ func NewAttributor(procRoot string, ttl time.Duration) *Attributor {
 
 // Remote — [AttributeRemote]와 같은 답을 주되 fd 스캔을 재사용한다.
 func (a *Attributor) Remote(remoteIP string, remotePort uint32) Attribution {
-	inodes, err := socketsTo(a.procRoot, remoteIP, remotePort) // 이건 매번 읽는다 — 파일 하나다
+	inodes, err := socketsTo(a.procRoot, remoteIP, remotePort) // 이것은 매번 읽는다 — 파일 하나다
 	if err != nil || len(inodes) == 0 {
 		return Attribution{Reason: ReasonSocketGone}
 	}

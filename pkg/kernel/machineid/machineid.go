@@ -38,7 +38,7 @@ func SelfAssign(fp *commonv1.MachineIdentity) (id, derivedFrom string) {
 //
 // 지문의 **출처는 OS마다 다르다**(리눅스는 /etc/machine-id·DMI, Windows는 레지스트리) — 그 부분만
 // [platformIDs]로 갈라 두고 나머지 규칙은 한 곳에 둔다. 갈라 두지 않았을 때 Windows 노드가
-// 조용히 fqdn으로 떨어졌다(TD-CNG-7): 호스트명을 바꾸면 같은 머신이 다른 노드가 된다.
+// 표시 없이 fqdn으로 떨어졌다(TD-CNG-7): 호스트명을 바꾸면 같은 머신이 다른 노드가 된다.
 func Fingerprint() *commonv1.MachineIdentity {
 	machineID, hardwareUUID := platformIDs()
 	fp := &commonv1.MachineIdentity{

@@ -36,7 +36,7 @@ func TestParseDetectionMethod(t *testing.T) {
 		{"artifact", "artifact", unspec, art},
 		{"symbol-analysis", "symbol-analysis", unspec, sym},
 
-		// 컴포넌트가 적은 것이 Envelope를 이긴다. Envelope는 수집 전체의 방법이고
+		// 컴포넌트가 적은 것이 Envelope보다 우선한다. Envelope는 수집 전체의 방법이고
 		// 프로퍼티는 그 자산 하나를 어떻게 봤나라 더 구체적이다. 더 약해도 그것이 사실이다.
 		{"the property beats the Envelope — even when it is weaker", "symbol-analysis", ri, sym},
 

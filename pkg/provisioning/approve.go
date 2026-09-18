@@ -23,7 +23,7 @@ var ErrCorruptPlan = errors.New("plan is inconsistent with its own status")
 // finalized_at을 덮으므로, 서명 뒤에 바꾸면 방금 만든 서명이 깨진다.
 //
 // 판정과 실행 승인은 다른 단계다. 판정을 끝낸 쪽은 IN_REVIEW로 넘기고, 승인이 FINALIZED로
-// 올린다. 계약이 이미 그 둘을 갖고 있어 새 상태는 필요 없다. 상태별로:
+// 올린다. 계약에 이미 그 둘이 있어 새 상태는 필요 없다. 상태별로:
 //
 //   - IN_REVIEW: 기존 승인과 finalized_at이 **없어야 한다.** 있으면 손상이다 — 누군가 이 상태에
 //     서명을 달아 둔 것이고, 그 서명은 이 상태에 대한 것이다. 구조 검사를 지나면 상태를

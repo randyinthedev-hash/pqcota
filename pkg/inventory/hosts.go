@@ -35,7 +35,7 @@ type Host struct {
 	Conn string
 }
 
-// 지원하는 노드 OS. 여기 없는 값은 오타로 보고 거절한다 — 조용히 리눅스로 삼키면
+// 지원하는 노드 OS. 여기 없는 값은 오타로 보고 거절한다 — 알리지 않고 리눅스로 삼키면
 // Windows 노드에 리눅스 collector가 올라가고, 실패는 한참 뒤에 드러난다.
 const (
 	OSLinux   = "linux"
@@ -108,7 +108,7 @@ func ParseHosts(r io.Reader) ([]Host, error) {
 		}
 		key := get(row, "ssh_key")
 		if conn == ConnWinRM {
-			// WinRM은 리눅스 노드로 붙는 길이 아니고, 키로 붙지도 않는다. 조용히 흘려보내면
+			// WinRM은 리눅스 노드로 붙는 길이 아니고, 키로 붙지도 않는다. 알리지 않고 흘려보내면
 			// 사용자는 키로 붙는 줄 알고, 실패는 접속 시점에야 난다.
 			if os != OSWindows {
 				return nil, fmt.Errorf("host %q: connection=%s is for %s nodes (os=%q)", nid, ConnWinRM, OSWindows, os)
@@ -204,7 +204,7 @@ func RenderAnsibleInventory(hosts []Host) string {
 			b.WriteByte('\n')
 		}
 	}
-	// 접속 방법은 CSV가 정하지만, 그 안에서 사이트마다 갈리는 값이 둘 남는다. 여기서
+	// 접속 방법은 CSV가 정하지만, 그 안에서 사이트마다 다른 값이 둘 남는다. 여기서
 	// 지어내면 틀렸을 때 "pqcota가 만든 인벤토리 탓"으로 보이므로 자리만 알려 준다.
 	if len(byOS[OSWindows]) > 0 {
 		b.WriteString(`

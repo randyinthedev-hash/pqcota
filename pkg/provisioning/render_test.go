@@ -169,7 +169,7 @@ func TestRenderJCAJarPlacementGuidance(t *testing.T) {
 
 // BC 기본 클래스의 정답은 **버전에 달렸다** — 실측: 1.80/1.81의 BouncyCastleProvider에는 ML-KEM
 // 서비스가 17개, 1.78.1에는 0개(Kyber는 BouncyCastlePQCProvider에 따로). 계획은 JAR 버전을
-// 알려주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 조용히 단언하지 않는다(§2.5).
+// 알려주지 않으므로, 기본값을 쓰되 그 전제를 조각에 적는다 — 알리지 않고 단언하지 않는다(§2.5).
 func TestBCDefaultClassStatesVersionAssumption(t *testing.T) {
 	bc := action(commonv1.CryptoRuntime_CRYPTO_RUNTIME_JCA,
 		provisioningv1.RemediationKind_REMEDIATION_KIND_PROVIDER_INJECT, "ML-KEM (FIPS 203)", "BC")
@@ -180,7 +180,7 @@ func TestBCDefaultClassStatesVersionAssumption(t *testing.T) {
 		}
 	}
 
-	// 계획이 클래스를 명시했으면 그건 저자의 결정이라 도구가 전제를 덧붙이지 않는다.
+	// 계획이 클래스를 명시했으면 그것은 저자의 결정이라 도구가 전제를 덧붙이지 않는다.
 	bc.ProviderClass = "com.acme.AcmeProvider"
 	if out := provisioning.Render(bc); strings.Contains(out, "1.80+") {
 		t.Errorf("a BC version assumption was attached to an explicit class:\n%s", out)

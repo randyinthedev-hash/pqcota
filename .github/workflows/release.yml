@@ -135,7 +135,7 @@ jobs:
             echo
             echo "버전별 목표와 성과: [RELEASE_NOTES.md]($REPO_URL/blob/$TAG/RELEASE_NOTES.md)"
           } > /tmp/relnotes.md
-          # v0.1.0-rc.1 처럼 하이픈이 붙은 태그는 사전 릴리스다 — 안정판으로 올라가면
+          # v0.1.0-rc.1처럼 하이픈이 붙은 태그는 사전 릴리스다 — 안정판으로 올라가면
           # 받는 사람이 시험용을 정식으로 착각한다.
           case "$TAG" in *-*) PRE=--prerelease ;; *) PRE= ;; esac
           gh release create "$TAG" $PRE \

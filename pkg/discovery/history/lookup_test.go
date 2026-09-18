@@ -7,12 +7,12 @@ import (
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
 )
 
-// 내부 테스트다 — 옛 행(v1 지문이 없는 행)을 흉내 내려면 hashV1 을 비워야 하는데, 그것은
+// 내부 테스트다 — 옛 행(v1 지문이 없는 행)을 흉내 내려면 hashV1을 비워야 하는데, 그것은
 // 밖에서 할 수 없다.
 
 var seqID int
 
-// 실제 적재는 시각을 붙여 id 를 짓는다 — 같은 내용이라도 id 는 매번 다르다.
+// 실제 적재는 시각을 붙여 id를 짓는다 — 같은 내용이라도 id는 매번 다르다.
 func snapV(node, ruleset, alg string) *Snapshot {
 	seqID++
 	return &Snapshot{
@@ -21,8 +21,8 @@ func snapV(node, ruleset, alg string) *Snapshot {
 	}
 }
 
-// ★ 중복 억제는 v1 로 접는다. 옛 지문(ContentHash)이 같아도 규칙 판이나 제외 수가 다르면 다른
-// 상태이고, v1 이 없는 옛 행은 같은 행이 아니다 — 새 행을 만든다. 옛 지문으로 계속 접으면
+// ★ 중복 억제는 v1로 접는다. 옛 지문(ContentHash)이 같아도 규칙 판이나 제외 수가 다르면 다른
+// 상태이고, v1이 없는 옛 행은 같은 행이 아니다 — 새 행을 만든다. 옛 지문으로 계속 접으면
 // 업그레이드 뒤에도 v1 열이 영원히 비어 v1 참조를 찾지 못한다.
 func TestDedupFoldsOnV1NotOnLegacyHash(t *testing.T) {
 	m := NewMemStore()
@@ -36,14 +36,14 @@ func TestDedupFoldsOnV1NotOnLegacyHash(t *testing.T) {
 		t.Fatal("같은 상태를 다시 적재했는데 접히지 않았다")
 	}
 
-	// 같은 내용, 다른 규칙 판 — 옛 지문은 같지만 v1 은 다르다. 접히면 안 된다.
+	// 같은 내용, 다른 규칙 판 — 옛 지문은 같지만 v1은 다르다. 접히면 안 된다.
 	c := snapV("n", "pqcota-enrich/v3", "X25519")
 	_ = m.Append(c)
 	if !c.Created {
 		t.Fatal("규칙 판이 다른데 옛 지문이 같다고 접혔다")
 	}
 
-	// 옛 행을 흉내 낸다: 직전 행의 v1 을 지운다. 같은 내용이 오면 재사용하지 않고 새 행이어야 한다.
+	// 옛 행을 흉내 낸다: 직전 행의 v1을 지운다. 같은 내용이 오면 재사용하지 않고 새 행이어야 한다.
 	m.hashV1[c.ID] = ""
 	d := snapV("n", "pqcota-enrich/v3", "X25519")
 	_ = m.Append(d)
@@ -52,7 +52,7 @@ func TestDedupFoldsOnV1NotOnLegacyHash(t *testing.T) {
 	}
 }
 
-// 조회 키 (node, ruleset, digest) 가 인터페이스와 같다. 규칙 판이 다르면 못 찾고, 같은 상태가 두
+// 조회 키 (node, ruleset, digest)가 인터페이스와 같다. 규칙 판이 다르면 못 찾고, 같은 상태가 두
 // 행일 때(이행의 자국) 최근 것을 돌려준다.
 func TestByContentHashV1(t *testing.T) {
 	m := NewMemStore()

@@ -1,6 +1,6 @@
 package main
 
-// 빌드한 pqcota-approve 를 실제로 부른다. 규칙(PrepareApproval)이 옳은지는 pkg/provisioning 의
+// 빌드한 pqcota-approve를 실제로 부른다. 규칙(PrepareApproval)이 옳은지는 pkg/provisioning의
 // 테스트가 보고, 여기서는 **제품 경로가 그 규칙을 부르고 그 순서를 지키는지** 본다 —
 // 상태를 올린 뒤에 서명해야 서명이 올린 상태를 덮는다.
 
@@ -41,7 +41,7 @@ const judged = `{"id":"pqcaton:org://acme:01J","status":"PLAN_STATUS_IN_REVIEW",
 const draft = `{"id":"p","status":"PLAN_STATUS_DRAFT","scope":"s",
  "actions":[{"id":"a1","targetNodeId":"web-01","kind":"REMEDIATION_KIND_CONFIG_ONLY"}]}`
 
-// FINALIZED 라고 적혀 있는데 승인이 없다 — 상태만 바꿔 넣은 계획이다.
+// FINALIZED라고 적혀 있는데 승인이 없다 — 상태만 바꿔 넣은 계획이다.
 const forged = `{"id":"p","status":"PLAN_STATUS_FINALIZED","scope":"s","finalizedAt":"2026-09-10T00:00:00Z",
  "actions":[{"id":"a1","targetNodeId":"web-01","kind":"REMEDIATION_KIND_CONFIG_ONLY"}]}`
 
@@ -55,7 +55,7 @@ func run(t *testing.T, bin, priv, plan string) (stdout, stderr string, err error
 	return so.String(), se.String(), err
 }
 
-// TP-GATE-12 — 판정을 끝낸 계획을 주면 FINALIZED 로 올리고 시각을 찍고 서명한다.
+// TP-GATE-12 — 판정을 끝낸 계획을 주면 FINALIZED로 올리고 시각을 찍고 서명한다.
 // 그 서명이 올린 상태 위에서 검증되어야 한다.
 func TestApproveFinalizesJudgedPlan(t *testing.T) {
 	pub, priv, err := sign.Generate()
@@ -83,7 +83,7 @@ func TestApproveFinalizesJudgedPlan(t *testing.T) {
 	}
 }
 
-// TP-GATE-12 — 승인할 대상이 아니거나 손상된 계획은 거절하고 stdout 에 아무것도 내지 않는다.
+// TP-GATE-12 — 승인할 대상이 아니거나 손상된 계획은 거절하고 stdout에 아무것도 내지 않는다.
 // 거절하면서 계획을 함께 내면 그것을 받아 다음 단계에 넣는 사람이 생긴다.
 func TestApproveRefuses(t *testing.T) {
 	_, priv, _ := sign.Generate()

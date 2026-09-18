@@ -174,8 +174,8 @@ type ProvisioningRecord struct {
 	Status   ProvisioningStatus     `protobuf:"varint,8,opt,name=status,proto3,enum=pqcota.provisioning.v1.ProvisioningStatus" json:"status,omitempty"`
 	Note     string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"` // 실패 사유·검증 결과 등
 	At       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=at,proto3" json:"at,omitempty"`
-	// 이 조치의 근거 참조가 이력에서 어떻게 해결됐나. 제출된 참조와 찾은 실제 id 를 **한 항목으로**
-	// 짝지어 남긴다 — 따로 두면 하나만 못 찾았을 때 어느 참조가 어느 id 로 해결됐는지 알 수 없다.
+	// 이 조치의 근거 참조가 이력에서 어떻게 해결됐나. 제출된 참조와 찾은 실제 id를 **한 항목으로**
+	// 짝지어 남긴다 — 따로 두면 하나만 못 찾았을 때 어느 참조가 어느 id로 해결됐는지 알 수 없다.
 	// 이것이 레코드 → 계획 → 스냅샷으로 되짚는 사슬의 마지막 고리다.
 	SnapshotResolutions []*SnapshotResolution `protobuf:"bytes,11,rep,name=snapshot_resolutions,json=snapshotResolutions,proto3" json:"snapshot_resolutions,omitempty"`
 	unknownFields       protoimpl.UnknownFields
@@ -297,7 +297,7 @@ type SnapshotResolution struct {
 	//	*SnapshotResolution_Submitted
 	//	*SnapshotResolution_LegacyPlanSnapshotId
 	What               isSnapshotResolution_What `protobuf_oneof:"what"`
-	ResolvedSnapshotId string                    `protobuf:"bytes,3,opt,name=resolved_snapshot_id,json=resolvedSnapshotId,proto3" json:"resolved_snapshot_id,omitempty"` // 비면 미해결 — 못 찾았거나 찾지 않았다. reason 이 갈라 말한다
+	ResolvedSnapshotId string                    `protobuf:"bytes,3,opt,name=resolved_snapshot_id,json=resolvedSnapshotId,proto3" json:"resolved_snapshot_id,omitempty"` // 비면 미해결 — 못 찾았거나 찾지 않았다. reason이 구분해 알린다
 	Reason             string                    `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`                                                     // 사람이 읽는다. 못 찾았을 때 가능한 이유까지
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -381,7 +381,7 @@ type SnapshotResolution_Submitted struct {
 }
 
 type SnapshotResolution_LegacyPlanSnapshotId struct {
-	LegacyPlanSnapshotId string `protobuf:"bytes,2,opt,name=legacy_plan_snapshot_id,json=legacyPlanSnapshotId,proto3,oneof"` // 계획 단위 호환 경로. source_node_id 가 없어 참조로 합성하지 않는다
+	LegacyPlanSnapshotId string `protobuf:"bytes,2,opt,name=legacy_plan_snapshot_id,json=legacyPlanSnapshotId,proto3,oneof"` // 계획 단위 호환 경로. source_node_id가 없어 참조로 합성하지 않는다
 }
 
 func (*SnapshotResolution_Submitted) isSnapshotResolution_What() {}

@@ -79,7 +79,7 @@ func (s *Service) collectNode(node string, opts map[string]string) *discoveryv1.
 				// PROCESS를 커버로 세지 않아 갭으로 남는다 — 관측하지 못한 것은 부재가 아니다(§2.6).
 				note = "target process not visible (namespace separation, permissions, …) — unobserved != absent: " + err.Error()
 			case len(dets) == 0:
-				// 봤는데 없었다. 이건 관측 결과이므로 계층은 커버된 것이다.
+				// 봤는데 없었다. 이것은 관측 결과이므로 계층은 커버된 것이다.
 				covered = append(covered, commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS)
 				note = "process observed; no OpenSSL"
 			default:

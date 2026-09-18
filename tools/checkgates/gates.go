@@ -184,7 +184,7 @@ func gatesIn(file string, af *ast.File) []gate {
 // calledOutsideTests — 테스트가 아닌 파일에서, 그리고 선언 파일이 아닌 곳에서 불리나.
 //
 // ★ 패키지로 가린다. `os.Executable()`이 이 리포에 실제로 있어서, 이름만 맞추면 **없는 배선을
-// 있다고 오판한다.** 게이트가 조용히 통과하는 쪽이라 가장 위험한 오류다. 별칭 import
+// 있다고 오판한다.** 게이트가 알리지 않고 통과하는 쪽이라 가장 위험한 오류다. 별칭 import
 // (`prov "…/provisioning"`)도 놓치지 않도록 파일마다 그 패키지의 실제 이름을 먼저 푼다.
 func calledOutsideTests(parsed map[string]*ast.File, g gate) bool {
 	for f, af := range parsed {

@@ -34,7 +34,7 @@ func samplePlan() *provisioningv1.FinalizedPlan {
 	}}
 }
 
-// L2: 노드별 play + 모듈 스테이지(주입형) + config 조각 배치. 활성화·재시작은 하지 않는다 — 그건 L3.
+// L2: 노드별 play + 모듈 스테이지(주입형) + config 조각 배치. 활성화·재시작은 하지 않는다 — 그것은 L3.
 func TestProvisioningPlaybookL2(t *testing.T) {
 	pb := provisioning.GenerateProvisioningPlaybook(samplePlan(), provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L2_STAGE_INSTALL)
 	for _, want := range []string{
@@ -215,7 +215,7 @@ func TestL3HooksGroupedAndDeduped(t *testing.T) {
 }
 
 // 같은 노드·같은 런타임에 **서로 다른** 조각이 둘이면, 같은 경로에 두 번 copy해선 안 된다 —
-// 뒤가 앞을 조용히 덮어써 앞 조치가 사라진다(모듈만 놓이고 참조는 안 되는 상태로 배포됨, §2.6).
+// 뒤가 앞을 알리지 않고 덮어써 앞 조치가 사라진다(모듈만 놓이고 참조는 안 되는 상태로 배포됨, §2.6).
 func TestConfigFragmentsNeverOverwriteEachOther(t *testing.T) {
 	mk := func(id, kind string) *provisioningv1.RemediationAction {
 		k := provisioningv1.RemediationKind_REMEDIATION_KIND_CONFIG_ONLY
@@ -341,7 +341,7 @@ func strings2Contains(v any, want string) bool {
 // 계약은 automation_level을 **조치별** 속성으로 정하고(§4.3 "레벨은 자산별 속성이며 전사
 // 일괄이 아니다"), 승인 서명이 그 값을 덮는다(sign.CanonicalPlan). 그런데 생성기가 전역
 // `--level` 하나로 모든 조치를 내던 동안, 「결제 서버=L1 · 무상태 워커=L3」으로 확정한 계획이
-// `--level l3` 한 번에 평탄화됐다. **승인자가 서명한 위임 수준과 실제 실행 수준이 갈리는**
+// `--level l3` 한 번에 평탄화됐다. **승인자가 서명한 위임 수준과 실제 실행 수준이 어긋나는**
 // 자리라, 위험도에 따라 위임을 나눈 판정이 실행에서 사라졌다.
 func TestPerAssetAutomationLevelSurvivesTheGlobalFlag(t *testing.T) {
 	plan := &provisioningv1.FinalizedPlan{Actions: []*provisioningv1.RemediationAction{
@@ -359,7 +359,7 @@ func TestPerAssetAutomationLevelSurvivesTheGlobalFlag(t *testing.T) {
 			Activation:      &provisioningv1.ActivationHooks{Activate: "worker-activate", Restart: "worker-restart"}},
 	}}
 
-	// 전역 기본값을 어느 쪽으로 주든 조치별 판정이 이긴다. 그래서 두 방향을 다 돌린다 —
+	// 전역 기본값을 어느 쪽으로 주든 조치별 판정이 우선한다. 그래서 두 방향을 다 돌린다 —
 	// 한 방향만 보면 "기본값이 우연히 맞았다"와 구별되지 않는다.
 	for _, fallback := range []provisioningv1.DeployAutomationLevel{
 		provisioningv1.DeployAutomationLevel_DEPLOY_AUTOMATION_LEVEL_L3_FULL_AUTO,

@@ -7,7 +7,7 @@ import (
 
 // ExtractStrings — ELF 파일의 문자열 섹션에서 fork 판별용 인쇄가능 문자열을 추출한다
 // (설계 §2.1 심볼 계층). debug/elf 사용 — readelf/strings 미의존.
-// .rodata/.comment/.data.rel.ro 의 printable ASCII 런(길이 >= minLen)을 모은다.
+// .rodata/.comment/.data.rel.ro의 printable ASCII 런(길이 >= minLen)을 모은다.
 func ExtractStrings(path string, minLen int) ([]string, error) {
 	f, err := elf.Open(path)
 	if err != nil {

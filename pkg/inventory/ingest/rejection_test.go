@@ -23,7 +23,7 @@ func opts(store history.Store) ingest.IngestOptions {
 
 // TestRequiredModeRefusesToIngestWithoutAVerifier — 검증자가 없으면 **적재 자체가 시작되지 않는다.**
 //
-// 결과를 하나씩 거절하는 것이 아니라 여는 자리에서 끊는다 — 조용히 통과하는 경로가 열려 있는지가
+// 결과를 하나씩 거절하는 것이 아니라 여는 자리에서 막는다 — 알리지 않고 통과하는 경로가 열려 있는지가
 // 문제이지, 어떤 결과가 왔는지는 문제가 아니기 때문이다.
 func TestRequiredModeRefusesToIngestWithoutAVerifier(t *testing.T) {
 	o := opts(history.NewMemStore())
@@ -62,7 +62,7 @@ func TestUnverifiedIsNotTheSameAsPassed(t *testing.T) {
 // TestRejectionsOutliveTheProcess — 받지 않은 사실이 저장소에 남는다.
 //
 // 남기지 않으면 "러너가 잘못 설정돼 계속 거절당하고 있었다"와 "그 노드에서는 아무 일도 없었다"가
-// 구분되지 않는다. 절단 기록이 이력의 구멍을 갈라 주는 것과 같은 자리다.
+// 구분되지 않는다. 절단 기록이 이력의 구멍을 구분해 주는 것과 같은 자리다.
 func TestRejectionsOutliveTheProcess(t *testing.T) {
 	store := history.NewMemStore()
 	o := opts(store)

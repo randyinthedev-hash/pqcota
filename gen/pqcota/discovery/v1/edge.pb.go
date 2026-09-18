@@ -209,7 +209,7 @@ type ObservedEdge struct {
 	//
 	// **비었다는 것은 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이다.** 앱을 늘 짚어내지는 못한다 — best-effort다:
 	// 짧게 붙었다 끊긴 연결은 /proc을 읽는 시점에 이미 없고, 권한이 모자라면 남의 프로세스
-	// fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note가 말한다 — 관측 갭과 같은 규칙이다.
+	// fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note에 적힌다 — 관측 갭과 같은 규칙이다.
 	AppKey string `protobuf:"bytes,13,opt,name=app_key,json=appKey,proto3" json:"app_key,omitempty"`
 	// app_key를 무엇에서 뽑았나 — "systemd-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
 	// 근거가 다르면 신뢰도가 다르므로 값만 두고 출처를 버리지 않는다.

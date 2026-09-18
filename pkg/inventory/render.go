@@ -200,7 +200,7 @@ func RenderDiff(a, b *history.Snapshot) string {
 	}
 	// 방향 규약: 첫 인자=과거, 둘째=최신. '추가'=둘째에만·'사라짐'=첫째에만이라, 인자를 시간
 	// 역순으로 주면 방향이 뒤집혀 읽힌다 — 하드 에러는 아니다(되돌림 미리보기로 역순 비교가
-	// 유효하므로). 대신 뒤집혔음을 고지한다(§2.6 — 오독을 조용히 두지 않는다).
+	// 유효하므로). 대신 뒤집혔음을 고지한다(§2.6 — 오독을 그대로 두지 않는다).
 	if a.CreatedAt.After(b.CreatedAt) {
 		sb.WriteString("⚠ the first snapshot is the newer one (reverse order) — 'added' then reads as removed and 'removed' as added. In time order it is <older-id>,<newer-id>.\n\n")
 	}

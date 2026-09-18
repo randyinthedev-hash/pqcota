@@ -25,7 +25,7 @@ build:
 	 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o /dev/null ./... >/dev/null
 	@echo "✓ Go 빌드(호스트 + linux/amd64 + windows/amd64) 통과"
 
-# Java attach 사이드카 — JDK가 없으면 **건너뛰되 조용히 넘기지 않는다**(§2.6 결).
+# Java attach 사이드카 — JDK가 없으면 **건너뛰되 알리지 않고 넘기지 않는다**(§2.6 결).
 # 산출물은 build/collector.jar. 데모는 컨테이너 안에서 같은 걸 빌드한다.
 #
 # ★ 두 번 컴파일하는 이유 — **대상 JVM의 하한이 곧 관측 커버리지**다. 관측 대상 안으로 들어가는 것은
@@ -59,7 +59,7 @@ fmt-check:
 
 # proto SSOT → Go 코드 생성 (gen/pqcota/{common,discovery,provisioning}/v1/*.pb.go)
 # gen/은 커밋돼 있으므로 클론 직후에 돌릴 일은 없고, **proto를 고쳤을 때** 다시 만들어 함께
-# 커밋한다. 어긋난 채로 올리면 CI의 generate 드리프트 검사가 끊는다(.github/workflows/ci.yml).
+# 커밋한다. 어긋난 채로 올리면 CI의 generate 드리프트 검사가 막는다(.github/workflows/ci.yml).
 # buf가 없으면 무엇을 설치해야 하는지 알려준다 —
 # "command not found"만 보이면 원인이 컨트랙트인지 도구인지 알 수 없다.
 generate:
@@ -110,7 +110,7 @@ breaking:
 	fi
 
 # 경계 표현 게이트 — 이 리포는 다른 티어를 **지목하지 않는다**. 여기 없는 기능은 "하지 않는다"로
-# 적고, 계획은 로드맵이 말한다(위치 선언은 check-docs 규칙 (2)가 따로 막는다). 사람 기억에만
+# 적고, 계획은 로드맵에 적는다(위치 선언은 check-docs 규칙 (2)가 따로 막는다). 사람 기억에만
 # 맡기면 새어 들어가므로 빌드에서 막는다.
 #   허용 예외: "Community Edition"(이 리포 자신의 이름), "enterprise intranet"(기업 내부망의 영문).
 #   EE는 단어 경계로만 — 영문 문서의 feed·between 같은 낱말에 걸리지 않게.
@@ -129,7 +129,7 @@ check-boundary:
 	echo "✓ 경계 표현 검사 통과"
 
 # 문서 게이트 — 링크·앵커 무결성 + 낡은 범위 표현 + 역할분담 산문 + 개인정보 + 라이선스 표 대조.
-# 코드는 테스트가 지키는데 문서는 아무도 안 지켜서 조용히 썩는다. 여기서 막는다.
+# 코드는 테스트가 지키는데 문서는 아무도 안 지켜서 아무도 모르는 사이에 낡는다. 여기서 막는다.
 # 검사기는 Go다 — 이 리포를 빌드하려면 Go가 이미 필요하므로 새 런타임 전제가 없다(§2.3).
 # go run 대신 빌드해서 실행: go run은 실패 시 "exit status 1"을 덧붙여 게이트 출력이 지저분해진다.
 check-docs:
@@ -146,13 +146,13 @@ check-collectors:
 # 보지, 그 규칙이 쓰이는지 보지 않는다.
 #   같은 부류로 **규칙 판 자리표시자**도 막는다. normalize.RulesetVersion 하나가 파생값의 근거를
 #   말하기로 해 놓고 적재 명령이 "ruleset-demo"를 넘기면, 아무것도 실패하지 않은 채 이력 비교만
-#   조용히 무의미해진다 — 모든 스냅샷이 같은 자리표시자를 달기 때문이다.
+#   아무 표시 없이 무의미해진다 — 모든 스냅샷이 같은 자리표시자를 달기 때문이다.
 check-gates:
 	@go build -o build/checkgates ./tools/checkgates && ./build/checkgates
 
 # 문체 게이트 — 문서·HTML·도구 출력의 한국어에서 **한 번 걷어낸 말이 다시 들어오지 않게** 한다.
-# 지금 있는 것은 tools/checkprose/baseline.tsv 에 파일마다 적어 두고 늘면 막는다. 고쳐서 줄었으면
-# `go run ./tools/checkprose -baseline` 으로 기준선을 내려 같은 커밋에 넣는다.
+# 지금 있는 것은 tools/checkprose/baseline.tsv에 파일마다 적어 두고 늘면 막는다. 고쳐서 줄었으면
+# `go run ./tools/checkprose -baseline`으로 기준선을 내려 같은 커밋에 넣는다.
 check-prose:
 	@go run ./tools/checkprose
 
@@ -163,7 +163,7 @@ test:
 	go test ./...
 
 # 도구 설치 헬퍼 (buf는 릴리스 바이너리 권장)
-# 어디에 깔리는지 함께 알린다 — go install은 조용히 $(go env GOPATH)/bin에 넣는데, 거기가 PATH에
+# 어디에 깔리는지 함께 알린다 — go install은 알리지 않고 $(go env GOPATH)/bin에 넣는데, 거기가 PATH에
 # 없으면 다음 단계인 make generate가 "플러그인 없음"으로 넘어져 원인이 설치처럼 보인다.
 #
 # **버전을 고정한다.** `@latest`면 언제 깔았느냐로 생성 코드가 달라져, 같은 커밋에서 사람마다

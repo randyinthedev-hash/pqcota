@@ -54,7 +54,7 @@ type IngestOptions struct {
 	// RequireSignature — 검증을 필수로 만든다. VerifySig가 nil이면 **적재 자체를 거절한다.**
 	//
 	// 기본이 아닌 이유: 전송 보안(mTLS·SSH)이 검증을 대신하는 경로가 실제로 있다. 그러나 그
-	// 전제가 서지 않는 곳 — 여러 조직의 결과가 한 저장소로 모이는 곳 — 에서는 조용히 통과하는
+	// 전제가 서지 않는 곳 — 여러 조직의 결과가 한 저장소로 모이는 곳 — 에서는 알리지 않고 통과하는
 	// 경로가 열려 있으면 안 된다.
 	RequireSignature bool
 
@@ -204,10 +204,10 @@ func splitAttributionDeclarations(in []*discoveryv1.CollectionResult) ([]*discov
 // 순환이 되므로 값을 둔다. 어긋나면 TestDeclaredKindMatches가 실패한다.
 const declaredKind = "declared"
 
-// record — 받지 않은 사실을 저장소에 남긴다. 남길 곳이 없으면 조용히 지나간다(v0.1.x와 같음).
+// record — 받지 않은 사실을 저장소에 남긴다. 남길 곳이 없으면 표시 없이 지나간다(v0.1.x와 같음).
 //
 // 남기다 실패해도 적재를 멈추지 않는다 — 기록을 못 남긴 것 때문에 관측까지 잃으면 손해가 크다.
-// 대신 못 남겼다는 사실을 리포트에 적는다. 조용히 사라지게 두지 않는 것이 이 기록의 목적이다.
+// 대신 못 남겼다는 사실을 리포트에 적는다. 표시 없이 사라지게 두지 않는 것이 이 기록의 목적이다.
 func (o IngestOptions) record(rep *IngestReport, res *discoveryv1.CollectionResult, node string, kind history.RejectionKind, reason string) {
 	if o.Rejections == nil {
 		return
