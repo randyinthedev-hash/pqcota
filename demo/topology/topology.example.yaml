@@ -3,7 +3,7 @@
 # up.sh가 이 샘플을 topology.yaml로 복사해 돌린다(복사본은 git이 무시). **편집 없이 그대로 동작**하고,
 # 자기 환경에 가깝게 바꾸려면 topology.yaml을 고치면 된다. 명세: demo/topology/README.md
 #
-# ★ 노드 종류는 CE가 실제로 관측·빌드하는 것만: openssl / java(JCA).
+# ★ 노드 종류는 pqcota가 실제로 관측·빌드하는 것만: openssl / java(JCA).
 #   관측 못 하는 런타임(.NET·Go 등)은 여기 없다 — 있는 척하지 않는다(§2.6).
 #
 # ★ 여기 적는 건 **관측 대상(레거시 환경)**뿐이다. 도구 쪽 컨테이너인 pqcota-ctl(컨트롤러)과
