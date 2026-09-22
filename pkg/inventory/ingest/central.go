@@ -223,7 +223,7 @@ func (o IngestOptions) record(rep *IngestReport, res *discoveryv1.CollectionResu
 }
 
 // IngestCBOM — 외부 도구(CBOMkit/CipherIQ 등)가 낸 CycloneDX를 수신해 히스토리에 적재한다(SV-2·SD-7).
-// ImportCBOM(서명검증→구조검증→스코프바인딩, §2.3)을 통과한 것만 CollectionResult로 감싸
+// ImportCBOM(서명검증→구조검증→스코프바인딩, 위임 수신 설계 §1)을 통과한 것만 CollectionResult로 감싸
 // Normalize→store 한다. pqcota collector 경로(IngestResults)와 같은 뒷단을 공유 — 입력 형식만 다름.
 func IngestCBOM(raw []byte, targetNodeID string, verifySig func([]byte) bool, snapshotPrefix, rulesetVersion string, store history.Store) (Disposition, error) {
 	disp, env, _ := ImportCBOM(raw, targetNodeID, verifySig)
