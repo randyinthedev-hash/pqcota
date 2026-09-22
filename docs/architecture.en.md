@@ -277,7 +277,7 @@ Where §3.3 deals with **a provider's capability** (which algorithms it implemen
 
 `MatchPQC(name)` normalizes a negotiated group or algorithm name (uppercase, separators removed) and matches by substring → `(PQCAlgorithm, ok)`. For example `X25519MLKEM768`→ML-KEM (fips), `sntrup761x25519-sha512@openssh.com`→NTRU-Prime (experimental), `x25519`→(false, classical).
 
-**The maturity axis is orthogonal to the posture axis** — on top of `pkg/kernel/posture`'s "PQC or classical" (🟢/🔴/⚪, §1.6) it adds "standard or experimental". `posture.Grade(group)`→maturity, `posture.GradeLabel`→a standard/draft/experimental/broken label (for display). The dependency is one-way (posture→registry).
+**The maturity axis is orthogonal to the posture axis** — on top of `pkg/kernel/posture`'s "PQC or classical" (🟢/🔴/⚪, inventory design §6.1) it adds "standard or experimental". `posture.Grade(group)`→maturity, `posture.GradeLabel`→a standard/draft/experimental/broken label (for display). The dependency is one-way (posture→registry).
 
 **The remediation branch** — `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)` route maturity into a remediation, and `posture.Recommend(group, cipher, regulated)` produces an overall recommendation for a single edge (classical and unobserved included):
 

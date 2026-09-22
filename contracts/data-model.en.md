@@ -91,7 +91,7 @@ The typed view the core normalization pipeline derives from the `cbom_cyclonedx`
 |---|---|---|
 | `NetworkProtocol` | the observed protocol | `TLS`·`SSH`·`QUIC` (its handshake is encrypted → usually unknown) |
 | `EdgeRole` | the direction of src | `CLIENT`·`SERVER` |
-| `QuantumPosture` | quantum posture (§1.6). A **derived view** — the core classifies it from `negotiated_group` | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
+| `QuantumPosture` | quantum posture (inventory design §6.1). A **derived view** — the core classifies it from `negotiated_group` | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
 | **`ObservedEdge`** | one observed communication edge | `src_node_id`·`dst_node_id` (empty plus `dst_addr` if unresolved)·`protocol`·`role`·**`negotiated_group`** (the posture input)·`cipher`·`observed_count`·`first/last_seen` |
 
 ---

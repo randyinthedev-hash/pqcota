@@ -89,7 +89,7 @@ core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타
 |---|---|---|
 | `NetworkProtocol` | 관측 프로토콜 | `TLS`·`SSH`·`QUIC`(핸드셰이크 암호화→대개 불명) |
 | `EdgeRole` | src 방향 | `CLIENT`·`SERVER` |
-| `QuantumPosture` | 양자내성(§1.6). **파생 뷰**: core가 `negotiated_group`에서 분류 | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
+| `QuantumPosture` | 양자내성(인벤토리 설계 §6.1). **파생 뷰**: core가 `negotiated_group`에서 분류 | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
 | **`ObservedEdge`** | 관측된 통신 엣지 한 건 | `src_node_id`·`dst_node_id`(이어지지 않았으면 빈 값 + `dst_addr`)·`protocol`·`role`·**`negotiated_group`**(등급 입력)·`cipher`·`observed_count`·`first/last_seen` |
 
 ---

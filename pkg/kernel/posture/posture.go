@@ -11,7 +11,7 @@ import (
 )
 
 // pqcTokens — 협상 그룹 이름에 이 토큰이 들어가면 PQC(하이브리드 포함)로 본다(🟢).
-// 하이브리드(X25519MLKEM768)든 순수 PQC(mlkem768)든 posture는 동일하게 PQC로 표기한다(§1.6).
+// 하이브리드(X25519MLKEM768)든 순수 PQC(mlkem768)든 posture는 동일하게 PQC로 표기한다(인벤토리 설계 §6.1).
 var pqcTokens = []string{
 	"MLKEM", "KYBER", // ML-KEM (FIPS 203) / 구 Kyber
 	"SNTRUP",      // sntrup761 (OpenSSH)
@@ -104,7 +104,7 @@ func Recommend(negotiatedGroup, cipher string, regulated bool) registry.Remediat
 	}
 }
 
-// Symbol — posture의 대시보드 기호(§1.6). 토폴로지 범례·요약에 쓴다.
+// Symbol — posture의 대시보드 기호(인벤토리 설계 §6.1). 토폴로지 범례·요약에 쓴다.
 func Symbol(p discoveryv1.QuantumPosture) string {
 	switch p {
 	case discoveryv1.QuantumPosture_QUANTUM_POSTURE_PQC_HYBRID:
