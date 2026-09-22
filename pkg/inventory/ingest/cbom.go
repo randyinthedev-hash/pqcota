@@ -1,4 +1,4 @@
-// Package ingest implements the CBOM import adapter (위임 수신 설계 「어댑터 명세」, SV-2·SD-7).
+// Package ingest — CBOM 수신 어댑터(위임 수신 설계 「어댑터 명세」, SV-2·SD-7).
 // CBOMkit 등이 산출한 표준 CycloneDX를 "수신·처리"만 한다 — CBOMkit을 실행하지 않는다(§1.1).
 package ingest
 
