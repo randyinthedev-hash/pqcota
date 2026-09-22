@@ -1,4 +1,4 @@
-// Package openssl implements the OpenSSL runtime collector (설계 문서 §2.1, SD-1·SD-3).
+// Package openssl — OpenSSL 런타임 collector(디스커버리 설계 §2.1, SD-1·SD-3).
 // /proc·ELF를 Go로 자체 파싱한다 — ldd/lsof/ss/readelf에 의존하지 않는다(최소 이미지 대응 · 노드에 남는 것 최소화, §2.3).
 package openssl
 

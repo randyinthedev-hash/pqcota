@@ -1,4 +1,4 @@
-// Package jvm hosts the JVM collector's Go side: it parses the Java attach
+// Package jvm — JVM collector의 Go 쪽: Java attach
 // sidecar 출력을 정규화된 CBOM Envelope(CollectionResult)로 변환하고 intake 계약(§1.6)으로 노출한다.
 // (attach 자체는 순수 Java 사이드카 — discovery/collectors/jvm/collector. 여기선 결과를 계약으로.)
 package jvm

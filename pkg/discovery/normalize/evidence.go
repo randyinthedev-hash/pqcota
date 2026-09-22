@@ -1,4 +1,4 @@
-// Package normalize implements the Discovery normalization pipeline (규정서 §2.4).
+// Package normalize — 디스커버리 정규화 파이프라인(규정서 §2.4).
 // 강화·검증·동일성해소가 코어 단독 책임 — Collector는 강화하지 않는다(설계 문서 §3, contracts/README §1).
 package normalize
 

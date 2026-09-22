@@ -1,4 +1,4 @@
-// Package network implements the network-collector (디스커버리 설계 §2.3) — TLS/SSH
+// Package network — network-collector(디스커버리 설계 §2.3). TLS/SSH
 // 핸드셰이크를 수동 관측해 협상된 KEX 그룹과 통신 엣지를 잡는다. 복호화 없이 평문 핸드셰이크만 본다.
 //
 // 책임 경계(§1.6 유지): collector는 협상 그룹 "관측"까지. 등급 분류(🟢🔴⚪)는 코어 파생(§1.2, pkg/kernel/posture).

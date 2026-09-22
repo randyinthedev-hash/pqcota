@@ -1,4 +1,4 @@
-// Package history is the append-only discovery history (규정서 §2.4⑥, §1.2 원본 불변).
+// Package history — append-only 디스커버리 이력(규정서 §2.4⑥, §1.2 원본 불변).
 // MemStore(인메모리, 테스트·단일 실행) + PgStore(Postgres 영속화)를 제공한다.
 package history
 
