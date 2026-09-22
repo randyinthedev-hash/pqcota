@@ -2,21 +2,13 @@
 
 # pqcota 데모 (OSS): 접근준비 → 디스커버리 → 인벤토리 → 프로비저닝
 
-**Docker만 있으면** 한 줄로 설치·수행·제거되는 종단 데모입니다. 단일 가상 네트워크에 묶인
-노드에서 pqcota가 **① 사용자 hosts 파일로 접근 준비(비밀 미영속) → ② Ansible/SSH로 OpenSSL·Java(JCA)·
-통신 핸드셰이크 디스커버리 → ③ 중앙 인벤토리(엔드포인트·프로필·앱 표시·이력·자산 스코프) →
-④ 프로비저닝(L2 플레이북·롤백 레코드 **생성** → 적용 → 되돌림)**까지 전 범위를 보여줍니다.
+**Docker만 있으면** 한 줄로 설치·수행·제거되는 종단 데모입니다. 단일 가상 네트워크에 묶인 노드에서
+pqcota가 **① 사용자 hosts 파일로 접근 준비 → ② Ansible/SSH로 OpenSSL·Java(JCA)·통신 핸드셰이크
+디스커버리 → ③ 중앙 인벤토리 → ④ 프로비저닝(플레이북 생성 → 적용 → 되돌림)**까지 전 범위를 보여줍니다.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호입니다.
-
-> **①은 이 데모의 구성 때문에 필요한 것이지, 관측의 전제가 아닙니다.** 데모는 컨트롤러에서 **여러 노드에
-> SSH로** 스캐너를 돌리므로 접속 인벤토리가 필요합니다. 한 노드를 그 자리에서 훑거나 결과 파일을 모아
-> 적재하는 경로는 ①이 아예 없어도 됩니다. 무엇이 필수·선택인지는 [discovery/cmd README](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다).
-
-> **경계**: 이 데모는 이 리포(Apache-2.0)만으로 완결됩니다. 프로비저닝은 **생성·영속**까지이고,
-> 데모는 생성한 플레이북을 **실제로 적용하고 되돌립니다**. 생성만 확인하면 깨끗한 노드에서 깨지는 플레이북도 통과합니다(실제로 그런 결함이 있었습니다).
-> **선언 대조(`UNDECLARED`/`UNOBSERVED`)·리뷰-확정 거버넌스·동적 프로비저닝**은 이 리포가 하지 않아 데모에도 없습니다.
-> (스냅샷 간 변화 diff는 관측 사실이라 이 리포에 있습니다. 아키텍처 §6 기준.)
+이 문서는 **데모를 돌리는 사람**을 위한 것입니다. 데모가 왜 이렇게 구성됐고 안에서 무엇이 도는지는
+[데모 설계](design.md)에, 무엇을 검증하고 무엇을 검증하지 않는지는
+[데모가 검증하는 것](integration-verification.md)에 있습니다.
 
 📊 **실행 전 예상 결과**는 [`expected-output/`](expected-output/)에 있습니다. 콘솔 출력·토폴로지 SVG 샘플과
 실제로 실행하면 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)도 설명합니다.
@@ -24,37 +16,63 @@
 ## 요구 사항
 - Docker (Compose v2) · 인터넷(최초 이미지 빌드) · 사용자 `docker` 그룹 (루트/KVM 불필요)
 
-리포는 `pqcota-ctl` 컨테이너 안에서 빌드됩니다([아래](#리포는-어디서-빌드되나-ctl-머신에서)).
+리포는 `pqcota-ctl` 컨테이너 안에서 빌드됩니다([설계 · 빌드](design.md#3-빌드-ctl-머신에서)).
 빌드 대상은 **지금 체크아웃된 소스**이며 커밋하지 않은 수정도 포함됩니다.
 
 ## 빠른 시작
 ```bash
-./demo/scripts/up.sh      # 이미지 → 컨테이너 → **ctl에서 리포 빌드** → SSH 키 → hosts.csv
-./demo/scripts/demo.sh    # 접근준비 → 디스커버리 → 인벤토리(메타·앱 표시·이력·스코프) → 프로비저닝(생성·적용·되돌림)
+./demo/scripts/up.sh      # 이미지 → 컨테이너 → ctl에서 리포 빌드 → SSH 키 → hosts.csv
+./demo/scripts/demo.sh    # 접근준비 → 디스커버리 → 인벤토리 → 프로비저닝(생성·적용·되돌림)
 ./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
 ```
 
 `./demo/scripts/demo.sh --help`가 조정 지점을 전부 적습니다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)입니다.
+
+처음이면 [`scripts/`](scripts)의 이 세 개만 보면 됩니다. 나머지 폴더는 그 뒤에서 도는 부품이고,
+무엇이 무엇인지는 [설계 · 부품](design.md#2-부품)에 적혀 있습니다.
 
 > **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
 > (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가
 > 그대로 반영됩니다. 자기 환경에 가깝게 바꿔 같은 종단을 돌릴 수 있습니다.
 > 상세: **[topology/README](topology/README.md)**.
 
-## 폴더 구성
-| 폴더/파일 | 의미 | 직접 실행? |
-|---|---|---|
-| [`scripts/`](scripts) | **사용자가 실행**하는 것: `up.sh`(설치) · `demo.sh`(수행) · `down.sh`(제거) | ✅ 이 3개 |
-| [`scripts/ansible/`](scripts/ansible) | demo.sh가 구동하는 디스커버리 **오케스트레이션**: SSH 인벤토리·플레이북(`discover.yml`) | ❌ |
-| [`integration-verification.md`](integration-verification.md) | **이 데모가 검증하는 통합 케이스**와 커버하지 않는 것 | ❌ |
-| [`scripts/internal/`](scripts/internal) | 컨테이너 **안에서** 도는 헬퍼(노드 부팅·서비스 기동/정지·트래픽 생성·관측). `ssl-apps.sh`는 L3 훅이 가리키는 서비스 관리 지점 | ❌ |
-| [`workloads/`](workloads) | 노드에 배포되는 **데모 크립토 워크로드**(스캔·관측 대상): `CryptoApp.java`(JCA/BouncyCastle) · `pqc-echo/`(PQC TLS 트래픽 생성기, Go) | ❌ |
-| [`expected-output/`](expected-output) | 실행 전 **예상 결과** 미리보기(콘솔·토폴로지 SVG) | ❌ |
-| [`topology/`](topology) | **데모 환경 정의**: `topology.yaml`(첫 실행 시 샘플 복사)과 생성기 | ✏️ 이 파일을 고쳐 구성 변경 |
-| [`recording/`](recording/README.md) | 데모를 **스크린캐스트로 만들 때**의 절차와 편집 틀. 제품을 쓰는 데는 필요 없고, 발표·출품용 영상을 다시 만들 때 씁니다 | ❌ |
-| `Dockerfile` | 컨테이너 **빌드** 정의(노드 종류별 스테이지) | ❌(스크립트가 호출) |
+## 무엇이 보이나
 
-> 처음이면 **`scripts/`의 up → demo → down** 세 개만 보면 됩니다. 나머지는 그 뒤에서 도는 부품입니다.
+`demo.sh`는 진행을 `▶ N/6`으로 찍습니다. 기본 토폴로지의 노드는 web-gw(OpenSSL 3.x) · pay-app(JVM) ·
+pay-db(OpenSSL 1.1.1, 레거시) 셋이고, 컨트롤러 `pqcota-ctl`이 SSH로 이들을 훑습니다. 단계마다 보이는 것은
+다음과 같습니다.
+
+| 단계 | 보이는 것 |
+|---|---|
+| **0/6 접근 준비** | `hosts.csv`에서 Ansible 인벤토리를 만들고 엔드포인트와 CMDB 프로필을 등록합니다. 인벤토리 테이블에 접속 비밀이 **0건**임을 SQL로 셉니다 |
+| **1/6 SSH 확인** | 컨트롤러에서 모든 노드로 Ansible ping |
+| **2/6 디스커버리** | 노드마다 OpenSSL 자산 · JCA provider 체인(런타임에 `addProvider`한 BouncyCastle까지) · TLS/SSH 핸드셰이크를 관측하고 결과를 회수합니다. 끝나면 노드에 남는 것이 없습니다 |
+| **3/6 디스커버리 뷰** | 발견 자산과 관측 엣지의 등급: 🟢 PQC/하이브리드 · 🔴 고전(양자취약) · ⚪ 불명. 기본 토폴로지에서는 `web-gw → pay-app`이 🟢, `web-gw → pay-db`가 🔴입니다(TLS·SSH 모두) |
+| **4/6 토폴로지** | 관측 결과를 그림으로 그려 `demo/.generated/topology.svg`에 둡니다 |
+| **5/6 중앙 인벤토리** | 적재 후 조회: 엔드포인트·프로필 헤더, 자산마다 `@앱` 표시(pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` 둘 다), 같은 결과를 한 번 더 적재한 뒤의 `-history`·`-snapshot`·`-diff`(정답은 **변화 없음**), 자산 스코프(제외 건수 고지), `pqcota-prune` dry-run |
+| **6/6 프로비저닝** | 확정 계획으로 L2·L3 플레이북과 롤백 레코드를 **생성**하고, 대상 노드(기본 구성에선 pay-db)에 **적용**해 `/opt/pqcota/oqsprovider.so`·`/etc/pqcota/openssl-pqc.cnf`가 놓였는지 확인한 뒤, 롤백 플레이북으로 **되돌려** 두 파일이 사라지는 것까지 확인합니다 |
+
+출력에 그대로 나오지만 오류가 아닌 것이 둘 있습니다.
+- `⚠ duplicate: physical machine … → [pay-db web-gw]`: 데모의 타깃은 한 호스트 위의 컨테이너라 물리 장비 지문이 같습니다. 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시입니다.
+- 프로비저닝이 배치하는 `oqsprovider.so`는 **빈 파일**입니다. 데모가 보이는 것은 배포·가역성이지 암호 기능이 아닙니다([왜 그런지](design.md#1-원칙)). 실물로 확인하려면 아래 선택 단계를 켭니다.
+
+### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
+
+```bash
+DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
+```
+
+빈 파일로는 못 보이는 것이 하나 남습니다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인합니다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용됩니다.
+
+대상은 pay-db가 아니라 인벤토리에서 OpenSSL 3.0–3.4를 관측한 노드입니다. provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없습니다. 같은 L2/L3 산출물로 배치·활성화한 뒤,
+
+| | 보이는 것 |
+|---|---|
+| **능력** | `openssl list -kem-algorithms`의 ML-KEM 계열이 **0개 → 14개**, `list -providers`에 `oqsprovider … active` |
+| **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 봅니다 |
+| **되돌림** | L3→L2 순서로 되돌리면 다시 **0개**: 가역성도 같은 자로 잽니다 |
+
+**재관측에서 인벤토리는 그대로입니다.** 오류가 아닙니다. OpenSSL 쪽은 provider 층을 관측하는 경로가 아직 없어서이고, 데모는 그 이유를 출력에 함께 냅니다. 자세한 것은 [설계 · 선택 단계](design.md#54-선택-단계-실물-provider)에 있습니다.
 
 ## 산출물은 어디에 생기나
 
@@ -76,124 +94,13 @@ docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # 인벤토리 �
 ```
 
 > **호스트 파일시스템은 거의 안 건드립니다**. 리포에 남는 것은 위 그림·생성물뿐이고, 그마저 gitignore입니다.
-> 접속 키(`/work/id_demo`)와 `targets.ini`는 **컨트롤러 안에만** 있고 인벤토리에 적재되지 않습니다(§1.5).
-
-## 리포는 어디서 빌드되나. **ctl 머신에서**
-
-`pqcota-ctl`이 곧 빌드 머신입니다. `up.sh` 3단계가 그 컨테이너 안에서 컴파일하고, 같은 머신에서
-디스커버리·인벤토리·프로비저닝을 돌립니다.
-
-| 무엇을 | 어떤 옵션으로 | 어디에 |
-|---|---|---|
-| proto 생성 코드 | `make generate` (buf) | `/src/gen/` |
-| 중앙 CLI (`ingest`·`inventory`·`provision`…) | `CGO_ENABLED=0 go build` | `/usr/local/bin/` (ctl에서 실행) |
-| collector (`nodescan`·`netcap`·`jvmscan`) | `CGO_ENABLED=0 GOOS=linux GOARCH=<arch> go build` | `/work/dist/linux-<arch>/` (노드로 반입) |
-| JVM attach 사이드카 | `make build-jar` (javac + jar) | `/work/dist/collector.jar` |
-
-실행하면 그대로 찍힙니다:
-
-```console
-▶ 3/6 리포 빌드 — **ctl 머신(pqcota-ctl)에서** 소스를 컴파일합니다
-     [ctl] Ubuntu 24.04.4 LTS · x86_64 · go1.26.4
-     [ctl] make generate …  go build -o /usr/local/bin/ …  GOARCH=amd64 go build -o dist/linux-amd64/ …
-```
-
-**사용자 환경도 같습니다.** 빌드 머신은 리눅스면 되고(Go 1.26.4+·buf·JDK 11+는 선택), collector만 **노드 arch에
-맞춰** 만들면 됩니다. `CGO_ENABLED=0` 정적 링크라 배포판·libc를 가리지 않습니다. 이 데모에서도
-Ubuntu 24.04에서 빌드한 바이너리가 20.04 노드에서 그대로 돕니다.
-
-이미지 빌드(1단계)가 만드는 것은 OS·툴체인과 관측 **대상** 워크로드뿐입니다(`pqc-echo` = 현실에선
-사용자의 앱, `topogen` = 컨테이너보다 먼저 필요). **pqcota 소프트웨어는 이미지에 넣지 않습니다.**
-
-## 실행 시점: 도는 컨테이너 (기본 토폴로지)
-
-[`topology/topology.yaml`](topology/README.md)이 정의합니다. 아래는 기본값이고 **띄운 상태에서 실측한 값**입니다.
-
-| 컨테이너 | 베이스 OS · arch | 세그먼트 | 상시 프로세스 · 리스닝 | 실제 환경에서는 |
-|---|---|---|---|---|
-| **pqcota-ctl** | Ubuntu 24.04 · 호스트 arch | corp+db | `sleep infinity` · 없음 | 리포를 빌드하고 도구를 돌리는 머신 |
-| **pqcota-demo-pg** | Debian 13 (postgres:16) · 호스트 arch | corp+db | `postgres` · :5432 | 중앙 인벤토리 DB (단일 호스트 경로엔 불필요) |
-| **web-gw** | Ubuntu 24.04, OpenSSL **3.x** · 호스트 arch | corp | `sshd` · :22 | 관측 대상: TLS/SSH 클라이언트 쪽 |
-| **pay-app** | Ubuntu 26.04, temurin 21 · 호스트 arch | corp | `sshd`·`java`·`pqc-echo` · :22 :8443 | 관측 대상: JVM 자산 |
-| **pay-db** | Ubuntu 20.04, OpenSSL **1.1.1** · 호스트 arch | corp+db | `sshd`·`payment-gw`·`api-gw` · :22 :4433 :4434 | 관측 대상: 레거시 자산 |
-
-노드 OS는 `topology.yaml`의 `version`·`fork`가 고릅니다(3.x→24.04, 3.0→22.04, 1.1.1→20.04,
-libressl→alpine). arch는 전부 호스트와 같습니다. **컨트롤러만 두 세그먼트에 붙습니다**(모든 노드에
-SSH). IP는 매번 새로 배정되므로 세그먼트 이름으로만 참조합니다.
-
-**노드에 collector는 없습니다**. 워크로드와 데모 헬퍼뿐이고, 디스커버리 후 잔재도 0입니다:
-
-```console
-$ docker exec pay-db ls /usr/local/bin
-node-entrypoint.sh  pqc-echo  pqcota-gen-traffic.sh  pqcota-observe.sh  ssl-apps.sh
-```
-
-`topo-gen`이 0단계에 `--rm`으로 잠깐 더 돕니다(compose·groups.ini·SVG 생성 후 소멸).
-
-## 디스커버리 (Ansible/SSH, 모두 실물)
-1. **OpenSSL 자산**은 `pqcota-nodescan`이 냅니다. `/proc` 스캔으로 로드된 libssl/libcrypto를 봅니다.
-2. **JCA provider 체인**은 `pqcota-jvmscan`이 냅니다. **정찰→attach** 순서입니다. `/proc`로 실행 중 JVM(pay-app의 CryptoApp)을 찾아 그 PID에 attach해 `Security.getProviders()` 실체를 봅니다. CryptoApp이 **런타임에 `addProvider`한 BouncyCastle**까지 잡습니다. java.security엔 정적 등록이 없어 **정적 스캔으론 관측되지 않는** 것(openssl의 `/proc` 스캔과 대칭, `detection=runtime-introspection`). attach가 안 되면 정적 프로브로 내려가되, 관측하지 못한 것은 갭으로 남깁니다.
-3. **통신 엣지**는 `pqcota-netcap`이 냅니다. AF_PACKET(`CAP_NET_RAW`)으로 TLS/SSH 핸드셰이크를 복호화 없이 관측합니다.
-
-`pqcota-discover-view`(OSS)가 결과를 모아 **발견 자산 + 관측 엣지 등급**을 냅니다:
-- 🟢 **PQC/하이브리드**(`X25519MLKEM768`, `sntrup761x25519`) · 🔴 **고전=양자취약**(`x25519`, `ECDHE`) · ⚪ **불명**
-- 예: `web-gw → pay-app` 🟢 MLKEM · `web-gw → pay-db` 🔴 고전 · SSH도 같은 갈림(`→pay-app` 🟢 sntrup761 · `→pay-db` 🔴이고, 레거시 OS의 OpenSSH엔 PQC KEX가 없습니다)
-
-## 중앙 인벤토리 (엔드포인트·프로필·앱 표시·이력·변화)
-`pqcota-ingest`가 회수 결과를 append-only 히스토리에 적재하고, `pqcota-inventory`가 조회합니다:
-- **▸ 머신 헤더**: `pqcota-hosts`가 upsert한 **엔드포인트**(이름·ip:port, 비밀 없음) + **프로필**(display_name·env·role·owner, CMDB 선언 레인).
-- **같은 장비가 여러 이름으로 등재되면 고지합니다**: 적재 결과에 `⚠ duplicate: physical machine … → [pay-db web-gw]`가 나오는데 이것은 오류가 아닙니다. 데모의 타깃들은 한 호스트 위의 컨테이너라 `pay-db`와 `web-gw`가 같은 물리 장비 지문을 갖고, 플랫폼은 그 사실을 감추지 않고 그대로 알립니다(TK-MACHINE). 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시가 이것입니다.
-- **@앱 표시**: 각 크립토 자산이 어느 앱 것인지(`app_keys`). pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` **둘 다**에 걸립니다(그 .so 교체는 두 앱 모두 영향).
-- **이력·변화**: 같은 회수 결과를 한 번 더 적재해(실운용의 "다음 회차 스캔"에 해당) `-history`(변화 지점 + 관측 횟수) · `-snapshot`(자산 + 관측 엣지) · `-diff`(`added`·`removed`·`changed`)를 보입니다. 같은 관측이므로 diff는 **"변화 없음"**이 정답입니다. 도구는 없는 변화를 지어내지 않습니다. 실제로 버전이 바뀌면 finding id가 유지되어 **같은 자산의 `changed`**로 잡힙니다.<br>스냅샷은 **내용이 바뀔 때만** 쌓이고, 반복 관측은 가벼운 관측 기록으로만 남습니다. 저장은 변화 횟수만큼만 자라되 "매번 스캔했다"는 증거는 보존됩니다.
-- **자산 스코프**: 노드는 등재됐어도 그 안의 자산 전부가 관리 대상은 아닙니다. `sshd`·패키지 python 런타임 같은 잡음을 규칙으로 빼면 **앱이 실제로 쓰는 자산만** 남습니다. 뺀 건수는 반드시 고지됩니다. **제외는 부재가 아닙니다**(§2.6).
-- **보존 정책**: `pqcota-prune`을 dry-run으로 돌려 **노드별 최신 스냅샷은 어떤 정책으로도 지우지 않음**을 보입니다. 파괴적 동작이라 조회 커맨드와 분리했고, 실제 삭제는 `-apply`로만 합니다.
-
-## 프로비저닝 (생성 → 적용 → 되돌림)
-발견된 finding에 **확정 계획(FINALIZED)**을 만들어 `pqcota-provision`을 돌립니다:
-- **§3.7 게이트**: FINALIZED 아니면 거부. **L2 플레이북 생성**(모듈 스테이지 + config 조각).
-- **before 캡처 + 롤백 레코드 영속**: 조치 전 암호 상태(모듈·버전)와 **영향 앱(공유 .so면 다중)**을 append-only로 남깁니다.
-
-이어서 생성물을 **실제로 적용합니다**. 도는지까지 봐야 "생성했다"가 말이 됩니다:
-
-- **적용**: 생성된 플레이북을 `ansible-playbook`으로 대상 노드(기본 구성에선 pay-db)에 실행. 모듈 sha256 게이트도 함께 통과시킵니다.
-- **확인**: 타깃에 `/opt/pqcota/oqsprovider.so`와 `/etc/pqcota/openssl-pqc.cnf`가 놓였고, config가 **그 배치 경로를 참조**하는지(`module = /opt/pqcota/oqsprovider.so`).
-- **되돌림**: `--rollback` 플레이북으로 제거. 원본 설정을 덮은 적이 없으니 **제거만으로 이전 상태**가 되고, 두 파일이 사라지는 것까지 확인합니다.
-
-> **왜 적용까지 하나**: 생성만 하고 안 돌리면 **문법은 맞는데 실제로는 깨지는** 플레이북이 통과합니다. 실제로 그런 결함이 있었습니다(config 디렉터리를 안 만들어 `copy`가 실패). 이 단계가 그 부류를 상시로 잡습니다.
->
-> **provider 모듈은 도구가 주지 않습니다.** 데모는 배포 경로만 보이려 **빈 파일**을 씁니다. 실제 암호 기능은 없습니다. 실물 모듈은 사용자가 빌드하거나 벤더에서 받아 반입합니다([커스텀 provider 절차](../provisioning/design.md#6b-커스텀-provider)). 데모가 굳이 빈 파일을 쓰는 것은 **암호 기능 시연이 아니라 배포·가역성 시연**이 목적이고, "Docker만 있으면 된다"는 전제를 지키기 위해서입니다.
-
-- **L2는 조각을 놓기만 합니다**. 참조되게 만들지 않으므로 모든 산출물이 완전히 가역입니다.
-- **L3는 여기에 활성화·재시작을 더합니다.** 명령은 계획의 `activation` 훅에 사용자가 적은 것을 씁니다. 환경마다 활성화 지점이 다르므로 도구가 추측하지 않습니다. 데모 노드는 `ssl-apps.sh`로 서비스를 관리하므로 훅이 그것을 가리킵니다(현실의 systemd unit·사내 기동 스크립트에 해당).
-- 데모의 L3가 보이는 것은 **훅 순서·활성화 지점 연결·재시작·가역성**입니다. 레거시 노드의 OpenSSL은 이 조각의 PQC 그룹을 모르므로 **능력이 바뀌었다고 말하지 않습니다**. 그 노드의 실제 조치는 fork 교체이고, 그것은 config로 배포되지 않는다고 플레이북 주석에 적혀 있습니다.
-
-### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
-
-```bash
-DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
-```
-
-빈 파일로는 못 보이는 것이 하나 남습니다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인합니다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용됩니다.
-
-대상은 6단계의 pay-db가 **아닙니다**. provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없습니다. 인벤토리에서 3.x를 관측한 노드를 골라 같은 L2/L3 산출물로 배치·활성화한 뒤,
-
-| | 보이는 것 |
-|---|---|
-| **능력** | `openssl list -kem-algorithms`의 ML-KEM 계열이 **0개 → 14개**, `list -providers`에 `oqsprovider … active` |
-| **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 봅니다 |
-| **되돌림** | L3→L2 순서로 되돌리면 다시 **0개**: 가역성도 같은 자로 잽니다 |
-
-**재관측에서 인벤토리는 그대로입니다.** 데모는 이것을 숨기지 않고 이유까지 함께 냅니다: OpenSSL은 provider 층을 관측하는 경로가 아직 없고(`/proc/maps`의 libssl·libcrypto와 ELF 문자열까지입니다. JCA는 attach로 provider 체인을 보지만 OpenSSL은 관측하지 못합니다), 핸드셰이크도 협상은 양쪽이 알아야 하는데 이 토폴로지의 상대는 1.1.1입니다. 설계 검토는 [디스커버리 설계 §2.1](../discovery/design.md#21-openssl-collector-go-sd-1-sd-3)에 있습니다. 끝나면 L3→L2 순서로 되돌려 노드를 원래대로 둡니다.
-
-## 접근 비밀 경계 (§1.5)
-접속 키·계정은 **사용자 hosts.csv → 런타임 전용 `targets.ini`(소유자 전용 `0600`)**에만 실립니다. pqcota 인벤토리(Postgres)엔
-**엔드포인트(node_id·이름·ip·port)만** upsert되고 비밀은 적재하지 않습니다(데모가 `pqcota_endpoint`에 비밀 0건임을 확인).
+> 접속 키(`/work/id_demo`)와 `targets.ini`는 **컨트롤러 안에만** 있고 인벤토리에 적재되지 않습니다([설계 · 접근 비밀 경계](design.md#6-접근-비밀-경계-15)).
 
 ## 내 환경(실제 자산)에 적용하려면
 
 데모는 컨테이너를 세워 주지만, 실제 자산에선 **환경이 이미 있고** 사용자가 세 가지를 준비합니다.
 순서대로 무엇이 나오는지는 [여정](../journey.md)이 컨테이너 없이 처음부터 끝까지 따라갑니다.
-머신 구분은 위 [실행 시점: 도는 컨테이너](#실행-시점-도는-컨테이너-기본-토폴로지)와 같습니다.
+머신 구분은 [설계 · 도는 컨테이너](design.md#4-실행-시점-도는-컨테이너-기본-토폴로지)와 같습니다.
 **`pqcota-ctl`이 곧 사용자가 리포를 클론·빌드하는 머신**이고, 노드에는 아무것도 미리 깔지 않습니다.
 `hosts.csv` 하나로 끝나지 않습니다:
 
