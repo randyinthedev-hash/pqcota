@@ -273,7 +273,7 @@ type ProviderSignature struct {
 
 `MatchPQC(name)`은 협상 그룹/알고리즘명을 정규화(대문자·구분자 제거)해 부분문자열 매칭 → `(PQCAlgorithm, ok)`. 예: `X25519MLKEM768`→ML-KEM(fips), `sntrup761x25519-sha512@openssh.com`→NTRU-Prime(experimental), `x25519`→(false, 고전).
 
-**성숙도 축은 등급 축과 직교한다.** `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, §1.6) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(등급→registry).
+**성숙도 축은 등급 축과 직교한다.** `pkg/kernel/posture`의 "PQC냐 고전이냐"(🟢/🔴/⚪, 인벤토리 설계 §6.1) 위에 "표준이냐 실험이냐"를 더한다. `posture.Grade(group)`→성숙도, `posture.GradeLabel`→표준/초안/실험/취약 라벨(뷰 표기). 의존은 단방향(등급→registry).
 
 **remediation 분기.** `registry.Remediation` + `PQCAlgorithm.Remediate(regulated)`가 성숙도를 조치로 라우팅하고, `posture.Recommend(group, cipher, regulated)`가 엣지 하나에 대한 종합 권고를 낸다(고전·미관측 포함):
 

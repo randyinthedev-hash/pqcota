@@ -33,7 +33,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(§1.6 ⚪).
+// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(인벤토리 설계 §6.1 ⚪).
 type NetworkProtocol int32
 
 const (
@@ -136,7 +136,7 @@ func (EdgeRole) EnumDescriptor() ([]byte, []int) {
 	return file_pqcota_discovery_v1_edge_proto_rawDescGZIP(), []int{1}
 }
 
-// 양자내성 등급 (§1.6). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
+// 양자내성 등급 (인벤토리 설계 §6.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
 // Collector 출력에는 존재하지 않는다(§1.2, EvidenceStrength와 동일 원칙).
 type QuantumPosture int32
 
