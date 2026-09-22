@@ -1,7 +1,7 @@
 # 위임 수신 설계 (Delegated Intake: CBOM 임포트)
 
 **문서 성격**: discovery에서 **직접 만들지 않고 받기만 하는** 기능을 collector(직접 관측)와 분리해 다룬다. 소스·빌드 아티팩트 스캔은 기존 도구(CBOMkit 등)에 위임하고, pqcota는 그 표준 산출물(CycloneDX)을 **수신·검증·정규화**만 한다.
-**기준**: [디스커버리 설계](../discovery/design.md) §2.3·SV-2·SD-7 · 규정서 §2.
+**기준**: [인벤토리 테스트케이스 SV-2](testcases.md#sv-2-cbom-수신-위임-경계) · [디스커버리 테스트케이스 SD-7](../discovery/testcases.md#sd-7-에어갭) · 규정서 §2.
 **구현**: `pkg/inventory/ingest`(수신 어댑터: 검증+임포트) · [`inventory/cmd/pqcota-cbom-ingest`](cmd/README.md)(수신·검증·적재 종단 CLI).
 
 > **왜 collector와 분리하나**. openssl·jvm·network collector는 **직접 만드는 런타임 관측(핵심 IP)**이다. CBOM 임포트는 정반대다. 스캔은 남이 하고 pqcota는 결과를 받는다. 코드 형태(계약 뒤 얇은 어댑터)·유지보수·라이선스(GPL 격리)·서비스 경계가 collector와 모두 달라 별도 문서로 둔다.
