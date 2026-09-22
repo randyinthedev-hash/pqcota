@@ -47,7 +47,7 @@ func TestRenderDiffDirection(t *testing.T) {
 	}
 }
 
-// e2e: collector 산출물(CycloneDX) → Normalize → 읽기전용 인벤토리 뷰(§8-7).
+// TV-INGEST-4 — e2e: collector 산출물(CycloneDX) → Normalize → 읽기전용 인벤토리 뷰.
 func TestRenderEndToEnd(t *testing.T) {
 	cbom := []byte(`{"bomFormat":"CycloneDX","specVersion":"1.6","components":[
       {"type":"cryptographic-asset","name":"libcrypto","properties":[
