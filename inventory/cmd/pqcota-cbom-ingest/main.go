@@ -48,7 +48,12 @@ func main() {
 	defer closeFn()
 
 	// CBOM 서명 검증(verifySig)은 아직 미배선 — CBOM은 신뢰된 CI/전송 경로로 온다는 전제(SV-2).
-	// (sign 패키지는 CollectionResult 전용. raw-CBOM 서명 검증은 후속.)
+	// sign 패키지는 CollectionResult의 정규화 바이트에 서명하는데 여기 오는 것은 사용자 CI가 낸
+	// 원본 CycloneDX라, 무엇을 서명으로 볼지부터 정해야 한다(검토 중인 설계 §10).
+	//
+	// **검증하지 않았다는 사실을 알린다.** 아무 말도 하지 않으면 검증한 것과 구별되지 않는다
+	// (§2.6 갭 ≠ 부재). pqcota-ingest가 키 없이 돌 때 내는 줄과 같은 자리다.
+	fmt.Fprintln(os.Stderr, "signature check: **not done** — this entrance has no key to verify with, so the CBOM's authenticity rests on your CI and transport (SV-2).")
 	prefix := "cbom-" + time.Now().UTC().Format("20060102T150405Z")
 	disp, err := ingest.IngestCBOM(raw, nodeID, nil, prefix, normalize.RulesetVersion, store)
 	if err != nil {
