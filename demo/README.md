@@ -49,11 +49,11 @@ pay-db(OpenSSL 1.1.1, 레거시) 셋이고, 컨트롤러 `pqcota-ctl`이 SSH로 
 | **2/6 디스커버리** | 노드마다 OpenSSL 자산 · JCA provider 체인(런타임에 `addProvider`한 BouncyCastle까지) · TLS/SSH 핸드셰이크를 관측하고 결과를 회수합니다. 끝나면 노드에 남는 것이 없습니다 |
 | **3/6 디스커버리 뷰** | 발견 자산과 관측 엣지의 등급: 🟢 PQC/하이브리드 · 🔴 고전(양자취약) · ⚪ 불명. 기본 토폴로지에서는 `web-gw → pay-app`이 🟢, `web-gw → pay-db`가 🔴입니다(TLS·SSH 모두) |
 | **4/6 토폴로지** | 관측 결과를 그림으로 그려 `demo/.generated/topology.svg`에 둡니다 |
-| **5/6 중앙 인벤토리** | 적재 후 조회: 엔드포인트·프로필 헤더, 자산마다 `@앱` 표시(pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` 둘 다), 같은 결과를 한 번 더 적재한 뒤의 `-history`·`-snapshot`·`-diff`(정답은 **변화 없음**), 자산 스코프(제외 건수 고지), `pqcota-prune` dry-run |
+| **5/6 중앙 인벤토리** | 적재 후 조회: 엔드포인트·프로필 헤더, 자산마다 `@앱` 표시(pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` 둘 다), 같은 결과를 한 번 더 적재해도 **스냅샷이 늘지 않는 것**(`-history`), 그 스냅샷의 자산·엣지(`-snapshot`), 자산 스코프(제외 건수 고지)와 그 **전후를 견주는** `-diff`, `pqcota-prune` dry-run |
 | **6/6 프로비저닝** | 확정 계획으로 L2·L3 플레이북과 롤백 레코드를 **생성**하고, 대상 노드(기본 구성에선 pay-db)에 **적용**해 `/opt/pqcota/oqsprovider.so`·`/etc/pqcota/openssl-pqc.cnf`가 놓였는지 확인한 뒤, 롤백 플레이북으로 **되돌려** 두 파일이 사라지는 것까지 확인합니다 |
 
 출력에 그대로 나오지만 오류가 아닌 것이 둘 있습니다.
-- `⚠ duplicate: physical machine … → [pay-db web-gw]`: 데모의 타깃은 한 호스트 위의 컨테이너라 물리 장비 지문이 같습니다. 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시입니다.
+- `⚠ duplicate: physical machine … → [pay-db web-gw]`: **리눅스 호스트에서 돌리면** 나옵니다. 데모의 타깃은 한 호스트 위의 컨테이너인데, 리눅스에서는 컨테이너 안에서도 호스트의 장비 지문이 보여 노드 셋의 지문이 같아집니다. 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시입니다. macOS의 Docker Desktop에서는 지문의 출처가 달라 이 줄이 나오지 않습니다([왜 그런지](design.md#52-중앙-인벤토리-엔드포인트프로필앱-표시이력변화)).
 - 프로비저닝이 배치하는 `oqsprovider.so`는 **빈 파일**입니다. 데모가 보이는 것은 배포·가역성이지 암호 기능이 아닙니다([왜 그런지](design.md#1-원칙)). 실물로 확인하려면 아래 선택 단계를 켭니다.
 
 ### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
