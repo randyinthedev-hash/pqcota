@@ -40,7 +40,7 @@ esac
 # 데모 구성은 up.sh가 topology.yaml에서 생성한 산출물(compose·groups·profiles·manifest)이 정의한다.
 GEN="$DEMO_DIR/.generated"
 [ -f "$GEN/manifest.env" ] || { echo "run ./demo/scripts/up.sh first (nothing has been generated yet)." >&2; exit 1; }
-source "$GEN/manifest.env"  # NODES · EDGE_COUNT · HUMAN
+source "$GEN/manifest.env"  # NODES · EDGE_COUNT · human()
 ANS="cd /work/ansible && ansible"       # ansible.cfg 적용 위해 그 디렉토리에서 실행
 INV="-i /work/ansible/targets.ini -i /work/ansible/groups.ini"
 pg() { docker exec pqcota-demo-pg psql -U postgres -d pqcota "$@"; }
