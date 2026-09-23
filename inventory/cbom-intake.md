@@ -22,7 +22,7 @@
 ## 1. 무엇을 하나. 받는 입구
 
 - **수신**: 사용자가 CI/로컬에서 만든 표준 CycloneDX CBOM 파일을 받는다.
-- **검증**: 구조·앵커를 `IngestCBOM`(=`ImportCBOM`) 내부에서 **강제**. 부적합이면 **거부**(저장 안 함, TV-CBOM-2). 서명은 관문이 있으나 **배선되지 않았다** — `pqcota-cbom-ingest`가 그 사실을 알린다([검토 중인 설계 §10](../docs/under-review.md)).
+- **검증**: 구조·앵커를 `IngestCBOM`(=`ImportCBOM`) 내부에서 **강제**. 부적합이면 **거부**(저장 안 함, TV-CBOM-2). 서명은 관문이 있으나 **배선되지 않았다**. `pqcota-cbom-ingest`가 그 사실을 알린다([검토 중인 설계 §10](../docs/under-review.md)).
 - **정규화**: Envelope 부착(`detection_method=source/artifact`) → collector 산출과 **같은 파이프라인·같은 인벤토리**로 수렴.
 
 **파일만 오간다.** CBOMkit은 사용자의 CI가 돌리고 pqcota는 그 산출 파일을 읽을 뿐이다. 호출·번들·링크가 없어 GPL이 전염되지 않는다(§4).
