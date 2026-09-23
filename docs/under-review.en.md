@@ -726,3 +726,62 @@ reason has to be recorded separately.
 
 **Ordering against §5 (server-role edges).** Windows servers are often the listening side, so §5 landing
 first raises the value. Conversely, adding ㉢ without §5 yields less on Windows than it does on Linux.
+
+---
+
+## 10. The CBOM intake has no signature verification wired
+
+`pqcota-cbom-ingest` **does not verify signatures.** The verifier exists and the call site exists, but the
+value passed is always `nil` (`inventory/cmd/pqcota-cbom-ingest/main.go` — `ingest.IngestCBOM(raw, nodeID, nil, …)`).
+It is the same kind of gap as §8: the rule is in the code and the product path does not call it.
+
+### 10.1 What is missing
+
+`ImportCBOM` puts the signature **first** (`verifySig != nil && !verifySig(raw)` → `Rejected`, TD-SIGN-2).
+Nothing in this command can fill `verifySig`. Unlike `pqcota-ingest`, which fills it from `PQCOTA_VERIFY_KEY`,
+the CBOM path has neither an environment variable nor a flag for a key.
+
+Three things disagree as a result.
+
+| What disagrees | Today |
+|---|---|
+| The notice | `pqcota-ingest` prints "signature check: **not done** — no public key to verify with" on stderr. The CBOM path **says nothing** — it cannot be told apart from having verified (§2.6, a gap is not an absence) |
+| The docs | The command reference, the delegated-intake design and the examples all say it "verifies the signature (optional), the structure and the anchor", and that refusal reason (2) is "a signature mismatch (**when a verification key is configured**)". No key can be configured, so that condition is unreachable |
+| The required mode | `PQCOTA_REQUIRE_SIGNATURE=1` only blocks `IngestWith` (collector results). In the same deployment a CBOM still walks in — and whoever turned it on has no way to learn that |
+
+The notice and the docs were fixed in v0.9.2; this section records what is left.
+
+### 10.2 What blocks it is that the signature covers something else
+
+The `sign` package signs and verifies the **canonical bytes of a `CollectionResult`** (`sign.Canonical`).
+What the CBOM path receives is the **original CycloneDX bytes a user's CI produced**. We did not create it,
+so it is not a place to impose our canonicalization — which is why `verifySig` in `ImportCBOM` has the
+different type `func([]byte) bool`.
+
+So this does not end at "take a key from an environment variable". **What counts as the signature** has to
+be settled first.
+
+### 10.3 Three options
+
+**㉠ A detached signature file.** Verify `<cbom.json>.sig` (base64 ed25519) next to the input against the
+original bytes. The release bundle already has this shape (SHA256SUMS plus a detached signature) and the key
+can stay `PQCOTA_VERIFY_KEY`. Piping through stdin (`-`) leaves nowhere to put the file, so that case needs
+a flag.
+
+**㉡ The place CycloneDX defines.** Read the 1.6 `signature` field (JSF/JWS). Following the standard is the
+gain; JSON canonicalization (JCS) comes along with it, and whether CBOMkit fills that field has to be
+checked first.
+
+**㉢ Leave it to the transport and say so.** Instead of verifying, record the fact in the output — the same
+`unverified` count `pqcota-ingest` keeps. The smallest change in code, but it leaves the authenticity of the
+file vouched for by nobody, at a boundary whose whole premise is that only files cross it.
+
+### 10.4 Not settled
+
+**Whether `PQCOTA_REQUIRE_SIGNATURE=1` should block this entrance too.** Blocking fits the meaning of that
+variable, but a pipeline that turns it on today and feeds CBOMs in would start failing that day. Landing a
+way to verify first (㉠ or ㉡) and blocking after is the safer order.
+
+**Whose key it is.** A collector signature answers "that collector signed it" (§8); a CBOM comes from a
+user's CI, so the key is the **organization's CI key**. Mixing both into one `PQCOTA_VERIFY_KEY` reproduces
+the problem §8 describes — one leaked key accepts anything, a collector result or a CBOM alike.
