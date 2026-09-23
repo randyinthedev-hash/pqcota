@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -143,13 +146,52 @@ func TestProfilesHeader(t *testing.T) {
 	}
 }
 
-// manifest는 bash가 source해 그대로 쓴다(배열·연관배열 문법).
+// manifest는 bash가 source해 그대로 쓴다(배열·이름 찾기 함수).
 func TestManifest(t *testing.T) {
 	out := ManifestEnv(parse(t, sample))
-	for _, want := range []string{"NODES=(web-gw pay-app pay-db)", "EDGE_COUNT=2", `[web-gw]="Payments Web"`} {
+	for _, want := range []string{"NODES=(web-gw pay-app pay-db)", "EDGE_COUNT=2",
+		`web-gw) printf '%s\n' 'Payments Web' ;;`, `pay-app) printf '%s\n' 'pay-app' ;;`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the manifest is missing %q:\n%s", want, out)
 		}
+	}
+}
+
+// ★ manifest는 **macOS가 기본으로 주는 bash(3.2)에서도** source돼야 한다. 데모의 전제가
+// 「Docker만 있으면 된다」이므로 호스트에 새 bash를 요구하지 않는다. 연관 배열(4.0부터)을 내던
+// 동안 macOS에서는 첫 단계부터 `web: unbound variable`로 멈췄고, CI와 리눅스의 bash는 5라 그
+// 판에서는 드러나지 않았다. 그래서 문법으로 막는다.
+func TestManifestAvoidsNewerBash(t *testing.T) {
+	out := ManifestEnv(parse(t, sample))
+	for _, bad := range []string{"declare -A", "mapfile", "readarray", ",,}", "^^}"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("the manifest uses %q, which bash 3.2 does not have:\n%s", bad, out)
+		}
+	}
+}
+
+// 이름은 topology.yaml이 주는 자유 문구다. 인용을 빠뜨리면 `$`·따옴표가 든 이름에서 bash가
+// 다른 것을 낸다(치환·인용 깨짐). 실제로 source해서 낸 값을 대조한다.
+func TestManifestQuotesNames(t *testing.T) {
+	bash, err := exec.LookPath("bash")
+	if err != nil {
+		t.Skip("bash is not on this machine")
+	}
+	const name = `Pay's "DB" $HOME`
+	spec := "nodes:\n  - {id: pay-db, kind: java, name: '" + strings.ReplaceAll(name, "'", "''") + "'}\n"
+	dir := t.TempDir()
+	man := filepath.Join(dir, "manifest.env")
+	if err := os.WriteFile(man, []byte(ManifestEnv(parse(t, spec))), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// `set -euo pipefail`까지 같이 건다 — 실제 스크립트가 그렇게 source하고, 첨자를 산술식으로
+	// 읽는 결함이 드러난 자리도 `-u`였다.
+	out, err := exec.Command(bash, "-c", "set -euo pipefail; source '"+man+"'; human pay-db; human ghost").Output()
+	if err != nil {
+		t.Fatalf("sourcing the manifest failed: %v", err)
+	}
+	if got, want := string(out), name+"\nghost\n"; got != want {
+		t.Errorf("human printed %q, want %q", got, want)
 	}
 }
 

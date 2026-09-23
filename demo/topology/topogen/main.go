@@ -3,7 +3,7 @@
 // 한 명세로 네 산출물을 낸다(데모가 네 곳에 하드코딩하던 것):
 //
 //	docker-compose.yml  서비스(노드별 build target·args·networks) + ctl + pg
-//	manifest.env        bash 소스용 — NODES 배열 · EDGE_COUNT · 사람이 읽는 이름(HUMAN)
+//	manifest.env        bash 소스용 — NODES 배열 · EDGE_COUNT · 사람이 읽는 이름(human 함수)
 //	groups.ini          Ansible 그룹(openssl/java) + 엣지→traffic 시나리오
 //	profiles.csv        CMDB 프로필(pqcota-profile 형식)
 //
@@ -357,6 +357,11 @@ func ProfilesCSV(s *Spec) string {
 }
 
 // ManifestEnv — up.sh/demo.sh가 source해 바로 쓰는 bash 선언.
+//
+// **연관 배열(declare -A)을 쓰지 않는다.** macOS가 기본으로 주는 bash는 3.2이고 연관 배열은 4.0부터다.
+// 3.2는 `declare -A HUMAN=([web-gw]="…")`의 첨자를 산술식으로 읽어, `set -u`에 걸려
+// `web: unbound variable`로 멈춘다. 데모의 전제가 「Docker만 있으면 된다」이므로 호스트에 새 bash를
+// 요구하지 않는다. 이름 찾기는 case 함수로 낸다 — 3.2에도 있고, 모르는 id의 기본값도 같은 자리에 적힌다.
 func ManifestEnv(s *Spec) string {
 	ids := make([]string, 0, len(s.Nodes))
 	for _, n := range s.Nodes {
@@ -365,12 +370,19 @@ func ManifestEnv(s *Spec) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "NODES=(%s)\n", strings.Join(ids, " "))
 	fmt.Fprintf(&b, "EDGE_COUNT=%d\n", len(s.Edges))
-	b.WriteString("declare -A HUMAN=(\n")
+	b.WriteString("# human <node-id> — the display name. An id it does not know prints as itself.\n")
+	b.WriteString("human() {\n  case \"$1\" in\n")
 	for _, n := range s.Nodes {
-		fmt.Fprintf(&b, "  [%s]=\"%s\"\n", n.ID, n.displayName())
+		fmt.Fprintf(&b, "  %s) printf '%%s\\n' %s ;;\n", n.ID, shellSingle(n.displayName()))
 	}
-	b.WriteString(")\n")
+	b.WriteString("  *) printf '%s\\n' \"$1\" ;;\n  esac\n}\n")
 	return b.String()
+}
+
+// shellSingle — bash가 글자 그대로 읽는 단일 인용. 이름은 topology.yaml이 주는 자유 문구라
+// `$`·백틱·따옴표가 들어올 수 있다. 안의 `'`는 인용을 닫고 escape한 뒤 다시 연다.
+func shellSingle(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 func sortedKeys(m map[string]string) []string {

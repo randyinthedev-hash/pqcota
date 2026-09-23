@@ -21,7 +21,7 @@ GEN="$DEMO_DIR/.generated"; rm -rf "$GEN"; mkdir -p "$GEN"
 docker build -q --target topo-gen -t pqcota-demo/topo-gen -f "$DEMO_DIR/Dockerfile" "$ROOT" >/dev/null
 docker run --rm -v "$TOPO_FILE:/in.yaml:ro" -v "$GEN:/out" pqcota-demo/topo-gen /in.yaml /out
 DC=(docker compose -f "$GEN/docker-compose.yml")
-source "$GEN/manifest.env"   # NODES · EDGE_COUNT · HUMAN
+source "$GEN/manifest.env"   # NODES · EDGE_COUNT · human()
 
 echo "▶ 1/6 building images (OS, toolchain and workloads only — pqcota is not built here)…"
 echo "   the first run takes a few minutes to pull base images."
@@ -81,7 +81,7 @@ rm -rf "$(dirname "$KEY")"
 echo "▶ 6/6 building the node IP map and hosts.csv (resolves observed IPs to node names; defines discovery access)…"
 NODESJSON="$(mktemp)"
 HOSTSCSV="$(mktemp)"
-# HUMAN(사람이 읽는 이름)은 위에서 선언(기본) 또는 토폴로지 manifest에서 source됨 — pqcota-hosts가
+# 사람이 읽는 이름은 manifest.env의 human 함수가 준다(모르는 id면 id 그대로) — pqcota-hosts가
 # name 컬럼을 엔드포인트 인벤토리로 upsert(시각 구분).
 echo "node_id,name,ip,port,ssh_user,ssh_key" > "$HOSTSCSV"
 {
@@ -98,7 +98,7 @@ echo "node_id,name,ip,port,ssh_user,ssh_key" > "$HOSTSCSV"
     first=0
     echo "   $n = ${allips% }" >&2
     # hosts.csv: 접근 비밀(ssh_key)은 여기(사용자 파일)에만 — pqcota 인벤토리엔 적재 안 함(§1.5).
-    echo "$n,${HUMAN[$n]:-$n},$ip,22,root,/work/id_demo" >> "$HOSTSCSV"
+    echo "$n,$(human "$n"),$ip,22,root,/work/id_demo" >> "$HOSTSCSV"
   done
   echo ']'
 } > "$NODESJSON"
