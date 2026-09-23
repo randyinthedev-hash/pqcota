@@ -99,9 +99,9 @@ CycloneDX를 수신·검증·적재한다. 부적합은 거부하고 저장하�
 
 `env PQCOTA_DSN`이 있으면 Postgres에 영속하고, 없으면 인메모리 요약만 낸다.
 
-> **거부는 판단이 아니라 결정론적 검증이다.** 거부 사유는 지금 하나다: **구조 부적합**(malformed JSON · CycloneDX 아님(`bomFormat`) · 미지원 `specVersion`). `ImportCBOM`은 서명 검증을 첫 관문으로 두지만 이 명령에는 키를 줄 자리가 없어 그 관문이 서지 않는다 — 돌릴 때마다 그 사실을 stderr로 알린다([검토 중인 설계 §10](../../docs/under-review.md)). 둘 다 기계적으로 판정된다. 반대로 `target_node_id` 바인딩이 없는 것은 **거부가 아니라** 스코프 판정으로 라우팅되고, `pqcota:` 프로퍼티가 없는 자산은 **거부가 아니라** 강도 미상으로 파싱만 안 된다. "못 믿을 것은 버리되, 안 본 것을 없다고는 안 한다".
+> **거부는 판단이 아니라 결정론적 검증이다.** 거부 사유는 지금 하나다: **구조 부적합**(malformed JSON · CycloneDX 아님(`bomFormat`) · 미지원 `specVersion`). `ImportCBOM`은 서명 검증을 첫 관문으로 두지만 이 명령에는 키를 줄 자리가 없어 그 관문이 서지 않고, 돌릴 때마다 그 사실을 stderr로 알린다([검토 중인 설계 §10](../../docs/under-review.md)). 둘 다 기계적으로 판정된다. 반대로 `target_node_id` 바인딩이 없는 것은 **거부가 아니라** 스코프 판정으로 라우팅되고, `pqcota:` 프로퍼티가 없는 자산은 **거부가 아니라** 강도 미상으로 파싱만 안 된다. "못 믿을 것은 버리되, 안 본 것을 없다고는 안 한다".
 
-`ImportCBOM`이 구조·앵커를 검증한다(서명 관문은 미배선 — 위 주의). 통과분은 관측 레인(`detection_method=source/artifact`)으로 위와 같은 히스토리에 수렴한다. 어댑터: `pkg/inventory/ingest`.
+`ImportCBOM`이 구조·앵커를 검증한다(서명 관문은 미배선. 위 주의). 통과분은 관측 레인(`detection_method=source/artifact`)으로 위와 같은 히스토리에 수렴한다. 어댑터: `pkg/inventory/ingest`.
 
 > **CI 파이프라인 주입**: 중간 파일 없이 CBOMkit 출력을 바로 흘려보낼 수 있다(GitHub Actions·GitLab CI 등):
 > ```bash

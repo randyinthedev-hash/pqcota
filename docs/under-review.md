@@ -706,7 +706,7 @@ PE, fork 판별은 그대로」인 것과 같은 갈래다.
 ## 10. CBOM 수신에는 서명 검증 배선이 없다
 
 `pqcota-cbom-ingest`는 **서명을 검증하지 않는다.** 검증기는 있고 부르는 자리도 있는데, 넘기는 값이
-언제나 `nil`이다(`inventory/cmd/pqcota-cbom-ingest/main.go` — `ingest.IngestCBOM(raw, nodeID, nil, …)`).
+언제나 `nil`이다(`inventory/cmd/pqcota-cbom-ingest/main.go`의 `ingest.IngestCBOM(raw, nodeID, nil, …)`).
 §8과 같은 부류다: 규칙은 코드에 있고 제품 경로가 부르지 않는다.
 
 ### 10.1 무엇이 비어 있나
@@ -719,9 +719,9 @@ PE, fork 판별은 그대로」인 것과 같은 갈래다.
 
 | 어긋난 것 | 지금 |
 |---|---|
-| 알림 | `pqcota-ingest`는 「signature check: **not done** — no public key to verify with」를 stderr로 낸다. CBOM 경로는 **아무 말도 하지 않는다** — 검증한 것과 구별되지 않는다(§2.6 갭 ≠ 부재) |
+| 알림 | `pqcota-ingest`는 「signature check: **not done**: no public key to verify with」를 stderr로 낸다. CBOM 경로는 **아무 말도 하지 않는다**. 그래서 검증한 것과 구별되지 않는다(§2.6 갭 ≠ 부재) |
 | 문서 | 커맨드 레퍼런스·위임 수신 설계·examples가 「서명(옵션)·구조·앵커를 검증한다」, 「거부 사유 (2) 서명 검증 실패(**검증 키가 설정된 경우**)」라고 적는다. 키를 설정할 방법이 없으니 그 조건은 도달하지 않는다 |
-| 필수 모드 | `PQCOTA_REQUIRE_SIGNATURE=1`은 `IngestWith`(collector 결과)만 막는다. 같은 배포에서 CBOM은 그대로 들어온다 — 「서명 없이는 안 받는다」고 켜 둔 쪽이 그것을 알 방법이 없다 |
+| 필수 모드 | `PQCOTA_REQUIRE_SIGNATURE=1`은 `IngestWith`(collector 결과)만 막는다. 같은 배포에서 CBOM은 그대로 들어온다. 「서명 없이는 안 받는다」고 켜 둔 쪽이 그것을 알 방법이 없다 |
 
 알림과 문서는 v0.9.2에서 고쳤다(이 문서가 남은 것을 적는다).
 
@@ -742,7 +742,7 @@ PE, fork 판별은 그대로」인 것과 같은 갈래다.
 **㉡ CycloneDX가 정한 자리.** 1.6의 `signature`(JSF/JWS) 필드를 읽는다. 표준을 따르는 이점이 있지만,
 JSON 정규화(JCS)가 걸려 들어오고 CBOMkit이 그 필드를 채우는지부터 확인해야 한다.
 
-**㉢ 전송에 맡기고 그렇게 적는다.** 검증하지 않는 대신 그 사실을 산출물에 남긴다 —
+**㉢ 전송에 맡기고 그렇게 적는다.** 검증하지 않는 대신 그 사실을 산출물에 남긴다:
 `unverified` 건수를 세는 지금 방식(`pqcota-ingest`)을 CBOM 쪽에도 두는 것이다. 코드 변경은 가장
 작지만, 「위임 수신은 파일만 오간다」는 경계에서 파일의 진정성을 아무도 보증하지 않는 상태가 남는다.
 
@@ -753,5 +753,5 @@ JSON 정규화(JCS)가 걸려 들어오고 CBOMkit이 그 필드를 채우는지
 막는 순서가 안전하다.
 
 **키를 누구 것으로 보나.** collector 서명은 「그 collector가 서명했다」를 묻는데(§8), CBOM은 사용자 CI가
-낸 것이라 **조직의 CI 키**다. 같은 `PQCOTA_VERIFY_KEY`에 섞으면 §8이 지적한 문제가 여기서도 생긴다 —
+낸 것이라 **조직의 CI 키**다. 같은 `PQCOTA_VERIFY_KEY`에 섞으면 §8이 지적한 문제가 여기서도 생긴다.
 키 하나가 새면 collector 결과든 CBOM이든 아무것이나 받는다.
