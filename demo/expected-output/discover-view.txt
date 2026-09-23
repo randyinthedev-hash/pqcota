@@ -4,8 +4,8 @@
 
 ──────── ① discovered assets (per node) ────────
   pay-app
-    • JCA provider chain: SUN,SunRsaSign,SunEC,SunJSSE,SunJCE,SunJGSS,SunSASL,XMLDSig,SunPCSC,JdkLDAP,JdkSASL,SunPKCS11,BC [EVIDENCE_STRENGTH_CONFIRMED]
     • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+    • JCA provider chain: SUN,SunRsaSign,SunEC,SunJSSE,SunJCE,SunJGSS,SunSASL,XMLDSig,SunPCSC,JdkLDAP,JdkSASL,SunPKCS11,BC [EVIDENCE_STRENGTH_CONFIRMED]
   pay-db
     • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
     • OpenSSL  libssl.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]

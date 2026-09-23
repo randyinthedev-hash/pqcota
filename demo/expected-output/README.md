@@ -32,7 +32,7 @@ attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README
 - **중앙 인벤토리(5)**: `▸ Payments DB (ip:22) │ Payments DB · production · db · owner=DBA team`처럼 **엔드포인트·프로필 헤더** + `@앱` 표시. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 모두에 걸림**.
 - **엣지의 앱(5)**: 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
   `@/usr/bin/openssl(exe-path)`, **못 잡으면 `@?`**입니다. 이 데모에서는 네 엣지 중 셋이 `@?`로 나오고
-  사유가 함께 찍힙니다. *"socket closed between capture and lookup: short-lived connections are missed(3)"*. 데모 트래픽이
+  사유가 함께 찍힙니다. `socket closed between capture and lookup — short-lived connections are missed(3)`. 데모 트래픽이
   전부 짧은 연결이라 그렇습니다. 그중 하나를 `pqcota-declare-attribution`으로 지정하면
   `@batch-runner.service(declared)`로 바뀌고, **관측이 이미 잡은 칸은 그대로입니다.**
 - **프로비저닝(6)**: 확정 계획→L2 플레이북 + 롤백 레코드: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
