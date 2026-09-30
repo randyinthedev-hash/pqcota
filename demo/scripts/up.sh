@@ -61,7 +61,7 @@ docker exec pqcota-ctl bash -lc '
     $D/pqcota-inventory/inventory/cmd/pqcota-profile $D/pqcota-inventory/inventory/cmd/pqcota-declare $D/pqcota-inventory/inventory/cmd/pqcota-prune \
     $D/pqcota-inventory/inventory/cmd/pqcota-declare-attribution \
     $D/pqcota-provisioning/provisioning/cmd/pqcota-provision $D/pqcota-provisioning/provisioning/cmd/pqcota-records $D/pqcota-provisioning/provisioning/cmd/pqcota-approve \
-    $D/pqcota-discovery/discovery/cmd/pqcota-keygen
+    $D/pqcota-common/cmd/pqcota-keygen
   echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # collectors to carry onto the nodes"
   CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/" \
     $D/pqcota-discovery/discovery/cmd/pqcota-nodescan $D/pqcota-discovery/discovery/cmd/pqcota-netcap $D/pqcota-discovery/discovery/cmd/pqcota-jvmscan

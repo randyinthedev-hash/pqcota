@@ -115,7 +115,7 @@ types with `go get` alone. It is regenerated only when a proto changes (see the 
 
 ```bash
 D=github.com/randyinthedev-hash
-go build -o bin/ $D/pqcota-discovery/discovery/cmd/... $D/pqcota-inventory/inventory/cmd/... $D/pqcota-provisioning/provisioning/cmd/...
+go build -o bin/ $D/pqcota-common/cmd/... $D/pqcota-discovery/discovery/cmd/... $D/pqcota-inventory/inventory/cmd/... $D/pqcota-provisioning/provisioning/cmd/...
 ```
 
 **② The collectors that go on the target nodes** — built statically **for the node's OS and arch**.

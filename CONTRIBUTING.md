@@ -11,7 +11,7 @@ For developers who want to **fork·extend·contribute** to pqcota. Users who jus
 
 You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refuses to build) and
 **buf** + `protoc-gen-go`·`protoc-gen-go-grpc`. Add **JDK 11+** if you touch the JVM collector (optional — without it only the sidecar build is skipped).
-Once the repo builds, the [examples](examples/) just run (only the JVM and OpenSSL integration
+Once the repo builds, the [examples](examples/README.md) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
 pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` until they are tagged, and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [README](README.md#build).
@@ -56,15 +56,15 @@ Also read [the ripple checklist for contract changes](https://github.com/randyin
 
 | Repository | What |
 |---|---|
-| [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | Contract SSOT (protobuf; the namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1`), the **committed** generated Go code in `gen/`, and the shared logic in `pkg/kernel` (registry·posture·scope·machineid·sign·completeness) and `pkg/org` |
+| [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | Contract SSOT (protobuf; the namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1`), the **committed** generated Go code in `gen/`, the shared logic in `pkg/kernel` (registry·posture·scope·machineid·sign·completeness) and `pkg/org`, and `cmd/pqcota-keygen` (used by both collector signing and plan approval) |
 | [`pqcota-inventory`](https://github.com/randyinthedev-hash/pqcota-inventory) | The inventory stage: `pkg/inventory` (history·normalize·ingest·resultio·declaration) and the commands in `inventory/cmd` |
 | [`pqcota-discovery`](https://github.com/randyinthedev-hash/pqcota-discovery) | The discovery stage: `discovery/collectors` (reference collectors), `discovery/cmd`, the reference Ansible playbook, `pkg/discovery/procs` |
 | [`pqcota-provisioning`](https://github.com/randyinthedev-hash/pqcota-provisioning) | The provisioning stage: `pkg/provisioning` and the commands in `provisioning/cmd` |
-| `pqcota` (this repository) | `demo/` (Docker end-to-end demo), `examples/` (per-stage runnable examples), `tools/` (the gates that measure all five repos), `test/crossstage/` (tests that span stages), the release workflow |
+| `pqcota` (this repository) | `demo/` (Docker end-to-end demo), `tools/` (the gates that measure all five repos), `test/crossstage/` (tests that span stages), the release workflow. The per-stage runnable examples live in the stage repositories (`examples/` in each); [examples/README.md](examples/README.md) here is the signpost |
 
 **Direction of dependence.** `pqcota-common` imports no other module; `pqcota-inventory` imports only common; `pqcota-discovery` and `pqcota-provisioning` import common and inventory and never each other. Inside discovery, the collectors import only common and `pkg/discovery/procs`, because they are built into binaries that go onto the observed nodes. `make check-deps` enforces this (rules in `tools/checkdeps/rules.tsv`).
 
-To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)·[inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/cmd/README.md)·[provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/cmd/README.md)).
+To **actually run the commands, use the examples** ([signpost](examples/README.md); each stage repository has an `examples/` with a `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)·[inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/cmd/README.md)·[provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/cmd/README.md)).
 
 ## Contract-first
 

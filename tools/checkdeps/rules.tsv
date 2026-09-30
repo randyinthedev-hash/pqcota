@@ -10,6 +10,7 @@
 # 단계 방향: common ← inventory ← discovery, inventory ← provisioning. collector는 노드로 나가는 바이너리라
 # common과 procs만 쓴다.
 class	gen/	common
+class	cmd/	common
 class	pkg/kernel/	common
 class	pkg/org/	common
 class	pkg/discovery/procs/	procs
