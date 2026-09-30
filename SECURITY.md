@@ -1,43 +1,40 @@
-한국어 · [English](SECURITY.en.md)
+# Security Policy
 
-# 보안 정책 (Security Policy)
 
-`pqcota`는 기업 내부망의 암호 자산을 관측·정규화하고 전환물을 생성하는 도구다. 취급하는 데이터(엔드포인트·암호 자산 인벤토리)와 요구 권한(collector의 패킷 관측 등) 때문에 보안 신고를 진지하게 다룬다.
+`pqcota` is a tool that observes and normalizes an enterprise intranet's crypto assets and generates migration artifacts. Because of the data it handles (endpoint and crypto-asset inventory) and the privileges it requires (packet observation by the collector, etc.), we take security reports seriously.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
+## Supported versions
 
-## 지원 버전
+Security fixes land on **`main` and the latest release**. They are not backported to earlier tags — a solo project cannot maintain several branches, and pretending to would leave users believing they have a fix that never reached them.
 
-보안 수정은 **`main`과 최신 릴리스**에 반영한다. 지난 태그로는 백포트하지 않는다. 1인 개발이라 여러 갈래를 유지할 수 없고, 유지하는 척하면 쓰는 쪽이 안 온 수정을 왔다고 여기게 된다.
-
-| 버전 | 보안 수정 |
+| Version | Security fixes |
 |---|---|
 | `main` | ✅ |
-| 최신 릴리스 | ✅: 다음 릴리스로 나간다. 오래 둘 수 없는 결함이면 패치 릴리스를 따로 낸다 |
-| 그 이전 태그 | ❌: 최신으로 올린다 |
+| the latest release | ✅ — it goes out in the next release; a defect that cannot sit there gets its own patch release |
+| earlier tags | ❌ — upgrade to the latest |
 
-## 취약점 신고
+## Reporting a vulnerability
 
-**공개 이슈·PR·토론으로 올리지 않는다.** 다음 비공개 경로로 알린다:
+**Do not open a public issue, PR, or discussion.** Use one of these private channels:
 
-1. **GitHub 비공개 신고 (권장)**: 리포 **Security 탭 → "Report a vulnerability"**. 조율된 공개(coordinated disclosure) 절차로 진행된다.
-2. 위가 불가하면 **메인테이너에게 직접** 연락한다. <randyinthedev@gmail.com>. 제목에 `[security]`를 달아주면 빨리 눈에 띈다.
+1. **GitHub private report (preferred)** — the repo's **Security tab → "Report a vulnerability"**. This follows a coordinated-disclosure process.
+2. If that isn't possible, **contact the maintainer directly** — <randyinthedev@gmail.com>. Prefixing the subject with `[security]` helps it surface faster.
 
-신고에 다음을 담아주면 분류가 빠르다: 영향 컴포넌트(collector/CLI/라이브러리), 재현 절차, 영향(권한 상승·정보 노출·무결성 훼손 등), 가능하면 PoC.
+Including the following speeds up triage: affected component (collector/CLI/library), reproduction steps, impact (privilege escalation·information disclosure·integrity compromise, etc.), and a PoC if possible.
 
-> **취약점이 아닌 것은 공개 이슈로 여는 것이 맞다.** 버그·질문·제안은 **이 리포의 이슈**로 열면 된다. 숨길 이유가 없고, 공개된 논의가 다음 사람에게 남는다. 비공개를 요구하는 것은 **고치기 전에 알려지면 사용자가 공격당할 수 있는 것**뿐이다.
+> **Anything that isn't a vulnerability belongs in a public issue.** Bugs, questions, and proposals go to **this repo's issues** — there's nothing to hide, and an open discussion stays for the next person. Private reporting is only for **things that could expose users to attack if known before a fix**.
 
-## 응대
+## Response
 
-1인 개발이라 **best-effort**로 응대한다. 접수 확인, 재현·평가 후 수정 계획을 신고자와 조율한다. SLA는 두지 않되, 유효한 신고는 다른 작업보다 앞에 둔다.
+As a solo project, response is **best-effort** — acknowledge receipt, reproduce and assess, then coordinate a fix plan with the reporter. There is no SLA, but a valid report goes ahead of other work.
 
-## 보안 범위 (이 프로젝트 특성)
+## Security scope (specific to this project)
 
-특히 다음은 보안 이슈로 본다:
+The following in particular are treated as security issues:
 
-- **접근 비밀 유출**: 접속 키·계정은 런타임 전용 파일에만 실리고 인벤토리(Postgres)에는 엔드포인트만 적재한다(비밀 미영속, §1.5). 비밀이 영속 저장소·로그·아티팩트로 새면 취약점이다.
-- **서명·무결성**: 히스토리 레코드의 ed25519 서명 우회, 위·변조 수용.
-- **collector 권한 오용**: 패킷 관측(`CAP_NET_RAW`)·프로세스 스캔 권한을 넘어선 동작, 관측 대상의 평문 페이로드 수집(collector는 핸드셰이크만 복호화 없이 관측한다).
-- **생성물 주입**: 관측·계약 입력이 생성되는 Ansible 플레이북·config에 악성 내용으로 흘러드는 경로.
+- **Access-secret leakage** — connection keys/accounts live only in a runtime-only file, and only endpoints are ingested into the inventory (Postgres); secrets are not persisted. If a secret leaks into a persistent store, logs, or artifacts, that is a vulnerability.
+- **Signing·integrity** — bypassing the ed25519 signature on history records, or accepting forgery/tampering.
+- **Collector privilege misuse** — actions beyond the packet-observation (`CAP_NET_RAW`) and process-scan privileges, or collecting the observed target's plaintext payloads (we only observe handshakes, without decryption).
+- **Artifact injection** — paths where observed or contract inputs flow malicious content into the generated Ansible playbooks/config.
 
-무엇이 범위 밖인지는 신고할 때 함께 논의한다(예: 사용자가 직접 실행하는 플레이북의 운영 환경 문제는 이 도구가 아니라 실행 측 책임).
+What is out of scope is discussed together at report time (e.g., operational problems in the environment where the user runs the playbook themselves are the execution side's responsibility, not this tool's).

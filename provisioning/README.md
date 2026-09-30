@@ -1,126 +1,118 @@
-한국어 · [English](README.en.md)
+# Provisioning — generating migration artifacts (stage 3)
 
-# Provisioning: 전환물 생성 (3단계)
 
-**확정된 계획**(`FinalizedPlan`)을 입력으로 받아 PQC 전환 아티팩트를 생성한다. config 조각, Ansible 플레이북(**어디까지 갈지 고른다**. L1 모듈 배치 · L2 config까지 · L3 활성화·재시작까지, **적용·롤백 양방향**), 되돌림 근거(before 캡처·롤백 레코드)를 만든다.
+Takes a **finalized plan** (`FinalizedPlan`) as input and generates PQC migration artifacts — config fragments, Ansible playbooks (**you choose how far they go** — L1 stages the module, L2 adds the config, L3 activates and restarts; **both apply and rollback**), and the basis for undoing (before capture, rollback records).
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
+What to change and how to undo it is **decided deterministically by the generator**; running the resulting playbook is done by the user's own Ansible. The plan is **written by the user** → [samples and fields](../examples/provisioning/plans/README.md).
 
-무엇을 바꿀지·어떻게 되돌릴지는 **생성기가 결정론적으로 정하고**, 만들어진 플레이북을 돌리는 것은 사용자의 Ansible이다. 계획은 **사용자가 작성한다** → [견본·필드](../examples/provisioning/plans/README.md).
+> **Scope** — two runtimes: **openssl** and **jca**. Anything else produces no artifact and says so (`# (unknown runtime)`). The output assumes POSIX file placement (staging plus Ansible `copy`/`absent`), so **the nodes are Linux**. CNG provisioning is [planned for v0.10.0](../RELEASE_NOTES.md#roadmap--upcoming-releases-planned).
 
-> **대상 범위**: 런타임은 **openssl·jca** 둘이다. 그 밖은 아티팩트를 만들지 않고 그렇게 적는다(`# (unknown runtime)`). 생성물이 POSIX 파일 배치(스테이징 + Ansible `copy`·`absent`)를 전제하므로 **노드는 리눅스**다. CNG 프로비저닝은 [v0.10.0 계획](../RELEASE_NOTES.md#로드맵-예정-릴리스-계획)이다.
-
-## 한눈에
+## At a glance
 
 ```mermaid
 flowchart LR
-    P["plan.json<br/>확정 계획"] --> G["pqcota-provision"] --> Y["provision.yml"]
-    Y --> A["사용자의<br/>ansible-playbook"] --> M["머신에 반영"]
+    P["plan.json<br/>finalized plan"] --> G["pqcota-provision"] --> Y["provision.yml"]
+    Y --> A["the user's<br/>ansible-playbook"] --> M["applied on the machine"]
 ```
 
-**도구는 플레이북과 config를 생성하고 되돌릴 근거를 남긴다.** 실제 적용은 사용자가 자기 Ansible로 돌린다.
+**The tool generates the playbook and the config, and leaves behind the basis for undoing.** The actual application is run by the user with their own Ansible.
 
 <details>
-<summary><b>전체 절차: 게이트·런타임 분기·레벨·롤백까지 (펼치기)</b></summary>
+<summary><b>The full procedure — gate, runtime branch, level, rollback (expand)</b></summary>
 
 ```mermaid
 flowchart TD
-    P["plan.json<br/>(확정 계획)"] --> G{"게이트<br/>Executable()"}
-    G -- "FINALIZED 아님<br/>서명 없음<br/>조치 없음" --> X["실행 거부"]
-    G -- 통과 --> R["조치별 아티팩트 렌더<br/>Render()"]
+    P["plan.json<br/>(finalized plan)"] --> G{"gate<br/>Executable()"}
+    G -- "not FINALIZED<br/>no signature<br/>no remediation" --> X["execution refused"]
+    G -- passes --> R["render artifacts per remediation<br/>Render()"]
     R --> B{"crypto_runtime"}
-    B -- openssl --> O["openssl.cnf 조각"]
-    B -- jca --> J["java.security 조각"]
+    B -- openssl --> O["openssl.cnf fragment"]
+    B -- jca --> J["java.security fragment"]
     O --> L{"automation_level"}
     J --> L
-    L -- L1 --> S1["플레이북: 모듈 배치만"]
-    L -- L2 --> S2["플레이북: 모듈 + config 조각 배치"]
-    L -- L3 --> S3["플레이북: 배치 + activation 훅<br/>pre → 배치 → activate → restart"]
-    S1 --> U["사용자가 ansible-playbook 실행"]
+    L -- L1 --> S1["playbook: staging only"]
+    L -- L2 --> S2["playbook: module + config fragment staged"]
+    L -- L3 --> S3["playbook: staging + activation hook<br/>pre → stage → activate → restart"]
+    S1 --> U["the user runs ansible-playbook"]
     S2 --> U
     S3 --> U
-    U --> M["머신에 파일이 놓인다<br/>(L3면 활성화·재시작까지)"]
-    R -.-> RC["before 캡처 → 롤백 레코드<br/>(--dsn 지정 시)"]
+    U --> M["files land on the machine<br/>(at L3, activation and restart too)"]
+    R -.-> RC["before capture → rollback record<br/>(when --dsn is given)"]
 ```
 
 </details>
 
-## 무엇으로 이루어지나
+## What it consists of
 
-| 요소 | 무엇 |
+| Piece | What it is |
 |---|---|
-| **입력**: 확정 계획 | 어느 노드의 무엇을 어떤 provider로 바꿀지 적은 JSON. 사용자가 쓴다 → [견본·필드](../examples/provisioning/plans/README.md) |
-| **생성기**: `pqcota-provision` | 계획을 읽어 config 조각과 Ansible 플레이북을 만든다 |
-| **산출**: 플레이북 | 적용용 하나, 되돌림용 하나. 표준 Ansible이라 자기 도구로 돌린다 |
-| **근거**: 롤백 레코드 | `--dsn`을 주면 조치 *전* 상태를 append-only로 남긴다 → [`pqcota-records`](cmd/README.md) |
+| **Input** — the finalized plan | JSON stating which node's what is to be changed to which provider. The user writes it → [samples and fields](../examples/provisioning/plans/README.md) |
+| **Generator** — `pqcota-provision` | reads the plan and produces config fragments and Ansible playbooks |
+| **Output** — playbooks | one to apply, one to undo. Standard Ansible, so you run them with your own tooling |
+| **Basis** — rollback records | given `--dsn`, the state *before* the remediation is recorded append-only → [`pqcota-records`](cmd/README.md) |
 
-## 간단히 써보기
+## Try it quickly
 
 ```bash
-# ⓪ 승인 — 판정을 끝낸 계획(IN_REVIEW)을 FINALIZED로 올리며 서명하고, 검증할 공개키를 등록한다.
-#    확인할 키가 없으면 생성기가 거절한다. 승인은 책임의 소재라 확인되지 않으면
-#    그 자리가 비어 있는 것과 같기 때문이다.
-eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY(개인) · VERIFY_KEY(공개)
+# ⓪ approve — raise the judged plan (IN_REVIEW) to FINALIZED while signing it, and register the key it will be checked with.
+#    With no key to check, the generator refuses: an approval is where responsibility sits,
+#    and one nobody can verify leaves that place empty.
+eval "$(pqcota-keygen | grep '^PQCOTA_')"          # SIGN_KEY (private) · VERIFY_KEY (public)
 PQCOTA_APPROVAL_KEY="$PQCOTA_SIGN_KEY" \
   pqcota-approve --approver reviewer-1 plan.json > plan.signed.json
 export PQCOTA_APPROVAL_KEYS="reviewer-1=$PQCOTA_VERIFY_KEY"
 
-# ① 생성 — 승인된 계획에서 플레이북을 만든다
+# ① generate — build a playbook from the approved plan
 pqcota-provision --level l2 plan.signed.json > provision.yml
 
-# ② 적용 — 디스커버리에서 쓰던 targets.ini를 그대로 쓴다
+# ② apply — reuse the same targets.ini you used for discovery
 ansible-playbook -i targets.ini provision.yml
 
-# ③ 되돌림 — 같은 계획으로 역방향 플레이북을 만들어 돌린다
+# ③ undo — generate the reverse playbook from the same plan and run it
 pqcota-provision --level l2 --rollback plan.signed.json > provision-rollback.yml
 ansible-playbook -i targets.ini provision-rollback.yml
 ```
 
-옵션 전체와 provider 모듈을 어디 두는지는 [provisioning/cmd](cmd/README.md). 실행 전에 **계획이 게이트를 통과해야 한다**. `status`가 `PLAN_STATUS_FINALIZED`가 아니거나, 승인 서명이 없거나, 조치가 하나도 없으면 아무것도 생성되지 않는다. **판정을 끝낸 계획은 `IN_REVIEW`로 오고 `pqcota-approve`가 `FINALIZED`로 올린다.** 그래서 승인을 건너뛴 계획은 상태부터 걸린다.
+All options, and where provider modules go → [provisioning/cmd](cmd/README.md). Before anything runs, **the plan must pass the gate** — if `status` is not `PLAN_STATUS_FINALIZED`, or there are no approval signatures, or there is not a single remediation, nothing is generated. **A judged plan arrives as `IN_REVIEW` and `pqcota-approve` raises it to `FINALIZED`** — so a plan that skipped approval is caught by its status first.
 
-## 결과를 가르는 두 축
+## The two axes that decide the output
 
-**`kind`가 "무엇을", `automationLevel`이 "어디까지"**를 정한다. 둘의 조합이 산출물을 결정한다.
+**`kind` decides "what", `automationLevel` decides "how far".** Their combination determines the output.
 
-| `kind` | 그 조치로 놓이는 것 (L1) | (L2) | (L3) |
+| `kind` | What that remediation stages (L1) | (L2) | (L3) |
 |---|---|---|---|
-| `CONFIG_ONLY` | 없음. **L2부터 나온다** | config 조각 | config 조각 + **활성화·재시작** |
-| `PROVIDER_INJECT` | provider 모듈 | provider 모듈 + config 조각 | 모듈 + config 조각 + **활성화·재시작** |
-| `FORK_REPLACE`·`PROXY_FRONT`·`REBUILD`·`JDK_UPGRADE`·`APP_RECONFIG`·`DECOMMISSION` | 없음. **어느 레벨에서도** | 〃 | 〃 |
+| `CONFIG_ONLY` | nothing — **it starts at L2** | config fragment | config fragment + **activation and restart** |
+| `PROVIDER_INJECT` | provider module | provider module + config fragment | module + config fragment + **activation and restart** |
+| `FORK_REPLACE`·`PROXY_FRONT`·`REBUILD`·`JDK_UPGRADE`·`APP_RECONFIG`·`DECOMMISSION` | nothing — **at any level** | 〃 | 〃 |
 
-첫 줄이 L1에서 비는 것과 마지막 줄이 비는 것은 **뜻이 다르다.** 첫 줄은 "아직"이고 마지막 줄은 "영영"이다. 그래서 마지막 줄만 **왜 없는지가 플레이북에 주석으로 남는다.**
+The first row being empty at L1 and the last row being empty **mean different things.** The first is "not yet"; the last is "never" — which is why only the last row leaves **a comment in the playbook explaining why nothing is there.**
 
-활성화·재시작 명령은 계획의 `activation` 훅에서 온다. 훅이 없으면 L3이어도 그 단계는 생성되지 않는다.
+The activation and restart commands come from the plan's `activation` hook. Without the hook, that step is not generated even at L3.
 
 ```
-    # 조치 a2(REMEDIATION_KIND_FORK_REPLACE): config로 배포 불가 — 수동 단계(§4.3 레거시를 건드리는 조치)
+    # remediation a2 (REMEDIATION_KIND_FORK_REPLACE): cannot be deployed via config — manual step
 ```
 
 
-## 잘 안 될 때: 증상과 원인
+## When it doesn't work — symptom and cause
 
-| 증상 | 원인 |
+| Symptom | Cause |
 |---|---|
-| `plan not finalized: 프로비저닝 실행 거부` | `status`가 FINALIZED가 아니거나 `approvalSignatures`가 비었다. 대개 **`pqcota-approve`를 건너뛴 것**이다. 판정을 끝낸 계획은 `IN_REVIEW`로 오고 승인이 올린다 |
-| `refusing to approve: … inconsistent with its own status` | `IN_REVIEW`인데 승인이나 확정 시각이 있거나, `FINALIZED`인데 둘 중 하나가 없다. 상태만 손으로 바꿔 넣은 계획이다 |
-| 플레이북에 config 조각이 없다 | `--level l1`이다. config는 L2부터 |
-| 조각에 `Groups`/`namedGroups`가 주석으로만 있다 | `targetAlgorithm`이 KEM이 아니거나 인식되지 않았다 |
-| 플레이북에 조치가 주석으로만 있다 | 그 `kind`는 config로 배포할 수 없다(포크 교체·재빌드 등) |
-| provider 클래스명이 `<…확인>`으로 나온다 | `providerChoice`가 BC 계열이 아니다. 정식 클래스명으로 교체해야 한다 |
-| `Could not find or access '…so'` (실행 시) | 모듈 소스를 못 찾았다. `files/`에 두거나 `-e pqcota_module_src_<이름>=` 지정 |
-| 여러 provider인데 전부 같은 파일이 배치됐다 | 전역 `pqcota_module_src`를 썼다. provider별 변수나 `files/` 관례로 |
-| 적용했는데 여전히 고전으로 협상된다 | 조각이 **배치만** 됐고 참조·재시작(L3)이 안 됐거나, JCA라면 provider 우선순위가 뒤에 있다 |
+| `plan not finalized — provisioning refused` | `status` is not FINALIZED, or `approvalSignatures` is empty. Usually **`pqcota-approve` was skipped** — a judged plan arrives as `IN_REVIEW` and approval raises it |
+| `refusing to approve: … inconsistent with its own status` | `IN_REVIEW` with an approval or a `finalized_at`, or `FINALIZED` missing either. The status was edited in by hand |
+| the playbook has no config fragment | you are on `--level l1`. Config starts at L2 |
+| the fragment has `Groups`/`namedGroups` only as a comment | `targetAlgorithm` is not a KEM, or was not recognized |
+| the playbook has the remediation only as a comment | that `kind` cannot be deployed via config (fork replacement, rebuild, and so on) |
+| the provider class name comes out as `<…confirm>` | `providerChoice` is not in the BC family — replace it with the proper class name |
+| `Could not find or access '…so'` (at run time) | the module source was not found — put it in `files/` or pass `-e pqcota_module_src_<name>=` |
+| several providers but the same file was staged for all | you used the global `pqcota_module_src` — use per-provider variables or the `files/` convention |
+| applied, but the negotiation is still classical | the fragment was **only staged** and never referenced or restarted (L3), or, on JCA, the provider sits late in the priority order |
 
-## 더 알아야 한다면
+## This folder
 
-버전·provider 상황에 따라 무엇이 생성되는지, 머신 어디에 놓이는지, 활성화·되돌림이 어떻게 대칭인지 → **[프로비저닝 설계](design.md)**.
+- [`cmd/`](cmd) — entry points for generation and query → [command map](cmd/README.md)
 
-## 이 폴더
+## See also
 
-- [`cmd/`](cmd): 생성·조회 실행 진입점 → [커맨드 지도](cmd/README.md)
-- **설계 문서**: [프로비저닝 설계](design.md) · [테스트케이스](testcases.md)
-
-## 더 보기
-
-- 최소 실행 예제: [examples/provisioning](../examples/provisioning)
-- 종단 시연: [demo](../demo)
+- Minimal runnable examples: [examples/provisioning](../examples/provisioning)
+- End-to-end demo: [demo](../demo)

@@ -1,117 +1,114 @@
-한국어
+# Compatibility policy: what we do not break
 
-# 호환성 정책: 무엇을 깨지 않는가
+This repo publishes a contract, and other people consume it. So we write down **what we have promised not to break**.
+Where a gate enforces the promise, that is written down too. A rule without a check drifts sooner or later.
 
-이 리포는 계약을 내놓고 남이 그것을 소비한다. 그래서 **무엇을 깨지 않기로 했는지**를 적어 둔다.
-지키는 방법이 게이트로 있는 것은 그것도 적는다. 규칙만 있고 검사가 없으면 언젠가 어긋난다.
+> **§ notation**: a `§N` in this document is a section number of **this document**. References to other documents are written as links.
 
-> **§ 표기**: 이 문서 안의 `§N`은 **이 문서**의 절 번호다. 다른 문서를 가리킬 때는 링크로 적는다.
+Compatibility is not one thing but **five faces**. Without splitting them, "compatible" stops meaning anything specific.
 
-호환은 하나가 아니라 **다섯 면**이다. 갈라서 보지 않으면 "호환된다"가 무엇을 뜻하는지 흐려진다.
-
-| 면 | 무엇이 깨지나 | 지키는 것 |
+| Face | What breaks | What guards it |
 |---|---|---|
-| ① 계약(proto) | 옛 결과를 새 코드가 못 읽는다 | `buf breaking` (CI) |
-| ② 서명 | 옛 결과의 서명이 무효가 된다 | `TestCanonicalCoversAllFields` |
-| ③ Go API | 소비자 코드가 컴파일되지 않는다 | 아래 §3 규칙 |
-| ④ DB 스키마 | 새 코드가 옛 DB에서 실패한다 | 멱등 DDL + §4 |
-| ⑤ 혼재 버전 | 옛 **바이너리**가 새 DB에 잘못 쓴다 | §5: **조직 없는 쓰기를 거부한다** |
+| ① Contract (proto) | new code cannot read old results | `buf breaking` (CI) |
+| ② Signature | the signature on an old result becomes invalid | `TestCanonicalCoversAllFields` |
+| ③ Go API | consumer code no longer compiles | the §3 rules below |
+| ④ DB schema | new code fails on an old DB | idempotent DDL + §4 |
+| ⑤ Mixed versions | an old **binary** writes wrongly into a new DB | §5: **writes without an organization are refused** |
 
 ---
 
-## 1. 계약: 순수 additive만
+## 1. Contract: purely additive
 
-필드·enum 값 **추가**만 한다. 번호 변경·타입 변경·삭제를 하지 않는다. 이름을 바꾸지 않는다
-(와이어에는 번호만 가지만, 생성 코드의 심볼이 바뀌어 소비자가 깨진다).
+We only **add** fields and enum values. We do not renumber, retype or delete. We do not rename either
+(only the number travels on the wire, but the symbol in the generated code changes and breaks consumers).
 
-CI가 직전 태그를 기준으로 `buf breaking`을 돌린다. 규칙이 아니라 게이트다.
+CI runs `buf breaking` against the previous tag. It is a gate, not a rule.
 
-**주석은 예외가 아니다**. 주석만 바꿔도 `gen/`이 바뀌므로 함께 커밋한다. CI가 `make generate` 후
-차이가 있으면 실패시킨다.
+**Comments are not an exception.** Changing only a comment changes `gen/`, so commit them together. CI fails if
+`make generate` leaves a difference.
 
-## 2. 서명: 범위를 바꾸면 과거가 무효가 된다
+## 2. Signature: changing the scope invalidates the past
 
-`sign.Canonical`은 서명 필드만 빼고 **전 필드**를 덮는다. 계약에 필드를 더하면 여기도 갱신해야
-하고(`TestCanonicalCoversAllFields`가 필드 수를 지켜본다), **갱신하는 순간 기존 서명이 전부
-무효가 된다.**
+`sign.Canonical` covers **every field** except the signature field. When a field is added to the contract it must be updated here too
+(`TestCanonicalCoversAllFields` watches the field count), and **the moment it is updated, every existing signature
+becomes invalid.**
 
-그래서 필드 추가는 **서명 마이그레이션을 각오한 릴리스에서만** 한다. 값을 채우는 것은 다르다.
-`Canonical`은 필드 집합이 아니라 **값**을 읽으므로, 비어 있던 필드를 채우기 시작해도 과거 결과는
-여전히 같은 바이트로 정규화된다([v0.1.3](../RELEASE_NOTES.md)이 그 경우였다).
+So a field is added **only in a release that has accepted a signature migration**. Filling in a value is different.
+`Canonical` reads **values**, not the set of fields, so if we start filling a field that used to be empty, past results
+still canonicalize to the same bytes ([v0.1.3](../RELEASE_NOTES.md) was such a case).
 
-## 3. Go API: 지우지 않고, 바꾸지 않고, 더한다
+## 3. Go API: do not delete, do not change, add
 
-이 모듈은 `go get`으로 소비된다. 다음 셋을 지킨다.
+This module is consumed with `go get`. Keep these four.
 
-**① 함수 시그니처를 바꾸지 않는다.** 인자가 더 필요하면 **옵션 구조체를 받는 새 함수**를 만들고,
-기존 함수는 그것을 부르는 껍데기로 남긴다.
+**① Do not change a function signature.** If it needs more arguments, make **a new function that takes an options struct**
+and leave the existing function as a shell that calls it.
 
 ```go
-func IngestResults(...) (*IngestReport, error)   // 그대로 — 내부에서 아래를 부른다
+func IngestResults(...) (*IngestReport, error)   // unchanged: calls the one below internally
 func IngestWith(results []*discoveryv1.CollectionResult, o IngestOptions) (*IngestReport, error)
 ```
 
-**② exported 인터페이스에 메서드를 더하지 않는다.** 밖의 구현체가 전부 깨진다. 필요하면
-**별도 인터페이스**를 만들고, 쓰는 쪽이 타입 단언이나 옵션으로 받는다.
+**② Do not add methods to an exported interface.** Every implementation outside would break. If you need one,
+make **a separate interface**, and let the caller receive it through a type assertion or an option.
 
 ```go
-type Store interface{ ... }          // 건드리지 않는다
-type RejectionStore interface{ ... } // 새로 — PgStore가 함께 만족한다
+type Store interface{ ... }          // untouched
+type RejectionStore interface{ ... } // new: PgStore satisfies it as well
 ```
 
-**③ 생성자는 더한다.** `NewPgStore(ctx, dsn)`을 두고 `NewPgStoreIn(ctx, dsn, org)`을 더한다.
-기존 호출자는 한 줄도 고치지 않는다.
+**③ Add constructors.** Keep `NewPgStore(ctx, dsn)` and add `NewPgStoreIn(ctx, dsn, org)`.
+Existing callers do not change a single line.
 
-인터페이스로 받아 온 값에 새 능력을 묻고 싶으면 **작은 인터페이스를 하나 더 만들고 타입 단언**한다.
-`org.Scoped`가 그 예다. `history.Store`에 `Org()`를 더하지 않고도 조직을 물을 수 있다.
+To ask a value received through an interface about a new capability, **make one more small interface and use a type assertion.**
+`org.Scoped` is the example: the organization can be asked without adding `Org()` to `history.Store`.
 
-**④ 모듈 경로는 셋 밖이다. 바꾸면 새 모듈이다.** 시그니처를 하나도 안 건드려도 경로가 바뀌면
-가져다 쓰는 쪽의 import가 전부 깨진다. 그래서 이것만은 더하기로 흡수할 수 없고, 마이너 릴리스에
-실어 **무엇이 어떻게 바뀌는지 적는 것**이 유일한 방법이다.
+**④ The module path is outside these three. Changing it makes a new module.** Even when no signature is touched, changing the path
+breaks every import on the consuming side. So this is the one thing that cannot be absorbed by adding, and the only way is to
+ship it in a minor release and **write down what changes and how**.
 
-v0.5.0에서 한 번 했다: `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
-선언한 경로에 해당하는 리포가 없어 `go get`이 아예 받아 오지 못했고, 가져다 쓰는 쪽이 `replace`를
-자기 `go.mod`에 영구히 들고 있어야 했다. **다시 바꾸지 않는다**. 경로가 리포 주소와 같아졌으므로
-같은 이유가 다시 생기지 않는다.
+We did it once, in v0.5.0: `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
+No repo existed at the declared path, so `go get` could not fetch it at all, and consumers had to carry a `replace` in their own
+`go.mod` permanently. **We do not change it again.** The path now equals the repo address, so the same reason cannot arise again.
 
-## 4. DB 스키마: 멱등하게, 그리고 절반만 되지 않게
+## 4. DB schema: idempotent, and never half-applied
 
-스키마는 **`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`**로 자란다.
-새 코드가 옛 DB를 만나면 그 자리에서 따라잡는다.
+The schema grows through **`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`**.
+When new code meets an old DB, it catches up on the spot.
 
-**멱등하지 않은 것이 하나 있다. PRIMARY KEY 변경.** `ADD PRIMARY KEY`에는 `IF NOT EXISTS`가
-없고, PK가 안 바뀐 DB에서 새 `ON CONFLICT` 절을 돌리면 **실행 중에 오류로 멈춘다.** 이런 이행은
-`pg_index`에서 **지금 PK가 몇 컬럼인지** 보고 조건부로 도는 `DO $$ ... $$` 블록으로 쓴다.
-두 번 돌아도 같아야 한다. 실물 Postgres에서 두 번 돌려 확인한 뒤에 넣는다.
+**One thing is not idempotent: changing a PRIMARY KEY.** `ADD PRIMARY KEY` has no `IF NOT EXISTS`, and running a new
+`ON CONFLICT` clause against a DB whose PK has not changed **stops with an error at run time.** Write such a migration as
+a `DO $$ ... $$` block that looks in `pg_index` at **how many columns the PK has now** and runs conditionally.
+Running it twice must give the same result. Add it only after running it twice against a real Postgres.
 
-**자동 스키마 생성은 기본으로 켜져 있다. `PQCOTA_AUTO_DDL=0`으로 끌 수 있으며, 끈 상태에서 스키마가 없으면 오류로 중단한다.** 생성자가 알리지 않고 `CREATE TABLE`을 도는 것은 편하지만, 가리키는
-곳이 어긋났을 때 **빈 테이블이 새로 생기고 거기에 쓴다.** 그러면 데이터가 사라진 것처럼 보인다.
-그래서 끄는 수단을 두고, 끈 상태에서는 만들지 않고 확인만 한다.
+**Automatic schema creation is on by default. `PQCOTA_AUTO_DDL=0` turns it off, and with it off a missing schema stops with an error.** A constructor that
+runs `CREATE TABLE` without telling anyone is convenient, but when it points at the wrong place, **a new empty table is created and written to.** The data then looks
+as if it vanished. So there is a way to turn it off, and with it off the code checks instead of creating.
 
-## 5. 혼재 버전: 조직을 모르는 옛 바이너리의 쓰기를 거부한다
+## 5. Mixed versions: refuse writes from an old binary that does not know the organization
 
-가장 놓치기 쉬운 면이다. 스키마를 잘 이행해 두면 **옛 바이너리가 새 DB에 그대로 쓸 수 있다**.
-`DEFAULT`가 새 컬럼을 채워 주기 때문이다. 편해 보이지만 이것이 함정이다: 옛 바이너리는 조직을
-모르므로 **남의 조직 자리에 쓰고도 아무 오류를 내지 않는다.**
+This is the face that is easiest to miss. If the schema was migrated well, **an old binary can keep writing into the new DB**,
+because `DEFAULT` fills the new column. That looks convenient, and it is the trap: an old binary does not know about
+organizations, so it **writes into another organization's slot without raising any error.**
 
-그래서 조직 격리를 요구하는 배포에서는 이행의 마지막 단계로 **기본값을 뗀다.**
+So in a deployment that requires organization isolation, **the default is dropped** as the last migration step.
 
 ```sql
 ALTER TABLE pqcota_snapshots ALTER COLUMN org DROP DEFAULT;
 ```
 
-그러면 조직을 모르는 옛 바이너리의 INSERT가 `NOT NULL` 위반으로 **실패한다.** 알아채지 못하는 오염 대신
-즉시 드러나는 실패다. 이 리포가 종료코드 0·완전성 맵·절단 기록으로 지켜 온 것과 같은 선택이다.
-*고지 없이 빠지면 "없다"로 읽힌다.*
+After that, an INSERT from an old binary that does not know the organization **fails** with a `NOT NULL` violation. It is a failure that shows at once,
+in place of contamination nobody notices. It is the same choice this repo has kept through exit code 0, the completeness map and the truncation record:
+*what drops out without notice gets read as "not there".*
 
-단일 조직으로 쓰는 사용자는 이 단계를 밟지 않는다. 기본값이 남아 있고, 아무것도 달라지지 않는다.
+Users running a single organization do not take this step. The default stays, and nothing changes.
 
 ---
 
-## 이 정책이 적용된 예
+## Where this policy was applied
 
-| 릴리스 | 무엇을 지켰나 |
+| Release | What it kept |
 |---|---|
-| v0.1.3 | 비어 있던 `collected_at`을 채웠다. **값을 채운 것이라 과거 서명이 유효하다**(§2). 시계를 패키지 변수로 두어 시그니처를 안 바꿨다(§3①) |
-| v0.2.0 | 조직 축을 넣으면서 생성자를 더하고(§3③) 인터페이스를 안 건드렸다(§3②). PK 변경만 조건부 DDL(§4), 기본값 제거는 선택 단계(§5) |
-| v0.5.0 | 모듈 경로를 리포 주소에 맞췄다(§3④). 더하기로 흡수할 수 없는 유일한 종류라, 마이너에 실어 무엇이 바뀌는지 적었다 |
+| v0.1.3 | Filled the empty `collected_at`. **Because it fills a value, past signatures stay valid** (§2). The clock became a package variable so no signature changed (§3①) |
+| v0.2.0 | Added the organization axis with a new constructor (§3③) and without touching an interface (§3②). Only the PK change used conditional DDL (§4), and dropping the default is an optional step (§5) |
+| v0.5.0 | Aligned the module path with the repo address (§3④). It is the one kind that cannot be absorbed by adding, so it went into a minor release with a note of what changes |

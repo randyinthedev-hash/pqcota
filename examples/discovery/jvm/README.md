@@ -1,33 +1,33 @@
-# examples/discovery/jvm: 실행 중 JVM 정찰→attach
+# examples/discovery/jvm: reconnaissance → attach on a running JVM
 
 ```bash
 ./examples/discovery/jvm/run.sh
 ```
 
-> **전제: Go 툴체인 + Docker.** 다른 discovery 예제는 Go만으로 도는데, 이것은 **살아있는 JVM**이 필요해(정찰·attach 대상) 컨테이너로 격리했다.
+> **Prerequisites: the Go toolchain + Docker.** The other discovery examples run on Go alone, but this one needs a **live JVM** (the target of reconnaissance and attach), so it is isolated in a container.
 
-## 무엇을 보이나
+## What it shows
 
-openssl collector가 `/proc`를 훑어 로드된 lib를 스스로 찾듯, **jvm-collector도 실행 중 JVM을 직접 정찰**한다. 이 예제는 그 종단을 최소로 보인다:
+Just as the openssl collector sweeps `/proc` and finds the loaded libraries itself, **the jvm collector also reconnoitres running JVMs on its own**. This example shows that end to end at minimum:
 
-1. **정찰**(`ScanJVMs`): `/proc`로 실행 중 JVM을 찾아 PID·JAVA_HOME·버전·앱을 얻는다. 호출자가 PID·JDK를 미리 몰라도 된다.
-2. **attach**: 발견한 PID에 붙어 `Security.getProviders()` **실체**를 관측한다.
-3. **동적 등록 포착**: 예제 앱은 `java.security`에 BC를 **정적으로 안 심고** 런타임에 `addProvider(BouncyCastle)`만 한다. **정적 스캔(프로브)으론 이것을 관측하지 못한다. attach만 잡는다**(`detection=runtime-introspection`).
-4. **JSON Lines 적재**: attach 경로는 JVM별로 한 줄씩 낸다(다중 JVM 대비). `pqcota-ingest`가 `*.jsonl`을 읽어 적재한다.
+1. **Reconnaissance** (`ScanJVMs`): finds running JVMs through `/proc` and gets each one's PID, JAVA_HOME, version and app. The caller does not need to know the PID or the JDK in advance.
+2. **Attach**: attaches to the PID it found and observes what `Security.getProviders()` **actually returns**.
+3. **Catching dynamic registration**: the example app does **not register BC statically** in `java.security` and only calls `addProvider(BouncyCastle)` at run time. **A static scan (the probe) cannot observe this. Only attach catches it** (`detection=runtime-introspection`).
+4. **JSON Lines loading**: the attach path emits one line per JVM (in case of several). `pqcota-ingest` reads `*.jsonl` and loads it.
 
-## 핵심: 프로브 vs attach
+## The key point: probe vs attach
 
-| | 정적 프로브 | **attach** |
+| | Static probe | **Attach** |
 |---|---|---|
-| 보는 것 | `java.security` 정적 등록 체인 | 실행 중 JVM의 **실체**(동적 `addProvider` 포함) |
-| 이 예제의 동적 BC | ❌ 관측하지 못함 | ✅ 포착 |
+| What it sees | the statically registered chain in `java.security` | what the running JVM **actually has** (including dynamic `addProvider`) |
+| The dynamic BC in this example | ❌ not observed | ✅ caught |
 
-`PQCOTA_JVM_AGENT`(collector JAR)가 있으면 attach, 없으면 프로브로 내려가고 강등으로 적는다.
+If `PQCOTA_JVM_AGENT` (the collector JAR) is present it attaches, and if not it falls back to the probe and records the downgrade.
 
-## 다중 JVM
+## Several JVMs
 
-한 노드에 JVM이 여럿이면 각각 **구별되는 finding**이 된다. 식별자는 **앱**(main 클래스·`-jar`)이라(PID 아님) 같은 JDK의 두 앱도 하나로 합쳐지지 않고, 재스캔해도 이력이 안 깨진다. 설계·경계: [collectors/jvm/README](../../../discovery/collectors/jvm/README.md).
+When a node has several JVMs, each becomes a **distinct finding**. The identifier is the **app** (main class or `-jar`), not the PID, so two apps on the same JDK are not merged into one and the history does not break on a rescan. Design and boundary: see the collector source under `discovery/collectors/jvm/`.
 
-## 전체 종단
+## The whole flow
 
-Ansible/SSH·다중 노드·Postgres 적재까지는 [demo/](../../../demo) 6단계(2번째 스텝이 이 정찰→attach를 실제 노드에서 돌린다).
+For Ansible/SSH, several nodes and loading into Postgres, see the six steps of [demo/](../../../demo) (its second step runs this reconnaissance → attach on real nodes).

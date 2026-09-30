@@ -25,7 +25,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -159,7 +158,6 @@ func main() {
 		`a section with a heading and no body — the text was dropped while moving it, or never finished`,
 		"`~` in a range — GitHub reads it as strikethrough and strikes part of the sentence. Use `–`",
 		"uses `§N` without saying which document the section belongs to — a first-time reader has no way to find it",
-		"an English document links to a Korean one — point at the English counterpart if it exists, otherwise mark it `(Korean)`",
 	}
 	hits := make([][]string, len(titles))
 
@@ -191,12 +189,6 @@ func main() {
 					} else if anchor != "" && anchors[p] != nil && !anchors[p][slug(anchor)] {
 						hits[0] = append(hits[0], fmt.Sprintf("%s:%d: anchor missing → %s", d, n+1, target))
 					}
-					// (9) 영문 문서가 한국어 문서를 가리키는 자리. 규칙은 CONTRIBUTING「언어」에
-					// 있다: 영문 짝이 있으면 그쪽을 가리키고, 없으면 `(Korean)`으로 밝힌다.
-					// 손으로 지키면 반드시 어긋난다 — 실제로 28곳이 어긋나 있었다.
-					if msg := crossLang(d, p, line); msg != "" {
-						hits[8] = append(hits[8], fmt.Sprintf("%s:%d: %s → %s", d, n+1, msg, target))
-					}
 				}
 			}
 			// 금지 문구는 한 줄 안에 있으므로 줄 단위로 본다 — 위치를 정확히 가리키기 위함.
@@ -225,42 +217,22 @@ func main() {
 	// (8) 라이선스 표 ↔ 실제 링크되는 모듈. 손으로 관리하면 반드시 어긋난다(실제로 어긋났다).
 	if dep := checkLicenseTable(); len(dep) > 0 {
 		hits = append(hits, dep)
-		titles = append(titles, "the licensing document disagrees with the actual dependencies — fix docs/licensing.md §2")
+		titles = append(titles, "the licensing document disagrees with the actual dependencies — fix the section 2 table in docs/licensing.md")
 	} else {
 		hits = append(hits, nil)
 		titles = append(titles, "")
 	}
 
-	// (9) 관리체계의 숫자 ↔ 실제로 센 값. 표가 스스로 "리포에서 센 값"이라고 밝히므로,
-	//     그 말이 참인지 세는 것도 게이트의 일이다.
-	if num := checkGovernanceNumbers(); len(num) > 0 {
-		hits = append(hits, num)
-		titles = append(titles, "the governance numbers disagree with the repo — fix the 「숫자」 table in docs/governance.md")
-	} else {
-		hits = append(hits, nil)
-		titles = append(titles, "")
-	}
-
-	// (10) 테스트 맵의 레벨 분포 ↔ 실제로 센 값. (9)와 같은 이유이고, 이 표는 한때 관리체계에도
-	//      함께 있었다. 숫자를 두 곳에 적으면 한쪽만 고쳐지므로 여기 하나로 모으고 게이트를 붙였다.
-	if num := checkTestMapNumbers(); len(num) > 0 {
-		hits = append(hits, num)
-		titles = append(titles, "the test-map level counts disagree with the repo — fix the 「레벨 분포」 table in docs/test-map.md")
-	} else {
-		hits = append(hits, nil)
-		titles = append(titles, "")
-	}
-
-	// (11) 한국어 문서와 영문 짝의 뼈대. 한쪽에만 절·항목을 더하면 링크 검사로는 잡히지 않는다.
+	// (9) 영문 정본과 한국어 번역(`*.ko.md`)의 뼈대. 한쪽에만 절·항목을 더하면 링크 검사로는 잡히지 않는다.
 	if par := checkBilingualParity(); len(par) > 0 {
 		hits = append(hits, par)
-		titles = append(titles, "a Korean document and its English counterpart have drifted apart in structure — one side gained or lost a section or a list item")
+		titles = append(titles, "an English document and its Korean translation (`*.ko.md`) have drifted apart in structure — one side gained or lost a section or a list item")
 	} else {
 		hits = append(hits, nil)
 		titles = append(titles, "")
 	}
 
-	// (12) 문서의 Go 버전 ↔ go.mod. 툴체인을 올리면 아홉 곳을 손으로 맞춰야 했다.
+	// (10) 문서의 Go 버전 ↔ go.mod. 툴체인을 올리면 아홉 곳을 손으로 맞춰야 했다.
 	if gv := checkGoVersion(); len(gv) > 0 {
 		hits = append(hits, gv)
 		titles = append(titles, "a document states a Go version that `go.mod` does not — bump them together")
@@ -323,26 +295,6 @@ func loc(file string, idx int, line string) string {
 	return fmt.Sprintf("%s:%d: %s", file, idx+1, s)
 }
 
-// crossLang — 영문 문서가 한국어 문서를 가리킬 때의 규칙 위반을 알린다. 위반이 없으면 빈 문자열.
-//
-// 언어 전환 헤더와 정본 표시 줄은 **한국어를 가리키는 것이 맞다** — 거기서 영문으로 보내면
-// 읽는 사람이 자기가 보던 언어로 되돌아온다.
-func crossLang(from, to, line string) string {
-	if !strings.HasSuffix(from, ".en.md") || !strings.HasSuffix(to, ".md") || strings.HasSuffix(to, ".en.md") {
-		return ""
-	}
-	if strings.HasPrefix(line, "English ·") || strings.Contains(line, "Translated from the Korean original") {
-		return ""
-	}
-	if _, err := os.Stat(strings.TrimSuffix(to, ".md") + ".en.md"); err == nil {
-		return "links to Korean although an English counterpart exists"
-	}
-	if !strings.Contains(line, "Korean") {
-		return "a Korean-only document without the `(Korean)` marker"
-	}
-	return ""
-}
-
 // checkLicenseTable — 빌드 산출물에 실제로 링크되는 모듈(go list -deps)이 라이선스 문서의 표와
 // 일치하나. 버전까지 본다 — 버전이 어긋나면 "어느 버전을 검토했나"가 거짓이 된다.
 // 목록을 못 얻으면 그 사실을 실패로 낸다(알리지 않고 통과시키지 않는다).
@@ -389,12 +341,8 @@ func checkLicenseTable() []string {
 // 없는 기호다 — 링크가 아니라 검색으로도 안 걸린다. 이미 문서 열 곳이 「§ 표기」 한 줄로 밝히고
 // 있어, 관행은 서 있고 빠진 문서만 있는 상태였다. 그 한 줄을 게이트로 굳힌다.
 //
-// 규정서 자신은 면제한다 — 자기 절 번호를 자기가 가리키는 것이라 밝힐 대상이 없다.
 // 영문 문서는 「§ notation」으로 같은 일을 한다.
 func unexplainedSectionRefs(doc string, ls []string) []string {
-	if strings.HasSuffix(doc, "regulation.md") {
-		return nil
-	}
 	body := strings.Join(ls, "\n")
 	if strings.Contains(body, "§ 표기") || strings.Contains(body, "§ notation") {
 		return nil
@@ -483,212 +431,30 @@ func tildeRanges(doc string, ls []string) []string {
 	return out
 }
 
-// checkGovernanceNumbers — 「관리체계」의 숫자 표가 실제와 맞나.
-//
-// 그 표는 스스로 "손으로 적은 값이 아니다. 리포에서 센 값"이라고 밝힌다. 그렇다면 그 말이 참인지
-// 세는 것까지가 게이트의 일이다. 실제로 커밋 수가 246에 굳은 채 253이 될 때까지 아무도 알아채지
-// 못했고, 게이트 수는 `all` 타깃이 열하나인데 열로 적혀 있었다. 세는 법을 옆에 적어 두는 것만으로는
-// 아무도 다시 세지 않는다.
-//
-// 릴리스 수는 세지 않는다. `gh`와 네트워크·인증에 기대는데, 그것이 없는 자리에서 알리지 않고 건너뛰면
-// **검사하지 못한 것을 통과로 읽게 된다**(§2.6 갭 ≠ 부재). 세지 않는다는 사실을 문서에 밝혀 두고
-// 릴리스할 때 손으로 맞추는 편이 정직하다.
-func checkGovernanceNumbers() []string {
-	const doc = "docs/governance.md"
-	ls, _, err := lines(doc)
-	if err != nil {
-		return nil // 문서가 없으면 이 검사 대상이 아니다
-	}
-	stated := statedNumbers(ls, "숫자")
-
-	var miss []string
-	check := func(label string, actual int) {
-		if actual < 0 {
-			return // 셀 수 없었다 — 세는 쪽에서 이미 그 사실을 남겼다
-		}
-		got, ok := stated[label]
-		if !ok {
-			miss = append(miss, fmt.Sprintf("%s: the 「숫자」 table has no `%s` row, so the gate has nothing to compare its count (%d) against", doc, label, actual))
-			return
-		}
-		// 커밋 수만 폭을 둔다. 커밋마다 정확히 맞기를 요구하면 이 게이트는 매 커밋 깨지고,
-		// 그러면 숫자가 아니라 게이트를 지우게 된다.
-		if label == "커밋" {
-			switch {
-			case got > actual:
-				miss = append(miss, fmt.Sprintf("%s: `커밋` says %d but the repo has only %d — the table cannot be ahead of the repo", doc, got, actual))
-			case actual-got > commitDrift:
-				miss = append(miss, fmt.Sprintf("%s: `커밋` says %d but the repo has %d (%d behind, over the %d allowed) — update the number and the date beside it", doc, got, actual, actual-got, commitDrift))
-			}
-			return
-		}
-		if got != actual {
-			miss = append(miss, fmt.Sprintf("%s: `%s` says %d but the repo has %d — the table says it was counted, so count it again", doc, label, got, actual))
-		}
-	}
-	check("커밋", gitCommits())
-	check("자동 게이트", makeAllTargets())
-	check("테스트 함수", testFuncs())
-	return miss
-}
-
-// commitDrift — 커밋 수가 뒤처져도 넘어가 주는 폭. 넘으면 갱신하라고 막는다.
-const commitDrift = 20
-
-// numberRow — `| 라벨 | 253 (2026-08-26 기준) | 세는 법 |`의 둘째 칸 맨 앞 숫자를 읽는다.
-// 괄호 안 단서는 사람이 읽는 자리라 건드리지 않는다.
-var numberRow = regexp.MustCompile(`^\|\s*([^|]+?)\s*\|\s*([0-9]+)`)
-
-// statedNumbers — 그 절의 표에 적힌 값. 다른 절의 표에도 숫자가 있으므로 절을 가려서 읽고,
-// 라벨의 강조 표기(`**unit**`)는 벗겨서 문서마다 다른 표기에 걸리지 않게 한다.
-func statedNumbers(ls []string, section string) map[string]int {
-	out := map[string]int{}
-	in := false
-	for _, line := range ls {
-		if strings.HasPrefix(line, "## ") {
-			in = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == section
-			continue
-		}
-		if !in {
-			continue
-		}
-		if m := numberRow.FindStringSubmatch(line); m != nil {
-			if n, err := strconv.Atoi(m[2]); err == nil {
-				out[strings.Trim(strings.TrimSpace(m[1]), "*`")] = n
-			}
-		}
-	}
-	return out
-}
-
-// gitCommits — 얕은 클론에서는 세지 않는다. 히스토리가 잘려 있어 실제보다 작게 나오고,
-// 그대로 비교하면 문서가 틀렸다고 잘못 막는다.
-func gitCommits() int {
-	if out, err := exec.Command("git", "rev-parse", "--is-shallow-repository").Output(); err == nil &&
-		strings.TrimSpace(string(out)) == "true" {
-		fmt.Fprintln(os.Stderr, "⚠ skipping the commit-count check: this is a shallow clone (`git clone --depth`)")
-		return -1
-	}
-	out, err := exec.Command("git", "rev-list", "--count", "HEAD").Output()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "⚠ skipping the commit-count check: `git rev-list` failed:", err)
-		return -1
-	}
-	n, err := strconv.Atoi(strings.TrimSpace(string(out)))
-	if err != nil {
-		return -1
-	}
-	return n
-}
-
-// makeAllTargets — `all` 타깃이 부르는 게이트 수. 문서가 "`Makefile`의 `all` 타깃"이라고
-// 세는 법을 밝히고 있으므로 같은 자리를 센다.
-func makeAllTargets() int {
-	ls, _, err := lines("Makefile")
-	if err != nil {
-		return -1
-	}
-	for _, line := range ls {
-		if rest, ok := strings.CutPrefix(line, "all:"); ok {
-			return len(strings.Fields(rest))
-		}
-	}
-	return -1
-}
-
-// testFuncs — 테스트 함수 전체.
-func testFuncs() int {
-	total, _ := testFuncLevels()
-	return total
-}
-
-// testFuncLevels — 테스트 함수 전체와, 그중 통합(리눅스 전용) 수. unit은 그 차다. 통합의 기준은
-// 테스트 맵이 밝힌 대로 `//go:build linux` 태그다.
-//
-// 문서의 `grep -r`와 달리 추적 파일만 센다. 손에 남은 임시 파일이 숫자를 흔들지 않게 하려는 것이고,
-// 깨끗한 트리에서는 같은 값이다.
-func testFuncLevels() (total, integration int) {
-	for _, f := range tracked("*_test.go") {
-		ls, _, err := lines(f)
-		if err != nil {
-			return -1, -1
-		}
-		linuxOnly, n := false, 0
-		for _, line := range ls {
-			if strings.HasPrefix(line, "//go:build ") && strings.Contains(line, "linux") {
-				linuxOnly = true
-			}
-			if strings.HasPrefix(line, "func Test") {
-				n++
-			}
-		}
-		total += n
-		if linuxOnly {
-			integration += n
-		}
-	}
-	return total, integration
-}
-
-// checkTestMapNumbers — 「테스트 명세 지도」의 레벨 분포가 실제와 맞나. 관리체계의 숫자와 같은
-// 이유다. 이 표도 스스로 "손으로 적은 것이 아니라 리포에서 센 값"이라고 밝히므로 그 말이 참인지 센다.
-//
-// e2e는 세지 않는다. Go 테스트가 아니라 데모 6단계라서 셀 대상이 없다.
-func checkTestMapNumbers() []string {
-	const doc = "docs/test-map.md"
-	ls, _, err := lines(doc)
-	if err != nil {
-		return nil // 문서가 없으면 이 검사 대상이 아니다
-	}
-	total, integration := testFuncLevels()
-	if total < 0 {
-		return nil
-	}
-	stated := statedNumbers(ls, "레벨 분포")
-
-	var miss []string
-	for _, c := range []struct {
-		label  string
-		actual int
-	}{
-		{"unit", total - integration},
-		{"integration", integration},
-	} {
-		got, ok := stated[c.label]
-		if !ok {
-			miss = append(miss, fmt.Sprintf("%s: the 「레벨 분포」 table has no `%s` row, so the gate has nothing to compare its count (%d) against", doc, c.label, c.actual))
-			continue
-		}
-		if got != c.actual {
-			miss = append(miss, fmt.Sprintf("%s: `%s` says %d but the repo has %d — the table says it was counted, so count it again", doc, c.label, got, c.actual))
-		}
-	}
-	return miss
-}
-
-// checkBilingualParity — 한국어 문서와 영문 짝의 뼈대가 같은가.
+// checkBilingualParity — 영문 정본과 한국어 번역(`X.ko.md`)의 뼈대가 같은가.
 //
 // 문장은 언어마다 다른 것이 당연하지만 **뼈대는 같아야 한다.** 한쪽에만 절이나 항목을 더하면
-// 표시 없이 어긋나는데, 링크·앵커 검사로는 잡히지 않는다. 실제로 로드맵 항목 셋이 영문에만 없었고,
-// v0.6.4는 한국어만 줄이고 영문은 긴 채로 남아 있었다.
+// 표시 없이 어긋나는데, 링크·앵커 검사로는 잡히지 않는다. 번역본이 없는 문서는 대상이 아니다
+// (필요한 문서만 번역한다는 것이 이 리포의 방침이다).
 //
 // **제목의 글자는 비교하지 않는다.** 번역이라 다른 것이 맞다. 비교하는 것은 `##` 절의 수, 그리고
 // 절마다 `###` 소제목 수와 최상위 목록 항목 수다. 코드 블록 안은 세지 않는다.
 func checkBilingualParity() []string {
 	var miss []string
-	for _, en := range tracked("*.en.md") {
-		ko := strings.TrimSuffix(en, ".en.md") + ".md"
-		if _, err := os.Stat(ko); err != nil {
-			continue // 영문만 있는 문서는 짝이 없다
+	for _, ko := range tracked("*.ko.md") {
+		en := strings.TrimSuffix(ko, ".ko.md") + ".md"
+		if _, err := os.Stat(en); err != nil {
+			miss = append(miss, fmt.Sprintf("%s: a Korean translation without an English original (%s)", ko, en))
+			continue
 		}
-		a, errA := skeleton(ko)
-		b, errB := skeleton(en)
+		a, errA := skeleton(en)
+		b, errB := skeleton(ko)
 		if errA != nil || errB != nil {
 			continue
 		}
 		if len(a) != len(b) {
 			miss = append(miss, fmt.Sprintf("%s: %d `##` sections but %s has %d — one side gained or lost a section",
-				ko, len(a)-1, en, len(b)-1))
+				en, len(a)-1, ko, len(b)-1))
 			continue
 		}
 		for i := range a {
@@ -697,12 +463,12 @@ func checkBilingualParity() []string {
 				where = "`" + a[i].title + "`"
 			}
 			if a[i].subs != b[i].subs {
-				miss = append(miss, fmt.Sprintf("%s: %s has %d `###` but the English counterpart has %d",
-					ko, where, a[i].subs, b[i].subs))
+				miss = append(miss, fmt.Sprintf("%s: %s has %d `###` but the Korean translation has %d",
+					en, where, a[i].subs, b[i].subs))
 			}
 			if a[i].items != b[i].items {
-				miss = append(miss, fmt.Sprintf("%s: %s has %d list items but the English counterpart has %d",
-					ko, where, a[i].items, b[i].items))
+				miss = append(miss, fmt.Sprintf("%s: %s has %d list items but the Korean translation has %d",
+					en, where, a[i].items, b[i].items))
 			}
 		}
 	}

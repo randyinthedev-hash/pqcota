@@ -1,88 +1,82 @@
-한국어 · [English](README.en.md)
+# Inventory — central inventory (stage 2)
 
-# Inventory: 중앙 인벤토리 (2단계)
 
-디스커버리가 낸 관측을 **중앙에 적재·영속·조회**한다. 여러 번의 수집을 누적해 자산 히스토리를 만들고, 머신 메타데이터(엔드포인트·프로필)와 **어느 앱이 쓰는지**를 붙여 "무엇이 · 어디서 · 어떤 암호 알고리즘을 쓰는지"를 조회 가능한 인벤토리로 만든다.
+**Ingests, persists, and serves** the observations Discovery produced. It accumulates repeated collections into an asset history and attaches machine metadata (endpoints, profiles) and **app attribution**, turning "what uses which cryptographic algorithm, and where" into a queryable inventory.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
-
-## 한눈에
+## At a glance
 
 ```mermaid
 flowchart LR
-    R["CollectionResult<br/>JSON 파일들"] --> I["pqcota-ingest"] --> H["append-only<br/>히스토리"]
-    H --> V["pqcota-inventory<br/>조회·이력·diff"]
+    R["CollectionResult<br/>JSON files"] --> I["pqcota-ingest"] --> H["append-only<br/>history"]
+    H --> V["pqcota-inventory<br/>query · history · diff"]
 ```
 
-## 무엇으로 이루어지나
+## What it consists of
 
-| 요소 | 무엇 |
+| Piece | What it is |
 |---|---|
-| **적재**: `pqcota-ingest` | 회수한 결과를 정규화해 히스토리에 쌓는다. 여기가 유일한 쓰기 관문이다 |
-| **히스토리** | 변화 지점마다 스냅샷. append-only라 지난 관측이 덮이지 않는다 |
-| **머신 메타데이터** | 엔드포인트·프로필(환경·역할·소유자). **접근 비밀은 영속하지 않는다** |
-| **조회**: `pqcota-inventory` | 최신 상태·이력·스냅샷 간 diff. 읽기 전용이다 |
+| **Ingest** — `pqcota-ingest` | normalizes retrieved results and appends them to the history. This is the only write path |
+| **History** | a snapshot at every point of change. Append-only, so earlier observations are never overwritten |
+| **Machine metadata** | endpoints and profiles (environment, role, owner). **Access secrets are not persisted** |
+| **Query** — `pqcota-inventory` | latest state, history, and diffs between snapshots. Read-only |
 
-**자산은 머신 → 앱 → 프로세스 세 층이다.** 앱은 `(node_id, app_key)`로 유일하게 식별되고, 프로세스는 휘발적이라 저장하지 않고 그때그때 이어 붙인다.
+**Assets have three layers: machine → app → process.** An app is uniquely identified by `(node_id, app_key)`; a process is volatile, so it is not stored and is resolved on demand instead.
 
-## 간단히 써보기
+## Try it quickly
 
 ```bash
-# ① 적재 — 회수한 결과 디렉터리를 읽는다
+# ① ingest — read a directory of retrieved results
 export PQCOTA_DSN='postgres://user:pw@host:5432/pqcota'
 pqcota-ingest ./results
 
-# ② 조회 — 전 노드 최신 상태
+# ② query — latest state across all nodes
 pqcota-inventory
 
-# ③ 이력·변화
+# ③ history and change
 pqcota-inventory -history node-01
-pqcota-inventory -diff <과거id>,<최신id>
+pqcota-inventory -diff <older-id>,<newer-id>
 ```
 
-외부 도구가 낸 CBOM이나 CMDB 선언을 넣는 것도 같은 히스토리로 들어간다:
+A CBOM produced by an external tool, or a CMDB declaration, lands in the same history:
 
 ```bash
-pqcota-cbom-ingest cbom.json cmdb://payment-gw     # 외부 도구가 스캔한 CBOM
-pqcota-declare cmdb.csv --out ./declared && pqcota-ingest ./declared   # CMDB 선언
+pqcota-cbom-ingest cbom.json cmdb://payment-gw     # a CBOM scanned by an external tool
+pqcota-declare cmdb.csv --out ./declared && pqcota-ingest ./declared   # a CMDB declaration
 ```
 
-저장소 없이 파일만 취합해 보려면 `pqcota-discover-view ./results`. 커맨드별 인자는 [inventory/cmd](cmd/README.md).
+To just collate files without a datastore, use `pqcota-discover-view ./results`. Per-command arguments → [inventory/cmd](cmd/README.md).
 
-**여럿이 한 저장소를 쓴다면**: 모든 명령이 `PQCOTA_ORG`로 조직을 받는다. 안 주면 `default`에 묶이고,
-`PQCOTA_REQUIRE_ORG=1`이면 조직 없이는 저장소가 열리지 않는다. 조직마다 `node_id`가 따로 관리되므로
-같은 `web-01`이 서로 덮어쓰지 않는다.
+**If several organizations share one datastore** — every command takes the organization from
+`PQCOTA_ORG`. Without it, the store binds to `default`; with `PQCOTA_REQUIRE_ORG=1` it will not open
+at all without one. Each organization keeps its own `node_id` space, so two `web-01`s do not overwrite
+each other.
 
 ```bash
 export PQCOTA_ORG=acme PQCOTA_REQUIRE_ORG=1 PQCOTA_REQUIRE_SIGNATURE=1
 ```
 
-셋 다 **검증 없이 지나가는 경로를 닫는 것**이다. 조직 없이 열리거나, 서명을 못 물어보고 통과하거나,
-스키마가 없는데 새로 만들어 거기 쓰는 일이 그것이다. 전부 [inventory/cmd](cmd/README.md#pqcota-ingest)에 있다.
+All three close a path that would otherwise pass quietly — opening without an organization, accepting
+results without being able to ask about their signature, or creating a schema that was not there and
+writing into it. Details in [inventory/cmd](cmd/README.md#pqcota-ingest).
 
-## 무엇이 들어오나
+## What comes in
 
-어디서 왔는지에 따라 **넣는 커맨드가 다르고**, 함께 기록되는 관측 방법도 다르다.
+**The command differs by origin**, and so does the detection method recorded alongside it.
 
-| 어디서 왔나 | 넣는 커맨드 | 어떻게 봤나 → 증거 강도 |
+| Where it came from | Command | How it was seen → evidence strength |
 |---|---|---|
-| **[collector](../discovery/README.md)가 직접 관측한 것** | `pqcota-ingest` | **실행 중인 프로세스를 직접 관측했다**(`runtime_introspection`) → `confirmed`<br>JVM attach가 막혀 파일만 읽었으면 `artifact` → `inferred_high` |
-| **외부 도구가 스캔한 CBOM**(CBOMkit 등) | `pqcota-cbom-ingest` | **빌드 산출물을 읽었다**(`artifact`) → `inferred_high` |
-| **아무도 스캔하지 않은 기록**(CMDB·기존 인벤토리) | `pqcota-declare` → `pqcota-ingest` | **본 적 없다**. 비어 있음(`unspecified`) → 강도 없음 |
+| **Observed directly by a [collector](../discovery/README.md)** | `pqcota-ingest` | **a running process was observed directly** (`runtime_introspection`) → `confirmed`<br>if JVM attach was blocked and only files were read, `artifact` → `inferred_high` |
+| **A CBOM scanned by an external tool** (CBOMkit and friends) | `pqcota-cbom-ingest` | **a build artifact was read** (`artifact`) → `inferred_high` |
+| **A record nobody scanned** (CMDB, an existing inventory) | `pqcota-declare` → `pqcota-ingest` | **never seen** — empty (`unspecified`) → no strength |
 
-앞의 둘은 **누가 수집했든 실제로 관측된 것**이다. 다만 강도는 다르다. 실행 중인 것을 직접 본 쪽이 빌드 산출물만 읽은 쪽보다 강하다. 셋째는 관측 자체가 없어 계열이 아예 다르다: 적어둔 추정이 관측된 사실과 섞이면 나중에 "CMDB엔 있다는데 관측되지 않았다"를 가려낼 수 없다. 이 구분이 대조의 기준선이다.
+The first two are **actually observed, whoever collected them** — the strength just differs; seeing a running process beats reading a build artifact. The third has no observation at all and belongs to a different lane entirely: if written-down assumptions mix with observed facts, you can no longer tell apart "the CMDB says so but it was never observed." That distinction is the baseline for reconciliation.
 
-기록되는 값은 **어떻게 봤나**(`detection_method`)뿐이다. **강도(`evidence_strength`)는 저장하지 않고 거기서 매번 다시 계산한다**. 판정 규칙이 한곳에 있어야 나중에 규칙이 바뀌어도 과거 결과가 같은 기준으로 다시 읽힌다. 전체 값 목록은 [계약](../contracts/data-model.md).
+Only **how it was seen** (`detection_method`) is recorded. **Strength (`evidence_strength`) is not stored — it is recomputed from that every time**, so that when the derivation rule improves, past results are read under the same rule. The full value list is in the [contract](../contracts/data-model.md).
 
-## 더 알아야 한다면
+## This folder
 
-자산 모델·동일성 해소·이력 보존 판정·자산 스코프의 근거 → **[인벤토리 설계](design.md)**.
+- [`cmd/`](cmd) — entry points for central ingest, query, and metadata → [command map](cmd/README.md)
 
-## 이 폴더
+## See also
 
-- [`cmd/`](cmd): 중앙 적재·조회·메타데이터 실행 진입점 → [커맨드 지도](cmd/README.md)
-- **설계 문서**: [인벤토리 설계](design.md) · [위임 수신 설계](cbom-intake.md) · [테스트케이스](testcases.md)
-
-## 더 보기
-
-규정서 §3 · [아키텍처 설계](../docs/architecture.md) · 뷰·저장소·선언 임포트 라이브러리 [`pkg/inventory/`](../pkg/inventory) · 실행 예제 [`examples/inventory/`](../examples/inventory)
+view, store, and declaration-import libraries [`pkg/inventory/`](../pkg/inventory) · runnable examples [`examples/inventory/`](../examples/inventory)

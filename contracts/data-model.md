@@ -1,178 +1,175 @@
-한국어 · [English](data-model.en.md)
+# Data model schema (the contracts SSOT reference)
 
-# 데이터 모델 스키마 (contracts SSOT 레퍼런스)
 
-계약 파일·네임스페이스 목록과 CycloneDX property 매핑은 [contracts/README](README.md).
+For the list of contract files and namespaces and the CycloneDX property mapping, see [contracts/README](README.md).
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../docs/regulation.md)의 절 번호다.
+## 0. Conventions
 
-## 0. 규약
+- **Namespace = stage**: `pqcota.common.v1` (shared) · `pqcota.discovery.v1` · `pqcota.inventory.v1` · `pqcota.provisioning.v1`. The generated Go packages are `commonv1`, `discoveryv1`, `inventoryv1`, `provisioningv1`.
+- **protojson representation**: fields are **camelCase** (`target_node_id`→`targetNodeId`), `bytes` is a **base64 string** (`cbom_cyclonedx`), enums are **name strings** (`"DETECTION_METHOD_RUNTIME_INTROSPECTION"`), and `Timestamp` is RFC3339.
+- **enum 0 = `*_UNSPECIFIED` = "unknown"**. Not "absent" but "could not determine" — together with the completeness map it separates "genuinely not there" from "impossible to observe in principle".
+- **Backward compatibility**: never reuse a field number, mark removals `reserved`, append enum values only at the end, and make breaking changes as a new `v2`.
 
-- **네임스페이스 = 단계**: `pqcota.common.v1`(공유) · `pqcota.discovery.v1` · `pqcota.inventory.v1` · `pqcota.provisioning.v1`. 생성 Go 패키지는 `commonv1`·`discoveryv1`·`inventoryv1`·`provisioningv1`.
-- **protojson 표현**: 필드는 **camelCase**(`target_node_id`→`targetNodeId`), `bytes`는 **base64 문자열**(`cbom_cyclonedx`), enum은 **이름 문자열**(`"DETECTION_METHOD_RUNTIME_INTROSPECTION"`), `Timestamp`는 RFC3339.
-- **enum 0 = `*_UNSPECIFIED` = "unknown"**(§2.5). "없음"이 아니라 "판별 못 함". 완전성 맵과 함께 "실제 없음"과 "원리상 관측하지 못함"을 가른다.
-- **하위호환**: 필드 번호 재사용 금지, 삭제는 `reserved`, enum 값은 끝에만 추가, 파괴 변경은 `v2` 신설.
+## 1. Four principles that run through the model
 
-## 1. 모델을 관통하는 4가지 원칙
+These explain why the fields split the way they do.
 
-이 원칙들이 왜 필드가 그렇게 갈리는지를 설명한다.
-
-1. **Provenance 레인 분리(§1.2/§1.3)**: 데이터가 어디서 왔는지로 레인을 나눈다. 섞지 않는다.
-   - **관측(observed)**: collector가 실제로 본 것이다. `CollectionResult`·`ObservedEdge`·`MachineIdentity`가 여기 든다.
-   - **선언(declared)**: CMDB나 사용자가 채운 것이다. `MachineProfile`·스코프 마스터·선언 엣지가 여기 든다.
-   - **파생(derived)**: core가 관측에서 **재계산**하는 뷰다. `Finding`·`evidence_strength`·`QuantumPosture`가 여기 든다. **collector 출력엔 없다.** 원본(raw)에서 항상 재생성 가능(재현성).
-   - **행위(action)**: 도구가 한 일의 append-only 이력이다. `ProvisioningRecord`·`Decision`이 여기 든다.
-2. **식별 모델(§1.4)**: 세 층. **권위** = `node_id`(스코프 마스터/CMDB, 안정·전역 유일). **상관** = `MachineIdentity` 지문(machine-id·hw-uuid·cloud-id·fqdn: node_id 검증·CMDB 없을 때 self-id 파생). **로케이터** = IP(ID 아님, 네트워크 관측을 노드로 잇는 데만).
-3. **파생 뷰 재현성(§1.2)**: `raw_capture`(불변 원본)에서 강화 규칙으로 파생물을 만든다. 그래서 파생 메시지엔 `derived_from_snapshot_id`·`ruleset_version`이 붙는다(어떤 원본·어떤 규칙으로 재현되는지).
-4. **비밀 미영속(§1.5)**: 접근 비밀(SSH 키·비밀번호·계정)은 **어떤 스키마에도 필드가 없다**. `MachineEndpoint`가 대표: 타입상 비밀을 담을 수 없어 컴파일 타임에 보장된다.
+1. **Provenance lane separation** — lanes are split by where the data came from. They are never mixed.
+   - **Observed**: what a collector actually saw — `CollectionResult`, `ObservedEdge`, `MachineIdentity`.
+   - **Declared**: what a CMDB or a user filled in — `MachineProfile`, the scope master, declared edges.
+   - **Derived**: views the core **recomputes** from observations — `Finding`, `evidence_strength`, `QuantumPosture`. **They are not in collector output.** Always regenerable from the raw original (reproducibility).
+   - **Action**: an append-only record of what the tool did — `ProvisioningRecord`, `Decision`.
+2. **Identity model** — three layers. **Authority** = `node_id` (the scope master / CMDB; stable and globally unique). **Correlation** = the `MachineIdentity` fingerprint (machine-id, hw-uuid, cloud-id, fqdn — verifies node_id, and derives a self-id when there is no CMDB). **Locator** = the IP (not an ID; used only to resolve a network observation to a node).
+3. **Derived-view reproducibility** — derivations are produced from `raw_capture` (the immutable original) by enrichment rules. That is why derived messages carry `derived_from_snapshot_id` and `ruleset_version` (which original and which rule they can be reproduced from).
+4. **Secrets are never persisted** — access secrets (SSH keys, passwords, accounts) **have no field in any schema**. `MachineEndpoint` is the representative case: its type cannot hold a secret, so it is guaranteed at compile time.
 
 ---
 
-## 2. `common.v1`: 공유 어휘 (단계 가로지름)
+## 2. `common.v1` — shared vocabulary (crosses stages)
 
-### 통제 어휘 (enum): 전 단계 공유
-| enum | 뜻 | 값(0=UNSPECIFIED 생략) |
+### Controlled vocabulary (enums) — shared by all stages
+| Enum | Meaning | Values (0=UNSPECIFIED omitted) |
 |---|---|---|
-| `CryptoRuntime` | 암호 런타임. 무엇을 받는지는 [수용 원칙](../docs/runtime-acceptance.md). 모든 finding·자산·조치의 1급 분기 | `OPENSSL` · `JCA` · `WIN_CNG` |
-| `DetectionMethod` | 탐지 방법. collector가 신고 → evidence 파생 근거 | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
-| `EvidenceStrength` | 증거 강도. **detection_method에서 파생**(core만 채움) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
-| `UsageContext` | 사용 맥락 | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
-| `CollectionLayer` | 수집 계층(완전성 맵 단위) | `SOURCE`·`ARTIFACT`·`PROCESS`·`NETWORK`·`JVM_INTROSPECTION` |
-| `OpensslBindingMode` | OpenSSL 바인딩 | `DYNAMIC`·`STATIC`·`DLOPEN`·`VENDORED` |
-| `JcaRegistrationMode` | JCA provider 등록 | `STATIC`·`DYNAMIC`·`EXPLICIT` |
+| `CryptoRuntime` | the crypto runtime — the runtime a finding or asset belongs to. The first-class branch for every finding, asset, and remediation | `OPENSSL` · `JCA` · `WIN_CNG` |
+| `DetectionMethod` | the detection method. Reported by the collector → the basis for deriving evidence | `SOURCE`·`ARTIFACT`·`SYMBOL_ANALYSIS`·`RUNTIME_INTROSPECTION`·`DYNAMIC_TRACE` |
+| `EvidenceStrength` | evidence strength. **Derived from detection_method** (only the core fills it) | `CONFIRMED`·`INFERRED_HIGH`·`INFERRED_LOW` |
+| `UsageContext` | usage context | `SERVER`·`CLIENT`·`AT_REST`·`SIGNING` |
+| `CollectionLayer` | collection layer (the unit of the completeness map) | `SOURCE`·`ARTIFACT`·`PROCESS`·`NETWORK`·`JVM_INTROSPECTION` |
+| `OpensslBindingMode` | OpenSSL binding | `DYNAMIC`·`STATIC`·`DLOPEN`·`VENDORED` |
+| `JcaRegistrationMode` | JCA provider registration | `STATIC`·`DYNAMIC`·`EXPLICIT` |
 
-### 메시지
-| 메시지 | 목적 | 핵심 필드 |
+### Messages
+| Message | Purpose | Key fields |
 |---|---|---|
-| **`Envelope`** | 모든 수집 산출물에 붙는 provenance(§3.1) | `collector_id`·`detection_method`·`target_node_id`(권위 앵커)·`scope_master_ref`·`signature`(ed25519)·`collector_license`·`machine`(지문) |
-| **`MachineIdentity`** | 머신 상관·self-id 지문(§1.4). collector가 채움 | `machine_id`·`hardware_uuid`·`cloud_instance_id`·`fqdn`·`ips`(로케이터)·`self_assigned_id`(CMDB 없을 때 결정론 파생)·`derived_from` |
-| **`Completeness`** | 계층별 커버리지(§2.6) | `layers_covered`·`layers_missing`(갭: 자동 "부재" 금지)·`note` |
+| **`Envelope`** | the provenance attached to every collection output | `collector_id`·`detection_method`·`target_node_id` (the authoritative anchor)·`scope_master_ref`·`signature` (ed25519)·`collector_license`·`machine` (fingerprint) |
+| **`MachineIdentity`** | the machine correlation and self-id fingerprint. Filled by the collector | `machine_id`·`hardware_uuid`·`cloud_instance_id`·`fqdn`·`ips` (locators)·`self_assigned_id` (deterministically derived when there is no CMDB)·`derived_from` |
+| **`Completeness`** | per-layer coverage | `layers_covered`·`layers_missing` (the gap — never auto-treated as "absent")·`note` |
 
 ---
 
-## 3. `discovery.v1`: 관측·파생
+## 3. `discovery.v1` — observation and derivation
 
-### `collector.proto`: Intake 계약 (Collector가 **반환**하는 것, §1.6)
-core는 "노드를 주면 정규화된 CBOM을 반환한다"는 추상만 의존한다. 이 gRPC 경계가 곧 GPL 전염 차단 경계다(라이선스 정리).
+### `collector.proto` — the intake contract (what a collector **returns**)
+The core depends only on the abstraction "give it a node, get back a canonical CBOM". This gRPC boundary is also the GPL contagion barrier (license notes).
 
-| 메시지 | 목적 | 핵심 필드 |
+| Message | Purpose | Key fields |
 |---|---|---|
-| `CollectorCapabilities` | 능력 신고(`Describe`) | `crypto_runtimes`·`layers`·`detection_methods`·`license`·`invasive`(침습 시 PROPOSE 게이트) |
-| `CollectRequest` | 수집 요청 | `target_node_ids`(스코프 게이트 통과분만)·`options` |
-| **`CollectionResult`** | 정규화된 CBOM Envelope 한 단위 | `envelope` · `raw_capture`(불변 원본)+`raw_format` · **`cbom_cyclonedx`**(base64 CycloneDX 표준 본문)+`cyclonedx_spec_version` · `completeness` · `observed_edges` |
+| `CollectorCapabilities` | capability declaration (`Describe`) | `crypto_runtimes`·`layers`·`detection_methods`·`license`·`invasive` (invasive → the PROPOSE gate) |
+| `CollectRequest` | a collection request | `target_node_ids` (only those past the scope gate)·`options` |
+| **`CollectionResult`** | one canonical CBOM envelope | `envelope` · `raw_capture` (the immutable original) + `raw_format` · **`cbom_cyclonedx`** (base64 standard CycloneDX body) + `cyclonedx_spec_version` · `completeness` · `observed_edges` |
 
-> Collector = §2.4 step 1–2(원시 포집 + CycloneDX 변환) + Envelope. **파생 `Finding`은 만들지 않는다.**
+> Collector = steps 1–2 of the pipeline (raw capture + CycloneDX conversion) + the Envelope. **It does not produce derived `Finding`s.**
 
-### `cbom.proto`: 파생 `Finding` (정규화 파이프라인이 **생성**, §2.4 step 3–6)
-core 정규화 파이프라인이 `cbom_cyclonedx` 본문에서 파생하는 타입드 뷰다. **재계산할 수 있다**(§1.2).
+### `cbom.proto` — the derived `Finding` (**produced** by the normalization pipeline, steps 3–6)
+The typed view the core normalization pipeline derives from the `cbom_cyclonedx` body. **Recomputable**.
 
-| 메시지 | 목적 | 핵심 필드 |
+| Message | Purpose | Key fields |
 |---|---|---|
-| `OpensslAxes` | OpenSSL 분기축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode` |
-| `JcaAxes` | JCA 분기축 | `jdk_vendor`·`jdk_version`·`provider_set`(**순서 유의미**: 우선순위 협상)·`registration_mode` |
-| `CngAxes` | Windows CNG 분기축 | `provider_set`(KSP/SSP, **관측된 순서 그대로**) · `algorithms`(이름·종류·서비스하는 provider) |
-| **`Finding`** | 크립토 자산 한 건(파생 뷰) | `id`(정규화 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method`+**`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id`+`ruleset_version`(재현) · **`app_keys`**(자산이 어느 앱 것인지, 공유 .so는 다중) |
+| `OpensslAxes` | the OpenSSL branch axis | `lib`·`version`·`fork` (OpenSSL/BoringSSL/…)·`binding_mode` |
+| `JcaAxes` | the JCA branch axis | `jdk_vendor`·`jdk_version`·`provider_set` (**order is meaningful** — priority negotiation)·`registration_mode` |
+| `CngAxes` | the Windows CNG branch axis | `provider_set` (KSP/SSP, **in observed order**) · `algorithms` (name, class, and which providers serve it) |
+| **`Finding`** | one crypto asset (a derived view) | `id` (canonical hash)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method` + **`evidence_strength`** (derived) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id` + `ruleset_version` (reproduction) · **`app_keys`** (asset attribution; a shared .so has several) |
 
-### `asset.proto`: 자산 계층 (Machine → Application → Process)
-| 메시지/enum | 목적 | 핵심 필드 |
+### `asset.proto` — the asset hierarchy (Machine → Application → Process)
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| `ApplicationKind` | 안정 키 출처 | `SYSTEMD_UNIT`(권장)·`EXE_PATH`·`DECLARED` |
-| **`Application`** | 타깃 앱(프로비저닝 1급 단위). 전역 식별=`(node_id, app_key)` | `node_id`·`app_key`·`name`·`kind`·`match` |
-| `ProcessMatch` | app→라이브 프로세스 매칭 규칙(PID 저장 안 함) | `systemd_unit`(cgroup, 정확)>`exe_path`>`cmdline_regex` |
-| `LiveProcess` | 런타임에 이어 붙인 결과(휘발, 조회 전용) | `pid`·`cmdline`·`started_at` |
-| `ProcessResolution` | app의 라이브 프로세스 스냅샷 | `node_id`·`app_key`·`processes`·`resolved_at`(즉시 낡음) |
+| `ApplicationKind` | the origin of the stable key | `SYSTEMD_UNIT` (recommended)·`EXE_PATH`·`DECLARED` |
+| **`Application`** | the target app (the first-class unit of provisioning). Globally identified by `(node_id, app_key)` | `node_id`·`app_key`·`name`·`kind`·`match` |
+| `ProcessMatch` | the rule matching an app to a live process (no PID is stored) | `systemd_unit` (cgroup, exact) > `exe_path` > `cmdline_regex` |
+| `LiveProcess` | the result of runtime resolution (volatile, query-only) | `pid`·`cmdline`·`started_at` |
+| `ProcessResolution` | a snapshot of an app's live processes | `node_id`·`app_key`·`processes`·`resolved_at` (stale immediately) |
 
-> **Process는 저장하지 않는다**. PID는 휘발. 프로비저닝 직전 `ProcessMatch`로 **그때그때 이어 붙인다**.
+> **Processes are not stored** — a PID is volatile. It is **resolved live** through `ProcessMatch` right before provisioning.
 
-### `edge.proto`: 통신 엣지 (노드 간 관계)
-| 메시지/enum | 목적 | 핵심 필드 |
+### `edge.proto` — communication edges (relations between nodes)
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| `NetworkProtocol` | 관측 프로토콜 | `TLS`·`SSH`·`QUIC`(핸드셰이크 암호화→대개 불명) |
-| `EdgeRole` | src 방향 | `CLIENT`·`SERVER` |
-| `QuantumPosture` | 양자내성(인벤토리 설계 §6.1). **파생 뷰**: core가 `negotiated_group`에서 분류 | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
-| **`ObservedEdge`** | 관측된 통신 엣지 한 건 | `src_node_id`·`dst_node_id`(이어지지 않았으면 빈 값 + `dst_addr`)·`protocol`·`role`·**`negotiated_group`**(등급 입력)·`cipher`·`observed_count`·`first/last_seen` |
+| `NetworkProtocol` | the observed protocol | `TLS`·`SSH`·`QUIC` (its handshake is encrypted → usually unknown) |
+| `EdgeRole` | the direction of src | `CLIENT`·`SERVER` |
+| `QuantumPosture` | quantum posture. A **derived view** — the core classifies it from `negotiated_group` | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
+| **`ObservedEdge`** | one observed communication edge | `src_node_id`·`dst_node_id` (empty plus `dst_addr` if unresolved)·`protocol`·`role`·**`negotiated_group`** (the posture input)·`cipher`·`observed_count`·`first/last_seen` |
 
 ---
 
-## 4. `inventory.v1`: 메타데이터·판정
+## 4. `inventory.v1` — metadata and verdicts
 
-### `machine.proto`: 머신 메타데이터 (식별과 **분리**된 사람-대면 정보)
-| 메시지/enum | 목적 | 핵심 필드 |
+### `machine.proto` — machine metadata (human-facing information, **separate** from identity)
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| `Environment` | 배포 환경(시각 축) | `PRODUCTION`·`STAGING`·`DEVELOPMENT`·`TEST` |
-| `ProfileSource` | 프로필 출처 | `CMDB`·`REVIEWER`·`OBSERVED` |
-| **`MachineProfile`** | 사람이 보고 구분하는 메타데이터(선언/리뷰어가 채움) | `node_id`(앵커)·`display_name`·`environment`·`role`·`owner`·`location`·`labels`(map)·`source` |
-| **`MachineEndpoint`** | discovery 재접속용 **재사용 연결 메타데이터** | `node_id`·`name`·`ip`·`port`: ★**비밀 필드 없음**(키·계정·암호는 사용자 파일에만, §1.5) |
+| `Environment` | the deployment environment (a visual axis) | `PRODUCTION`·`STAGING`·`DEVELOPMENT`·`TEST` |
+| `ProfileSource` | where the profile came from | `CMDB`·`REVIEWER`·`OBSERVED` |
+| **`MachineProfile`** | the metadata people read to tell machines apart (filled by declaration or a reviewer) | `node_id` (the anchor)·`display_name`·`environment`·`role`·`owner`·`location`·`labels` (map)·`source` |
+| **`MachineEndpoint`** | **reusable connection metadata** for reconnecting during discovery | `node_id`·`name`·`ip`·`port` — ★**no secret field** (keys, accounts, and passwords live only in the user's files) |
 
-### `decision.proto`: 리뷰 판정 (스키마만 있고 판정 엔진은 없다)
-`FinalizedPlan`(provisioning)의 인벤토리 짝. 판정이 확정되면 확정 계획으로 이어진다.
+### `decision.proto` — review verdicts (schema only — there is no verdict engine)
+The inventory counterpart of `FinalizedPlan` (provisioning). When a verdict is finalized it leads into a finalized plan.
 
-| 메시지/enum | 목적 | 핵심 필드 |
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| `DecisionStatus` | 판정 lifecycle(§3.3③) | `DRAFT`·`IN_REVIEW`·`FINALIZED` |
-| `DecisionConclusion` | 리뷰어 결론(특히 UNOBSERVED 항목) | `EXISTS`·`STALE`·`EXCLUDED`·`APPROVED` |
-| **`ReconState`** | 선언과 관측을 대조한 결과 (어휘만 있고 **대조 엔진은 이 리포에 없다**) | `CONFIRMED`(선언∩관측)·`UNDECLARED`(관측만=shadow)·`UNOBSERVED`(선언만: 기계가 확정하지 않는다) |
-| **`Decision`** | 판정 한 건 | `subject`(엣지/정책 ID)·**`state`**(무엇에 대한 판정인가)·`conclusion`·`status`·`reviewer`·`signature`·`basis_hash`(근거 변하면 무효화)·`derived_from_snapshot_id` |
+| `DecisionStatus` | the verdict lifecycle | `DRAFT`·`IN_REVIEW`·`FINALIZED` |
+| `DecisionConclusion` | the reviewer's conclusion (especially for UNOBSERVED items) | `EXISTS`·`STALE`·`EXCLUDED`·`APPROVED` |
+| **`ReconState`** | the result of reconciling a declaration against observation (vocabulary only — **the engine is not in this repository**) | `CONFIRMED` (declared ∩ observed) · `UNDECLARED` (observed only = shadow) · `UNOBSERVED` (declared only — no machine decides this) |
+| **`Decision`** | one verdict | `subject` (an edge or policy ID)·`conclusion`·`status`·`reviewer`·`signature`·`basis_hash` (invalidated when the basis changes)·`derived_from_snapshot_id` |
 
 ---
 
-## 5. `provisioning.v1`: 생성·롤백
+## 5. `provisioning.v1` — generation and rollback
 
-### `plan.proto`: 확정 계획 (프로비저닝의 유일 실행 근거)
-| 메시지/enum | 목적 | 핵심 필드 |
+### `plan.proto` — the finalized plan (the only grounds for provisioning to run)
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| `DeployAutomationLevel` | 단계적 배포 위임(§4.3). 자산별 판정 | `L1_STAGE_ONLY`·`L2_STAGE_INSTALL`(프로덕션 기본)·`L3_FULL_AUTO`(활성화·재시작까지. 계획의 `activation` 훅) |
-| `PlanStatus` | 계획 lifecycle | `DRAFT`·`IN_REVIEW`·**`FINALIZED`**(실행 근거, §3.7 게이트) |
-| `RemediationKind` | 조치 종류(프로비저닝 설계 §4.1·§4.2) → core 생성기 분기 | `CONFIG_ONLY`·`PROVIDER_INJECT`·`FORK_REPLACE`·`PROXY_FRONT`·`REBUILD`·`JDK_UPGRADE`·`APP_RECONFIG`·`DECOMMISSION` |
-| **`RemediationAction`** | 자산 한 건에 대한 조치 | `target_node_id`·`finding_id`·`crypto_runtime`·`kind`·`automation_level`·`target_algorithm`·`provider_choice`·`provider_class`(FQCN 명시: 없으면 알려진 이름만 확정)·**`config_artifact`**(core 생성기가 렌더)·**`activation`**(L3 훅)·`rollback_note`·`priority` |
-| **`ActivationHooks`** | L3에서 실행할 **사용자가 적은 명령**(활성화 방법은 환경마다 달라 도구가 추측하지 않는다) | `pre`·`activate`·`deactivate`·`restart`: 생성기가 의미 순서로 배치: forward `pre→배치→activate→restart`, rollback `pre→deactivate→제거→restart` |
-| **`FinalizedPlan`** | 확정 계획(스키마: 저작·확정 엔진은 없다) | `id`·`status`·`scope`·`actions`·`approval_signatures`(finalize 전제)·`derived_from_snapshot_id`·`ruleset_version` |
+| `DeployAutomationLevel` | staged delegation of deployment. Decided per asset | `L1_STAGE_ONLY`·`L2_STAGE_INSTALL` (the production default)·`L3_FULL_AUTO` (through activation and restart — the plan's `activation` hook) |
+| `PlanStatus` | the plan lifecycle | `DRAFT`·`IN_REVIEW`·**`FINALIZED`** (the grounds for execution) |
+| `RemediationKind` | the kind of remediation → the core generator's branch | `CONFIG_ONLY`·`PROVIDER_INJECT`·`FORK_REPLACE`·`PROXY_FRONT`·`REBUILD`·`JDK_UPGRADE`·`APP_RECONFIG`·`DECOMMISSION` |
+| **`RemediationAction`** | the remediation for one asset | `target_node_id`·`finding_id`·`crypto_runtime`·`kind`·`automation_level`·`target_algorithm`·`provider_choice`·`provider_class` (an explicit FQCN — without it only known names are certain)·**`config_artifact`** (rendered by the core generator)·**`activation`** (the L3 hook)·`rollback_note`·`priority` |
+| **`ActivationHooks`** | the **commands the user wrote** to run at L3 (activation differs per environment, so the tool does not guess) | `pre`·`activate`·`deactivate`·`restart` — the generator places them in a meaningful order: forward `pre→stage→activate→restart`, rollback `pre→deactivate→remove→restart` |
+| **`FinalizedPlan`** | the finalized plan (schema only — there is no authoring or finalization engine) | `id`·`status`·`scope`·`actions`·`approval_signatures` (a precondition of finalize)·`derived_from_snapshot_id`·`ruleset_version` |
 
-### `rollback.proto`: 프로비저닝 히스토리·롤백 (스키마=OSS, 롤백 플레이북도 이 리포가 생성)
-| 메시지/enum | 목적 | 핵심 필드 |
+### `rollback.proto` — provisioning history and rollback (the schema is OSS, and this repo generates the rollback playbook too)
+| Message/enum | Purpose | Key fields |
 |---|---|---|
-| **`CryptoState`** | 특정 시점 암호 상태(before/after 공통) | `modules`(예 `libcrypto.so.3@3.0.13`)·`config_digest`·`provider_chain`·`config_snapshot_ref`(롤백용 원문 참조) |
-| `ProvisioningStatus` | 진행 상태(단계 경계=롤백 지점) | `STAGED`(L1)·`INSTALLED`(L2)·`ACTIVATED`(L3: 활성화·재시작 완료)·`ROLLED_BACK`·`FAILED` |
-| **`ProvisioningRecord`** | 프로비저닝 행위 1건의 append-only 이력 | `node_id`·**`app_keys`**(영향 앱, 공유 .so는 다중)·`action_id`·`plan_id`·**`before`**(롤백 기준)·`after`·`status`·`note`·`at` |
+| **`CryptoState`** | the crypto state at a point in time (shared by before/after) | `modules` (e.g. `libcrypto.so.3@3.0.13`)·`config_digest`·`provider_chain`·`config_snapshot_ref` (a reference to the original text, for rollback) |
+| `ProvisioningStatus` | progress (a stage boundary is a rollback point) | `STAGED` (L1)·`INSTALLED` (L2)·`ACTIVATED` (L3 — activation and restart done)·`ROLLED_BACK`·`FAILED` |
+| **`ProvisioningRecord`** | the append-only record of one provisioning act | `node_id`·**`app_keys`** (the affected apps; a shared .so has several)·`action_id`·`plan_id`·**`before`** (the rollback baseline)·`after`·`status`·`note`·`at` |
 
 ---
 
-## 6. 관계 지도: 메시지가 어떻게 이어지나
+## 6. Relationship map — how the messages connect
 
 ```
-[Collector]  ──반환──▶  CollectionResult { Envelope(+MachineIdentity) · raw_capture · cbom_cyclonedx · ObservedEdge[] · Completeness }
-                                     │  (§1.4 스코프 게이트 · ed25519 검증)
+[Collector]  ──returns──▶  CollectionResult { Envelope(+MachineIdentity) · raw_capture · cbom_cyclonedx · ObservedEdge[] · Completeness }
+                                     │  (scope gate · ed25519 verification)
                                      ▼
-[정규화]  ──파생──▶  Finding[] (evidence_strength·app_keys) ─┐   ObservedEdge + QuantumPosture(파생)
+[Normalize]  ──derives──▶  Finding[] (evidence_strength·app_keys) ─┐   ObservedEdge + QuantumPosture (derived)
                                      │                            │
-                              app_keys│앱                          │
+                          app_keys attribution                    │
                                      ▼                            ▼
-                             Application (node_id, app_key)   [중앙 인벤토리 뷰]
-                                     │                            ▲  ▸MachineEndpoint · MachineProfile (메타데이터 레인)
-                           ProcessMatch│(실시간)                    │
+                             Application (node_id, app_key)   [central inventory view]
+                                     │                            ▲  ▸MachineEndpoint · MachineProfile (the metadata lane)
+                         ProcessMatch │ (live)                    │
                                      ▼                            │
-                              LiveProcess (휘발)              [리뷰·판정] Decision ══(finalize)══╗
-                                                                                              ║
-                                                                                              ▼
-[프로비저닝 생성]  FinalizedPlan { RemediationAction[] } ──§3.7 FINALIZED 게이트──▶ 플레이북(L1/L2/L3)
+                              LiveProcess (volatile)         [review] Decision ══(finalize)══╗
+                                                                                             ║
+                                                                                             ▼
+[Provisioning]  FinalizedPlan { RemediationAction[] } ──FINALIZED gate──▶ playbooks (L1/L2/L3)
                                      │                                                  +
                                      ▼                                         ProvisioningRecord
-                          before = CryptoState(Finding들)  ─────────────────▶  { before/after · app_keys · status }  (append-only 롤백 근거)
+                          before = CryptoState(the Findings)  ────────────▶  { before/after · app_keys · status }  (append-only rollback basis)
 ```
 
-**레인으로 다시 보기**: 관측(`CollectionResult`·`ObservedEdge`) → 파생(`Finding`·`QuantumPosture`) → 선언/메타(`MachineProfile`·`Decision`) → 행위(`ProvisioningRecord`). `node_id`가 전 레인을 꿰는 앵커이고, `app_key(s)`가 크립토 자산을 앱에 이어 discovery→provisioning까지 흐른다.
+**Seen again as lanes**: observed (`CollectionResult`, `ObservedEdge`) → derived (`Finding`, `QuantumPosture`) → declared/metadata (`MachineProfile`, `Decision`) → action (`ProvisioningRecord`). `node_id` is the anchor threading every lane, and `app_key(s)` attributes crypto assets to apps, flowing from discovery all the way to provisioning.
 
-> **`app_key`가 늘 채워지는 것은 아니다.** `Finding`과 `ProvisioningRecord`는 관측한 프로세스에서
-> 바로 나오므로 앱이 항상 붙는다. **`ObservedEdge`도 앱까지 가되, 조회하는 순간 소켓이
-> 살아 있어야 한다**. 회선을 수동 관측하는 방식에는 소켓을 연 PID가 없어서, 캡처 시점에 소켓
-> inode를 `/proc/*/fd`와 대조해 채우기 때문이다.
+> **`app_key` is not always filled.** `Finding` and `ProvisioningRecord` come straight from the process
+> that was observed, so they always attribute. **`ObservedEdge` also reaches the app, but only
+> while the socket is still open at lookup time** — passive wire observation carries no PID of its own,
+> so the socket inode has to be correlated against `/proc/*/fd` to fill `app_key`.
 >
-> 그래서 짧게 붙었다 끊긴 연결은 비고, 권한이 모자라 남의 프로세스를 못 읽어도 빈다. **빈
-> `app_key`는 "이 엣지에 앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이고**, 왜 못 했는지는 완전성 맵의
-> note에 적혀 있다. 못 채운 칸은 사람이 지정할 수 있다
-> (`pqcota-declare-attribution`): 다만 그 선언은 **관측을 고치지 않고** 자기 레인에 쌓이고,
-> 합치는 일은 조회 화면에서 일어난다([인벤토리 설계 §2](../inventory/design.md#2-데이터-모델)).
+> A connection that closed quickly is therefore blank, and so is one whose process could not be read for
+> lack of permission. An **empty `app_key` means "could not attribute", not "this edge has no app"**, and
+> the completeness note says which. A person can fill what was missed
+> (`pqcota-declare-attribution`) — but that declaration **does not edit the observation**: it lands in its
+> own lane, and the join happens on the inventory screen.
 
 ---
 
-관련 설계: [디스커버리](../discovery/design.md) · [인벤토리](../inventory/design.md) · [프로비저닝](../provisioning/design.md) · [아키텍처·OSS 경계](../docs/architecture.md). 실행 예제: [examples/](../examples).
+Runnable examples: [examples/](../examples).

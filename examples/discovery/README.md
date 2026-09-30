@@ -1,99 +1,97 @@
-# examples/discovery: 접근 준비 + 두 수신 경로(① 직접 관측 · ② 위임 CBOM)
+# examples/discovery: access prep + two intake paths (① direct observation · ② delegated CBOM)
 
 ```bash
 ./examples/discovery/run.sh
 ```
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
+## What happens
 
-## 무슨 일이 일어나나
-
-### 1) `pqcota-hosts`: 사용자 hosts 파일 → Ansible 인벤토리 + 엔드포인트 (§1.5)
-입력 [`hosts.csv`](hosts.csv)(사용자가 관리하는 파일):
+### 1) `pqcota-hosts`: the user's hosts file → an Ansible inventory + endpoints
+The input is [`hosts.csv`](hosts.csv) (a file the user manages):
 ```
 node_id,name,ip,port,ssh_user,ssh_key,ssh_pass,os,connection
-node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,,,            ← SSH 키 방식(권장)
-node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password,,             ← 비밀번호 방식
+node-a,Web Frontend,10.0.0.2,22,deploy,/home/me/.ssh/id_ed25519,,,            ← SSH key (recommended)
+node-b,Payments App (Java),10.0.0.3,22,deploy,,example-password,,             ← password
 node-c,Payments DB,10.0.0.9,22,deploy,/home/me/.ssh/id_ed25519,,,
 node-d,Payments Gateway (Windows),10.0.0.11,,Administrator,,example-password,windows,winrm
 ```
-→ 두 가지를 낸다:
-- `--ansible-out targets.ini`: 런타임 전용 **Ansible 인벤토리**(접속 비밀이 실려 소유자만 읽을 수 있게 `0600`). 이것으로 각 노드에서 collector를 돌린다. **pqcota 인벤토리엔 영속하지 않는다.**
-- stdout: **안전 엔드포인트**(node_id·이름·ip·port이며 **비밀은 제외**한다). `--dsn`을 주면 이것을 인벤토리(Postgres)에 upsert(재사용·수정 대상).
+→ It produces two things:
+- `--ansible-out targets.ini`: a runtime-only **Ansible inventory** (it carries connection secrets, so it is `0600`, readable only by the owner). Use it to run the collectors on each node. **It is not persisted into the pqcota inventory.**
+- stdout: **safe endpoints** (node_id, name, ip and port, with **secrets excluded**). With `--dsn`, they are upserted into the inventory (Postgres) as reusable and editable records.
 
-> 접근 비밀(키·비밀번호·계정)은 **hosts.csv(사용자 파일)와 생성된 targets.ini(런타임)에만** 있고 pqcota 인벤토리엔 적재하지 않는다.
+> Access secrets (keys, passwords, accounts) exist **only in hosts.csv (the user's file) and the generated targets.ini (runtime)** and are never loaded into the pqcota inventory.
 
-#### 인증 방식: SSH 키(권장) 또는 비밀번호
-컬럼은 헤더 필수·순서 자유이며, **호스트마다 독립**이다. `node_id`만 필수다.
+#### Authentication: an SSH key (recommended) or a password
+The header is required and the column order is free, and each **host is independent**. Only `node_id` is required.
 
-| 컬럼 | 뜻 |
+| Column | Meaning |
 |---|---|
-| `ssh_user` | 로그인 계정(예: `deploy`, `root`) |
-| `ssh_key` | **미리 만들어둔 SSH 개인키 경로** → `ansible_ssh_private_key_file` (권장) |
-| `ssh_pass` | 비밀번호 → `ansible_ssh_pass` (지원하나 권장 안 함) |
-| `os` | `linux`(기본) 또는 `windows`. 그 노드에서 어느 collector를 돌릴지 가른다 |
-| `connection` | `ssh`(기본) 또는 `winrm`. 그 노드에 **어떻게 붙을지** |
+| `ssh_user` | the login account (e.g. `deploy`, `root`) |
+| `ssh_key` | **the path of a private SSH key you made in advance** → `ansible_ssh_private_key_file` (recommended) |
+| `ssh_pass` | a password → `ansible_ssh_pass` (supported but not recommended) |
+| `os` | `linux` (default) or `windows`. It decides which collectors run on that node |
+| `connection` | `ssh` (default) or `winrm`. **How to connect** to that node |
 
-- **키 방식**(node-a·node-c): `ssh_key`에 개인키 경로를 적고 `ssh_pass`는 비운다.
-- **비밀번호 방식**(node-b): `ssh_pass`에 비밀번호, `ssh_key`는 비움. ⚠️ Ansible이 비밀번호로 접속하려면 컨트롤러에 **`sshpass`가 설치**돼 있어야 한다(`apt install sshpass`). 평문 비밀번호가 targets.ini에 실리니 키 방식을 권한다.
-- 섞어 써도 된다(위 예시처럼 노드마다 다르게).
+- **Key** (node-a and node-c): write the private key path in `ssh_key` and leave `ssh_pass` empty.
+- **Password** (node-b): put the password in `ssh_pass` and leave `ssh_key` empty. ⚠️ For Ansible to connect with a password, the controller needs **`sshpass` installed** (`apt install sshpass`). A plaintext password ends up in targets.ini, so we recommend keys.
+- You can mix them (each node differs, as in the example above).
 
-#### `os`: 어느 collector를 보낼지 가른다
+#### `os`: decides which collectors to send
 
-`linux`면 `pqcota-nodescan`·`pqcota-netcap`·`pqcota-jvmscan`, `windows`면 `pqcota-cngscan`·`pqcota-jvmscan`이다. 비우면 `linux`이고, 둘 중 어느 것도 아닌 값은 **오류**다. 확인 없이 리눅스로 받아들이면 Windows 노드에 리눅스 collector가 올라가고 실패는 한참 뒤에 드러난다.
+`linux` gets `pqcota-nodescan`, `pqcota-netcap` and `pqcota-jvmscan`; `windows` gets `pqcota-cngscan` and `pqcota-jvmscan`. If empty it is `linux`, and any value that is neither is an **error**. Accepting it as Linux without checking would put Linux collectors on a Windows node and the failure would only show up much later.
 
-**관측하지 않고 받아 적는다.** OS는 collector를 올리기 *전에* 알아야 하는데 알아내려면 이미 무언가를 올려야 한다. hosts.csv는 사용자가 관리하는 파일이라 대개 이미 알고 있다. (플레이북은 `gather_facts`로 한 번 더 확인한다. 적힌 것과 다르면 그 노드는 건너뛴다.)
+**It is written down, not observed.** The OS has to be known *before* a collector is shipped, but finding it out would require shipping something already. hosts.csv is a file the user manages, so they usually know. (The playbook checks once more with `gather_facts`. If it differs from what is written, that node is skipped.)
 
-`os`가 만드는 것은 인벤토리의 **그룹**이다: `[targets_linux]`·`[targets_windows]`, 그리고 둘의 부모인 `[targets]`. `hosts: targets`로 쓰던 플레이북은 그대로 돈다.
+What `os` produces is inventory **groups**: `[targets_linux]` and `[targets_windows]`, plus their parent `[targets]`. A playbook that used `hosts: targets` runs unchanged.
 
-#### `connection`: 어떻게 붙을지
+#### `connection`: how to connect
 
-**여기 적는 이유는 `targets.ini`가 매 실행 덮어써지기 때문이다.** 손으로 더한 연결 설정은 다음 실행에 지워진다. 접속 방법은 지워지지 않는 곳, 즉 이 파일에 있어야 한다.
+**It is written here because `targets.ini` is overwritten on every run.** A connection setting added by hand is erased on the next run. How to connect has to live somewhere that is not erased, which is this file.
 
-| 값 | 인벤토리에 나가는 것 | 계정·비밀 |
+| Value | What goes into the inventory | Account and secret |
 |---|---|---|
-| `ssh` (기본) | 리눅스면 그대로. **Windows면 `ansible_shell_type=powershell`**: 셸이 sh가 아니다 | `ssh_key`(권장) 또는 `ssh_pass` |
-| `winrm` | `ansible_connection=winrm`, 포트 기본 **5985** | `ssh_pass` → `ansible_password`. **키로는 붙지 않는다** |
+| `ssh` (default) | as is for Linux. **For Windows, `ansible_shell_type=powershell`**: the shell is not sh | `ssh_key` (recommended) or `ssh_pass` |
+| `winrm` | `ansible_connection=winrm`, port defaults to **5985** | `ssh_pass` → `ansible_password`. **It does not connect with a key** |
 
-`port`를 적었으면 그것이 우선한다(HTTPS면 `5986`). `connection=winrm`인데 `os`가 `windows`가 아니거나 `ssh_key`가 있으면 **오류**다. 접속 시점에야 드러날 어긋남을 파일을 읽는 자리에서 오류로 막는다.
+If you wrote `port`, it wins (`5986` for HTTPS). It is an **error** if `connection=winrm` while `os` is not `windows`, or if `ssh_key` is present. A mismatch that would only show up at connection time is stopped as an error at the point the file is read.
 
-> **사이트마다 달라지는 값 둘은 지어내지 않는다**. SSH의 `ansible_shell_type=cmd`(sshd 기본 셸이 cmd일 때만)와 WinRM의 `ansible_winrm_transport`다. 생성된 ini의 주석이 그 자리를 알려 주고, 값은 `group_vars/targets_windows.yml`에 둔다.
+> **Two values that differ per site are not invented**: SSH's `ansible_shell_type=cmd` (only when sshd's default shell is cmd) and WinRM's `ansible_winrm_transport`. A comment in the generated ini shows where they go, and the values belong in `group_vars/targets_windows.yml`.
 >
-> 인증서 검증처럼 winrm 플러그인이 **선언하지 않은** 설정은 `ansible_winrm_<option>` 꼴로 적으면 pywinrm까지 그대로 넘어간다(`ansible_winrm_server_cert_validation` 등). 앤서블 옵션이 아니라 pywinrm의 이름이라 `ansible-doc`에서는 찾을 수 없다.
+> A setting the winrm plugin **does not declare**, such as certificate validation, is passed straight through to pywinrm when written as `ansible_winrm_<option>` (`ansible_winrm_server_cert_validation` and so on). It is pywinrm's name, not an Ansible option, so `ansible-doc` will not find it.
 
-#### SSH 키 만들고 타깃에 등록하기
-키 방식을 쓰려면 개인/공개키 쌍을 만들고 **공개키를 타깃의 `authorized_keys`에 등록**한다:
+#### Making an SSH key and registering it on the target
+To use keys, make a private/public key pair and **register the public key in the target's `authorized_keys`**:
 ```bash
-# 1) 키 쌍 생성 (한 번만) — 개인키 ~/.ssh/id_ed25519, 공개키 ~/.ssh/id_ed25519.pub
+# 1) generate the key pair (once): private key ~/.ssh/id_ed25519, public key ~/.ssh/id_ed25519.pub
 ssh-keygen -t ed25519 -C "pqcota-discovery" -f ~/.ssh/id_ed25519
 
-# 2) 각 타깃에 공개키 등록 (타깃당 한 번) — 이후 비밀번호 없이 접속
+# 2) register the public key on each target (once per target): afterwards you connect without a password
 ssh-copy-id -i ~/.ssh/id_ed25519.pub deploy@10.0.0.2
 ssh-copy-id -i ~/.ssh/id_ed25519.pub deploy@10.0.0.3
 ssh-copy-id -i ~/.ssh/id_ed25519.pub deploy@10.0.0.9
 
-# 3) 접속 확인
+# 3) check the connection
 ssh -i ~/.ssh/id_ed25519 deploy@10.0.0.2 true && echo OK
 ```
-그 다음 `hosts.csv`의 `ssh_key`에 **개인키 경로**(`~/.ssh/id_ed25519`)를 적는다. `ssh-copy-id`가 없으면 공개키(`.pub`) 내용을 타깃의 `~/.ssh/authorized_keys`에 한 줄 추가하면 된다(퍼미션: `.ssh` 700, `authorized_keys` 600).
+Then write the **private key path** (`~/.ssh/id_ed25519`) in `ssh_key` of `hosts.csv`. Without `ssh-copy-id`, add the contents of the public key (`.pub`) as one line to the target's `~/.ssh/authorized_keys` (permissions: `.ssh` 700, `authorized_keys` 600).
 
-> 이 예제(`run.sh`)는 접속까지 하지 않으므로 **키 파일이 없어도 동작**한다. `pqcota-hosts`는 경로 문자열을 targets.ini에 옮겨 적을 뿐이다. 키는 이후 실제 `ansible-playbook` 단계에서 쓰인다.
+> This example (`run.sh`) does not actually connect, so it **works even without a key file**. `pqcota-hosts` only copies the path string into targets.ini. The key is used later, in the real `ansible-playbook` step.
 
-### 2) `pqcota-ingest`: 회수 결과 → 스코프 게이트 → 정규화 → 적재
-[`../data/results`](../data)의 `CollectionResult` JSON들을 읽어 파생 `Finding`으로 정규화·적재한다. `PQCOTA_DSN`이 없으면 **인메모리 요약**(스냅샷·노드별 자산/엣지 수), 있으면 Postgres에 append-only 영속. 서명 검증은 `PQCOTA_VERIFY_KEY`가 있을 때만.
+### 2) `pqcota-ingest`: retrieved results → scope gate → normalization → loading
+It reads the `CollectionResult` JSON files in [`../data/results`](../data), normalizes them into derived `Finding`s and loads them. Without `PQCOTA_DSN` you get an **in-memory summary** (snapshots, and asset and edge counts per node); with it, the data is persisted append-only in Postgres. Signature verification happens only when `PQCOTA_VERIFY_KEY` is set.
 
-`node-a-openssl.json`의 CBOM(디코드)에는 한 공유 라이브러리에 앱이 여럿 붙은 것이 들어 있다:
+The decoded CBOM of `node-a-openssl.json` contains one shared library with several apps attached:
 ```json
 {"name":"pqcota:openssl.lib","value":"libssl.so.3"},
 {"name":"pqcota:app_keys","value":"/opt/apps/api-gw,/opt/apps/payment-gw"}
 ```
 
-## 실행 중 JVM 관측 (정찰→attach)
-JCA provider 체인은 **살아있는 JVM에 attach**해야 실체(런타임 `addProvider` 포함)가 보인다. 별도 예제로 격리했다(Go만이 아니라 JDK+Docker 필요): **[jvm/](jvm/README.md)**: `/proc` 정찰 → attach → 동적 BC 포착 → JSONL 적재를 최소로 보인다.
+## Observing a running JVM (reconnaissance → attach)
+The JCA provider chain shows what is really there (including a runtime `addProvider`) only if you **attach to a live JVM**. It is isolated in a separate example (it needs a JDK and Docker, not just Go): **[jvm/](jvm/README.md)** shows `/proc` reconnaissance → attach → catching the dynamic BC → JSONL loading at minimum.
 
-## 실제 노드를 스캔하려면 (리눅스)
-샘플 대신 진짜 관측을 내려면 관측 대상에서:
+## To scan a real node (Linux)
+To produce real observations instead of the samples, run this on the observed host:
 ```bash
-go run ./discovery/cmd/pqcota-nodescan <node-id>   # /proc의 로드된 OpenSSL(libssl/libcrypto) — 리눅스 전용
+go run ./discovery/cmd/pqcota-nodescan <node-id>   # the loaded OpenSSL (libssl/libcrypto) from /proc: Linux only
 ```
-결과 JSON을 모아 그 디렉터리를 `pqcota-ingest`에 준다. JVM은 [jvm/](jvm/README.md) 참고. 커맨드 전체 지도: [discovery/cmd/README](../../discovery/cmd/README.md).
+Collect the result JSON files and give that directory to `pqcota-ingest`. For the JVM see [jvm/](jvm/README.md). The map of all commands: [discovery/cmd/README](../../discovery/cmd/README.md).

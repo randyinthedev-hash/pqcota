@@ -1,13 +1,10 @@
-한국어 · [English](README.en.md)
+# discovery/cmd/ — discovery execution entry points
 
-# discovery/cmd/: 디스커버리 실행 진입점
 
-디스커버리 단계의 CLI(Go 바이너리)들. 이름이 비슷하니 **어느 걸 언제 쓰는지**를 세 범주로 나눠 정리한다. 관측은 전부 ②의 collector가 대상 머신에서 하고, 낸 결과를 중앙에 쌓는 일은 [inventory/cmd](../../inventory/cmd/README.md)가 맡는다.
+The CLIs (Go binaries) of the discovery stage. The names look alike, so this page sorts them into three categories by **which one to use when**. All observation is done by the collectors in ② on the target machine; accumulating what they produce centrally is [inventory/cmd](../../inventory/cmd/README.md)'s job.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
-
-## ① 접근 준비: 사용자 hosts 파일에서 discovery 접근을 준비한다
-discovery를 시작하기 전에, 접근 대상 노드의 접속 정보를 **사용자가 직접 작성한 hosts 파일**(CSV)로 정의한다. 접근 비밀(계정·SSH 키)은 이 파일에만 있고 **pqcota 인벤토리엔 적재하지 않는다**.
+## ① Access prep — setting up discovery access from the user's hosts file
+Before discovery starts, the connection details for the target nodes are defined in a **hosts file the user writes themselves** (CSV). Access secrets (accounts, SSH keys) live only in that file and are **never ingested into the pqcota inventory**.
 
 ### `pqcota-hosts`
 
@@ -15,66 +12,66 @@ discovery를 시작하기 전에, 접근 대상 노드의 접속 정보를 **사
 pqcota-hosts [--ansible-out <path>] [--dsn <postgres>] <hosts.csv>
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument/option | What it does |
 |---|---|
-| `<hosts.csv>` | 접속 정보 파일(사용자 작성). 헤더 필수·순서 자유이며 `node_id`만 필수다. **컬럼 표와 그대로 돌려볼 수 있는 샘플**은 [examples/discovery](../../examples/discovery/README.md)에 있다([hosts.csv](../../examples/discovery/hosts.csv)) |
-| `--ansible-out <path>` | Ansible 인벤토리(ini) 생성: 계정·키가 담기므로 **소유자만 읽을 수 있게**(`0600`) 쓴다. 이것으로 ②를 각 노드에 돌린다 |
-| `--dsn <postgres>` | 엔드포인트를 pqcota 인벤토리에 upsert: 계정·키 제외, 나중에 수정·재사용 가능 |
+| `<hosts.csv>` | the connection file (written by the user). A header is required, column order is free, and only `node_id` is mandatory — the **column table and a sample you can run as-is** are in [examples/discovery](../../examples/discovery/README.md) ([hosts.csv](../../examples/discovery/hosts.csv)) |
+| `--ansible-out <path>` | generates an Ansible inventory (ini) — it holds accounts and keys, so it is written **owner-readable only** (`0600`). You run ② on each node with it |
+| `--dsn <postgres>` | upserts the endpoints into the pqcota inventory — accounts and keys excluded; editable and reusable later |
 
-`<postgres>`는 Postgres 접속 문자열이다. 드라이버가 pgx라 URL 형식과 키=값 형식을 모두 받는다:
+`<postgres>` is a Postgres connection string. The driver is pgx, so both the URL form and the key=value form are accepted:
 
 ```
-postgres://<user>:<password>@<host>:<port>/<db>     # 예: postgres://postgres:pqcota@localhost:5432/pqcota
+postgres://<user>:<password>@<host>:<port>/<db>     # e.g. postgres://postgres:pqcota@localhost:5432/pqcota
 host=localhost port=5432 user=postgres dbname=pqcota
 ```
 
-같은 문자열을 `PQCOTA_DSN` 환경변수로도 준다(적재·조회 커맨드가 이것을 읽는다).
+The same string can be given through the `PQCOTA_DSN` environment variable (the ingest and query commands read it).
 
-옵션 없이 돌리면 안전 엔드포인트(`node_id`·이름·ip·port)를 stdout에 요약만 한다.
+Run with no options and it just summarizes the safe endpoints (`node_id`, name, ip, port) on stdout.
 
-### 그다음. 만든 인벤토리로 collector 돌리기
+### Then — running the collectors with the inventory you made
 
-`targets.ini`가 생겼다고 관측이 시작되지는 않는다. 그것은 **도달 수단**일 뿐이고, 실제로 collector를 각 노드에서 돌리는 것은 사용자의 Ansible이다. 그 방법을 보여 주는 **참조 플레이북**이 리포에 있다 → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
+A `targets.ini` existing does not start any observation. It is only **a means of reach**; actually running the collectors on each node is your Ansible's job. A **reference playbook** showing how is in the repo → [`discovery/ansible/discover.yml`](../ansible/discover.yml)
 
 ```bash
 ansible-playbook -i targets.ini discovery/ansible/discover.yml
 ```
 
-하는 일은 넷이다. **반입**(collector 셋을 `/tmp/pqcota-collector`로) → **실행** → **회수**(결과 JSON을 컨트롤러로) → **정리**(노드에 아무것도 남기지 않는다). collector는 상주 에이전트가 아니라 실행 후 종료하는 CLI라 이 일회성 패턴이 맞다.
+It does four things — **ship** (the three collectors into `/tmp/pqcota-collector`) → **run** → **retrieve** (the result JSON back to the controller) → **clean up** (nothing is left on the node). A collector is not a resident agent but a CLI that exits when done, so this one-shot pattern fits.
 
-JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다**. `pqcota-jvmscan --recon`으로 그 노드에 JVM이 있는지 먼저 보고, 있는 노드에만 보낸다.
+The JVM add-on (`collector.jar`) is **not sprayed onto every node** — `pqcota-jvmscan --recon` first checks whether that node has a JVM, and it is sent only to those that do.
 
-자기 인프라에 쓰려면 플레이북의 `collector_bin_dir`를 자기 빌드 산출(`dist/linux-amd64` 등)로 바꾸면 된다. 데모 전용은 트래픽 생성 헬퍼뿐이다. → [collector 배포 설계](../collector-deployment.md)
+To use it on your own infrastructure, point the playbook's `collector_bin_dir` at your own build output (`dist/linux-amd64`, say). The only demo-specific piece is the traffic generation helper.
 
-### 필수인가: **아니다. "원격으로 여러 노드를 훑을 때"만 필요하다**
+### Is it required — **no. Only "when scanning several nodes remotely"**
 
-이 단계는 관측의 전제가 아니라 **원격 도달 수단**이다. 무엇을 하려는지에 따라 갈린다:
+This step is not a precondition of observation but **a means of remote reach**. It depends on what you are trying to do:
 
-| 하려는 일 | 접근 준비 |
+| What you want | Access prep |
 |---|---|
-| 한 노드를 그 자리에서 훑고 보기 (`pqcota-nodescan --output table`) | **불필요**. SSH·Ansible을 아예 안 쓴다 |
-| 결과 JSON을 직접 모아 적재하기 (`pqcota-ingest <dir>`) | **불필요**. 파일만 있으면 된다 |
-| 컨트롤러에서 **여러 노드에 SSH로** 스캐너를 돌리기 | **필요**. 노드에 닿으려면 Ansible 인벤토리가 있어야 한다.<br>`targets.ini`를 직접 써도 된다. `pqcota-hosts`를 쓰면 CSV 하나에서 그 ini를 만들어 주고(계정·키가 담겨 소유자 전용 `0600`), **pqcota 인벤토리에는 계정·키를 뺀 `node_id`·이름·ip·port만** 넣는다 |
-| 인벤토리 뷰에 **▸머신 헤더**(이름·ip:port) 띄우기 | **선택**: `--dsn`으로 엔드포인트를 넣으면 헤더가 붙고, 없으면 헤더만 생략된다(자산·엣지는 그대로) |
+| scan and view one node right where it is (`pqcota-nodescan --output table`) | **not needed** — SSH and Ansible are not used at all |
+| collect result JSON yourself and ingest it (`pqcota-ingest <dir>`) | **not needed** — the files are enough |
+| run the scanners **over SSH on several nodes** from a controller | **needed** — reaching the nodes requires an Ansible inventory.<br>You can write `targets.ini` by hand. `pqcota-hosts` builds that ini from one CSV (owner-only `0600`, since it holds accounts and keys) and puts **only `node_id`, name, ip, and port — no account or key — into the pqcota inventory** |
+| show the **▸ machine header** (name, ip:port) in the inventory view | **optional** — pass `--dsn` to insert the endpoints and the header appears; without it only the header is omitted (assets and edges are unaffected) |
 
-노드 **등재 게이트**(`pqcota-ingest`의 scope-master 인자)도 마찬가지로 **선택**이다. 안 주면 게이트를 생략한다(로컬·데모). 등재는 "관리 대상 경계를 선언하고 싶을 때" 쓰는 것이지 적재의 전제가 아니다.
+The node **registration gate** (the scope-master argument to `pqcota-ingest`) is likewise **optional** — omit it and the gate is skipped (local runs, the demo). Registration is for when you want to declare the managed boundary; it is not a precondition of ingesting.
 
-## ② collector: 대상 머신에서 관측한다
+## ② Collectors — they observe on the target machine
 
-| collector | 노드 OS | 관측 대상 |
+| Collector | Node OS | What it observes |
 |---|---|---|
-| `pqcota-nodescan` | **linux** | `/proc`의 로드된 OpenSSL(libssl/libcrypto) |
-| `pqcota-jvmscan` | **linux** · windows | 실행 중 JVM의 JCA provider 체인(`Security.getProviders()`). Windows는 **커버가 좁다**(아래) |
-| `pqcota-netcap` | **linux** | TLS/SSH 핸드셰이크(AF_PACKET) |
-| `pqcota-cngscan` | **windows** | 등록된 CNG provider와 그 머신이 열거하는 알고리즘(`bcrypt.dll`) |
+| `pqcota-nodescan` | **linux** | the loaded OpenSSL in `/proc` (libssl/libcrypto) |
+| `pqcota-jvmscan` | **linux** · windows | a live JVM's JCA provider chain (`Security.getProviders()`). Coverage on Windows is **narrower** (below) |
+| `pqcota-netcap` | **linux** | TLS/SSH handshakes (AF_PACKET) |
+| `pqcota-cngscan` | **windows** | the registered CNG providers and the algorithms the machine enumerates (`bcrypt.dll`) |
 
-`pqcota-jvmscan`은 두 OS에서 프로세스를 훑지만 **거기서 보는 깊이가 다르다.** JDK 없이 붙는 Go 네이티브 attach가 리눅스 전용이라, Windows에서는 머신에 JDK가 있어야 런타임 등록까지 보고 없으면 `java.security`만 읽는 정적 폴백으로 내려간다(동적 등록은 사각) → [jvm-collector](../collectors/jvm/README.md).
+`pqcota-jvmscan` enumerates processes on both, but **sees a different depth on each.** The Go-native attach that works without a JDK is Linux-only, so on Windows the machine needs a JDK to reach runtime registrations; without one it drops to the static fallback that only reads `java.security` (dynamic registrations stay a blind spot) → jvm-collector.
 
-넷 다 `CollectionResult`를 낸다. **표에 없는 OS에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 0이다. "그것이 없는 노드"와 "그것을 못 본 노드"가 구별돼야 한다(§2.6).
+All four emit a `CollectionResult`. **Run one on an OS not in the table and it emits a gap, not an empty result**, with exit code 0 — "a node that has none" and "a node whose state was not seen" must stay apart.
 
-**릴리스에는 정적 바이너리가 붙는다**: 리눅스 셋은 `pqcota-linux-{amd64,arm64}.tar.gz`, Windows 둘(`pqcota-cngscan`·`pqcota-jvmscan`)은 `pqcota-windows-amd64.zip`이다. 각각 `discovery/collectors/{openssl,jvm,network,cng}` 패키지를 감싼 얇은 진입점이라, 새 관측 대상이 늘면 collector를 하나 더 붙이면 된다. 코어는 그대로다.
+**Static binaries are attached to the release**: the three Linux ones in `pqcota-linux-{amd64,arm64}.tar.gz`, the two Windows ones (`pqcota-cngscan` · `pqcota-jvmscan`) in `pqcota-windows-amd64.zip`. Each is a thin entry point wrapping the `discovery/collectors/{openssl,jvm,network,cng}` package, so when a new observation target appears you add one more collector — the core stays as it is.
 
-여러 노드에서 한꺼번에 돌리는 법은 [①의 참조 플레이북](#그다음-만든-인벤토리로-collector-돌리기).
+How to run them across many nodes at once → [the reference playbook in ①](#then--running-the-collectors-with-the-inventory-you-made).
 
 ### `pqcota-nodescan`
 
@@ -82,12 +79,12 @@ JVM 애드온(`collector.jar`)은 **모든 노드에 뿌리지 않는다**. `pqc
 pqcota-nodescan [--output json|table] [node-id]
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument/option | What it does |
 |---|---|
-| `[node-id]` | CMDB 권위 id. 생략하면 머신 지문에서 결정론적 self-id를 만들고, 그것도 없으면 `host://local` |
-| `--output` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
+| `[node-id]` | the authoritative CMDB id. Omitted, it derives a deterministic self-id from the machine fingerprint, and failing that uses `host://local` |
+| `--output` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
 
-`/proc`를 열지 못하면 **빈 결과를 내지 않는다**. "OpenSSL 없음"이 아니라 관측 자체가 불가한 것이라, 완전성 노트에 갭으로 적고 stderr로 알린다.
+If `/proc` cannot be opened it **does not emit an empty result** — that is not "no OpenSSL" but an inability to observe at all, so it records a gap in the completeness note and says so on stderr.
 
 ### `pqcota-jvmscan`
 
@@ -96,18 +93,18 @@ pqcota-jvmscan [--output json|table] [--pid N] [node-id]
 pqcota-jvmscan --recon
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument/option | What it does |
 |---|---|
-| `[node-id]` | 생략하면 `host://local` |
-| `--pid N` | 그 PID의 JVM 하나만 관측. 기본은 정찰로 찾은 전부 |
-| `--recon` | 정찰만 하고 발견된 JVM을 JSON으로 낸다(관측 안 함) |
-| `--output` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
+| `[node-id]` | omitted, `host://local` |
+| `--pid N` | observe only the JVM with that PID. The default is every one recon finds |
+| `--recon` | only reconnoiter, emitting the JVMs found as JSON (no observation) |
+| `--output` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
 
-`--pid`가 지목한 PID가 실행 중 JVM에 없으면 **전부 훑기로 바꾸지 않고 실패한다**. 관측하지 못한 것은 갭이지 다른 대상으로 대체할 일이 아니다.
+If the PID given by `--pid` is not among the running JVMs it **fails instead of falling back to scanning everything** — what was not observed is a gap, not something to substitute another target for.
 
-`--recon`은 오케스트레이터가 "이 노드에 JVM이 있나"를 보고 에이전트 JAR를 보낼지 정하는 근거다. JVM이 없으면 `[]`를 낸다.
+`--recon` is the basis on which an orchestrator decides whether to send the agent JAR to a node. With no JVM it emits `[]`.
 
-attach는 막힐 수 있다(`DisableAttachMechanism`, JEP 451, 권한). 그때는 실패로 끝내지 않고 정적 체인 읽기로 떨어지며 **동적 등록은 사각으로 남아 갭으로 고지된다**. 어떤 순서로 떨어지는지는 [jvm collector](../collectors/jvm/README.md).
+Attach can be blocked (`DisableAttachMechanism`, JEP 451, permissions). Then it does not end in failure but degrades to reading the static chain, and **dynamic registration stays a blind spot and is reported as a gap** — the order it degrades in is in the jvm collector.
 
 ### `pqcota-netcap`
 
@@ -115,18 +112,18 @@ attach는 막힐 수 있다(`DisableAttachMechanism`, JEP 451, 권한). 그때�
 pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 ```
 
-| 인자·옵션 | 기본값 | 하는 일 |
+| Argument/option | Default | What it does |
 |---|---|---|
-| `<node-id>` | `host://local` | 관측 결과를 달아 둘 노드 |
-| `[iface]` | `eth0` (env `NETCAP_IFACE`) | 포집할 인터페이스 |
-| `[window-seconds]` | `8` (env `NETCAP_WINDOW_SEC`) | 관측 구간 길이 |
-| `--strict` | 꺼짐 | 관측 불가일 때 종료코드 1로 실패 |
+| `<node-id>` | `host://local` | the node the observations are attributed to |
+| `[iface]` | `eth0` (env `NETCAP_IFACE`) | the interface to capture on |
+| `[window-seconds]` | `8` (env `NETCAP_WINDOW_SEC`) | the length of the observation window |
+| `--strict` | off | fail with exit code 1 when observation is impossible |
 
-**`CAP_NET_RAW`가 없으면 관측이 안 된다.** 그때 netcap은 stderr로 그 사실과 부여 방법(`setcap cap_net_raw+ep`)을 알리고, stdout으로는 `layers_missing=[NETWORK]`인 **갭 기록**을 낸다. 기본 종료코드는 **0**이다.
+**Without `CAP_NET_RAW` there is no observation.** In that case netcap reports the fact and how to grant it (`setcap cap_net_raw+ep`) on stderr, and emits on stdout a **gap record** with `layers_missing=[NETWORK]`. The default exit code is **0**.
 
-0인 이유는 이 갭이 중앙까지 가야 하기 때문이다. Ansible로 여러 노드를 돌릴 때 종료코드가 1이면 그 태스크가 실패로 처리돼 결과 파일을 회수하지 않고, 중앙에는 그 노드의 기록이 **아무것도** 남지 않는다. 그러면 인벤토리 뷰에서 "이 노드엔 TLS 링크가 없다"로 읽히는데, 실제로는 관측하지 못한 것이다. 갭을 실어 보내야 "관측하지 못했다"와 "없다"가 구분된다.
+It is 0 because that gap has to reach the center. When Ansible drives many nodes, an exit code of 1 makes the task a failure, so the result file is not retrieved and **nothing at all** is recorded centrally for that node. Then the inventory view reads as "this node has no TLS links" — when in fact it simply was not observed. Carrying the gap through is what keeps "not observed" apart from "not there".
 
-손으로 돌리면서 실패로 끝내고 싶으면 `--strict`를 준다(갭은 그대로 stdout에 낸다).
+If you are running it by hand and want it to fail, pass `--strict` (the gap still goes to stdout).
 
 ### `pqcota-cngscan`
 
@@ -134,73 +131,73 @@ pqcota-netcap [--strict] <node-id> [iface] [window-seconds]
 pqcota-cngscan [--output json|table] [node-id]
 ```
 
-| 인자·옵션 | 기본값 | 하는 일 |
+| Argument/option | Default | What it does |
 |---|---|---|
-| `[node-id]` | 머신 지문에서 파생한 self-id(§1.4), 그것도 비면 `host://local` | 관측 결과를 달아 둘 노드 |
-| `--output` | `json` | 출력 형식 → [아래 공통](#--output-nodescanjvmscancngscan-공통) |
+| `[node-id]` | the self-id derived from the machine fingerprint, or `host://local` if that is empty too | the node the observation is attached to |
+| `--output` | `json` | output format → [shared, below](#--output--shared-by-nodescan-jvmscan-and-cngscan) |
 
-**릴리스의 `pqcota-windows-amd64.zip`에 `pqcota-jvmscan`과 함께 들어 있다**(v0.6.3부터). 직접 만들려면:
+**It ships in the release's `pqcota-windows-amd64.zip` together with `pqcota-jvmscan`** (since v0.6.3). To build it yourself:
 
 ```bash
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
 ```
 
-**Windows가 아닌 곳에서 돌리면 빈 결과가 아니라 갭**을 내고 종료코드는 **0**이다. netcap이 `CAP_NET_RAW` 없을 때 하는 것과 같은 규칙이고, 이유도 같다. 갭이 중앙까지 가야 "CNG가 없는 노드"와 "CNG를 못 본 노드"가 구별된다(§2.6).
+**Run anywhere other than Windows and it emits a gap, not an empty result**, with exit code **0**. This is the same rule netcap follows when `CAP_NET_RAW` is missing, for the same reason — the gap has to reach the centre for "a node with no CNG" and "a node whose CNG was not seen" to stay apart.
 
-`certutil`·PowerShell·WMI를 부르지 않고 `bcrypt.dll`을 직접 호출한다. 무엇을 어떤 API로 보는지는 → [cng-collector](../collectors/cng/README.md).
+It calls `bcrypt.dll` directly instead of `certutil`, PowerShell or WMI. What it looks at, through which API → cng-collector.
 
-### `--output`: nodescan·jvmscan·cngscan 공통
+### `--output` — shared by nodescan, jvmscan and cngscan
 
-같은 수집이 돌고 **어느 층을 내보내느냐**가 갈린다.
+The same collection runs; what differs is **which layer is emitted**.
 
-| 값 | 내는 것 | 쓸 때 |
+| Value | What it emits | When |
 |---|---|---|
-| `json`(기본) | **CollectionResult**: collector 네이티브 원본(`raw_capture`)과 CycloneDX 표준 본문(`cbom_cyclonedx`)이 Envelope·완전성 맵과 함께 한 메시지에 담긴다 | 중앙(③)이 회수해 쌓는다 |
-| `table` | 그 결과를 **정규화해 파생한 Finding[]**을 사람이 읽는 표로 | 한 노드를 그 자리에서 확인한다 |
+| `json` (default) | a **CollectionResult** — the collector's native original (`raw_capture`) and the standard CycloneDX body (`cbom_cyclonedx`) in one message together with the Envelope and completeness map | the center (③) retrieves and accumulates it |
+| `table` | the **Finding[] derived by normalizing** that result, as a human-readable table | checking one node right where it is |
 
-진행·경고는 두 경우 모두 stderr로 간다. stdout엔 요청한 것만 담긴다.
+Progress and warnings go to stderr in both cases — stdout carries only what you asked for.
 
-**`table`은 저장하지 않는다.** 중앙이 하는 정규화를 인메모리로 한 번 돌리고 버린다. 히스토리·스냅샷 diff는 ③에 쌓아야 생긴다.
+**`table` stores nothing.** It runs the same normalization the center does, in memory, once, and throws it away — history and snapshot diffs only exist once things accumulate in ③.
 
-### 권한 · 환경변수
+### Privileges · environment variables
 
-노드에서 돌릴 때 필요한 것. 권한이 모자라면 **보이는 범위가 줄거나 그 커맨드가 아예 못 돈다**. 무엇을 관측하지 못했는지는 완전성 맵으로 고지되지만, 애초에 갖추는 편이 낫다.
+What you need when running on a node. Insufficient privilege means **the visible range shrinks, or that command cannot run at all**. What was not observed is reported through the completeness map, but it is better to have the privilege in the first place.
 
-| 커맨드 | 권한 | 환경변수 |
+| Command | Privilege | Environment variables |
 |---|---|---|
-| `pqcota-nodescan` | 자기 프로세스는 권한 없이 된다. **다른 사용자 것까지 보려면 root**(또는 `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY`: 있으면 결과에 서명(선택) |
-| `pqcota-netcap` | **`CAP_NET_RAW` 필수**(`setcap` 또는 root): 없으면 포집이 시작되지 않는다 | `NETCAP_IFACE`(기본 `eth0`) · `NETCAP_WINDOW_SEC`(기본 8초) |
-| `pqcota-jvmscan` | 대상 JVM과 **같은 UID**(또는 root). 대상이 attach를 막고 있으면 대상의 `java.security`를 읽는 정적 폴백으로 내려간다 | `PQCOTA_JVM_AGENT`=collector.jar 경로: 주면 attach 경로. **없고 도는 JVM도 없으면** java를 하나 띄워 그 기본 provider 체인을 보되 **강등**으로 적는다(도는 앱의 관측이 아니다) |
-| `pqcota-cngscan` | 특별한 권한이 필요 없다. `bcrypt.dll`의 열거 API는 읽기 조회다 | `PQCOTA_SIGN_KEY`: 있으면 결과에 서명(선택) |
+| `pqcota-nodescan` | its own process works as-is. **Seeing other users' requires root** (or `CAP_SYS_PTRACE`) | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
+| `pqcota-netcap` | **`CAP_NET_RAW` required** (`setcap` or root) — without it capture never starts | `NETCAP_IFACE` (default `eth0`) · `NETCAP_WINDOW_SEC` (default 8s) |
+| `pqcota-jvmscan` | **the same UID** as the target JVM (or root). If the target blocks attach it degrades to reading the target's `java.security` | `PQCOTA_JVM_AGENT`=path to collector.jar — given, it takes the attach path. **Without it, and with no JVM running**, it starts one to see the launcher's default provider chain, recorded as **degraded** (not an observation of a running app) |
+| `pqcota-cngscan` | no special privilege — the `bcrypt.dll` enumeration APIs are read-only queries | `PQCOTA_SIGN_KEY` — if set, results are signed (optional) |
 
 
-### 실행 요건: 커널·권한
+### Runtime requirements — kernel and privileges
 
-**커널 하한은 3.2다.** Go 툴체인이 정하는 값이고(Go 1.24부터), 이 리포는 그보다 새 기능을 요구하지 않는다. 그 위라면 배포판·libc는 가리지 않는다. 정적 링크라서다.
+**The kernel floor is 3.2.** That is the value the Go toolchain sets (since Go 1.24), and this repo requires nothing newer. Above that, distro and libc do not matter — the binaries are statically linked.
 
-| 기능 | 커널 요구 | 그 아래에서는 |
+| Capability | Kernel requirement | Below it |
 |---|---|---|
-| 노드 스캔 · fork 판정 · JVM 정찰 | **3.2**(툴체인 하한) | 바이너리가 실행되지 않는다 |
-| 통신 엣지 관측 | 추가 요구 없음 (`AF_PACKET`은 2.2 계열) |: |
-| 앱 표시(systemd 유닛) | systemd가 도는 환경 | 유닛명 대신 **실행 파일 경로**로 짚는다(upstart 시절 배포판) |
-| **컨테이너 안 JVM attach** | **4.1**(`/proc/<pid>/status`의 `NSpid`) | 호스트 PID로 폴백: 그 JVM만 미관측(갭으로 고지) |
+| node scan · fork determination · JVM recon | **3.2** (the toolchain floor) | the binary does not run |
+| communication edge observation | no extra requirement (`AF_PACKET` is 2.2-era) | — |
+| app attribution (systemd units) | an environment where systemd runs | attribution falls back to the **executable path** instead of a unit name (upstart-era distros) |
+| **JVM attach inside a container** | **4.1** (`NSpid` in `/proc/<pid>/status`) | falls back to the host PID — only that JVM goes unobserved (reported as a gap) |
 
-하한 미만에서도 **틀린 답을 내지 않는다**. 관측하지 못한 것은 완전성 갭으로 나가고(§2.6), `NSpid`가 없으면 호스트 PID를 그대로 쓴다.
+Even below the floor it **never goes silently wrong**. What was not observed goes out as a completeness gap, and without `NSpid` the host PID is used as-is.
 
-**실측**(KVM VM: 컨테이너는 호스트 커널을 공유해 이 항목을 검증할 수 없다):
+**Measured** (in KVM VMs — containers share the host kernel, so this item cannot be verified there):
 
-| 커널 | 배포판 | 결과 |
+| Kernel | Distro | Result |
 |---|---|---|
-| **3.2.0** | Ubuntu 12.04 | 세 collector 모두 정상 종료. OpenSSL 1.0.0g 탐지(fork=OpenSSL·dynamic), AF_PACKET 8초 구간 관측 성공. systemd가 없어 앱을 **실행 파일 경로**로 짚음(`/usr/sbin/sshd` 등) |
-| **3.10.0** | CentOS 7.9 | 세 collector 모두 정상 종료. OpenSSL 1.0.2k 탐지, cgroup v1에서 **systemd 유닛명으로 짚기 성공**(`sshd.service` 등) |
+| **3.2.0** | Ubuntu 12.04 | all three collectors exited cleanly. OpenSSL 1.0.0g detected (fork=OpenSSL, dynamic), AF_PACKET observed successfully over an 8-second window. With no systemd, app attribution fell back to the **executable path** (`/usr/sbin/sshd` and so on) |
+| **3.10.0** | CentOS 7.9 | all three collectors exited cleanly. OpenSSL 1.0.2k detected, and on cgroup v1 **systemd unit attribution succeeded** (`sshd.service` and so on) |
 
-두 커널 모두 `/proc/<pid>/status`에 **`NSpid` 줄이 없고**, 호스트 PID 폴백이 동작해 죽지 않았다. 4.1 경계가 실물로 확인된 셈이다.
+Neither kernel has an **`NSpid` line** in `/proc/<pid>/status`, and the host-PID fallback worked instead of dying — which confirms the 4.1 boundary against the real thing.
 
-> **PoC/테스트 하네스는 여기 없다.** openssl collector의 실물 `/proc`·ELF 검증 CLI는 유일 소비자인 통합 테스트와 co-locate: [`discovery/collectors/openssl/integration/probe`](../collectors/openssl/integration). 이 폴더(discovery/cmd/)는 **제품 디스커버리 진입점만** 둔다.
+> **The PoC/test harness is not here.** The CLI that verifies the openssl collector against real `/proc` and ELF lives co-located with its only consumer, the integration test — [`discovery/collectors/openssl/integration/probe`](../collectors/openssl/integration). This folder (discovery/cmd/) holds **only product discovery entry points**.
 
-## ③ 기타: collector가 아닌 커맨드
+## ③ Other — commands that are not collectors
 
-**관측이 아니다.** `CollectionResult`를 내지 않으므로 중앙에 적재되지 않는다. 도는 자리도 다르다. `pqcota-procs`는 대상 머신에서, `pqcota-keygen`은 키를 마련할 때 한 번만이다.
+**They are not observation.** They emit no `CollectionResult`, so nothing is ingested centrally. They also run in different places — `pqcota-procs` on the target machine, `pqcota-keygen` once, when the keys are set up.
 
 ### `pqcota-keygen`
 
@@ -208,16 +205,16 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discov
 pqcota-keygen
 ```
 
-인자가 없다. collector 리포트 서명용 **ed25519 키쌍**을 만들어 stdout에 낸다(§2.6). 낸 두 줄은 각각 갈 자리가 다르다:
+No arguments. It generates an **ed25519 key pair** for signing collector reports and prints it to stdout. The two lines it prints go to different places:
 
-| 낸 것 | 어디에 | 누가 쓰나 |
+| What it prints | Where it goes | Who uses it |
 |---|---|---|
-| `PQCOTA_SIGN_KEY` (개인키) | 노드에서 collector를 돌릴 때 | 결과에 서명한다. [권한·환경변수](#권한--환경변수) |
-| `PQCOTA_VERIFY_KEY` (공개키) | 중앙에서 `pqcota-ingest`를 돌릴 때 | 서명을 검증한다. 여럿이면 콤마로 잇는다 |
+| `PQCOTA_SIGN_KEY` (private) | on the node, when a collector runs | signs the result — [Privileges · environment variables](#privileges--environment-variables) |
+| `PQCOTA_VERIFY_KEY` (public) | at the centre, when `pqcota-ingest` runs | verifies the signature. Several keys are comma-separated |
 
-**개인키가 stdout으로 나온다.** 그대로 파일에 받으면 그 파일이 남고, 셸에 붙이면 히스토리에 남는다.
+**The private key goes to stdout.** Redirect it into a file and the file stays behind; paste it into a shell and it stays in the history.
 
-**서명은 선택이다.** 키를 안 주면 적재가 막히지 않고, 대신 중앙이 *"unverified signatures: N"*이라고 고지한다. 틀렸다는 뜻이 아니라 **검증한 적이 없다**는 뜻이다. 검증할 키가 없을 때 아예 적재를 시작하지 않게 하려면 `PQCOTA_REQUIRE_SIGNATURE=1`을 준다.
+**Signing is optional.** Without a key nothing is blocked; instead the centre reports *"unverified signatures: N"*. That does not mean they are wrong; it means **they were never checked**. To refuse to ingest at all when there is no key to verify with, set `PQCOTA_REQUIRE_SIGNATURE=1`.
 
 ### `pqcota-procs`
 
@@ -225,19 +222,19 @@ pqcota-keygen
 pqcota-procs [--unit UNIT] [--exe PATH] [--cmd REGEX]
 ```
 
-| 옵션 | 하는 일 |
+| Option | What it does |
 |---|---|
-| `--unit UNIT` | systemd 유닛명(cgroup 매칭) |
-| `--exe PATH` | 실행 파일 경로(정확 일치) |
-| `--cmd REGEX` | cmdline 정규식 |
+| `--unit UNIT` | a systemd unit name (cgroup matching) |
+| `--exe PATH` | the executable path (exact match) |
+| `--cmd REGEX` | a cmdline regular expression |
 
-**셋 중 하나 이상**을 줘야 한다(전부 비면 종료코드 2). 다른 사용자 프로세스까지 보려면 root가 필요하다.
+**At least one of the three** must be given (all empty → exit code 2). Seeing other users' processes requires root.
 
-프로비저닝 직전 **재시작 대상**을 찾는 용도다. PID는 휘발이라 저장하지 않고 그때그때 조회한다. 아직 이것을 부르는 자동 경로는 없다(플레이북의 `activation.restart`는 사용자가 쓴 명령을 그대로 실행한다).
+It exists to find **what to restart** right before provisioning — a PID is volatile, so it is not stored but looked up on the spot. There is no automatic path calling it yet (the playbook's `activation.restart` runs the command the user wrote, verbatim).
 
 ---
-**언제 무엇을 쓰나**
-- 여러 노드를 관측해 인벤토리에 쌓기 → **②**를 각 노드에서(기본 `--output json`) → [`pqcota-ingest`](../../inventory/cmd/README.md)로 중앙 적재.
-- 한 노드를 그 자리에서 확인만 하기 → **②**를 `--output table`로. 쌓이지 않는다.
+**When to use what**
+- Observing several nodes and accumulating them into the inventory → run **②** on each node (default `--output json`) → ingest centrally with [`pqcota-ingest`](../../inventory/cmd/README.md).
+- Just checking one node in place → run **②** with `--output table`. Nothing accumulates.
 
-> 로직은 전부 `pkg/discovery/`(정규화·히스토리)·`discovery/collectors/`(수집)에 있고, 이 커맨드들은 그것을 조립하는 얇은 진입점이다. 회수된 결과는 인벤토리의 `pqcota-ingest`가 **append-only 히스토리로 누적**한다.
+> All the logic lives in `pkg/inventory/` (normalization, history) and `discovery/collectors/` (collection); these commands are thin entry points that assemble it. Retrieved results are **accumulated into an append-only history** by the inventory's `pqcota-ingest`.

@@ -1,127 +1,117 @@
-한국어 · [English](README.en.md)
+# The pqcota demo (OSS) — access prep → discovery → inventory → provisioning
 
-# pqcota 데모 (OSS): 접근준비 → 디스커버리 → 인벤토리 → 프로비저닝
 
-**Docker만 있으면** 한 줄로 설치·수행·제거되는 종단 데모입니다. 단일 가상 네트워크에 묶인 노드에서
-pqcota가 **① 사용자 hosts 파일로 접근 준비 → ② Ansible/SSH로 OpenSSL·Java(JCA)·통신 핸드셰이크
-디스커버리 → ③ 중앙 인벤토리 → ④ 프로비저닝(플레이북 생성 → 적용 → 되돌림)**까지 전 범위를 보여줍니다.
+**With just Docker**, an end-to-end demo that installs, runs, and removes itself in one line each. Across nodes joined on a single virtual network, pqcota shows the whole scope: **① access prep from the user's hosts file → ② discovery of OpenSSL, Java (JCA), and communication handshakes over Ansible/SSH → ③ a central inventory → ④ provisioning (generate the playbooks → apply → roll back)**.
 
-이 문서는 **데모를 돌리는 사람**을 위한 것입니다. 데모가 왜 이렇게 구성됐고 안에서 무엇이 도는지는
-[데모 설계](design.md)에, 무엇을 검증하고 무엇을 검증하지 않는지는
-[데모가 검증하는 것](integration-verification.md)에 있습니다.
+This document is for **the person running the demo**.
 
-📊 **실행 전 예상 결과**는 [`expected-output/`](expected-output/)에 있습니다. 콘솔 출력·토폴로지 SVG 샘플과
-실제로 실행하면 달라질 수 있는 점(엣지 캡처 타이밍·base 이미지 버전)도 설명합니다.
+📊 **Expected results before you run**: [`expected-output/`](expected-output/) — sample console output and topology SVG, plus what may differ on a real run (edge capture timing, base image versions).
 
-## 요구 사항
-- Docker (Compose v2) · 인터넷(최초 이미지 빌드) · 사용자 `docker` 그룹 (루트/KVM 불필요)
+## Requirements
+- Docker (Compose v2) · internet (for the first image build) · your user in the `docker` group (no root, no KVM)
 
-리포는 `pqcota-ctl` 컨테이너 안에서 빌드됩니다([설계 · 빌드](design.md#3-빌드-ctl-머신에서)).
-빌드 대상은 **지금 체크아웃된 소스**이며 커밋하지 않은 수정도 포함됩니다.
+The repo is built inside the `pqcota-ctl` container.
+What gets built is **the source as currently checked out**, including uncommitted changes.
 
-## 빠른 시작
+## Quick start
 ```bash
-./demo/scripts/up.sh      # 이미지 → 컨테이너 → ctl에서 리포 빌드 → SSH 키 → hosts.csv
-./demo/scripts/demo.sh    # 접근준비 → 디스커버리 → 인벤토리 → 프로비저닝(생성·적용·되돌림)
-./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
+./demo/scripts/up.sh      # images → containers → build the repo on ctl → SSH keys → hosts.csv
+./demo/scripts/demo.sh    # access prep → discovery → inventory → provisioning (generate, apply, roll back)
+./demo/scripts/down.sh    # clean up (--rmi also removes images)
 ```
 
-`./demo/scripts/demo.sh --help`가 조정 지점을 전부 적습니다. 그중 하나가 아래 [선택 단계](#선택-단계-실물-provider로-마지막-한-칸까지-demo_real_provider1)입니다.
+`./demo/scripts/demo.sh --help` lists every knob — one of them is the [optional step](#optional-step--the-last-inch-with-a-real-provider-demo_real_provider1) below.
 
-처음이면 [`scripts/`](scripts)의 이 세 개만 보면 됩니다. 나머지 폴더는 그 뒤에서 도는 부품이고,
-무엇이 무엇인지는 [설계 · 부품](design.md#2-부품)에 적혀 있습니다.
+If this is your first time, these three scripts in [`scripts/`](scripts) are all you need. The other folders are machinery running behind them.
 
-> **데모 환경은 `demo/topology/topology.yaml` 하나가 정의합니다.** 첫 실행 때 샘플이 자동 복사되고
-> (git 무시), 그 파일을 고치면 노드 수·종류·OpenSSL 버전·JCA provider·네트워크 세그먼트·핸드셰이크가
-> 그대로 반영됩니다. 자기 환경에 가깝게 바꿔 같은 종단을 돌릴 수 있습니다.
-> 상세: **[topology/README](topology/README.md)**.
+> **The demo environment is defined by one file, `demo/topology/topology.yaml`.** A sample is copied in
+> automatically on the first run (and git-ignored); edit it and the node count, node kinds, OpenSSL versions,
+> JCA providers, network segments, and handshakes all follow — so you can shape it closer to your own
+> environment and run the same end-to-end flow.
+> Details: **[topology/README](topology/README.md)**.
 
-## 무엇이 보이나
+## What you see
 
-`demo.sh`는 진행을 `▶ N/6`으로 찍습니다. 기본 토폴로지의 노드는 web-gw(OpenSSL 3.x) · pay-app(JVM) ·
-pay-db(OpenSSL 1.1.1, 레거시) 셋이고, 컨트롤러 `pqcota-ctl`이 SSH로 이들을 훑습니다. 단계마다 보이는 것은
-다음과 같습니다.
+`demo.sh` reports progress as `▶ N/6`. The default topology has three nodes — web-gw (OpenSSL 3.x) · pay-app (JVM) · pay-db (OpenSSL 1.1.1, legacy) — and the controller `pqcota-ctl` scans them over SSH. What each step shows:
 
-| 단계 | 보이는 것 |
+| Step | What you see |
 |---|---|
-| **0/6 접근 준비** | `hosts.csv`에서 Ansible 인벤토리를 만들고 엔드포인트와 CMDB 프로필을 등록합니다. 인벤토리 테이블에 접속 비밀이 **0건**임을 SQL로 셉니다 |
-| **1/6 SSH 확인** | 컨트롤러에서 모든 노드로 Ansible ping |
-| **2/6 디스커버리** | 노드마다 OpenSSL 자산 · JCA provider 체인(런타임에 `addProvider`한 BouncyCastle까지) · TLS/SSH 핸드셰이크를 관측하고 결과를 회수합니다. 끝나면 노드에 남는 것이 없습니다 |
-| **3/6 디스커버리 뷰** | 발견 자산과 관측 엣지의 등급: 🟢 PQC/하이브리드 · 🔴 고전(양자취약) · ⚪ 불명. 기본 토폴로지에서는 `web-gw → pay-app`이 🟢, `web-gw → pay-db`가 🔴입니다(TLS·SSH 모두) |
-| **4/6 토폴로지** | 관측 결과를 그림으로 그려 `demo/.generated/topology.svg`에 둡니다 |
-| **5/6 중앙 인벤토리** | 적재 후 조회: 엔드포인트·프로필 헤더, 자산마다 `@앱` 표시(pay-db의 공유 `libssl.so.1.1`은 `payment-gw`·`api-gw` 둘 다), 같은 결과를 한 번 더 적재해도 **스냅샷이 늘지 않는 것**(`-history`), 그 스냅샷의 자산·엣지(`-snapshot`), 자산 스코프(제외 건수 고지)와 그 **전후를 견주는** `-diff`, `pqcota-prune` dry-run |
-| **6/6 프로비저닝** | 확정 계획으로 L2·L3 플레이북과 롤백 레코드를 **생성**하고, 대상 노드(기본 구성에선 pay-db)에 **적용**해 `/opt/pqcota/oqsprovider.so`·`/etc/pqcota/openssl-pqc.cnf`가 놓였는지 확인한 뒤, 롤백 플레이북으로 **되돌려** 두 파일이 사라지는 것까지 확인합니다 |
+| **0/6 access prep** | The Ansible inventory is generated from `hosts.csv`, and the endpoints and CMDB profiles are registered. The inventory table is counted by SQL for access secrets: **0** |
+| **1/6 SSH check** | Ansible ping from the controller to every node |
+| **2/6 discovery** | On each node, OpenSSL assets · the JCA provider chain (including the BouncyCastle added at runtime with `addProvider`) · TLS/SSH handshakes are observed and the results are retrieved. Nothing is left on the nodes afterward |
+| **3/6 discovery view** | The discovered assets and the grade of the observed edges: 🟢 PQC/hybrid · 🔴 classical (quantum-vulnerable) · ⚪ unknown. In the default topology `web-gw → pay-app` is 🟢 and `web-gw → pay-db` is 🔴 (for both TLS and SSH) |
+| **4/6 topology** | The observations drawn as a picture, saved to `demo/.generated/topology.svg` |
+| **5/6 central inventory** | Ingest, then query: the endpoint and profile header, an `@app` label on every asset (pay-db's shared `libssl.so.1.1` is attributed to both `payment-gw` and `api-gw`), **no new snapshot** from ingesting the same results a second time (`-history`), that snapshot's assets and edges (`-snapshot`), asset scope (the number excluded is reported) with a `-diff` **across it**, and a `pqcota-prune` dry run |
+| **6/6 provisioning** | From a finalized plan, the L2 and L3 playbooks and the rollback record are **generated**; they are **applied** to the target node (pay-db in the default setup) and the demo checks that `/opt/pqcota/oqsprovider.so` and `/etc/pqcota/openssl-pqc.cnf` landed; then the rollback playbook **undoes** it and the demo checks that both files are gone |
 
-출력에 그대로 나오지만 오류가 아닌 것이 둘 있습니다.
-- `⚠ duplicate: physical machine … → [pay-db web-gw]`: **리눅스 호스트에서 돌리면** 나옵니다. 데모의 타깃은 한 호스트 위의 컨테이너인데, 리눅스에서는 컨테이너 안에서도 호스트의 장비 지문이 보여 노드 셋의 지문이 같아집니다. 실운용에서 한 장비를 여러 이름으로 등재했을 때 보게 되는 표시입니다. macOS의 Docker Desktop에서는 지문의 출처가 달라 이 줄이 나오지 않습니다([왜 그런지](design.md#52-중앙-인벤토리-엔드포인트프로필앱-표시이력변화)).
-- 프로비저닝이 배치하는 `oqsprovider.so`는 **빈 파일**입니다. 데모가 보이는 것은 배포·가역성이지 암호 기능이 아닙니다([왜 그런지](design.md#1-원칙)). 실물로 확인하려면 아래 선택 단계를 켭니다.
+Two things appear in the output as-is and are not errors.
+- `⚠ duplicate: physical machine … → [pay-db web-gw]`: this appears **on a Linux host**. The demo targets are containers on one host, and on Linux the host's machine fingerprint is visible from inside a container, so all three carry the same value. It is what you see in production when one machine has been registered under several names. On Docker Desktop for Mac the fingerprint comes from elsewhere, so the line does not appear (why).
+- The `oqsprovider.so` that provisioning stages is an **empty file**. What the demo shows is deployment and reversibility, not cryptographic capability (why). To check it with the real thing, turn on the optional step below.
 
-### 선택 단계: 실물 provider로 마지막 한 칸까지 (`DEMO_REAL_PROVIDER=1`)
+### Optional step — the last inch with a real provider (`DEMO_REAL_PROVIDER=1`)
 
 ```bash
 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 ```
 
-빈 파일로는 못 보이는 것이 하나 남습니다: **도구가 낸 config와 배치가 정말 암호 알고리즘으로 반영되는가.** 이 변수를 켜면 실물 oqsprovider(liboqs + oqs-provider)를 노드와 같은 베이스에서 빌드해 그 한 칸까지 확인합니다. 첫 실행은 빌드에 수 분 걸리고, 이미지는 다음 실행부터 재사용됩니다.
+One thing an empty file cannot show: **whether the config and staging the tool produced really create cryptographic capability.** Turning this variable on builds a real oqsprovider (liboqs + oqs-provider) on the same base as the nodes and checks that last inch. The first run takes a few minutes to build; the image is reused from then on.
 
-대상은 pay-db가 아니라 인벤토리에서 OpenSSL 3.0–3.4를 관측한 노드입니다. provider는 OpenSSL 3의 개념이라 1.1.1 노드에는 넣을 자리가 없습니다. 같은 L2/L3 산출물로 배치·활성화한 뒤,
+The target is not pay-db but a node observed in the inventory as OpenSSL 3.0–3.4 — a provider is an OpenSSL 3 concept, so there is nowhere to put it on a 1.1.1 node. The same L2/L3 output stages and activates it, and then:
 
-| | 보이는 것 |
+| | What you see |
 |---|---|
-| **능력** | `openssl list -kem-algorithms`의 ML-KEM 계열이 **0개 → 14개**, `list -providers`에 `oqsprovider … active` |
-| **재관측** | 디스커버리를 다시 돌려 적재하고 `pqcota-inventory -diff`로 그 노드의 변화를 봅니다 |
-| **되돌림** | L3→L2 순서로 되돌리면 다시 **0개**: 가역성도 같은 자로 잽니다 |
+| **Capability** | the ML-KEM family in `openssl list -kem-algorithms` goes from **0 to 14**, and `list -providers` shows `oqsprovider … active` |
+| **Re-observation** | discovery is run and ingested again, and `pqcota-inventory -diff` shows that node's change |
+| **Rollback** | undoing in L3→L2 order takes it back to **0** — reversibility measured by the same ruler |
 
-**재관측에서 인벤토리는 그대로입니다.** 오류가 아닙니다. OpenSSL 쪽은 provider 층을 관측하는 경로가 아직 없어서이고, 데모는 그 이유를 출력에 함께 냅니다. 자세한 것은 [설계 · 선택 단계](design.md#54-선택-단계-실물-provider)에 있습니다.
+**On re-observation the inventory is unchanged.** That is not an error: OpenSSL has no path yet for observing the provider layer, and the demo prints the reason alongside.
 
-## 산출물은 어디에 생기나
+## Where the outputs land
 
-**대부분은 컨테이너 안**에 생기고, 리포에 생기는 것은 **`demo/.generated/` 한 곳뿐**입니다(gitignore). `down.sh`가 그 폴더를 통째로 지우고, 컨테이너 것은 컨테이너와 함께 사라집니다.
+**Most of it lives inside the containers**, and the only thing that lands in the repo is **`demo/.generated/`** (gitignored). `down.sh` deletes that folder wholesale, and whatever is in the containers disappears with them.
 
-| 어디 | 무엇 | 정리 |
+| Where | What | Cleanup |
 |---|---|---|
-| **리포** `demo/.generated/` | 리포에 생기는 **전부**: `topology.svg`·`topology.dot`(관측 토폴로지 그림) + 토폴로지에서 생성된 `docker-compose.yml`·`groups.ini`·`profiles.csv`·`manifest.env` | `down.sh`가 폴더째 삭제 (gitignore) |
-| **컨트롤러** `pqcota-ctl:/work/` | 빌드 산출 `dist/linux-<arch>/`(collector 3종)·`dist/collector.jar` · 회수된 관측 결과 `results/*.json` · 접속 `hosts.csv`→`ansible/targets.ini`(0600·비밀) · `nodes.json` · `profiles.csv` · 확정 계획 `plan.json` · 생성된 `ansible/playbook{,-l3}.yml`·`rollback{,-l3}.yml` · 모듈 `ansible/files/oqsprovider.so`(빈 파일) | 컨테이너와 함께 소멸 |
-| **Postgres** `pqcota-demo-pg` | 중앙 인벤토리: 스냅샷·관측 기록·엔드포인트·프로필·프로비저닝 레코드 | `down.sh`가 볼륨까지 삭제(`-v`) |
-| **타깃 노드** | 적용 단계에서 `/opt/pqcota/oqsprovider.so` · `/etc/pqcota/openssl-pqc.cnf`, L3면 활성화 지점 `/etc/pqcota/service.env`: **되돌림 단계에서 제거**되어 원상복귀 | 데모가 스스로 롤백 |
+| **The repo**, `demo/.generated/` | **everything** that lands in the repo — `topology.svg` and `topology.dot` (the observed topology drawing) plus the `docker-compose.yml`, `groups.ini`, `profiles.csv`, and `manifest.env` generated from the topology | `down.sh` deletes the folder (gitignored) |
+| **The controller**, `pqcota-ctl:/work/` | build output `dist/linux-<arch>/` (the three collectors) and `dist/collector.jar` · retrieved observations `results/*.json` · connection `hosts.csv`→`ansible/targets.ini` (0600, secret) · `nodes.json` · `profiles.csv` · the finalized plan `plan.json` · the generated `ansible/playbook{,-l3}.yml` and `rollback{,-l3}.yml` · the module `ansible/files/oqsprovider.so` (an empty file) | disappears with the container |
+| **Postgres**, `pqcota-demo-pg` | the central inventory — snapshots, observation records, endpoints, profiles, provisioning records | `down.sh` deletes the volume too (`-v`) |
+| **The target nodes** | at the apply step, `/opt/pqcota/oqsprovider.so` and `/etc/pqcota/openssl-pqc.cnf`, plus the L3 activation point `/etc/pqcota/service.env` — **removed at the rollback step**, back to the original state | the demo rolls itself back |
 
-들여다보려면(데모 종료 전):
+To look inside (before you tear the demo down):
 
 ```bash
-docker exec pqcota-ctl ls -R /work           # 컨트롤러 산출물 전부
-docker exec pqcota-ctl cat /work/ansible/provision.yml   # 생성된 플레이북
-docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # 인벤토리 테이블
+docker exec pqcota-ctl ls -R /work           # everything on the controller
+docker exec pqcota-ctl cat /work/ansible/provision.yml   # the generated playbook
+docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # the inventory tables
 ```
 
-> **호스트 파일시스템은 거의 안 건드립니다**. 리포에 남는 것은 위 그림·생성물뿐이고, 그마저 gitignore입니다.
-> 접속 키(`/work/id_demo`)와 `targets.ini`는 **컨트롤러 안에만** 있고 인벤토리에 적재되지 않습니다([설계 · 접근 비밀 경계](design.md#6-접근-비밀-경계-15)).
+> **The host filesystem is barely touched** — all that stays in the repo is the drawing and generated files above, and even those are gitignored.
+> The connection key (`/work/id_demo`) and `targets.ini` exist **only inside the controller** and are never ingested into the inventory.
 
-## 내 환경(실제 자산)에 적용하려면
+## To apply it to your own environment (real assets)
 
-데모는 컨테이너를 세워 주지만, 실제 자산에선 **환경이 이미 있고** 사용자가 세 가지를 준비합니다.
-순서대로 무엇이 나오는지는 [여정](../journey.md)이 컨테이너 없이 처음부터 끝까지 따라갑니다.
-머신 구분은 [설계 · 도는 컨테이너](design.md#4-실행-시점-도는-컨테이너-기본-토폴로지)와 같습니다.
-**`pqcota-ctl`이 곧 사용자가 리포를 클론·빌드하는 머신**이고, 노드에는 아무것도 미리 깔지 않습니다.
-`hosts.csv` 하나로 끝나지 않습니다:
+The demo stands the containers up for you; against real assets **the environment already exists** and you prepare three things.
+The machine roles are the same as in the demo: **`pqcota-ctl` is the machine where you clone and build the repo**, and nothing is pre-installed on the nodes.
+It does not end at `hosts.csv`:
 
-| # | 준비물 | 필수? | 무엇 |
+| # | What you prepare | Required? | What it is |
 |---|---|---|---|
-| 1 | **`hosts.csv`** | 원격 다중 노드면 필수 | node_id·ip·port·계정·키 → `pqcota-hosts`가 Ansible 인벤토리(`targets.ini`, 0600·미영속) 생성. `--dsn`이면 엔드포인트도 upsert(비밀 제외). 한 호스트에서 그 자리에 훑는다면 **불필요** |
-| 2 | **각 노드에 collector 바이너리** | 필수 | `pqcota-nodescan`·`pqcota-jvmscan`·`pqcota-netcap`을 ctl에서 빌드해 두면 됩니다. **반입은 데모의 플레이북이 그대로 해줍니다**(`discover.yml`이 반입→실행→회수→정리). 빌드 명령은 [루트 README · 빌드](../README.md#빌드)(arch별 사전 빌드 바이너리는 릴리스에 이미 있고, 무결성은 `SHA256SUMS`로 확인합니다. 그것이 진짜 이 리포가 낸 것인지 가리는 서명만 [로드맵](../RELEASE_NOTES.md)에 남아 있습니다) |
-| 3 | **실행 수단** | 필수 | Ansible이든 손이든 각 노드에서 collector를 돌리고 결과 JSON을 회수. 데모의 [`discover.yml`](../discovery/ansible/discover.yml)이 **참조 구현**입니다 |
+| 1 | **`hosts.csv`** | required for remote multi-node | node_id, ip, port, account, key → `pqcota-hosts` generates the Ansible inventory (`targets.ini`, 0600, not persisted). With `--dsn` it also upserts the endpoint (secrets excluded). **Not needed** if you are scanning one host in place |
+| 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbook ships them for you** (`discover.yml` ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.md#build) (per-arch prebuilt binaries are already in the releases and their integrity is checked with `SHA256SUMS`; only the signature that proves they came from this repo is still on the [roadmap](../RELEASE_NOTES.md)) |
+| 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](../discovery/ansible/discover.yml) is the **reference implementation** |
 
-그다음은 데모와 같습니다. 모은 결과를 `pqcota-ingest`에 주면 정규화·적재되고 `pqcota-inventory`로 봅니다.
+After that it is the same as the demo — hand the collected results to `pqcota-ingest` and they are normalized and stored; view them with `pqcota-inventory`.
 
-> **✅ collector 배포는 데모를 그대로 따라도 됩니다.** 노드 이미지엔 collector가 **없고**, `discover.yml`이
-> ctl에서 반입→실행→회수→정리합니다(끝나면 노드 잔존물 0). JVM 애드온은 `-recon` 정찰로 **JVM이 있는
-> 노드에만** 갑니다. 실환경 이식은 `collector_bin_dir`를 자기 빌드 산출(arch별)로 바꾸는 것뿐입니다.
+> **✅ You can copy the demo's collector deployment as-is.** The node images contain **no** collector; `discover.yml`
+> ships them from ctl, runs them, retrieves the results, and cleans up (zero residue on the nodes afterward). The JVM
+> add-on goes **only to nodes that have a JVM**, via `-recon`. Porting it to a real environment is just pointing
+> `collector_bin_dir` at your own build output (per arch).
 >
-> **데모에만 있는 것 두 가지**. 그대로 옮기면 안 됩니다:
-> - **트래픽 생성**(`groups.ini`의 `traffic=`·`pqcota-gen-traffic.sh`): 데모는 관측할 핸드셰이크가 없어 **일부러 만들어 냅니다.** 실제 환경엔 진짜 트래픽이 흐르므로 `pqcota-netcap <node> <iface> <구간초>`로 **관측만** 하면 됩니다.
-> - **그룹 멤버십**(`groups.ini`의 `[java]`): 어느 노드에 `pqcota-jvmscan`을 돌릴지 고르는 데모의 방식일 뿐, 자기 인벤토리 방식대로 하면 됩니다.
+> **Two things exist only in the demo** — do not carry them over:
+> - **Traffic generation** (`traffic=` in `groups.ini`, `pqcota-gen-traffic.sh`): the demo has no handshakes to observe, so it **manufactures them on purpose.** A real environment has real traffic, so you only need to **observe** with `pqcota-netcap <node> <iface> <window>`.
+> - **Group membership** (`[java]` in `groups.ini`): that is just the demo's way of picking which nodes get `pqcota-jvmscan`; use whatever your own inventory does.
 
-**선택 사항**: 노드 등재 게이트(`pqcota-ingest <dir> <scope-file>`) · 자산 스코프(`-scope-assets`) · CMDB 프로필(`pqcota-profile`) · Postgres 영속(`PQCOTA_DSN`) · 서명 검증(`PQCOTA_VERIFY_KEY`). 무엇이 필수·선택인지: [discovery/cmd README](../discovery/cmd/README.md#필수인가-아니다-원격으로-여러-노드를-훑을-때만-필요하다).
+**Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.md).
 
-## 디스커버리 그 다음
-디스커버리는 "무엇이 실제로 협상되는가"(등급)까지 보여줍니다. **"선언한 것과 얼마나 일치하는가
-(CONFIRMED/UNDECLARED/UNOBSERVED)"**와 **거버넌스·대조**는 이 리포가 하지 않아 데모에도 없습니다.
+## Beyond discovery
+Discovery shows you as far as "what is actually negotiated" (the grade). **"How well does that match what was declared (CONFIRMED/UNDECLARED/UNOBSERVED)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.

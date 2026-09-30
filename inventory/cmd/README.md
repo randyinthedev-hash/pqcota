@@ -1,14 +1,12 @@
-# inventory/cmd/: 인벤토리 진입점
+# inventory/cmd/: the inventory entry points
 
-인벤토리 단계의 CLI(Go 바이너리). collector가 낸 관측을 **중앙에 적재**하고, 쌓인 것을 **읽기전용**으로 조회한다. 다섯 범주로 나눠 정리한다.
+The CLIs (Go binaries) of the inventory stage. They **load into the center** what the collectors observed, and **read back**, read-only, what has accumulated. They are sorted into five categories.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
+## ① Loading: accumulate the retrieved results into the history
 
-## ① 적재: 회수된 결과를 히스토리에 쌓음
+**`pqcota-ingest` reads from one directory** the `CollectionResult` JSON files the collectors produced, and loads them through the scope gate → normalization → the append-only history. This is what makes the data the query commands below read.
 
-collector가 낸 `CollectionResult` JSON들을 **`pqcota-ingest`가 한 디렉터리에서 읽어** 스코프 게이트 → 정규화 → append-only 히스토리에 적재한다. 아래 조회 커맨드가 읽는 것을 여기서 만든다.
-
-그 디렉터리에 파일을 모으는 것은 **사용자**다. 데모에선 Ansible이 각 노드에서 [collector](../../discovery/cmd/README.md)를 돌려 컨트롤러로 회수한다.
+Gathering the files into that directory is **the user's** job. In the demo, Ansible runs the [collectors](../../discovery/cmd/README.md) on each node and retrieves the results to the controller.
 
 ### `pqcota-ingest`
 
@@ -16,73 +14,71 @@ collector가 낸 `CollectionResult` JSON들을 **`pqcota-ingest`가 한 디렉�
 pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument · option | What it does |
 |---|---|
-| `<results-dir>` | `*.json`(단일 객체)·`*.jsonl`(한 줄=한 결과)을 모두 읽는다. **형식은 확장자가 아니라 내용으로 가린다.** jvm attach 경로가 노드당 JVM 여럿을 JSONL로 낸다. 해독하지 못한 입력이 하나라도 있으면 **적재하지 않고 멈춘다.** 반쪽만 들어가면 빠진 자산이 없는 자산과 구별되지 않는다 |
-| `[scope-master-file]` | 노드 등재 게이트. 안 주면 게이트를 생략한다 |
-| `-scope-assets <csv>` | 자산 스코프: 등재된 노드 안에서 계속 관리할 자산만 남긴다(아래) |
+| `<results-dir>` | reads every `*.json` (a single object) and `*.jsonl` (one line = one result). **The format is decided by the content, not the extension.** The jvm attach path emits several JVMs per node as JSONL. If even one input cannot be decoded, it **stops without loading.** If only half went in, a missing asset would be indistinguishable from an asset that does not exist |
+| `[scope-master-file]` | the node registration gate. If not given, the gate is skipped |
+| `-scope-assets <csv>` | asset scope: keeps only the assets to go on managing within the registered nodes (below) |
 
-| 환경변수 | 하는 일 |
+| Environment variable | What it does |
 |---|---|
-| `PQCOTA_DSN` | Postgres 접속 문자열([형식](../../discovery/cmd/README.md#pqcota-hosts)). 없으면 인메모리 요약만: 영속되지 않는다 |
-| `PQCOTA_VERIFY_KEY` | 공개키(콤마 구분). 있으면 결과 서명을 검증하고 불일치는 거부한다. 키쌍은 [`pqcota-keygen`](../../discovery/cmd/README.md#pqcota-keygen)이 만들고, 짝이 되는 개인키는 **노드에서 collector가** 쓴다 |
-| `PQCOTA_REQUIRE_SIGNATURE` | `1`이면 검증할 키가 없을 때 **적재를 시작하지 않는다.** 없으면 검증을 건너뛰되 그 건수를 "서명 미확인"으로 따로 보고한다. 통과와 같은 자리에 두지 않는다 |
-| `PQCOTA_ORG` | 이 적재가 속할 조직(소문자·숫자·하이픈 2–64자). 없으면 `default`에 묶인다. **저장소를 여는 모든 명령이 같은 값을 봐야 한다**. 읽는 쪽과 쓰는 쪽이 다르면 데이터가 있는데 안 보인다 |
-| `PQCOTA_REQUIRE_ORG` | `1`이면 조직 없이 저장소를 열 수 없다. `default`도 이름으로 쓸 수 없다(예약). 여러 조직이 한 저장소를 쓰는 배포용: 섞인 뒤에는 되돌릴 수 없어 **여는 자리에서** 막는다 |
-| `PQCOTA_AUTO_DDL` | `0`이면 스키마를 만들지 않는다. 없으면 오류로 중단한다. 가리키는 곳이 어긋났을 때 빈 테이블을 새로 만들어 거기 쓰는 것을 막는다 |
+| `PQCOTA_DSN` | the Postgres connection string ([format](../../discovery/cmd/README.md#pqcota-hosts)). If absent there is only an in-memory summary: nothing is persisted |
+| `PQCOTA_VERIFY_KEY` | public keys (comma separated). If present it verifies the result signatures and refuses a mismatch. The key pair is made by [`pqcota-keygen`](../../discovery/cmd/README.md#pqcota-keygen), and the matching private key is used **by the collector on the node** |
+| `PQCOTA_REQUIRE_SIGNATURE` | if `1`, **loading does not start** when there is no key to verify with. If absent, verification is skipped but that count is reported separately as "signature unchecked". It is not put in the same place as a pass |
+| `PQCOTA_ORG` | the organization this load belongs to (lowercase, digits and hyphens, 2–64 characters). If absent it is bound to `default`. **Every command that opens the store has to see the same value**: if the reading side and the writing side differ, the data is there but you cannot see it |
+| `PQCOTA_REQUIRE_ORG` | if `1`, the store cannot be opened without an organization. `default` cannot be used as a name either (it is reserved). For deployments where several organizations share one store: once mixed they cannot be separated again, so it is blocked **at the point of opening** |
+| `PQCOTA_AUTO_DDL` | if `0`, the schema is not created. If absent, it stops with an error. It prevents a new empty table from being created and written to when the connection points at the wrong place |
 
-> **`PQCOTA_DSN`을 줬는데 저장소를 열지 못하면 멈춘다.** v0.1.x는 인메모리로 대체하고 계속했는데,
-> 그러면 화면에 성공이 찍히고 데이터는 프로세스와 함께 사라졌다. DSN을 준 것은 영속을 요구한 것이다.
+> **If `PQCOTA_DSN` is given but the store cannot be opened, it stops.** v0.1.x fell back to in-memory and carried on,
+> and then the screen printed success while the data vanished with the process. Giving a DSN is a request for persistence.
 
-미등재 노드의 결과는 버리지 않고 **등재요청**으로 남는다.
+The results of an unregistered node are not thrown away and remain as a **registration request**.
 
 ### `pqcota-declare-attribution`
 
 ```bash
 pqcota-declare-attribution [--out <dir>] <attribution.csv>   # CSV: node_id,dst,app_key
-pqcota-ingest <dir>                                          # 선언 레인으로 적재
+pqcota-ingest <dir>                                          # load into the declaration lane
 ```
 
-네트워크 관측은 **캡처하는 순간 소켓이 살아 있어야** 앱을 알아낸다. 짧게 붙었다 끊기는
-연결(배치·헬스체크·cron·SSH)은 그 구간을 벗어나므로 `app_key`가 빈다. 조회 화면에서 `@?`로 보이는
-빈칸이다. 운영자는 이 명령으로 그 빈칸을 메운다.
+Network observation can find the app only if **the socket is alive at the moment of capture**. A connection that attaches
+and drops quickly (a batch job, a health check, cron, SSH) falls outside that window, so `app_key` stays empty. It is the
+blank that shows as `@?` on the query screen. The operator fills that blank with this command.
 
 | | |
 |---|---|
-| `node_id` | 관측 호스트(엣지의 src) |
-| `dst` | 상대. 엣지에 찍힌 주소 그대로: `pqcota-inventory -snapshot`에서 보인다. **포트를 따로 적지 않는다**: 계약이 `dst_addr`를 `"ip:port"`로 정해 이미 들어 있고, 두 곳에 적으면 한쪽만 틀렸을 때 경고 없이 어긋난다 |
-| `app_key` | 이 엣지를 연 앱 |
+| `node_id` | the observing host (the edge's src) |
+| `dst` | the peer, exactly as printed on the edge: it appears in `pqcota-inventory -snapshot`. **Do not write the port separately**: the contract defines `dst_addr` as `"ip:port"` so it is already there, and writing it in two places lets one go wrong without any warning |
+| `app_key` | the app that opened this edge |
 
-**그대로 돌려볼 수 있는 샘플**은 [examples/inventory](../../examples/inventory/README.md#pqcota-declare-attribution-관측이-못-짚은-엣지의-앱을-사람이-적는다)에 있다([attribution.csv](../../examples/inventory/attribution.csv)).
+**A sample you can run as it is** is in [examples/inventory](../../examples/inventory/README.md#pqcota-declare-attribution-a-person-writes-the-app-for-an-edge-the-observation-could-not-attribute) ([attribution.csv](../../examples/inventory/attribution.csv)).
 
-> **관측을 고치지 않는다.** 이 선언은 자기 레인(`detection_method=UNSPECIFIED`)으로 쌓이고,
-> 합치는 일은 **조회할 때 화면에서** 일어난다. 관측이 이미 짚은 앱은 덮지 않고 **빈칸만**
-> 메우며, 메운 것은 `@app(declared)`로 표시되고 몇 건인지도 함께 나온다.
+> **It does not edit the observation.** The declaration accumulates in its own lane (`detection_method=UNSPECIFIED`),
+> and combining happens **on the screen at query time**. It fills **only the blanks** without overwriting an app the observation
+> already caught, and what was filled is shown as `@app(declared)` together with how many there are.
 >
-> 저장을 가르는 이유는 둘이다. 서명이 `app_key`를 덮으므로 고치면 collector가 서명한 것과
-> 달라지고, 원본에서 다시 계산할 때 저장된 값과 달라진다.
+> There are two reasons to keep them apart in storage. The signature covers `app_key`, so editing it would differ from what the
+> collector signed, and recomputing from the original would differ from the stored value.
 
-### 자산 스코프(`-scope-assets`)
+### Asset scope (`-scope-assets`)
 
-노드를 등재해도 그 안에서 관측되는 것 **전부가 관리 대상은 아니다**. 시스템 기본 라이브러리나 패키지가 딸려 넣은 런타임이 섞이면 인벤토리가 잡음에 묻힌다. 무엇을 계속 볼지는 **사용자가 선언**하고 도구는 집행한다.
+Registering a node does not make **everything observed inside it** a managed target. If the system's default libraries, or a runtime that a package pulled in, get mixed in, the inventory drowns in noise. **The user declares** what to keep watching, and the tool enforces it.
 
 ```csv
 action,runtime,lib,app_key,note
-exclude,*,*,/usr/bin/python*,패키지 python 런타임 — 관리 대상 아님
-exclude,openssl,libcrypto.so.*,*,이 계열은 전부 제외
-include,openssl,libcrypto.so.3,/opt/apps/payment-gw,결제 게이트웨이만 예외
+exclude,*,*,/usr/bin/python*,the package's python runtime — not a managed target
+exclude,openssl,libcrypto.so.*,*,exclude this whole family
+include,openssl,libcrypto.so.3,/opt/apps/payment-gw,an exception for the payment gateway only
 ```
 
-- 빈 칸과 `*`는 "모두"를 뜻한다. 패턴은 glob이다. 규칙이 없으면 **전부 관리 대상**이다(기본 포함).
-- 판정: 기본 포함 → `exclude`로 빼고 → `include`로 되돌린다. **include가 exclude를 이기므로** "이 계열은 전부 빼되 이것만 예외"를 쓸 수 있다.
-- 공유 `.so`는 쓰는 앱이 여럿이라, **하나만 맞아도** 규칙이 걸린다.
-- **제외는 "없음"이 아니다**. 뺀 건수를 적재 요약과 인벤토리 뷰가 고지한다. 고지 없이 사라지면 인벤토리가 "그런 자산은 없다"고 거짓말한다.
+- An empty cell and `*` both mean "all". Patterns are globs. With no rules, **everything is managed** (included by default).
+- The decision: included by default → removed by `exclude` → put back by `include`. **`include` beats `exclude`**, so you can write "remove this whole family but keep this one".
+- A shared `.so` has several apps using it, so a rule applies if **even one of them matches**.
+- **Excluded is not "absent".** The load summary and the inventory view announce how many were removed. If things vanished without notice, the inventory would be lying that "there is no such asset".
 
-> 근거·경계 상세: [인벤토리 설계 §8 자산 스코프](../design.md), 인수 기준: [테스트케이스 S](../testcases.md).
+## ② CBOM intake: import results produced by an external tool
 
-## ② CBOM 수신: 외부 도구가 낸 결과 임포트
-
-collector가 **직접 관측**하는 런타임이라면, 소스·빌드 아티팩트는 **스캔하지 않고 위임**한다. 사용자 CI에서 CBOMkit이 낸 표준 CycloneDX를 **받아서** 검증·정규화·적재한다. CBOMkit을 pqcota가 실행하지 않는다. → [discovery/README ②](../../discovery/README.md)
+For the runtimes a collector **observes directly**, source and build artifacts are **delegated, not scanned**. pqcota **receives** the standard CycloneDX that CBOMkit produced in the user's CI, and validates, normalizes and loads it. pqcota does not run CBOMkit. → [discovery/README ②](../../discovery/README.md)
 
 ### `pqcota-cbom-ingest`
 
@@ -90,28 +86,28 @@ collector가 **직접 관측**하는 런타임이라면, 소스·빌드 아티�
 pqcota-cbom-ingest <cbom.json | -> <target-node-id>
 ```
 
-CycloneDX를 수신·검증·적재한다. 부적합은 거부하고 저장하지 않는다.
+It receives, validates and loads a CycloneDX. A non-conforming one is refused and not stored.
 
-| 인자 | 하는 일 |
+| Argument | What it does |
 |---|---|
-| `<cbom.json>` | 받을 CycloneDX 파일. `-`면 stdin(아래 CI 주입) |
-| `<target-node-id>` | 그 CBOM을 어느 노드 자산으로 앵커할지 |
+| `<cbom.json>` | the CycloneDX file to receive. `-` means stdin (CI injection, below) |
+| `<target-node-id>` | which node's asset to anchor that CBOM to |
 
-`env PQCOTA_DSN`이 있으면 Postgres에 영속하고, 없으면 인메모리 요약만 낸다.
+If `env PQCOTA_DSN` is set it persists in Postgres, and if not it only prints an in-memory summary.
 
-> **거부는 판단이 아니라 결정론적 검증이다.** 거부 사유는 지금 하나다: **구조 부적합**(malformed JSON · CycloneDX 아님(`bomFormat`) · 미지원 `specVersion`). `ImportCBOM`은 서명 검증을 첫 관문으로 두지만 이 명령에는 키를 줄 자리가 없어 그 관문이 서지 않고, 돌릴 때마다 그 사실을 stderr로 알린다([검토 중인 설계 §10](../../docs/under-review.md)). 둘 다 기계적으로 판정된다. 반대로 `target_node_id` 바인딩이 없는 것은 **거부가 아니라** 스코프 판정으로 라우팅되고, `pqcota:` 프로퍼티가 없는 자산은 **거부가 아니라** 강도 미상으로 파싱만 안 된다. "못 믿을 것은 버리되, 안 본 것을 없다고는 안 한다".
+> **Refusal is deterministic validation, not judgement.** There is one reason for refusal today: a **non-conforming structure** (malformed JSON · not CycloneDX (`bomFormat`) · an unsupported `specVersion`). `ImportCBOM` puts signature verification as its first gate, but this command has no place to be given a key, so that gate does not stand, and the command says so on stderr every time it runs. Both are decided mechanically. Conversely, a missing `target_node_id` binding is **not a refusal**: it is routed to the scope decision, and an asset without `pqcota:` properties is **not a refusal** either: it is simply not parsed, with unknown strength. "Throw away what cannot be trusted, but never say something is absent because it was not seen."
 
-`ImportCBOM`이 구조·앵커를 검증한다(서명 관문은 미배선. 위 주의). 통과분은 관측 레인(`detection_method=source/artifact`)으로 위와 같은 히스토리에 수렴한다. 어댑터: `pkg/inventory/ingest`.
+`ImportCBOM` validates the structure and the anchor (the signature gate is not wired: see the note above). What passes converges into the same history as above, through the observation lane (`detection_method=source/artifact`). Adapter: `pkg/inventory/ingest`.
 
-> **CI 파이프라인 주입**: 중간 파일 없이 CBOMkit 출력을 바로 흘려보낼 수 있다(GitHub Actions·GitLab CI 등):
+> **Injecting from a CI pipeline**: you can pipe CBOMkit's output straight in without an intermediate file (GitHub Actions, GitLab CI and so on):
 > ```bash
 > cbomkit scan ./repo | pqcota-cbom-ingest - cmdb://payment-gw
 > ```
-> CI는 자기가 무엇을 빌드하는지 알므로 `target-node-id`를 여기서 못 박는다(앵커 없으면 스코프 판정으로 라우팅, [discovery/README](../../discovery/README.md) 참고).
+> CI knows what it is building, so it pins `target-node-id` here (without an anchor it is routed to the scope decision, see [discovery/README](../../discovery/README.md)).
 
-## ③ 조회: 쌓인 것을 읽기전용으로 본다
+## ③ Query: read what has accumulated, read-only
 
-핵심 구분은 **파일 취합(휘발성·로컬) vs 중앙 저장소 조회(영속·별도 프로세스)**다.
+The key distinction is **file collation (volatile, local) vs a central store query (persistent, a separate process)**.
 
 ### `pqcota-discover-view`
 
@@ -119,33 +115,33 @@ CycloneDX를 수신·검증·적재한다. 부적합은 거부하고 저장하�
 pqcota-discover-view <results-dir> [nodes.json] [topology-out.dot]
 ```
 
-| 인자 | 하는 일 |
+| Argument | What it does |
 |---|---|
-| `<results-dir>` | 회수된 `CollectionResult` JSON들을 그 자리에서 취합 |
-| `[nodes.json]` | 관측 IP를 노드명으로 잇기(`10.0.0.9` → `node-c`) |
-| `[topology-out.dot]` | 통신 토폴로지를 DOT로 쓴다(색=등급) |
+| `<results-dir>` | collates the retrieved `CollectionResult` JSON files on the spot |
+| `[nodes.json]` | maps observed IPs to node names (`10.0.0.9` → `node-c`) |
+| `[topology-out.dot]` | writes the communication topology as DOT (colour = grade) |
 
-발견 자산(OpenSSL·JCA)과 관측 통신 엣지 등급을 낸다. **저장소를 쓰지 않는다**. 휘발성 뷰다.
+It prints the discovered assets (OpenSSL, JCA) and the grade of each observed communication edge. **It does not use the store**: it is a volatile view.
 
 ### `pqcota-inventory`
 
 ```
-pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <과거id>,<최신id>]
+pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <past-id>,<latest-id>]
 ```
 
-인자 없이 돌리면 **전 노드 최신 스냅샷 + 등급 집계**를 낸다. `▸`머신 헤더(엔드포인트·프로필)와 `@`앱 표시(공유 `.so`는 다중)가 붙는다. `env PQCOTA_DSN`가 있어야 한다(Postgres의 append-only 히스토리 + 머신 메타데이터를 읽는다).
+Run with no arguments it prints **the latest snapshot of every node + a grade tally**. The `▸` machine header (endpoint and profile) and `@` app labels (a shared `.so` shows several) are attached. `env PQCOTA_DSN` is required (it reads the append-only history and the machine metadata in Postgres).
 
-| 플래그 | 하는 일 |
+| Flag | What it does |
 |---|---|
-| `-history <node>` | 그 노드의 스냅샷을 **오래된 것부터** 나열: seq, 적재 시각, ruleset, findings·edges 수, 갭 |
-| `-snapshot <id>` | 스냅샷 **단건 상세**: 자산 표 + 그 스냅샷의 **관측 엣지**(누적 뷰는 합계만 내므로 여기서만 펼침) |
-| `-diff <과거id>,<최신id>` | 두 스냅샷 **변화**: `added`·`removed`·`changed` |
+| `-history <node>` | lists that node's snapshots **oldest first**: seq, load time, ruleset, findings and edges counts, gaps |
+| `-snapshot <id>` | **detail of a single snapshot**: the asset table + that snapshot's **observed edges** (the cumulative view prints only totals, so they unfold only here) |
+| `-diff <past-id>,<latest-id>` | the **changes** between two snapshots: `added`, `removed`, `changed` |
 
-`-diff`의 **방향 규약: 첫 인자=과거, 둘째=최신**(`added`=둘째에만 있는 것, `removed`=첫째에만 있던 것). 시간 역순으로 주면 방향이 뒤집혀 읽히므로 **역순이면 경고한다.** finding id가 (node, name, runtime, fork) 해시라 **버전이 바뀌어도 같은 자산의 `changed`로** 잡힌다. ruleset이 다르면 파생값 차이가 재계산 결과일 수 있다고 경고한다.
+The **direction convention of `-diff`: first argument = past, second = latest** (`added` = present only in the second, `removed` = present only in the first). Giving them in reverse time order makes the direction read backwards, so **it warns if they are reversed.** The finding id is a hash of (node, name, runtime, fork), so **even when the version changes it is caught as a `changed` of the same asset.** If the rulesets differ, it warns that a difference in derived values may be a recomputation result.
 
-**스냅샷은 변화 지점에만 쌓인다.** 같은 상태를 다시 관측하면 스냅샷을 새로 만들지 않고 **관측 기록**(가벼움)만 남으므로, `-history`의 `obs`·`observed` 열이 "그 상태를 몇 번·언제까지 재확인했는지"를 보여준다. 덕분에 무거운 저장은 **변화 횟수만큼만** 자라면서도 "매번 스캔했다"는 증거는 보존된다.
+**Snapshots accumulate only at change points.** Observing the same state again does not create a new snapshot and leaves only an **observation record** (lightweight), so the `obs` and `observed` columns of `-history` show "how many times and until when that state was re-confirmed". So the heavy storage grows **only as many times as there are changes**, yet the evidence that "it was scanned every time" is kept.
 
-## ④ 보존 정책: 오래된 변화 지점 절단
+## ④ Retention policy: truncate old change points
 
 ### `pqcota-prune`
 
@@ -153,21 +149,19 @@ pqcota-inventory [-history <node>] [-snapshot <id>] [-diff <과거id>,<최신id>
 pqcota-prune [-older-than 90d] [-keep-last N] [-apply]
 ```
 
-| 플래그 | 하는 일 |
+| Flag | What it does |
 |---|---|
-| `-older-than <기간>` | 이보다 오래된 변화 지점을 절단(예: `90d`, `720h`) |
-| `-keep-last <N>` | 노드별 최근 N개 변화 지점은 보존 |
-| `-apply` | 실제로 삭제한다. **없으면 계획만 보인다**(기본 dry-run) |
+| `-older-than <duration>` | truncates change points older than this (e.g. `90d`, `720h`) |
+| `-keep-last <N>` | keeps each node's most recent N change points |
+| `-apply` | actually deletes. **Without it only the plan is shown** (dry-run by default) |
 
-두 축을 다 주면 **보수적**으로 판정한다(둘 다 버려도 될 때만). 정책을 하나도 안 주면 거부한다.
+If you give both axes, the decision is **conservative** (only when both allow discarding). With no policy at all, it refuses.
 
-불변식 셋: **최신 불가침**(노드별 최신은 어떤 정책으로도 안 지운다. 인벤토리 뷰·프로비저닝 before 캡처의 근거), **수정 금지**(남은 스냅샷은 바이트 그대로), **절단 사실 기록**(`-history`가 `⌫` 줄로 고지. 없으면 이력의 빈자리가 "관측 안 함"으로 읽힌다). 조회 커맨드와 **일부러 분리**했다. 읽기 도구가 파괴적 동작을 겸하면 실수 한 번이 이력을 지운다.
+Three invariants: **the latest is untouchable** (each node's latest is never deleted by any policy: it is the basis of the inventory view and of the provisioning before-capture), **no modification** (the remaining snapshots stay byte for byte), and **the fact of truncation is recorded** (`-history` announces it with a `⌫` line; without it a gap in the history would read as "not observed"). It is **deliberately separated** from the query commands. If a read tool also performed destructive actions, one mistake would erase the history.
 
-> 근거·판정 규칙 상세: [인벤토리 설계 §7 이력·보존](../design.md) (동등성 정의는 §7.3: 계약에 필드를 더할 때 함께 갱신해야 한다), 인수 기준: [테스트케이스 H·T](../testcases.md).
+## ⑤ Metadata · declaration import
 
-## ⑤ 메타데이터 · 선언 임포트
-
-엔드포인트는 `discovery/cmd/pqcota-hosts --dsn`이 채우고, 프로필·선언은 아래 둘이 채운다. → [collector·접근 준비 커맨드 지도](../../discovery/cmd/README.md)
+Endpoints are filled by `discovery/cmd/pqcota-hosts --dsn`, and profiles and declarations are filled by the two below. → [the collector and access-prep command map](../../discovery/cmd/README.md)
 
 ### `pqcota-profile`
 
@@ -175,12 +169,12 @@ pqcota-prune [-older-than 90d] [-keep-last N] [-apply]
 pqcota-profile [--dsn <postgres>] <profiles.csv>
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument · option | What it does |
 |---|---|
-| `<profiles.csv>` | 머신 프로필(`display_name`·`environment`·`role`·`owner`·`location`·`labels`). 출처는 CMDB |
-| `--dsn <postgres>` | 주면 인벤토리에 upsert. 없으면 파싱 결과만 보인다 |
+| `<profiles.csv>` | machine profiles (`display_name`, `environment`, `role`, `owner`, `location`, `labels`). The source is the CMDB |
+| `--dsn <postgres>` | if given, upserts into the inventory. If not, it only shows the parse result |
 
-식별과 분리된 **사람-대면 메타데이터**다. 뷰의 `▸`헤더를 채운다.
+It is **human-facing metadata** kept separate from identity. It fills the `▸` header of the view.
 
 ### `pqcota-declare`
 
@@ -188,15 +182,15 @@ pqcota-profile [--dsn <postgres>] <profiles.csv>
 pqcota-declare [--out <dir>] <declaration.csv>
 ```
 
-| 인자·옵션 | 하는 일 |
+| Argument · option | What it does |
 |---|---|
-| `<declaration.csv>` | 사용자 선언 인벤토리(`node_id`,`crypto_runtime`,`component`) |
-| `--out <dir>` | `CollectionResult` JSON 출력 디렉터리(기본 `declared-results`) |
+| `<declaration.csv>` | the user's declared inventory (`node_id`, `crypto_runtime`, `component`) |
+| `--out <dir>` | the output directory for `CollectionResult` JSON (default `declared-results`) |
 
-**관측이 아니다**. `detection_method`가 비어 나간다. 낸 JSON을 `pqcota-ingest <dir>`(①)로 적재하면 대조의 기준선이 된다.
+**It is not an observation.** `detection_method` goes out empty. If you load the JSON it produces with `pqcota-ingest <dir>` (①), it becomes the baseline for a comparison.
 
-## 언제 무엇을 쓰나
-- 회수한 결과 파일을 **한 번 취합해 그 자리에서 보기** → **`pqcota-discover-view`**(저장소 불필요·휘발성).
-- 여러 노드가 시간에 걸쳐 쌓은 **누적 인벤토리를 중앙에서 조회**(엔드포인트·프로필·앱 표시 포함) → **`pqcota-inventory`**(Postgres).
+## When to use what
+- To **collate the retrieved result files once and look at them on the spot** → **`pqcota-discover-view`** (no store needed, volatile).
+- To **query centrally the cumulative inventory that several nodes built up over time** (including endpoints, profiles and app labels) → **`pqcota-inventory`** (Postgres).
 
-> 로직은 `pkg/inventory/`(적재 어댑터 `ingest`·뷰 렌더·`RenderStore`·머신 메타데이터 `MetaStore`·hosts 파서)와 `pkg/discovery/`(정규화·히스토리 스토어)에 있고, 이 커맨드들은 그것을 조립하는 얇은 진입점이다.
+> The logic lives in `pkg/inventory/` (the loading adapter `ingest`, view rendering, `RenderStore`, the machine metadata `MetaStore`, the hosts parser), including normalization and the history store, and these commands are thin entry points that assemble it.

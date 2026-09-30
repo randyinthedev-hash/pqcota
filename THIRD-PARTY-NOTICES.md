@@ -1,30 +1,26 @@
-한국어 · [English](THIRD-PARTY-NOTICES.en.md)
-
 # Third-Party Notices
 
-이 리포를 빌드해 만든 바이너리(collector·CLI)에 **컴파일·링크되는** 서드파티 컴포넌트의 저작권·
-라이선스 고지입니다. 전부 허용적 라이선스(Apache-2.0 / BSD-3-Clause / MIT)이며, 그 바이너리를 남에게
-전달할 때 저작권 고지를 유지해야 하므로 아래에 원문을 둡니다.
 
-> 빌드 타임 도구(buf·protoc-gen-*)와 데모 환경 구성요소(Ansible·Temurin·OpenSSL·Graphviz 등, 별도 프로세스라
-> 링크되지 않음)를 포함한 **전체 라이선스 지형**은 [docs/licensing.md](docs/licensing.md)를 참조하세요.
+Copyright and license notices for the third-party components **compiled and linked into** the binaries you build from this repo (collectors and CLIs). All are permissive (Apache-2.0 / BSD-3-Clause / MIT); the notices are reproduced below because they must be preserved when you pass those binaries on.
+
+> For the **full license landscape** — including build-time tools (buf · protoc-gen-*) and demo-environment components (Ansible · Temurin · OpenSSL · Graphviz, etc., which run as separate processes and are not linked) — see [docs/licensing.md](docs/licensing.md).
 
 ---
 
 ## Apache License 2.0
 
-동일 라이선스가 이 프로젝트의 [`LICENSE`](LICENSE)에 전문으로 포함되어 있습니다. 다음 컴포넌트가 이를 따릅니다:
+The same license is included in full as this project's [`LICENSE`](LICENSE). The following components are covered by it:
 
 - **google.golang.org/grpc** — Copyright The gRPC Authors (Google LLC et al.)
 - **google.golang.org/genproto/googleapis/rpc** — Copyright Google LLC
 
-전문: [`LICENSE`](LICENSE) 또는 https://www.apache.org/licenses/LICENSE-2.0
+Full text: [`LICENSE`](LICENSE) or https://www.apache.org/licenses/LICENSE-2.0
 
 ---
 
 ## BSD 3-Clause "New" License
 
-다음 컴포넌트가 이를 따릅니다:
+The following components are covered by it:
 
 - **google.golang.org/protobuf** — Copyright (c) 2018 The Go Authors. All rights reserved.
 - **golang.org/x/sys** — Copyright 2009 The Go Authors.
@@ -66,7 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## MIT License
 
-다음 컴포넌트가 이를 따릅니다 (모두 Jack Christensen, jackc/pgx 생태계):
+The following components are covered by it (all from Jack Christensen, the jackc/pgx ecosystem):
 
 - **github.com/jackc/pgx/v5** — Copyright (c) 2013-2021 Jack Christensen
 - **github.com/jackc/pgpassfile** — Copyright (c) 2019 Jack Christensen
@@ -98,5 +94,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
-_이 목록은 `go.mod`의 배포 대상 의존성 기준입니다. 의존성 갱신 시 `go-licenses report ./...` 등으로
-재생성하는 것을 권장합니다. 데모 전용·빌드 전용 컴포넌트는 링크되지 않으므로 여기 포함하지 않습니다._
+_This list reflects the distribution-target dependencies in `go.mod`. When dependencies change, regenerating with e.g. `go-licenses report ./...` is recommended. Demo-only and build-only components are not linked and are therefore not included here._

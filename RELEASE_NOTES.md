@@ -1,1039 +1,1136 @@
-한국어 · [English](RELEASE_NOTES.en.md)
+# Release Notes — pqcota
 
-# 릴리스 노트: pqcota
 
-버전별 **목표**와 **성과**를 기록한다. 버전이 올라갈 때마다 갱신하고, 최신 버전을 맨 위에 둔다.
+Records the **goals** and **results** per version. Updated as versions advance, newest on top.
 
-절은 내용의 **종류**로 나눈다. **만든 것** · **알아낸 것** · **고친 것**이다. 결함은 기능으로 포장하지
-않고 자기 절에 적는다. 그 절은 세 가지를 밝힌다: **무엇이 잘못이었나 · 어느 버전부터인가 ·
-무엇이 잘못 나왔나**(아무것도 안 틀렸으면 그렇게 적는다). **발행된 버전의 절은 사실을 바꾸지
-않는다.** 무엇이 언제 있었고 어느 버전부터 틀렸는지는 나중에 고쳐 쓰지 않는다. 결함은 그것을 고친
-버전에서 어디서부터였는지를 밝히는 쪽으로 남긴다.
+Sections are split by the **kind** of content — **What was built** · **What was learned** ·
+**What was fixed**. A defect is not dressed up as a feature; it gets its own section, which states
+three things: **what was wrong · which version it entered in · what came out wrong** (if nothing came
+out wrong, it says so). **Sections of already-published versions do not have their facts changed.**
+What happened when, and which version a defect entered in, are not rewritten later; a defect is
+recorded in the version that fixed it, naming where it started.
 
-**다만 문장과 분량은 다듬을 수 있다.** 문체를 뒤에 맞추거나, 무게에 견줘 긴 절을 줄이는 일이 그렇다
-(문구만 바뀐 v0.6.4·v0.6.5를 그렇게 줄였다). 가르는 기준은 하나다. **읽는 사람이 아는 사실이 달라지면
-안 되고, 그것을 어떻게 말하는지는 달라져도 된다.**
+**Wording and length, however, may be revised** — bringing prose in line with a later style, or
+shortening a section that runs long for its weight (this is what happened to v0.6.4 and v0.6.5, which
+changed nothing but wording). One test decides it: **what the reader learns must not change; how it is
+said may.**
 
-**패치 릴리스를 따로 낼지는 별개 판단이다.** 기준은 버전 번호 규칙이 아니라 *알려진 결함을
-최신 릴리스에 얼마나 오래 두게 되는가*다. 다음 마이너가 멀면 패치를 따로 낸다(v0.1.3이 그랬다).
-곧 나가면 거기 싣는다. 몇 시간짜리 릴리스는 이력만 늘린다. 어느 쪽이든 「고친 것」이 **어느
-버전부터였는지**를 밝히므로 기록은 같다.
-
-> **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
+**Whether to cut a separate patch release is a distinct call.** The criterion is not a version-number
+rule but *how long a known defect would sit in the latest release*. If the next minor is far off, cut the
+patch (v0.1.3 did). If it ships shortly, carry the fix there — a release that lives for hours only adds
+history. Either way the "What was fixed" section names **which version it entered in**, so the record is
+the same.
 
 ---
 
-## 로드맵: 예정 릴리스 (계획)
+## Roadmap — Upcoming releases (planned)
 
-확정된 것이 아니라 방향이다. 각 버전은 착수·완료 시 위 규칙대로 정식 섹션으로 승격한다. **Windows CNG
-런타임은 단계적으로** 도입한다. 한 번에 넣지 않는 이유와 남은 미결은 [검토 중인 설계 §2.2](docs/under-review.md)에 있다.
+Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** , not all at once.
 
-- **v0.10.0 (계획)**은 **CNG 프로비저닝**이다. v0.8.0을 승인 인계에, v0.9.0을 근거 되짚기에 썼으므로 두 칸 더 뒤로 간다. **substrate 일반화가 선행한다**(POSIX 파일 가정을
-  벗어난다. Windows는 레지스트리/GPO라 `/opt/pqcota` 파일 스테이징·파일 제거 롤백에 안 맞는다) → `renderCNG`. 일반화는 이 구현과
-  함께 한다(투기적 추상화 금지). seam을 어디에 그을지는 아직 정하지 않았다.
-  [검토 중인 설계 §2.2](docs/under-review.md)를 본다.
+- **v0.10.0 (planned)** — **CNG provisioning** (moved back two more slots because v0.8.0 went to the approval handoff and v0.9.0 to evidence traceability): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided.
 
-- **Windows OpenSSL 관측 (계획 · 버전 미정).** 지금 `pqcota-nodescan`은 구현이 하나뿐이고 `/proc`를
-  읽는다. Windows에서 돌리면 빈 결과가 아니라 갭을 내지만, **관측은 못 한다.** 필요한 것은 두 조각을
-  갈아 끼우는 일이다. 로드된 모듈을 찾는 곳(`procmaps.go` → Toolhelp32 모듈 목록)과 바이너리에서
-  문자열을 추출하는 곳(`elfstrings.go` → PE)이다. **fork 판별(`registry.MatchFork`)은 추출한 문자열만 받으므로
-  그대로 쓴다.** jvm 정찰이 OS별 I/O + 공용 판별로 갈린 것과 같은 모양이다. 어느 collector가 어느
-  OS에서 도는지는 [커맨드 레퍼런스](discovery/cmd/README.md).
+- **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
+  implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
+  result, but it **cannot observe**. What is needed is swapping two pieces: finding the loaded modules
+  (`procmaps.go` → the Toolhelp32 module list) and pulling strings out of a binary (`elfstrings.go` →
+  PE). **Fork detection (`registry.MatchFork`) takes only the extracted strings, so it is reused
+  as-is** — the same shape the jvm reconnaissance took, per-OS I/O over shared pure matching. Which
+  collector runs on which OS is in the [command reference](discovery/cmd/README.md).
 
-- **provider 생태계 수용 (검토 중 · 버전 미정).** 어떤 provider를 쓸지 고르고 그 파일을 구해 오는 것은 계획을 쓰는 사용자가 한다. 이 리포가 하는 일은 **그 provider를 활성화하는 설정 파일을 대신 만드는 것이다.** 그런데 지금은 `activate`+`module` 한 가지 모양만 만들 줄 안다. provider마다 요구하는 설정이 달라서, OpenSSL 자체 `fips` 모듈(`fipsinstall`이 만들어 주는 파일을 끌어와야 한다)이나 pkcs11-provider(드라이버 경로 같은 항목이 더 필요하다)는 아직 만들지 못한다. 후보별로 무엇이 더 필요한지, 그리고 provider 관측·HSM 축은 [검토 중인 설계](docs/under-review.md)에서 다룬다.
+- **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is still being worked out.
 
-- **서버 역할 엣지 관측 (계획 · 버전 미정).** 지금 netcap은 **관측 노드가 연결을 건 엣지만** 낸다.
-  그래서 그 노드에서 **서버로 도는 프로세스는 엣지를 하나도 얻지 못하고**, nodescan이 찾은 「이 앱이
-  어느 라이브러리를 로드했다」와 「실제로 무엇으로 협상했다」를 `app_key`로 잇는 대조가 서버 쪽에만
-  통째로 비어 있다. 계약은 이미 `EdgeRole.SERVER`로 이것을 담을 수 있고, 막고 있는 것은 값 규약과
-  중복 제거다. 설계는 [검토 중인 설계 §5](docs/under-review.md).
+- **Observing server-role edges (planned · version TBD)** — today netcap emits **only the edges the observing node initiated**. So a **process serving on that node gets no edge at all**, and the comparison that ties "this app loaded that library" (found by nodescan) to "this is what it actually negotiated" through `app_key` is entirely empty on the server side. The contract can already carry this with `EdgeRole.SERVER`; what blocks it is the value conventions and deduplication.
 
-- **통신 관측 주기 분리 (계획 · 버전 미정).** 자산과 통신 엣지는 관측 주기가 다르다. 지금은 한
-  플레이북에 묶여 있어 엣지를 더 보려면 `/proc` 훑기와 JVM attach까지 함께 다시 돌려야 한다.
-  `discover.yml`은 그대로 두고 netcap만 회차로 돌리는 플레이북을 **더한다**. 함께 풀 것은 **반복
-  관측을 합치는 일**이다. 지금은 코어가 중복 엣지를 버리기만 해서 `observed_count`가 1에 머물고,
-  `first_seen`·`last_seen`은 아무도 채우지 않으며, 병합 키가 세 곳에서 서로 다르다.
-  설계는 [검토 중인 설계 §7](docs/under-review.md).
+- **Separating the traffic-observation cadence (planned · version TBD)** — assets and communication edges are observed on different cadences. Today they are bound into one playbook, so seeing more edges means re-running the `/proc` sweep and the JVM attach along with it. `discover.yml` is left alone and a playbook that runs netcap in rounds is **added**. What has to be solved along with it is **merging repeated observations**: the core only drops duplicate edges today, so `observed_count` stays at 1, `first_seen` and `last_seen` are filled by nobody, and the merge key differs in three places.
 
-- **엣지 상대의 스코프 판정 (계획 · 버전 미정).** 관측이 스코프 마스터에 없는 노드를 만나면 **등재 판정
-  요청**으로 보내라고 §1.4·§2.5가 정했고 SD-5가 인수 기준까지 세웠는데, **판정기(`ClassifyObserved`)는
-  있고 그것을 부르는 곳이 없다.** 미등재 상대는 `dst_addr`에 주소로 남아 화면에 보일 뿐 모이지 않는다.
-  운영자가 등재하지 못한 노드를 관측으로 드러내는 유일한 자동 수단인데 지금은 이어지지 않는다.
-  설계는 [검토 중인 설계 §6](docs/under-review.md).
+- **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, the design says to send it to a **registration request** — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today.
 
-- **서명을 collector에 묶는다 (계획 · 버전 미정).** 지금 적재는 **「누군가 서명했다」까지만** 본다.
-  `PQCOTA_VERIFY_KEY`가 키 목록이라 `envelope.collector_id`를 대조할 방법이 없고, 그래서 키 하나를
-  가진 쪽이 **아무 collector 이름이나 달고** 들어올 수 있다. 묶어서 검증하는 `sign.VerifyFrom`은
-  이미 있고 **부르는 곳이 없다.** 막고 있는 것은 환경변수 형식이라 한 줄로 끝나지 않는다.
-  설계는 [검토 중인 설계 §8](docs/under-review.md).
+- **Binding the signature to a collector (planned · version TBD)** — the ingest today confirms only that
+  **someone signed**. `PQCOTA_VERIFY_KEY` is a list of keys, so there is no way to check it against
+  `envelope.collector_id`, and whoever holds one key can arrive **wearing any collector's name**.
+  `sign.VerifyFrom`, which verifies against that binding, already exists and **nothing calls it**. What
+  blocks it is the environment-variable format, so it is not a one-line change.
 
-- **Windows 통신 관측 (계획 · 버전 미정).** `pqcota-netcap`은 리눅스 전용이라 Windows에서는
-  **바이너리 자체가 만들어지지 않는다.** 그래서 그 노드의 완전성 맵에 「NETWORK 계층 미관측」이
-  남지 않고, 조회 화면에서는 통신이 없는 것처럼 보인다. 해부 계층은 OS를 모르므로 갈아 끼울 것은
-  프레임을 얻는 조각 하나다. Npcap은 노드에 드라이버가 남아 택하지 않고, 내장 `SIO_RCVALL`로
-  간다(IPv4 위주·루프백 제외). 설계는 [검토 중인 설계 §9](docs/under-review.md).
+- **Observing communication on Windows (planned · version TBD)** — `pqcota-netcap` is Linux-only, so on
+  Windows **no binary is produced at all**. That node's completeness map therefore never records "NETWORK
+  layer not observed", and on screen it looks like a node with no communication. The dissection layer
+  knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
+  because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). 
 
-- **릴리스 서명 (계획 · 버전 미정).** **ed25519 서명과 `pqcota-verify-bundle`**을 넣는다. 번들 구성·서명·검증
-  절차는 [collector 배포 설계](discovery/collector-deployment.md)에서 정해 뒀고, 그때까지 무결성 확인은
-  `sha256sum -c`로 한다.
+- **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c`.
 
-### 로드맵에 없는 것: 안 만든다
+### Not on the roadmap — deliberately
 
-방향이 아니라 **경계**다. 언젠가 오리라 기대하지 않도록 적는다.
+These are **boundaries**, not directions. Written down so no one waits for them.
 
-| 안 만드는 것 | 대신 |
+| Not built | Instead |
 |---|---|
-| **플릿 오케스트레이션**(drain · rolling · 헬스체크 게이트) | 표준 Ansible 플레이북을 내므로 사용자의 배포 도구가 한다 |
-| **원격 실행 엔진**(에이전트 상주·push 채널) | 생성물을 사용자가 자기 substrate로 실행한다 |
-| **소스·아티팩트 CBOM 스캐너** | CI에 이미 소스가 있다. CBOMkit 등이 낸 CycloneDX를 **받는다** |
-| **동적 추적**(eBPF·ltrace) | 침습적이라 하지 않는다. 회선에서 실제 협상을 관측하는 쪽을 택했다 |
-| **판정·점수화**("위험함" 같은 등급 매기기) | 관측 사실만 낸다. 무엇을 언제 바꿀지는 사용자가 정한다 |
-| **사람이 값을 넣는 관리 화면** | 파일로 받는다(`hosts.csv`·`scope-assets.csv`·머신 프로필·확정 계획 JSON·`pqcota-declare`). 화면을 만들면 리뷰 큐와 확정 버튼이 따라오는데, 그 둘은 [아키텍처가 명시적으로 뺀 것](docs/architecture.md#62-명시적-제외--경계)이다. 그 순간 관측 도구가 판정 도구가 된다 |
+| **Fleet orchestration** — drain · rolling · health gates | Standard Ansible playbooks come out, so your deployment tooling drives them |
+| **Remote execution engine** — resident agents, push channels | You run the generated artifacts on your own substrate |
+| **Source / artifact CBOM scanner** | CI already has the source. CycloneDX from CBOMkit and friends is **ingested** instead |
+| **Dynamic tracing** (eBPF · ltrace) | Invasive, so it isn't done. Observing the actual negotiation on the wire was chosen instead |
+| **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
+| **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
 
 ---
 
-## v0.9.1: 문체 게이트를 이 리포에 둔다 (2026-09-17)
-
-**목표**: 문서·HTML·도구 출력의 한국어에서 한 번 걷어낸 말이 다시 들어오지 않게 하는 검사기
-`tools/checkprose`를 이 리포에 두고, 이것을 쓰는 다른 리포가 코드를 복사하지 않고 `go run
-github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1`로 돌리게 한다. 계약과 바이너리는 v0.9.0과
-같다.
-
-### 만든 것
-
-- **`make check-prose`**: 규칙표(`rules.tsv`)에 적힌 말이 늘면 막고, 줄어도 막아 기준선을 내리게 한다.
-  마크다운은 코드 블록·인라인 코드를, HTML은 code·pre·script·style과 주석을, Go는 문자열 리터럴만
-  본다. 영문 짝(`*.en.md`)은 보지 않는다. 지금 남은 128건은 기준선(`baseline.tsv`)이 안고 있다.
-- **알림표(`notices.tsv`)는 관문이 아니다.** 제목·표에서는 구분 기호로 맞는 띄운 붙임표처럼 기계가
-  가르지 못하는 것은 후보로만 알린다. 걸려도 통과하고 기준선에 들어가지 않는다.
-- **설정은 전부 한 디렉터리에 있고 코드는 리포를 가리지 않는다.** 규칙·알림·잘못 잡는 말·기준선과,
-  마크다운 밖에서 볼 파일 목록(`files.txt`)을 `-dir`로 받는다. 다른 리포는 자기 설정 디렉터리만 두면
-  된다.
-
-### 알아낸 것
-
-- **눈으로 지킨 규칙은 남지 않는다.** 2026-08-25에 엠대시를 `.md`에서 걷어냈는데 `.html`에는 그대로
-  남았고, `조용히`(silently)는 그 뒤로 쉰 줄 넘게 쌓였다. 기계로 막은 규칙만 남았다.
-- **검사기는 쓰는 리포가 아니라 원본 리포에 두는 편이 맞다.** 같은 코드를 리포마다 복사해 두면
-  규칙 하나를 넓힐 때마다 세 곳을 같은 커밋으로 맞춰야 하고, 어느 쪽이 원본인지가 라이선스 문제가
-  된다. 이 리포에 두고 다른 리포가 판을 지정해 쓰면 둘 다 사라진다.
-
-## v0.9.0: 조치가 어느 스냅샷 상태에서 나왔는지 되짚는다 (2026-09-11)
-
-**목표**: `derived_from_snapshot_id`를 채울 수 있게 한다. 계획을 만드는 쪽이 같은 결과를 같은
-규칙으로 정규화해 같은 지문을 내고, 이력이 그 지문으로 스냅샷을 찾아 레코드에 남긴다.
-**기존 승인 서명은 전부 무효가 된다**(아래 「받는 쪽이 달라지는 것」).
-
-### 만든 것
-
-- **참조용 지문 v1**(`history.ContentHashV1`, 규격 `pqcota-snapshot-content/v1`). 중복 억제 지문과
-  **다른 물음**에 답한다. 「같은 상태를 다시 관측했는가」가 아니라 「어느 스냅샷 상태에서 나온
-  조치인가」. 규칙 판·제외 수·본 계층·엣지의 앱을 넣고 엣지를 안정 필드 전부로 정렬한다. **v1은
-  닫혀 있다.** 바뀌면 v2를 만든다. 고정 입력의 값을 테스트가 잰다.
-
-- **노드별 병합이 결정론적이다.** 결과를 시각·수집기·내용순으로 정렬하고, 같은 finding이 다르게
-  오면 최근 것을 남기며 note에 알리고, 엣지는 안정 필드 전부가 같을 때만 합치며, 완전성 note는
-  하나도 버리지 않는다. 결과 파일의 순서가 스냅샷을 바꾸지 않는다.
-
-- **이력이 지문으로 찾는다.** `pqcota_snapshots.content_hash_v1` 열과 `(org, node_id, ruleset_ver,
-  content_hash_v1)` 인덱스. `SnapshotLookup{ByID, ByContentHashV1}`을 Postgres·메모리가 구현한다.
-  `Store`는 넓히지 않았다. 공개 인터페이스라 넓히면 구현한 외부 코드가 깨진다.
-
-- **조치가 근거를 든다.** `RemediationAction.evidence_sources[] = {finding_id, snapshot}`:
-  어느 finding이, 어느 스냅샷 상태에서 나왔는지다. 참조(`SnapshotReference`)는 이력의 실제 id이거나 내용
-  지문(`{format_version, digest, ruleset_version}`)이고, **원천 노드**(이력이 저장한 이름)를 든다.
-  복수 단위가 「스냅샷」이 아니라 「근거」인 것은 스냅샷만 여럿 두면 `finding_id`가 하나라 둘째
-  스냅샷의 어느 finding이 근거인지 말할 수 없기 때문이다. 계획 단위 `derived_from_snapshot_id`는
-  이전 판 호환 경로로 남는다.
-
-- **근거는 무엇의 근거인지 말해야 한다.** `evidence_sources[].finding_id`는 비울 수 없고, 호환용
-  `finding_id`는 `evidence_sources[0].finding_id`와 **같아야 한다. 비어 있어도 예외가 아니다.**
-  빈 값을 허용하면 옛 소비자는 근거 없이 읽고 새 소비자는 주 근거로 읽어 둘이 달라진다. 어긋나면 그 근거를
-  해결하지 않고 불완전으로 센다.
-
-- **생성기가 참조를 실제로 찾는다.** 참조 형식은 `--dsn` 없이도 검사하고(틀리면 종료 3), `--dsn`이면
-  이력에서 찾아 **찾은 스냅샷에 그 finding이 있는지**까지 본 뒤 `ProvisioningRecord.snapshot_resolutions`에
-  제출된 참조와 실제 id를 한 항목으로 남긴다. 못 찾으면 종료 3이고 경고문이 가능한 이유(다른 이력·
-  원천 노드 이름·규칙 판·스코프 정책·결과 집합)를 값으로 적는다. `pqcota-records`가 `snapshot:` 줄로
-  보인다. 레코드 → 계획 → 스냅샷 사슬이 이것으로 닫힌다.
+## v0.9.1 — The prose gate lives in this repo (2026-09-17)
+
+**Goal** — keep `tools/checkprose`, the checker that stops once-removed Korean expressions from
+creeping back into documents, HTML and tool output, in this repo, and let other repos run it with
+`go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1` instead of copying the code.
+Contracts and binaries are the same as v0.9.0.
+
+### Built
+
+- **`make check-prose`**: fails when a word listed in `rules.tsv` grows past the baseline, and also
+  when it shrinks, so the baseline gets lowered. Markdown is read with code blocks and inline code
+  masked, HTML with code·pre·script·style and comments masked, Go with string literals only. English
+  twins (`*.en.md`) are not read. The 128 hits that remain today are carried by `baseline.tsv`.
+- **Notices (`notices.tsv`) are not a gate.** Things a machine cannot separate from legitimate use
+  (a spaced hyphen that is a proper separator in headings and tables) are only reported as candidates.
+  They never fail the run and never enter the baseline.
+- **All configuration lives in one directory and the code knows nothing about the repo.** Rules,
+  notices, overlap words, the baseline, and the list of non-Markdown files to read (`files.txt`) come
+  from `-dir`. Another repo only needs its own configuration directory.
+
+### Learned
+
+- **Rules kept by eye do not survive.** Em dashes were removed from `.md` on 2026-08-25 but stayed in
+  `.html`, and "조용히" (silently) piled up past fifty lines afterwards. Only rules a machine enforces
+  remained.
+- **A checker belongs to the repo that originates it, not to the repos that use it.** Copying the same
+  code into every repo means every rule change has to land in three places in lockstep, and which copy
+  is the original becomes a licensing question. With this repo owning it and others pinning a version,
+  both problems disappear.
+
+## v0.9.0 — Tracing an action back to the snapshot state it came from (2026-09-11)
+
+**Goal** — make `derived_from_snapshot_id` fillable. The side producing the plan normalizes the same
+results under the same rules and gets the same fingerprint; the history finds the snapshot by it and
+records it. **Every existing approval signature becomes invalid** (see "What changes for consumers").
+
+### Built
+
+- **The reference fingerprint v1** (`history.ContentHashV1`, format `pqcota-snapshot-content/v1`). It
+  answers a **different question** than the dedup fingerprint — not "was the same state observed
+  again?" but "which snapshot state did this action come from?". It includes the ruleset version, the
+  excluded count, the layers covered and the edge's app, and sorts edges by every stable field. **v1 is
+  frozen.** A change means v2. A test pins the value of a fixed input.
+
+- **Per-node merging is deterministic.** Results are sorted by time, collector and content; a finding
+  that arrives differently keeps the most recent and says so in the note; edges merge only on an exact
+  match of every stable field; no completeness note is dropped. The order of result files no longer
+  changes the snapshot.
+
+- **The history looks up by fingerprint.** A `content_hash_v1` column and an `(org, node_id,
+  ruleset_ver, content_hash_v1)` index on `pqcota_snapshots`. `SnapshotLookup{ByID, ByContentHashV1}`
+  is implemented by Postgres and the in-memory store. `Store` was not widened — it is public, and
+  widening it breaks whoever implements it.
+
+- **Actions carry their evidence.** `RemediationAction.evidence_sources[] = {finding_id, snapshot}` —
+  which finding, in which snapshot state. The reference (`SnapshotReference`) is either the history's
+  real id or a content fingerprint (`{format_version, digest, ruleset_version}`), and names the
+  **source node** (the name the history stored it under). The plural unit is "evidence", not
+  "snapshot": listing snapshots alone leaves a single `finding_id` that cannot say which finding in the
+  second snapshot is the basis. The plan-level `derived_from_snapshot_id` stays as a compatibility path.
+
+- **Evidence must say what it is evidence of.** `evidence_sources[].finding_id` cannot be empty, and the
+  compatibility `finding_id` must equal `evidence_sources[0].finding_id` — **empty is not an exception.**
+  Allowing empty would let old consumers read no basis while new ones read the primary. A mismatch leaves
+  that evidence unresolved and counts as incomplete.
+
+- **The generator actually resolves references.** Shape is checked without `--dsn` (malformed → exit
+  3); with `--dsn` it looks the reference up, checks that **the found snapshot contains the finding**,
+  and records the submitted reference paired with the real id in
+  `ProvisioningRecord.snapshot_resolutions`. Not found → exit 3, and the warning names the possible
+  causes as values (another history, the source node's name, the ruleset, the scope policy, the result
+  set). `pqcota-records` shows it as a `snapshot:` line. This closes the record → plan → snapshot chain.
+
+### Fixed
+
+- **Per-node merging depended on input order** (v0.1.0–v0.8.0). Duplicate findings, duplicate edges and
+  the completeness note were all "first one wins". **What came out wrong**: reordering result files
+  changed the snapshot. Which of two collectors' views of one asset survived depended on directory
+  order, and the later collector's gap note vanished. The ruleset version moved to `pqcota-enrich/v2`
+  because the same input now yields a different snapshot.
+
+- **Edge identity was too narrow** (v0.1.0–v0.8.0). Only direction, protocol and negotiated group.
+  **What came out wrong**: two observations differing only in cipher or app folded into one, keeping the
+  first.
+
+- **Deduplication folded on the old fingerprint.** Keeping the v1 column while still folding on the old
+  fingerprint would have reused old rows with an empty v1 forever, leaving the column empty and the
+  references unresolvable. Folding now keys on v1. **The first ingest after upgrading creates a new row
+  even for an unchanged state** — a mark of the migration, not a change. Old rows keep an empty v1 and
+  are not back-filled.
+
+### What changes for consumers
+
+- **Every existing approval signature is invalid.** The action's evidence is part of `CanonicalPlan`.
+  An empty list still occupies a slot in the canonical form, so plans that had no evidence must also be
+  re-approved. Left uncovered, a reference could be swapped after signing and "traceable" would not be
+  a guarantee.
+- **Old consumers cannot read new plans.** Generators and approvers up to `v0.8.0` do not know
+  `evidence_sources`; `protojson` rejects unknown fields, so they refuse the plan. Roll back with the
+  same release of the generator.
+- **The ruleset version is `pqcota-enrich/v2`.** History comparison shows "the rules changed, so a
+  derived value moved". Downstream rebuilds its combined identifier.
+- **The first ingest after upgrading creates a new row even for an unchanged state.** A mark of the
+  migration, not a change.
 
-### 고친 것
-
-- **노드별 병합이 입력 순서에 기대고 있었다**(v0.1.0–v0.8.0). 같은 finding·같은 엣지·완전성 note
-  모두 「먼저 온 것이 우선한다」였다. **잘못 나온 것**: 결과 파일의 순서가 바뀌면 스냅샷이 달라졌다.
-  두 수집기가 같은 자산을 다르게 봤을 때 무엇이 남는지가 디렉터리 순서에 달렸고, 뒤에 온 수집기의
-  갭 설명이 사라졌다. 규칙 판을 `pqcota-enrich/v2`로 올렸다. 같은 입력에서 다른 스냅샷이
-  나오기 때문이다.
+## v0.8.0 — Approval finalizes the plan (2026-09-11)
 
-- **엣지 동일성이 좁았다**(v0.1.0–v0.8.0). 방향·프로토콜·협상 그룹만 봤다. **잘못 나온 것**: 암호군이나
-  앱이 다른 두 관측이 하나로 접혀 먼저 온 것만 남았다.
+**Goal** — separate judging from approving execution by contract status. The judging side hands over
+`IN_REVIEW`; approval raises it to `FINALIZED`.
 
-- **중복 억제가 옛 지문으로 접었다**. v1 열을 두고도 옛 지문으로 계속 접었다면 v1이 빈 옛 행이
-  재사용되어 v1 열이 영원히 비고 참조를 영원히 못 찾았을 것이다. 접는 기준을 v1로 옮겼다.
-  **업그레이드 뒤 첫 적재는 같은 상태여도 새 행이 생긴다.** 이행의 흔적이지 변화가 아니다.
-  옛 행의 v1은 비어 있고 소급하지 않는다.
+### Built
 
-### 받는 쪽이 달라지는 것
+- **`pqcota-approve` raises the status.** A judged plan arrives as `status=IN_REVIEW` with the approval
+  slot and `finalized_at` empty; the first approval raises it to `FINALIZED`, stamps `finalized_at`,
+  and **then** signs. `CanonicalPlan` covers both fields, so the other order would break the signature
+  just made. Further approvals change nothing and only add a signature — two approvers must sign the
+  same canonical bytes for both to verify. The per-status behaviour lives in one place,
+  `provisioning.PrepareApproval`, and `check-gates` checks that it is wired.
 
-- **기존 승인 서명이 전부 무효다.** 조치의 근거가 `CanonicalPlan`에 들어갔다. 빈 목록도 정규형에
-  자리 하나를 차지하므로 근거가 없던 옛 계획도 다시 승인받아야 한다. 덮지 않으면 참조를 서명 뒤에
-  바꿔 넣을 수 있어 「되짚을 수 있다」가 보장이 아니다.
-- **구 소비자는 새 계획을 읽지 못한다.** `evidence_sources`를 모르는 `v0.8.0` 이하의 생성기·승인기는
-  `protojson`이 모르는 필드를 거부해 계획을 읽지 못한다. 롤백도 같은 판의 생성기로 한다.
-- **규칙 판이 `pqcota-enrich/v2`다.** 이력 비교가 「규칙이 달라 파생값이 움직였다」로 갈라 보인다.
-  다운스트림은 자기 결합 식별자를 다시 세운다.
-- **업그레이드 뒤 첫 적재는 같은 상태여도 새 행이 생긴다.** 이행의 흔적이지 변화가 아니다.
+- **Structure is checked before approval.** There must be actions, each with a target node and a kind
+  (the same content layer as `Executable`). It runs for the first approval **and** for further ones — a
+  plan whose actions were removed after the first approval must not collect another. A plan that fails this and then gets signed becomes
+  "approved, yet not executable" — a state in which nobody can say what the approver took
+  responsibility for.
 
-## v0.8.0: 승인이 계획을 확정한다 (2026-09-11)
+- **Corrupt plans are refused.** `IN_REVIEW` with an approval or a `finalized_at`, or `FINALIZED`
+  missing either, is not approved. `FINALIZED` only ever comes from an approval, so an empty field means
+  the status was edited in.
 
-**목표**: 판정과 실행 승인을 계약의 상태로 가른다. 판정을 끝낸 쪽은 `IN_REVIEW`로 넘기고,
-승인이 `FINALIZED`로 올린다.
+- **The contract comment is corrected.** Despite its name, `FinalizedPlan` is an envelope that carries
+  `IN_REVIEW` too. Renaming would break consumers, so the name stays and the comment says so.
+  `buf breaking` does not object to comments.
 
-### 만든 것
+### Fixed
 
-- **`pqcota-approve`가 상태를 올린다.** 판정을 끝낸 계획은 `status=IN_REVIEW`에 승인 칸과 확정
-  시각이 빈 채로 오고, 첫 승인이 `FINALIZED`로 올리고 `finalized_at`을 찍은 **뒤에** 서명한다.
-  `CanonicalPlan`이 그 둘을 덮으므로 순서가 바뀌면 방금 만든 서명이 깨진다. 두 번째 승인부터는
-  아무것도 바꾸지 않고 서명만 더한다. 두 승인자가 같은 정준 바이트에 서명해야 둘 다 선다.
-  상태별 동작은 `provisioning.PrepareApproval` 하나에 있고 `check-gates`가 배선을 잰다.
+- **`pqcota-approve` never looked at status** (v0.7.0–v0.7.6). It signed whatever came in, including
+  `DRAFT`. **What came out wrong**: nothing executed, because `Executable` blocked it downstream. But
+  approval was an act that never checked what it was about, and when the plan-producing side put an
+  unverifiable label into the approval slot, the plan had the shape of `FINALIZED` with an approval
+  entry and **looked as though it satisfied the structural gate.** That shape is now refused as corrupt.
 
-- **승인 전에 구조를 묻는다.** 조치가 있고 조치마다 대상 노드와 종류가 있어야 한다(`Executable`의
-  내용 층과 같다). 첫 승인과 추가 승인 **둘 다** 지난다. 첫 승인 뒤에 조치가 지워진 계획에
-  추가 승인이 붙으면 안 된다. 여기서 걸리는 계획에 서명이 붙으면 「승인은 됐는데 실행할 수 없는 계획」이
-  생기는데, 그것은 승인자가 책임진 것이 무엇인지 말할 수 없는 상태다.
+- **The samples and the demo carried labels on `FINALIZED`** (v0.1.0–v0.7.6). Fourteen sample plans
+  had values like `"reviewer:alice"` in the approval slot, and the three demo plans wrote `FINALIZED`
+  with no approval slot at all. **What came out wrong**: the docs said the samples were not approved
+  plans, but their shape said otherwise, and every normal run printed "it is a label and proves
+  nothing". A warning that always fires is never read. All seventeen now arrive as `IN_REVIEW` with the
+  approval slot and `finalized_at` empty.
 
-- **손상된 계획을 거부한다.** `IN_REVIEW`인데 승인이나 확정 시각이 있거나, `FINALIZED`인데 둘 중
-  하나가 없으면 승인하지 않는다. `FINALIZED`는 승인이 찍힌 뒤에만 생기는 상태라, 비어 있으면
-  상태만 바꿔 넣은 것이다.
+### What changes for consumers
 
-- **계약 주석을 바로잡았다.** `FinalizedPlan`은 이름과 달리 `IN_REVIEW`도 운반하는 봉투다. 이름을
-  바꾸면 소비자가 깨지므로 두고, 주석에 적었다. `buf breaking`은 주석을 막지 않는다.
+**Whoever writes a plan by hand does not write `FINALIZED`.** Leave it `IN_REVIEW` and run
+`pqcota-approve`. A plan previously written as `FINALIZED` with an empty approval slot is now
+**refused as corrupt** — set its status back to `IN_REVIEW`. A plan that skipped `pqcota-approve` used
+to be refused with "approvals cannot be checked" and is now refused with "status is not `FINALIZED`".
+Same procedure, different message.
 
-### 고친 것
+## v0.7.6 — The gate matches the whole family (2026-09-11)
 
-- **`pqcota-approve`가 상태를 보지 않았다**(v0.7.0–v0.7.6). 넘어온 계획을 그대로 서명해 `DRAFT`에도
-  승인이 찍혔다. **잘못 나온 것**: 뒤에서 `Executable`이 막아 실행되지는 않았다. 다만 승인이라는
-  행위가 무엇에 대한 것인지 확인하지 않는 자리였고, 계획을 만드는 쪽이 승인 칸에 검증되지 않는
-  이름표를 넣어 두면 그 계획은 `FINALIZED`에 승인 항목이 있는 모양이라 **구조 관문의 의미를
-  충족한 것처럼 보였다.** 이제 그 모양은 손상으로 거부된다.
+**Goal** — catch the old copies that survive a ruleset bump.
 
-- **견본과 데모가 `FINALIZED`에 이름표를 담고 있었다**(v0.1.0–v0.7.6). 열넷의 견본 계획이
-  `"reviewer:alice"` 같은 값을 승인 칸에 두고 있었고, 데모 계획 셋은 승인 칸 없이 `FINALIZED`를
-  적고 있었다. **잘못 나온 것**: 견본은 「승인받은 계획」이 아니라고 문서가 말했지만 모양은 그
-  반대였고, 정상 경로마다 「이름표라 아무것도 증명하지 않는다」 경고가 찍혔다. 늘 뜨는 경고는
-  읽히지 않는다. 열일곱 다 `IN_REVIEW`에 승인 칸과 확정 시각을 비운 모양으로 고쳤다.
+### Fixed
 
-### 받는 쪽이 달라지는 것
+- **Only copies of the current version were caught** (v0.7.4–v0.7.5). Once the constant moves to
+  `pqcota-enrich/v2`, a leftover `pqcota-enrich/v1` passes as "not the current value, so not a
+  placeholder". **What came out wrong**: that leftover is exactly what needs catching. A copied value
+  does not follow the constant, so **code stamping the old version quietly survives**, and from then on
+  those snapshots look as though the current rules produced them. The family prefix
+  (`pqcota-enrich/`) is now derived from the constant, catching past and future versions alike. The
+  check does not depend on the constant's current value, so bumping it needs no test edits.
 
-**계획을 손으로 쓰는 사람은 `FINALIZED`를 적지 않는다.** `IN_REVIEW`로 두고 `pqcota-approve`를
-거친다. 전에 `FINALIZED`로 적어 두었던 계획은 승인 칸이 비어 있으면 **손상으로 거절된다.** 상태를
-`IN_REVIEW`로 되돌리면 된다. `pqcota-approve`를 건너뛴 계획은 전에는 「승인을 확인할 수 없다」로
-거절됐고 이제 「상태가 `FINALIZED`가 아니다」로 거절된다. 절차는 같고 메시지가 다르다.
+> **This gate took three releases to get right** (`v0.7.4` introduced it, `v0.7.5` made it pass its own
+> rule, `v0.7.6` widened it to the family). All three were the same kind of defect: correct today,
+> wrong after the next change. When writing a checker, ask what it catches **after the value moves**,
+> not what it catches now.
 
-## v0.7.6: 게이트가 계열로 본다 (2026-09-11)
+## v0.7.5 — The checker passes its own rule (2026-09-11)
 
-**목표**: 규칙 판이 오른 뒤에 남는 옛 복사본까지 막는다.
+**Goal** — actually establish what `v0.7.4` promised: that a placeholder cannot come back.
 
-### 고친 것
+### Fixed
 
-- **지금 판의 복사본만 잡고 있었다**(v0.7.4–v0.7.5). 상수가 `pqcota-enrich/v2`로 올라가면,
-  어딘가 남은 `pqcota-enrich/v1`은 「지금 값과 다르니 자리표시자가 아니다」로 지나간다.
-  **잘못 나온 것**: 그것이 바로 잡아야 하는 것이다. 베낀 값은 상수를 고쳐도 따라오지 않으므로
-  **옛 판을 찍는 코드가 오류 없이 남고**, 그때부터 그 스냅샷들은 지금 규칙으로 만들어진 것처럼
-  보인다. 이제 상수에서 계열(`pqcota-enrich/`)을 계산해 과거·미래 판을 함께 잡는다. 검사는
-  지금 상수의 값에 기대지 않으므로, 판을 올려도 테스트를 고칠 일이 없다.
-
-> **이 게이트는 세 판에 걸쳐 고쳐졌다**(`v0.7.4` 도입 · `v0.7.5` 자기 검사 · `v0.7.6` 계열).
-> 세 번 모두 「지금은 맞는데 다음에는 안 맞는다」는 같은 종류였다. 검사기를 쓸 때는 **지금
-> 무엇을 잡는가**보다 **값이 바뀐 뒤에도 잡는가**를 먼저 물어야 한다.
-
-## v0.7.5: 검사기가 자기 검사를 지난다 (2026-09-11)
-
-**목표**: `v0.7.4`가 약속한 「자리표시자가 다시 들어올 수 없다」를 실제로 세운다.
-
-### 고친 것
-
-- **게이트가 막으려는 복제를 자기 안에서 하고 있었다**(v0.7.4). 권위 있는 상수의 값을
-  검사기에 베껴 두고, 그 때문에 검사기 파일을 검사 대상에서 뺐다. **잘못 나온 것**: 값을
-  베끼면 상수를 고쳐도 따라오지 않는다. 규칙 판이 올라간 다음부터는 **새 값을 베낀 자리를
-  못 잡는다.** 지금 기능은 맞아도 미래의 보장이 아니었다. 상수를 `normalize`에서 직접 읽고
-  이름은 마디로만 보게 고쳐, 검사기가 예외 없이 자기 검사를 지난다. 그 사실을 테스트가
-  잰다. 값을 다시 베끼면 그 테스트가 깨진다.
-
-## v0.7.4: 위임 수신 종단도 규칙 판을 제대로 찍는다 (2026-09-11)
-
-**목표**: 자리표시자가 다시 들어올 수 없게 한다.
-
-### 고친 것
-
-- **`pqcota-cbom-ingest`가 아직 `ruleset-demo`를 찍고 있었다**(v0.1.0–v0.7.3). v0.7.3이
-  적재 자리표시자를 고쳤다고 적었지만, **실제로는 적재 종단 둘 가운데 하나만 갔다.**
-  이 명령은 문서상 정식 외부 CBOM 수신 종단(② 위임)이라 데모 경로가 아니다. 그래서 CI가
-  낸 CycloneDX로 쌓은 이력은 v0.7.3에서도 「규칙이 달라 파생값이 움직였나」에 답하지 못했다.
-
-### 만든 것
-
-- **`check-gates`가 규칙 판 자리표시자를 막는다.** 추적 중인 Go 파일에서 규칙 판 식별자처럼
-  생긴 문자열 리터럴을 찾아 낸다. 상수를 선언하는 자리와 테스트는 예외다. 배선 검사와 같은
-  부류라 같은 게이트에 넣었다: 규칙은 적어 두었는데 제품이 자기 값을 쓰면, **아무것도 실패하지
-  않은 채 보장만 사라진다.** 두 종단이 같은 결함을 릴리스 두 번 동안 들고 있었던 것이 그
-  때문이다. 형식 문자열의 `ruleset`은 값이 아니라 이름표이므로 잡지 않는다.
-
-## v0.7.3: 강화 규칙 판을 이 리포가 소유한다 (2026-09-10)
-
-**목표**: 파생값을 만드는 규칙의 판을 문자열 상수 하나로 세운다.
-
-### 만든 것
-
-- **`normalize.RulesetVersion`**(`pqcota-enrich/v1`). 파생값(`evidence_strength`·`pqc_readiness`·
-  등급·성숙도)을 만드는 규칙이 바뀔 때만 올린다. **릴리스 버전과 같지 않다.** 문구를 고치거나
-  CLI를 더한다고 파생 결과가 달라지지 않는다. 소비하는 쪽은 자기 규칙 판을 여기에 이어 붙인다.
-  대조나 계획 변환은 이 리포의 규칙이 아니기 때문이다.
-
-### 고친 것
-
-- **적재가 스냅샷에 `ruleset-demo`를 찍고 있었다**(v0.1.0–v0.7.2). 자리표시자가 실제 이력에
-  들어갔다. **잘못 나온 것**: 이력 비교가 「규칙이 달라 파생값이 움직인 것인지 실제 변화인지」를
-  이 값으로 가르는데, 모든 스냅샷이 같은 자리표시자를 달고 있어 그 물음에 답하지 못했다.
-  화면 전용 경로 둘(`pqcota-discover-view`·로컬 뷰)의 `ruleset-1`·`ruleset-demo`도 함께 갔다.
-
-## v0.7.2: 컨트롤러 CLI도 받아서 쓴다 (2026-09-10)
-
-**목표**: 릴리스만 받은 사람이 3단계를 끝까지 돌릴 수 있게 한다.
-
-### 만든 것
-
-- **컨트롤러 번들을 릴리스에 붙인다.** `pqcota-ctl-linux-amd64.tar.gz`·`-arm64.tar.gz`에 적재
-  (`pqcota-ingest`)·조회(`pqcota-inventory`)·승인(`pqcota-approve`)·생성(`pqcota-provision`)을 비롯한
-  CLI가 다 들어간다. 노드 번들과 **가는 곳으로 나눈다.** 앞은 관측할 호스트로 반입하고, 뒤는 중앙
-  한 대에 둔다. 전에는 운영자 CLI를 소스에서 빌드해야 해서, 릴리스만 받은 사람은 관측까지만 하고
-  적재·생성으로 넘어가지 못했다.
-
-## v0.7.1: 문서가 코드보다 앞선 자리 둘 (2026-09-10)
-
-**목표**: v0.7.0이 남긴 서술 어긋남을 고친다. 코드는 바꾸지 않는다.
-
-### 고친 것
-
-- **승인 검사 주석이 자기 다음 문장과 반대였다**(v0.7.0). 문단을 갈아 끼우면서 옛 첫 줄
-  「키가 없으면 막지 않되」를 지우지 않아, 바로 아래 「확인할 키가 없으면 기본으로 거절한다」와
-  나란히 있었다. **잘못 나온 것**: 코드를 읽는 사람에게 기본값을 반대로 알렸다. 동작은 처음부터
-  거절이었다.
-- **릴리스에 무엇이 붙는지 README가 넓게 적었다**(v0.1.0–v0.7.0). 「arch별 정적 바이너리」라고만
-  해서 전부 붙는 것처럼 읽혔다. 실제로 붙는 것은 **대상 노드에 올리는 collector와 JVM 사이드카**이고,
-  컨트롤러에서 쓰는 CLI는 소스에서 빌드한다. 릴리스 본문은 그 사실을 적고 있었으나 README는
-  적지 않았다. **잘못 나온 것**: 릴리스만 받은 사람이 3단계를 다 돌리려다 없는 명령을 찾게 했다.
-  국문·영문 양쪽을 고쳤다.
-
-## v0.7.0: 계획 수신과 실행 안전성을 조인다 (2026-09-10)
-
-**목표**: 계약에 담겨 건너온 판정을 실행이 버리지 않게 하고, **확인하지 못한 것을 통과로 세지
-않는다.** 배포 준비도 리뷰가 짚은 자리들이 계기였다. **종단 인계가 완성된 릴리스는 아니다.**
-계획을 채워 보내는 쪽과 승인 인계는 그대로 남아 있다.
-
-> **올릴 때 볼 것.** 기본값 둘이 바뀌어 **기존 자동화가 그대로는 통과하지 않는다.**
-> ① 승인 서명을 확인할 키(`PQCOTA_APPROVAL_KEYS`)가 없으면 **종료 1로 거절한다.** 알고 넘기려면
-> `--allow-unverified-approvals`. ② 계획에 빈칸이 남으면 산출물은 나오되 **종료 3**이다. 알고
-> 넘기려면 `--allow-incomplete`. ③ 모르는 `--level` 값은 이제 **종료 2**다(전에는 오류 없이 L2로 돌았다).
-
-### 만든 것
-
-- **승인 서명을 승인자의 키로 확인한다.** 꼴이 `<승인자>:ed25519:<base64>`이고, 승인자 id가 서명
-  문자열 안에 있어 **등록된 그 사람의 키로만** 확인한다. 서명 대상은 승인 서명 자신을 뺀 계획
-  전부라 **조치의 순서와 `status`까지 덮는다.** 초안에 받은 승인을 확정으로 바꿔 달 수 없다.
-  `PQCOTA_APPROVAL_KEYS`가 `<승인자>=<공개키>` 묶음인 이유가 여기 있다. 키만 나열하면 어느 키로든
-  통과한 서명이 아무 이름이나 달고 들어온다.
-- **확인할 키가 없으면 거절한다.** 전에는 경고하고 통과시켰고 닫는 것은 `PQCOTA_REQUIRE_APPROVAL=1`을
-  건 배포에서만 일어났다. 그러면 승인 무결성이 「닫을 수 있는 수단」에 머문다. 승인 검증을 생략하려면
-  `--allow-unverified-approvals`를 **명령줄에 적어야 하고, 다른 수단은 없다.** 환경변수로도 열리면 무엇이
-  검증됐는지가 셸 설정에 숨는다.
-- **자산별 위임 수준을 생성기가 따른다.** `automation_level`은 계약이 조치의 1급 속성으로 둔 값이다.
-  `--level`은 이제 **계획이 말하지 않은 조치의 기본값**이다. 롤백도 같은 규칙으로 갈리고 활성화
-  경고도 조치별로 본다.
-- **위임 수준을 말하지 않은 계획은 빈칸으로 센다.** 말하지 않으면 실행 수준이 `--level`에서 오는데,
-  그 플래그는 **승인 서명 밖에 있다.** 서명은 계획을 덮지만, 계획을 부르는 명령줄은 덮지 않는다.
-  그래서 미지정 조치의 유효 수준은 승인에 포함되지 않고, 그 사실을 이름으로 알린다. 막지는 않는다:
-  한 노드를 그 자리에서 시험할 때처럼 명령줄에서 정하는 것이 정당한 자리가 있다.
-- **빈칸이 남은 계획은 종료 상태 3이다.** 산출물은 그대로 낸다. 사람이 손으로 채우는 것이 정당한
-  경로라 막지 않는다. 다만 성공으로 끝내지 않는다. 알고 넘길 때는 `--allow-incomplete`를 준다.
-  거절(1)과 가르는 이유는 고칠 자리가 다르기 때문이다.
-- **실행 게이트가 절차뿐 아니라 최소 실행 내용도 본다.** 대상 노드가 없거나 조치 종류가
-  `UNSPECIFIED`면 **산출물을 만들기 전에 거절한다.** 도구가 계획을 대신 추측하지 않으므로,
-  거짓을 적은 조각을 내느니 막는다.
-- **사람이 보완할 수 있는 빈칸은 산출물과 함께 이름으로 알린다.** 목표 알고리즘이 하이브리드
-  그룹으로 풀리지 않아 **배치해도 아무것도 켜지지 않는** 조치, provider 클래스가 비어 자리표시자가
-  들어가는 조치, 되짚을 근거가 없는 계획이 그렇다. 산출물은 내고 **종료 상태 3**으로 끝낸다.
-  롤백에서는 활성화 훅과 추적성 공백을 같은 방식으로 알린다.
-- **게이트 다섯을 더했다.** 규칙을 적어 두고 제품이 부르지 않는 자리, 문서의 Go 버전과 `go.mod`,
-  테스트 레벨 수, 관리체계의 숫자, 한국어 문서와 영문 짝의 절 구조다.
-- **CI가 Postgres를 붙인다.** 조직 격리 케이스 다섯이 여기서 처음 돌았다. `CAP_NET_RAW`가 있어야
-  도는 케이스는 따로 한 번 더 돌린다.
-- **결과 파일을 확장자가 아니라 내용으로 가린다.** 이름이 속이던 자리를 없앴다.
-- **롤백이 무엇을 되돌리는지 산출물에 적는다.** 이 플레이북은 **이번 계획이 관리하는 고정 경로의
-  산출물을 지운다.** 원본을 덮은 적이 없어 원본은 남지만, 같은 이름·같은 경로로 두 번째 배포를
-  했다면 첫 배포의 pqcota 산출물은 이미 덮여 있어 되돌리면 이전 판이 아니라 파일이 사라진다.
-  **직전 pqcota 배포판을 복원하는 버전 롤백이 아니다.**
-
-### 알아낸 것
-
-- **서명이 지키는 결정과 실행이 따르는 결정이 어긋날 수 있다.** `automation_level`을 승인 서명이 덮는데
-  생성기가 읽지 않았다. 승인자는 「결제 서버는 L1까지만」에 서명하고, 실행은 `--level l3` 하나로
-  평탄화됐다. 위험도로 위임을 나눈 판정이 실행에서 사라지면 단계 경계가 게이트 구실을 하지 못한다.
-- **안전한 기본값을 닫으면 그 명령을 적어 둔 자리가 함께 움직인다.** 승인을 기본으로 닫자 문서대로
-  실행하면 플레이북을 얻지 못하는 경로가 다섯 생겼다. 낱말 하나를 바꾸면 네 곳이 함께 움직인다는
-  것을 종료 상태에서도 겪었다.
-- **스킵은 로그에 남아야 세어진다.** 워크플로 주석은 「무엇이 건너뛰었는지 남긴다」고 적어 두었는데
-  `-v`가 없어 스킵이 아예 찍히지 않았다. 그래서 Postgres 케이스 다섯이 CI에서 한 번도 돈 적 없다는
-  것을 아무도 몰랐다. 문서가 코드보다 앞서 있었다.
-- **환경이 정반대인 케이스는 한 번에 재지 못한다.** TD-NETWORK-15는 `CAP_NET_RAW`가 있어야, 16은
-  없어야 돈다. 한 러너에서 둘을 다 잴 방법이 없어 두 번 돌린다.
-- **커밋 수 게이트는 커밋 뒤에 다시 봐야 한다.** 커밋하면 그 수가 함께 오르므로, 커밋 전에 돌린
-  검사는 그 항목만 놓친다.
-- **통신 관측을 자산 스캔에서 떼는 일은 설계가 먼저다.** 구현을 넣었다가 되돌렸다. 반복 관측의 병합
-  규칙과 병합 키가 세 곳에서 어긋나 있어, 그것을 정하지 않고 주기만 나누면 엣지가 쌓이지 않는다.
-  설계를 [검토 중인 설계 §7](docs/under-review.md)에 세웠다.
-
-### 고친 것
-
-- **자산별 위임 수준을 생성기가 무시했다**(v0.1.0–v0.6.7). 계약이 조치별 속성으로 정한 값을 읽지
-  않고 전역 `--level` 하나로 모든 조치를 냈다. **잘못 나온 것**: 수준이 다른 자산이 섞인 계획에서
-  낮은 수준으로 확정한 자산까지 활성화·재시작 태스크를 받았다.
-- **승인 서명을 개수만 셌다**(v0.1.0–v0.6.7). `reviewer:demo` 같은 문자열 하나면 통과했다.
-  **잘못 나온 것**: 아무도 확인할 수 없는 승인을 단 계획이 실행 근거로 통과했다.
-- **실행 게이트를 CLI가 부르지 않았다**(v0.6.7까지). 규칙에는 테스트가 있었고 문서는 그 규칙을
-  약속했는데, 제품 경로는 상태만 비교했다. **잘못 나온 것**: 승인 서명과 조치가 빈 확정 계획이
-  플레이북을 받아 갔다. `check-gates`가 이 부류를 상시로 잡는다.
-- **모르는 `--level` 값이 오류 없이 L2로 돌았다**(v0.1.0–v0.6.7). `--level L3`처럼 대소문자만 틀려도
-  기본값으로 떨어졌다. **잘못 나온 것**: 활성화·재시작이 빠진 산출물을 받고도 시킨 대로 됐다고
-  읽게 했다. 수준은 위험도에 따른 위임이라 말한 것보다 낮게 도는 것도 잘못이다. 이제 종료 2다.
-- **CNG에 「아직 없다」가 남아 있었다**(v0.6.0–v0.6.7). 실물로 확인한 뒤에도 문서와 주석이 미구현으로
-  적혀 있었다. **잘못 나온 것**: 되는 것을 안 된다고 읽게 했다.
-- **되돌리기로 한 낱말 넷이 다른 파일형에 남아 있었다.** `실기`(実機) 12곳, `저장된 값과 갈린다` 4곳,
-  `해소` 22곳, `조용히 틀린다` 2곳이다. 문서에서 걷을 때 `.proto`·`.sh`·주석을 함께 보지 않았다.
-  **잘못 나온 것**: 같은 것을 문서와 코드가 다르게 불렀다.
-
-## v0.6.7: 같은 것을 하나의 이름으로 부른다 (2026-08-21)
-**목표**: 같은 것이 자리마다 다른 이름으로 불리던 곳을 맞춘다. 그리고 v0.6.6에서 드러난
-"같은 목록이 두 곳에 있으면 갈라진다"를 **게이트로 막는다.**
-
-> **화면에 나가는 값이 하나 바뀐다**. PQC 성숙도의 최상위가 `standard`에서 **`fips-standard`**로
-> 간다(아래 ①). 출력을 긁어 쓰는 쪽은 이 문자열을 맞춰야 한다.
-
-### 만든 것
-
-- **`make check-collectors`**: 릴리스 워크플로가 **빌드하는** collector와 참조 플레이북이 노드로
-  **반입하는** collector가 같은지 본다. v0.6.6에서 실제로 갈라졌던 자리다. 어긋나면 무엇이 다른지와
-  두 목록을 함께 찍는다. 두 파일 중 하나의 **모양이 바뀌어 아무것도 못 읽으면 그것도 실패**로 낸다.
-  읽지 못한 것을 통과로 치면 게이트가 아무것도 잡지 못하는 채로 남는다. CI가 돌린다.
-
-### 고친 것
-
-- **① PQC 성숙도가 데이터와 화면에서 다르게 불렸다**(v0.6.2–v0.6.6).
-
-  **무엇이 잘못이었나**. 저장되는 값은 `fips-standard`인데 화면 라벨만 `standard`였다.
-  v0.6.2에서 `표준`을 영어로 옮기며 생긴 갈림이고, 한국어일 때는 드러나지 않았다.
-
-  **무엇이 잘못 나왔나**. `X25519MLKEM768 [standard]`을 본 사람이 [아키텍처](docs/architecture.md)의
-  성숙도 표에 있는 `fips-standard`와 같은 것인지 알 수 없었다.
-
-  **무엇이 바뀌나**. 화면이 **값을 그대로** 낸다(`[fips-standard]`). 문자열을 다시 쓰지 않고 상수를
-  반환하므로 다음에 값이 바뀌면 화면이 저절로 따라간다. 샘플(`discover-view.txt`·`topology.svg`·
-  README 콘솔 블록)도 **데모를 다시 돌려** 받았다.
-
-- **② `CONFIRMED`가 서로 다른 두 열거형에 있는데 줄여 썼다**(v0.1.0–v0.6.6). 루트 README의 콘솔
-  블록이 `[CONFIRMED]`로 적었는데 화면은 `[EVIDENCE_STRENGTH_CONFIRMED]`를 낸다. 줄이면
-  `ReconState.CONFIRMED`(선언 대조 결과)와 구별되지 않는다. 화면 그대로 적는다. 이제 접두어 없는
-  `CONFIRMED`는 문서에서 항상 `ReconState`다.
-
-- **③ 세 상태를 세 가지 방식으로 불렀다**(v0.1.0–v0.6.6). 데모 README가 `CONFIRMED/shadow/미관측`으로
-  **계약 이름·뜻풀이·우리말**을 섞었다. `shadow`가 `UNDECLARED`인지 네 번째 개념인지 알 수 없었다.
-  이름은 `CONFIRMED`/`UNDECLARED`/`UNOBSERVED`로 맞추고, `shadow`는 **그것이 무엇인지 설명하는
-  자리에만** 남긴다.
-
-- **④ 영어 문서가 화면과 다른 이름을 썼다**(v0.6.2–v0.6.6). 루트 `README.en`의 콘솔 블록이
-  `quantum posture`·`posture totals`였는데 화면은 `quantum-resistance grade`·`grade totals`를 낸다.
-  한국어 쪽은 v0.6.2에서 **등급**으로 옮겼는데 영어 쪽이 따라오지 않았다. 산문 넷도 함께 맞췄다.
-  `pkg/kernel/posture`·`QuantumPosture`처럼 릴리스된 식별자는 그대로다.
-
-## v0.6.6: 릴리스 번들이 플레이북과 어긋나 있었다 (2026-08-21)
-**목표**: 받아서 돌리면 실패하는 자리를 잡는다. 그리고 **다른 문서를 알아야 읽히던 문장들**을
-그 자리에서 말하게 한다.
-
-### 알아낸 것
-
-- **같은 목록이 두 곳에 있으면 말없이 갈라진다.** Windows 노드에 올릴 collector 목록이 릴리스
-  워크플로와 플레이북 양쪽에 있었고, 한쪽만 바뀌어도 잡아 주는 것이 없었다. 지금은 워크플로
-  주석이 "플레이북이 반입하는 것과 같아야 한다"고 못 박지만 **게이트는 아니다.**
-
-### 고친 것
-
-- **① Windows 번들에 `pqcota-jvmscan`이 없었다**(v0.6.3–v0.6.5).
-
-  **무엇이 잘못이었나**. v0.6.3에서 `discover.yml`의 Windows 블록이 `pqcota-cngscan`·
-  `pqcota-jvmscan` **둘을** 반입하게 됐는데, 릴리스 워크플로는 `cngscan` 하나만 만들었다.
-
-  **무엇이 잘못 나왔나**. **릴리스 번들만 받아 플레이북을 돌리면 반입 단계에서 실패한다.**
-  실제 장비 검증 때는 `jvmscan.exe`를 손으로 빌드해 올려서 이 경로를 한 번도 타지 않았다.
-
-  **무엇이 바뀌나**. 번들에 둘이 들어간다(`pqcota-windows-amd64.zip`).
-
-- **② 다른 문서를 알아야 읽히던 자리들.** 기호가 가리키는 곳이 그 문서 안에 없었다.
-
-  | 어디 | 무엇이 | 무엇으로 |
+- **The gate was doing the very duplication it forbids** (v0.7.4). The authoritative constant's value
+  was copied into the checker, and the checker's own file was therefore excluded from the scan.
+  **What came out wrong**: a copied value does not follow the constant. Once the ruleset version moves,
+  **copies of the new value go uncaught.** It worked today and guaranteed nothing tomorrow. The
+  constant is now read from `normalize` and the name is matched by segment, so the checker passes its
+  own rule with no exemption. A test holds that in place — copy the value again and it breaks.
+
+## v0.7.4 — The delegated intake endpoint stamps the ruleset too (2026-09-11)
+
+**Goal** — make it impossible for a placeholder to come back.
+
+### Fixed
+
+- **`pqcota-cbom-ingest` was still stamping `ruleset-demo`** (v0.1.0–v0.7.3). v0.7.3 said the ingest
+  placeholder was fixed, but **only one of the two ingest endpoints actually moved.** This command is
+  the documented endpoint for receiving external CBOMs (delegated intake), not a demo path, so history
+  built from CI-produced CycloneDX still could not answer "did the rules change, or did something?"
+  after v0.7.3.
+
+### Built
+
+- **`check-gates` blocks ruleset placeholders.** It finds string literals that look like a ruleset
+  identifier in tracked Go files; the file declaring the constant and the tests are exempt. It lives in
+  the same gate as the wiring check because it is the same failure: the rule is written down, the
+  product uses its own value instead, and **nothing fails while the guarantee quietly disappears.**
+  That is how two endpoints carried the same defect across two releases. The word `ruleset` inside a
+  format string is a label, not a value, so it is not flagged.
+
+## v0.7.3 — This repo owns the enrichment ruleset version (2026-09-10)
+
+**Goal** — give the rules that produce derived values a version of their own.
+
+### Built
+
+- **`normalize.RulesetVersion`** (`pqcota-enrich/v1`). It moves only when the rules that produce derived
+  values (`evidence_strength`, `pqc_readiness`, posture, maturity) change. **It is not the release
+  version** — editing prose or adding a CLI does not change what those rules produce. Consumers append
+  their own ruleset version to it, because reconciliation and plan conversion are not this repo's rules.
+
+### Fixed
+
+- **Ingest stamped `ruleset-demo` onto snapshots** (v0.1.0–v0.7.2). A placeholder went into the real
+  history. **What came out wrong**: history comparison uses this value to tell "the rules changed, so a
+  derived value moved" apart from "something actually changed", and every snapshot carrying the same
+  placeholder could not answer that. The two view-only paths (`pqcota-discover-view` and the local view)
+  carried `ruleset-1` and `ruleset-demo` too.
+
+## v0.7.2 — The controller CLIs ship too (2026-09-10)
+
+**Goal** — let someone who took only the release run all three stages.
+
+### Built
+
+- **A controller bundle is attached to the release.** `pqcota-ctl-linux-amd64.tar.gz` and `-arm64.tar.gz`
+  carry every CLI, including ingest (`pqcota-ingest`), query (`pqcota-inventory`), approval
+  (`pqcota-approve`) and generation (`pqcota-provision`). It is kept apart from the node bundles **by where
+  they go**: those are carried onto the hosts you observe, this one sits on the single central machine.
+  Building the operator CLIs from source used to be the only way, so anyone who took only the release could
+  observe and go no further.
+
+## v0.7.1 — Two places where the document ran ahead of the code (2026-09-10)
+
+**Goal** — fix the wording v0.7.0 left out of step. No code changes.
+
+### Fixed
+
+- **A comment on the approval check contradicted its own next sentence** (v0.7.0). Replacing the paragraph
+  left the old opening line, "with no keys it does not block", sitting right above "with no key to check
+  with, it refuses by default". **What came out wrong**: it told anyone reading the code the opposite of the
+  default. The behaviour was refusal from the start.
+- **The README described the release contents too broadly** (v0.1.0–v0.7.0). Saying only "per-architecture
+  static binaries" read as if everything shipped. What actually ships is **the collectors that go onto
+  target nodes, plus the JVM sidecar**; the controller CLIs are built from source. The release body said so;
+  the README did not. **What came out wrong**: someone who took only the release would go looking for
+  commands that were never there. Fixed in both languages.
+
+## v0.7.0 — Tightening plan intake and execution safety (2026-09-10)
+
+**Goal** — stop execution from discarding judgements that arrived inside the contract, and **stop
+counting what could not be checked as a pass.** The deployment-readiness review pointed at these.
+**This is not the release that completes the end-to-end handoff** — filling the plan in on the way out,
+and the approval handoff itself, are still open.
+
+> **Read before upgrading.** Two defaults changed, so **existing automation will not pass as-is.**
+> ① With no key to check approvals with (`PQCOTA_APPROVAL_KEYS`), it **refuses with exit 1**; pass
+> `--allow-unverified-approvals` to go on knowingly. ② A plan with blanks still produces the artifact but
+> **exits 3**; pass `--allow-incomplete`. ③ An unknown `--level` is now **exit 2** (it used to fall back
+> to L2 silently).
+
+### Built
+
+- **Approvals are checked with the approver's key.** The shape is `<approver>:ed25519:<base64>`, and the
+  approver id lives inside the signature, so verification uses **only that person's registered key**. The
+  signature covers the whole plan except the approvals themselves, so **it covers the order of the actions
+  and `status` too** — an approval given on a draft cannot be moved onto a finalized plan.
+  `PQCOTA_APPROVAL_KEYS` is a `<approver>=<public key>` map for this reason: a bare list of keys lets a
+  signature that passes under any key arrive wearing any name.
+- **With no key to check with, it refuses.** It used to warn and go on, and closing that path happened only
+  where a deployment set `PQCOTA_REQUIRE_APPROVAL=1`, which leaves approval integrity as something you
+  *can* close. The one way to open it knowingly is `--allow-unverified-approvals`, and **it has to be
+  written on the command line** — an environment variable would hide what was verified in shell config.
+- **The generator follows the per-asset delegation level.** `automation_level` is a first-class property of
+  the action in the contract. `--level` is now **the default for actions the plan leaves unset**. Rollback
+  splits by the same rule, and the activation warnings are per action.
+- **A plan that does not state the level counts as having a blank.** When it is unset the level comes from
+  `--level`, and that flag is **outside the approval signature** — the signature covers the plan, not the
+  command line that invokes it. So the effective level of an unset action is not covered by the approval,
+  and that is now reported by name. It does not block: deciding the level on the command line is a
+  legitimate path, for instance when trying one node in place.
+- **A plan with blanks exits 3.** The artifact is still produced — filling blanks in by hand is a legitimate
+  path, so it does not block — but it does not finish as a success. To accept it knowingly,
+  `--allow-incomplete`. It is kept apart from a refusal (1) because what you have to fix differs.
+- **The execution gate looks at minimum executable content, not only procedure.** If an action has no target
+  node, or its kind is `UNSPECIFIED`, it **refuses before producing anything**. The tool does not guess the
+  plan, so rather than ship a fragment stating something untrue it blocks.
+- **Blanks a person can fill are reported by name alongside the artifact.** Actions whose target does not
+  resolve to a hybrid group and therefore **turn nothing on when deployed**, actions whose provider class is
+  empty so a placeholder ships, and plans with no basis to trace back to. The artifact is produced and the
+  run **exits 3**. On rollback, missing activation hooks and traceability gaps are reported the same way.
+- **Five more gates.** A rule written down but never called by the product; the Go version in the docs
+  against `go.mod`; the test level counts; the governance numbers; and the section structure of a Korean document
+  against its English counterpart.
+- **CI brings up Postgres.** The five org-isolation cases ran there for the first time. The case that needs
+  `CAP_NET_RAW` is run once more on its own.
+- **Result files are told apart by content, not by extension.** The place where a name could lie is gone.
+- **The rollback playbook states what it undoes.** It **removes the artifacts this plan manages at their
+  fixed paths.** Originals were never overwritten and survive, but if a second run deployed under the same
+  name and path, the first run's pqcota artifact is already overwritten — undoing it then deletes the file
+  instead of restoring the earlier one. **It is not a version rollback.**
+
+### Learned
+
+- **What a signature protects and what execution follows can diverge.** The approval signature covers
+  `automation_level`, but the generator did not read it. An approver signed "the payment server goes no further
+  than L1" while execution flattened everything with `--level l3`. When the judgement that split delegation
+  by risk disappears at execution time, the stage boundary stops working as a gate.
+- **Closing a default moves every place that command is written down.** Making approval checks mandatory
+  left five documented paths that no longer produce a playbook. The lesson that changing one word moves four
+  places turned out to hold for exit statuses too.
+- **A skip is only counted if it reaches the log.** The workflow comment promised to record what was
+  skipped, but without `-v` no skip was ever printed — which is why nobody noticed that five Postgres cases
+  had never run in CI. The document was ahead of the code.
+- **Cases with opposite environments cannot be measured in one run.** TD-NETWORK-15 needs `CAP_NET_RAW`;
+  TD-NETWORK-16 needs its absence. No single runner satisfies both, so it runs twice.
+- **The commit-count gate has to be re-checked after committing**, because committing raises the number the
+  gate compares against.
+- **Splitting traffic observation from asset scanning is a design question first.** The implementation went
+  in and came back out. The merge rule for repeated observations and the merge key disagreed in three
+  places; dividing the cadence without settling that leaves edges that never accumulate.
+
+### Fixed
+
+- **The generator ignored the per-asset delegation level** (v0.1.0–v0.6.7). It never read the per-action
+  value and emitted every action at the global `--level`. **What came out wrong**: in a plan mixing levels,
+  assets finalized at a lower level still received activation and restart tasks.
+- **Approvals were only counted** (v0.1.0–v0.6.7). A single string like `reviewer:demo` passed.
+  **What came out wrong**: a plan carrying an approval nobody could verify passed as grounds to execute.
+- **The CLI never called the execution gate** (through v0.6.7). The rule had tests and the documents
+  promised it, but the product path only compared status. **What came out wrong**: a finalized plan with no
+  approvals and no action content was handed a playbook. `check-gates` now catches that class.
+- **An unknown `--level` fell back to L2 silently** (v0.1.0–v0.6.7). `--level L3` differed only in case and
+  landed on the default. **What came out wrong**: it handed over an artifact with no activation or restart
+  while reading as if the request had been honoured. A level is delegation by risk, so running lower than
+  asked is as wrong as running higher. It is exit 2 now.
+- **CNG still said "not yet"** (v0.6.0–v0.6.7). Documents and comments called it unimplemented after real
+  hardware had confirmed it. **What came out wrong**: it told readers something worked when it did not.
+- **Four words that had been reverted survived in other file types.** `실기` in 12 places,
+  `저장된 값과 갈린다` in 4, `해소` in 22, `조용히 틀린다` in 2. Sweeping the documents had not covered
+  `.proto`, `.sh` and comments. **What came out wrong**: the documents and the code called the same thing by
+  different names.
+
+## v0.6.7 — One name per thing (2026-08-21)
+**Goal** — make the same thing carry the same name everywhere, and turn what v0.6.6 exposed — "the
+same list in two places drifts apart" — into **a gate**.
+
+> **One value on screen changes** — the top PQC maturity goes from `standard` to **`fips-standard`**
+> (① below). Anything scraping the output has to follow that string.
+
+### Built
+
+- **`make check-collectors`** — checks that the collectors the release workflow **builds** and the
+  ones the reference playbook **deploys** are the same set. They really did drift in v0.6.6. On a
+  mismatch it prints what differs along with both lists. If either file changes shape so that nothing
+  can be read, **that fails too** — passing quietly would leave the gate blind. CI runs it.
+
+### Fixed
+
+- **① The PQC maturity was named one way in the data and another on screen** (v0.6.2–v0.6.6).
+
+  **What was wrong** — the stored value is `fips-standard`, while the display label was just
+  `standard`. The split appeared when the Korean `표준` was translated in v0.6.2; in Korean there was
+  nothing to collide with.
+
+  **What came out wrong** — seeing `X25519MLKEM768 [standard]`, a reader could not tell whether it was
+  the `fips-standard` from the maturity table in the architecture.
+
+  **What changes** — the screen now prints **the value itself** (`[fips-standard]`), returning the
+  constant rather than re-typing the string, so the display follows if the value ever changes. The
+  samples (`discover-view.txt`, `topology.svg`, the README console blocks) were regenerated **by
+  running the demo again**.
+
+- **② `CONFIRMED` lives in two different enums, and one place abbreviated it** (v0.1.0–v0.6.6). The
+  root README's console block said `[CONFIRMED]` where the screen prints
+  `[EVIDENCE_STRENGTH_CONFIRMED]`. Abbreviated, it is indistinguishable from `ReconState.CONFIRMED`.
+  The block now quotes the screen — so a bare `CONFIRMED` in the documents always means `ReconState`.
+
+- **③ Three states were called by three different kinds of name** (v0.1.0–v0.6.6). The demo README
+  wrote `CONFIRMED/shadow/unobserved` — a contract name, a gloss, and a plain word. Nothing told the
+  reader whether `shadow` was `UNDECLARED` or a fourth thing. The names are now
+  `CONFIRMED`/`UNDECLARED`/`UNOBSERVED`, and `shadow` stays only where it **explains** what
+  `UNDECLARED` is.
+
+- **④ The English documents used a different name from the screen** (v0.6.2–v0.6.6). The root
+  `README.en` console block said `quantum posture` and `posture totals`, while the screen prints
+  `quantum-resistance grade` and `grade totals`. The Korean side moved to 등급 in v0.6.2 and the
+  English side did not follow. Four prose sites were aligned as well. Released identifiers such as
+  `pkg/kernel/posture` and `QuantumPosture` are untouched.
+
+## v0.6.6 — The release bundle had drifted from the playbook (2026-08-21)
+**Goal** — fix what fails when you download it and run it. And make the sentences that could only be
+read with another document open say what they mean where they stand.
+
+### Learned
+
+- **The same list kept in two places drifts apart in silence.** The set of collectors to put on a
+  Windows node lived in both the release workflow and the playbook, and nothing caught it when only
+  one changed. A comment in the workflow now says it must match the playbook — but **that is not a
+  gate.**
+
+### Fixed
+
+- **① `pqcota-jvmscan` was missing from the Windows bundle** (v0.6.3–v0.6.5).
+
+  **What was wrong** — v0.6.3 made the Windows block of `discover.yml` deploy **both**
+  `pqcota-cngscan` and `pqcota-jvmscan`, while the release workflow still built only `cngscan`.
+
+  **What came out wrong** — **download the release, run the playbook, and it fails at deployment.**
+  During the real-hardware run `jvmscan.exe` was built by hand, so this path was never exercised.
+
+  **What changes** — the bundle carries both (`pqcota-windows-amd64.zip`).
+
+- **② Sentences that could only be read with another document open.** The symbols pointed somewhere
+  the document itself never defined.
+
+  | Where | What | Now |
   |---|---|---|
-  | 루트 README 지원 표 | `①은 리눅스 전용이고 ②·③은 OS 무관이다` | **JDK 없이 붙는 경로가 리눅스 전용**이라고 풀어 적는다 |
-  | 〃 | `관측 레인·선언 레인` | **기계가 본 것과 사람이 적은 것** |
-  | 〃 | `(≤25 실측)` | `JDK 25까지 재 봤다` |
-  | [collector 배포 설계](discovery/collector-deployment.md) | `①`이 **배포 단계**와 **attach 계층** 둘을 가리켰다 | 계층 쪽을 풀어 적는다 |
-  | [inventory/cmd](inventory/cmd/README.md) | `②가 서명`: 다른 문서의 절 번호였고, **주체도 틀렸다** | 서명은 **노드의 collector**가 한다 |
-  | [provisioning](provisioning/README.md) | 첫 문장의 `L1/L2/L3`이 **접힌 다이어그램 안에서만** 설명됐다 | 첫 문장에 무엇인지 적는다 |
-
-- **③ `pqcota-keygen`이 두 문서에 있었다**(v0.6.3). 커맨드가 사는 [discovery/cmd](discovery/cmd/README.md)에
-  두고, `pqcota-ingest`의 `PQCOTA_VERIFY_KEY` 행에서 가리킨다.
-
-- **④ 「지원」 표가 잰 자리를 범위처럼 적었다**(v0.6.3). `실측 범위는 Windows 11 26200`은 **거기서만
-  된다**로 읽혔는데 사실이 아니다. CNG가 있는 Windows면 돈다. 버전에 따라 달라지는 것은 "되느냐"가
-  아니라 **"무엇이 보이느냐"**다(26200에는 ML-DSA가 있고 ML-KEM이 없었다). 잰 기록은 테스트맵에 있다.
-
-## v0.6.5: 한자어 뭉치와 영어 관용구를 푼다 (2026-08-21)
-**목표**: 한국어 문서의 낱말 셋을 푼다. **코드는 바뀌지 않았고** 영어 문서도 그대로다.
-
-### 고친 것
-
-- **`해소`**: 한 낱말이 다섯 가지 일을 하고 있어 자리마다 다르게 풀었다. IP→노드는 **잇기**,
-  `go get`이 못 한 것은 **받아 오지 못했다**, 앱 키는 **찾아낸다**, 프로세스는 **그때그때 이어
-  붙인다**, FIPS 갭은 **갭을 메움**.
-- **`조용히 틀린다`** → **`오류 없이 틀린다`**. `silently wrong`을 그대로 옮긴 말이었다.
-- **`갈리다`**: 분기에만 남기고(`노드 OS로 갈린다`), 값이 어긋나는 자리는 **`달라진다`·`다르면`**으로.
-- 식별자는 그대로다(`ProcessMatch`·`TestResolve`·`procs.Attribution`).
-
-## v0.6.4: 문서가 코드를 따라잡는다 (2026-08-21)
-**목표**: 화면과 코드가 앞서 나간 뒤 문서에 남은 낡은 자리를 메운다. **코드는 한 줄도 바뀌지
-않았다**. 받아서 올릴 것이 없는 릴리스다.
-
-### 알아낸 것
-
-- **화면이 바뀌어도 문서에 인용한 출력은 그대로 남아 낡는다.** `checkdocs`는 링크·앵커·낱말은 보지만 **문서가
-  인용한 출력이 실제와 같은지는 안 본다.** 데모를 다시 돌려 대조해서 하나를 찾았다. 게이트가 없는 자리다.
-
-### 고친 것
-
-- **문서 넷을 화면·코드에 맞췄다.** openssl collector의 「전제」가 빌드 태그를 잘못 적은 것
-  (v0.1.0–v0.6.3), 예제의 `os` 열 설명(v0.6.3), 아키텍처의 collector 목록에서 빠진
-  `pqcota-cngscan`(v0.6.0), `expected-output`의 롤백 레코드 인용이 아직 한국어였던 것(v0.6.2).
-- **로드맵에 [Windows OpenSSL 관측]을 넣고**, `pqcota-nodescan`이 리눅스 전용이라는 것을 그 명령을
-  보여 주는 자리마다 적었다. 대응표는 커맨드 레퍼런스 한 곳에만 둔다.
-
-## v0.6.3: Windows 노드가 디스커버리 경로에 들어온다 (2026-08-21)
-**목표**: v0.6.0에서 CNG를 관측할 수 있게 됐지만 **그 collector를 노드까지 보내고 결과를 회수하는 방법이
-없었다.** 실물 Windows에 앤서블로 붙어 끝까지 한 바퀴 돌린다.
-
-### 만든 것
-
-- **`hosts.csv`의 `os`·`connection` 열**: `pqcota-hosts`가 `[targets_linux]`·`[targets_windows]` 그룹과
-  연결 변수(`ansible_connection=winrm` 또는 `ansible_shell_type=powershell`)를 낸다. `targets`를 둘의
-  **부모**로 둬서 `hosts: targets`로 쓰던 플레이북은 그대로 돈다. **접속 방법을 CSV에 두는 이유**는
-  `targets.ini`가 매 실행 덮어써지기 때문이다. 손으로 더한 설정은 다음 실행에 지워진다.
-- **`discover.yml`이 노드 OS로 갈린다**. `gather_facts`가 주는 `os_family`로 리눅스면 collector 셋,
-  Windows면 `pqcota-cngscan`·`pqcota-jvmscan`이다. **OS를 알아내려고 노드에 무언가를 먼저 올리지
-  않는다.** 반입 → 정찰 → 실행 → 회수 → 정리 순서는 같고 모듈만 다르다(`ansible.windows` 필요).
-- **jvm 정찰이 Windows에서도 돈다**. Toolhelp32로 프로세스를, `java.exe`가 아니면 모듈 목록에서
-  `jvm.dll`을 본다(리눅스의 `/proc`·`maps`와 같은 자리). `certutil`·PowerShell·WMI를 부르지 않는 것은
-  cng-collector와 같은 이유다(§2.3). **남의 프로세스 메모리(PEB)도 읽지 않는다**. 그래서 명령줄을
-  못 읽고 앱 이름이 빈다. 그 사실은 값으로 남아 화면이 고지한다.
-- **릴리스에 `pqcota-windows-amd64.zip`**: 지금까지는 쓰는 쪽이 직접 빌드해야 했다.
-- **커맨드 레퍼런스를 메운다**. `pqcota-cngscan`(v0.6.0에 들어왔는데 빠져 있었다)과 `pqcota-keygen`을
-  싣고, collector별 대응 OS 표를 **한 곳에만** 둔다. `hosts.csv` 작성법이 어디 있는지도 가리킨다.
-
-> **계약은 그대로고, 나오는 결과가 하나 늘어난다.** `.proto`는 건드리지 않았다. 다만 jvm-collector가
-> **CBOM 본문 없이 완전성 갭만 실은 `CollectionResult`**를 낼 수 있다. 찾았는데 관측하지 못한 JVM이다
-> (아래 「고친 것」 ③). 컴포넌트를 세는 쪽은 빈 본문을 받을 수 있다.
-
-### 알아낸 것
-
-- **Windows에서는 권한에 따라 볼 수 있는 범위가 절반 넘게 달라진다.** 일반 사용자는 265개 중 **163개**를 못 열었고
-  관리자는 264개 중 **3개**였다. 남은 3은 더 올려도 안 열리는 바닥값이다. Java 서버가 Windows
-  서비스(SYSTEM)로 도는 배치가 흔하니, 권한 없이 돌리면 **정작 봐야 할 JVM이 통째로 안 보인다.**
-- **attach 3계층이 여기서 값을 냈다.** ①(Go 네이티브)은 리눅스 전용이지만 ②·③은 이미 OS 무관이라
-  **포팅할 것이 없었다.** ②가 실물에서 붙었고 대상 JVM이 `A Java agent has been loaded dynamically`를
-  찍었다. Windows의 attach는 스레드 주입인데 이 장비에서는 막히지 않았다.
-- **이름이 `java.exe`인데 JVM이 아닌 것이 있다.** Oracle javapath의 런처 심이 그렇다. JDK가
-  `jvm.dll not loaded by target process`로 알려 준다. 리눅스에 없는 형태라 **실제 장비가 아니면 안 나왔다.**
-- **리눅스에서 가려져 있던 결함 셋이 Windows에서 드러났다.** ①이 대개 먼저 성공하고, 클라이언트가
-  우연히 대상의 JDK이고, 런처 심이 없어서였다. 셋 다 같은 부류다. **도구가 만들거나 빌려 온 것을
-  관측이라고 적는다.**
-- **코드 경로가 다 맞아도 앤서블이 그 노드에 닿는 부분은 따로다.** 마지막에 실 Windows에
-  Win32-OpenSSH + 키로 붙어 확인했다(TD-WIN-1·2). 걸린 것은 하나뿐이었고 컨테이너에 `ssh`
-  클라이언트가 없던 것이라 리포 쪽에 손댈 것은 없었다.
-
-### 고친 것
-
-- **① ② JDK 클라이언트가 붙지 못하면 자기 설정을 대상의 것으로 냈다**(v0.1.0–v0.6.2).
-
-  **무엇이 잘못이었나**. `Attacher`가 attach 실패를 잡아 `System.getProperty("java.home")`으로
-  `java.security`를 읽었다. 그 `java.home`은 **대상이 아니라 클라이언트의 것**이다.
-
-  **무엇이 잘못 나왔나**. javapath 심에 **클라이언트 JDK의 provider 13개**가 붙었고, attach가 성공한
-  진짜 JVM과 내용이 한 글자도 다르지 않았다. 강등 표시(`inferred_high`·`artifact`)가 함께 붙어도
-  값이 틀린 것은 그대로다. **빈 결과보다 나쁘다.** 그럴듯한 답이 엉뚱한 자산에 달린다.
-
-  **무엇이 바뀌나**. ②는 폴백하지 않고 사유와 함께 실패로 끝낸다. 정적 폴백은 **대상의**
-  JAVA_HOME을 쓰는 Go 쪽이 맡고, 모르면 갭이 된다. 값이 나오던 자리 일부가 갭으로 바뀌는데,
-  줄어드는 것은 원래 남의 값이었다. `StaticFallback.java`는 부르는 데가 없어져 지웠다.
-
-- **② 도는 JVM이 없으면 도구가 하나 띄워 그것을 관측으로 냈다**(v0.1.0–v0.6.2).
-
-  **무엇이 잘못이었나**. 프로브 경로가 `java`를 실행해 그 JVM의 provider 체인을 읽고
-  `confirmed`·`runtime-introspection`으로 냈다. `nodescan`이 `/proc`에 **로드된** libssl만 보는 것과
-  어긋난다.
-
-  **무엇이 잘못 나왔나**. 화면이 스스로 모순됐다: `recon: JVMs 0` 바로 아래에
-  `1 JVMs observed · confirmed`.
-
-  **무엇이 바뀌나**. 값은 버리지 않되 그 이름으로 적는다. 강등 + 사유("도는 JVM이 없어 이 머신의
-  java 런처를 띄워 본 것이다")를 달고 머리줄도 `0 JVMs observed`로 낸다.
-
-- **③ 찾았는데 관측하지 못한 JVM이 중앙에 가지 않았다**(v0.1.0–v0.6.2).
-
-  **무엇이 잘못이었나**. attach가 다 막히면 그 JVM의 결과를 아예 내지 않았다.
-
-  **무엇이 잘못 나왔나**. 실패가 stderr에만 남아 **중앙은 그런 JVM이 있었다는 것조차 몰랐다.**
-  "관측하지 못했다"가 "없다"와 구별되지 않는다(§2.6). netcap이 캡처 불가를 갭으로 실어 보내는
-  것과 같은 자리인데 여기만 비어 있었다.
-
-  **무엇이 바뀌나**. 갭과 사유를 계약에 실어 보낸다. **컴포넌트는 만들지 않는다**. provider를
-  하나도 못 봤는데 빈 체인을 실으면 "이 JVM엔 provider가 없다"로 읽힌다.
-
-- **④ 보안 정책이 "정식 릴리스 이전"이라고 적혀 있었다**(v0.1.0–v0.6.2). 지원 범위 칸도 "아직
-  없음"이었다. 실제 정책(백포트하지 않는다)으로 바꿨다. 같은 이유로 이미 되는 기능에 "vN부터"를 붙인
-  문장들을 뗐다. 지금 무엇이 되는지 묻는 사람에게 그것은 답이 아니고, 버전 이력은 릴리스 노트에 있다.
-
-## v0.6.2: 프로그램이 내는 말을 영어로 (2026-08-19)
-**목표**: 문서는 한국어가 정본이지만 **코드와 그 출력은 영어를 기본으로 한다**는 규칙을 세우고 리포
-전체를 거기에 맞춘다. 콘솔로 나간 줄은 로그에 남고 이슈에 붙는다. 그 자리에서 한국어는 읽을 수
-있는 사람을 좁힌다.
-
-### 만든 것
-
-- **「언어」 규칙은 [CONTRIBUTING](CONTRIBUTING.md)에 있다.** 갈래마다 어느 말을 쓰는지와 **왜 그런지**를
-  적었다. 주석은 한국어다(프로그램 밖으로 나가지 않는다). 콘솔 출력·플래그 도움말·에러 값·테스트
-  실패 메시지, 그리고 **계약에 실려 나가는 문자열**은 영어다(에러가 어디로 흘러갈지는 부르는 쪽이
-  정한다). 규칙이 스스로 정한 예외 셋도 함께 적었다: `.proto`와 CI 워크플로의 주석, SQL DDL 문자열
-  안의 주석, 그리고 `tools/checkdocs`의 **패턴**(한국어 문서를 잡는 도구다. 그 도구가 **말하는**
-  것은 영어다).
-- **적용 범위**: 콘솔 출력과 플래그 도움말, 데모·예제 스크립트의 서술, 에러 값 53건, 테스트 실패
-  메시지 396건(65개 파일), 그리고 계약을 타고 나가는 문자열: `Completeness.Note` ·
-  `Attribution.Reason` · `Remediation`의 권고 문장 · 성숙도 라벨(`standard`/`draft`/`experimental`/`broken`).
-- **샘플 출력 재생성**: 데모를 실제로 다시 돌려 [expected-output](demo/expected-output/README.md)을
-  새로 받았다. README·예제의 콘솔 블록, 그리고 `-diff`의 `added`·`removed`·`changed`처럼 문서가
-  이름으로만 부르던 출력 문자열을 실제 문자열로 맞췄다. 데모·예제의 표시 이름도 영어다. 화면에
-  그대로 나오는 값이기 때문이다.
-
-> **계약의 모양은 그대로고 값이 바뀐다.** `.proto`는 한 줄도 건드리지 않았다. 다만 위 네 자리의
-> **문자열 값**이 달라지므로, 그 문장을 대조해 분기하는 쪽은 새 값으로 맞춰야 한다. 문자열 대조는
-> 원래 권하지 않는다. 사유를 가르려면 `Attribution.Reason`을 상수로 비교한다.
-
-### 알아낸 것
-
-- **한국어에는 수 일치가 없어서, 옮기고 나서야 드러나는 자리가 있다.** `-history`의 머리줄이
-  `1 change points`로 나왔다. 한국어 원문("변화 지점 1개")에는 틀릴 자리가 없었다. `inventory.Plural`을
-  두어 뷰와 `pqcota-prune`이 함께 쓴다.
-- **어순이 바뀌면 포맷 인자가 오류 없이 어긋난다.** 한국어는 "web-01 레코드 2개", 영어는 "2 records for
-  web-01": 문장을 옮기면 `%s`와 `%d`의 자리가 뒤바뀌는데 인자는 그대로 남는다. 빌드는 통과한다.
-  `go vet`이 두 번 잡았고, 위치 지정 동사(`%[2]d`)로 고쳤다. **번역이 타입 오류가 되는 자리다.**
-- **비ASCII 입력을 검사하는 테스트는 번역하면 검사할 것이 없어진다.** `safeName("노드/1")`은 비ASCII가
-  하이픈으로 바뀌고 앞뒤 하이픈이 잘리는지 보는 케이스다. 입력을 영어로 바꾸자 테스트가 실패했고,
-  옳은 대응은 기대값을 고치는 것이 아니라 **입력을 되돌리는 것**이었다.
-
-### 고친 것
-
-- **없다.** 이 릴리스가 손댄 것은 전부 이 릴리스가 새로 쓴 문자열이고, 발행된 버전에서 잘못 나온
-  것은 없다. 이행 중에 낸 실수 둘(포맷 인자·비ASCII 테스트)은 `go vet`과 테스트가 발행 전에 잡았다.
-
-## v0.6.1: CNG 관측에 남은 빈칸 둘 (2026-08-19)
-**목표**: v0.6.0을 내고 남겨 둔 두 빈칸을 채운다. 둘 다 **실제 장비에서 한 번에 함께 확인**했다.
-
-### 만든 것
-
-- **`CngAlgorithm.providers`**: 알고리즘마다 `BCryptEnumProviders`로 **누가 그것을 서비스하는지**
-  묻는다. 등록 목록(`provider_set`)은 "머신에 무엇이 있나"만 답하므로, 조치 대상을 고르려면 이쪽이
-  필요하다. 순수 additive다. 못 물었으면 **빈 목록**으로 둔다. 빈 것과 "물어봤는데 없더라"를 같은
-  모양으로 적지 않는다(§2.6).
-- **Windows `hardware_uuid`**: `GetSystemFirmwareTable('RSMB')`로 SMBIOS Type 1을 읽는다. WMI·
-  PowerShell을 부르지 않는다(§2.3). `MachineGuid`는 **설치** 단위(다시 깔면 바뀐다)라 **하드웨어**
-  단위 앵커가 따로 필요하다. 표기는 리눅스 `/sys/class/dmi/id/product_uuid`와 **같게** 맞췄다.
-  앞 세 묶음이 리틀엔디언이라 되돌리지 않으면 같은 머신이 듀얼 부팅에서 다른 UUID로 보인다.
-  펌웨어가 `0x00`·`0xFF`로 채워 둔 값은 **식별자로 쓰지 않는다**(서로 다른 머신이 한 노드로 합쳐진다).
-
-### 알아낸 것
-
-- **JCA에서 물려받은 전제가 CNG에서는 서지 않는다.** 실측에서 알고리즘 **50개가 전부 provider
-  하나씩**이었다. 같은 알고리즘을 둘이 서비스하는 경우가 없으니 **우선순위 다툼 자체가 없다.**
-  `provider_set`의 순서를 보존하는 이유는 따로다: **관측한 대로 적기 때문**이고, 정렬하면 관측을
-  고치는 것이 된다.
-- **알고리즘을 실제로 서비스하는 것은 등록된 아홉 중 `Microsoft Primitive Provider` 하나다.**
-  나머지 여덟은 키 저장(KSP) 쪽이라 알고리즘 열거에 잡히지 않는다. v0.7.0에서 "ML-DSA를 쓰려면
-  무엇을 건드리나"의 답이 여기서 좁혀진다.
-- **지문을 하나 더해도 `node_id`는 흔들리지 않았다.** self-id 우선순위가 `machine-id`를 먼저 보므로
-  `hardware_uuid`가 생겨도 `derived_from`은 그대로다(§1.4). 지문을 늘릴 때 제일 걱정할 것이 이력이
-  갈리는 것인데, 그 자리는 우선순위가 이미 막고 있었다.
-- **SMBIOS 값이 Windows 자신이 보고하는 UUID와 일치했다**(`Win32_ComputerSystemProduct.UUID` 대조).
-
-### 고친 것
-
-- **확인하지 않은 것을 단정한 문장**(v0.6.0).
-
-  **무엇이 잘못이었나**. 계약 주석·`contracts/README`·collector README·테스트케이스 넷이
-  `provider_set`의 순서를 **"우선순위"**라고 적었다. JCA에서 그대로 옮겨 온 전제이고 CNG에서는
-  확인한 적이 없다.
-
-  **무엇이 잘못 나왔나**. 계약을 읽는 쪽이 **검증된 사실로 읽는다.** 게다가 실측은 반대에 가까웠다:
-  겹치는 provider가 없어 순서가 우선순위로 작동할 자리 자체가 없었다.
-
-  **무엇이 바뀌나**. "관측 순서 그대로 담는다"로 적고, 우선순위 여부는 **미확인**이라고 밝힌다.
-  서드파티 provider가 깔려 둘이 겹치는 머신에서 다시 잰다.
-
-## v0.6.0: Windows CNG를 관측한다 (2026-08-19)
-**목표**: v0.1.0에 **스키마로만 예약**해 둔 `CngAxes`를 채운다. 실물 Windows에서 재고, 그 관측이
-인벤토리 화면까지 오는 것을 확인한다. 계약에 이름만 있고 채우는 코드가 없는 상태를 닫는 릴리스다.
-
-### 만든 것
-
-- **`pqcota-cngscan` · [cng-collector](discovery/collectors/cng/README.md)**: `bcrypt.dll`을 직접
-  호출한다(`BCryptEnumRegisteredProviders`·`BCryptEnumAlgorithms`). `certutil`·PowerShell·WMI를
-  부르지 않는다. 스크립트 실행이 정책으로 막힌 서버에서도 관측 실패가 환경 탓으로 흩어지지
-  않는다(§2.3). **Windows가 아니면 빈 결과가 아니라 갭**을 내고 종료코드는 0이다.
-- **`CngAxes.algorithms`·`CngAlgorithm`**: 실측 뒤에 번호를 부여해 더했다(순수 additive).
-  v0.1.0의 예약 주석이 정해 둔 절차 그대로다. provider 이름만으로는 답이 안 나오기 때문이다(아래).
-- **`COLLECTION_LAYER_CNG_INTROSPECTION`**: JCA가 자기 계층을 가진 것과 같은 이유다. 프로세스도
-  아티팩트도 아니고 **머신에 등록된 provider를 조회**한 것이라, 무엇을 못 봤는지가 다른 계층과 다르다.
-- **화면**: 파일 뷰와 인벤토리 뷰가 CNG 자산을 그린다. `readiness`는 `registry.MatchPQC`로 파생하며
-  **판정이 아니라 관측의 요약**이다(아키텍처 §6).
-- **Windows 교차 컴파일 게이트**: `make build`와 CI가 windows/amd64를 함께 본다. **코드를 쓰기
-  전에** 세웠다: 리눅스 전용 코드가 빌드 태그 밖으로 새면 Windows에서만 깨지고, 그것은 이 게이트에서만 잡힌다.
-- **예제 표본**: `examples/data/results/node-d-cng.json`. 데모는 리눅스 컨테이너 여섯 대라 Windows
-  노드를 끌어들일 수 없어, 실제 장비 관측을 표본으로 넣어 Go 툴체인만으로 볼 수 있게 했다(머신 지문은 뺐다).
-
-### 알아낸 것
-
-- **Windows 11 Pro 25H2(빌드 26200)의 CNG에는 `ML-DSA`가 있고 `ML-KEM`이 없다.** provider 9개 ·
-  알고리즘 50개를 관측했다. 서명은 양자내성으로 갈 수 있어도 **TLS 키 교환은 못 간다**는 뜻이고,
-  그것이 이 노드의 사실이다. 다른 빌드로 일반화하지 않는다.
-- **provider 이름으로는 아무것도 못 가른다.** 관측된 아홉이 전부 `Microsoft …` 이름이라, 노드 사이의
-  능력 차이는 알고리즘 목록에만 나타난다. 계약에 알고리즘 축을 더한 근거가 이것이다.
-- **`dwClass`는 열거 요청의 연산 비트마스크가 아니라 인터페이스 상수다.** 값이 겹쳐(둘 다 4가 있다)
-  50개 중 18개가 빈 종류로 나오고 DH·ECDH 다섯은 `secret-agreement`가 아니라
-  `asymmetric-encryption`으로 **틀리게** 붙었다. 모르는 것을 비우는 규칙이 있어도 **겹치는 값은
-  오류 없이 틀린다.** 판정을 OS 호출 안에 두면 실물 없이는 못 잡는다. 순수 함수로 떼어 실측으로 못 박았다.
-- **런타임을 하나 늘리면 그리는 자리가 둘이다.** 파생 뷰까지 확인하고 닫았다면 파일 뷰와 인벤토리 뷰
-  **양쪽이 빈 채** 나갔을 것이다. 관측이 화면까지 오지 않으면 적지 않은 것과 같다.
-- **CNG의 FIPS 모드는 알고리즘 열거로 알 수 없다**. `fips_validation`은 `unknown`이다(§2.5).
-
-### 고친 것
-
-- **Windows 노드가 호스트명에 매달리던 것**(v0.1.0–v0.5.0, 첫 Windows 관측에서 드러났다).
-
-  **무엇이 잘못이었나**. 머신 지문 수집이 `/etc/machine-id`와 DMI만 봤다. Windows에는 그 경로가
-  없으니 전부 비고, 최후 폴백인 `fqdn`이 앵커가 된다.
-
-  **무엇이 잘못 나왔나**. 첫 실측의 `derived_from`이 `fqdn`이었다. **호스트명을 바꾸면 같은 머신이
-  다른 노드가 되어 이력이 갈린다.** 리눅스 노드는 원래 `machine-id`를 써서 드러나지 않았을 뿐이다.
-
-  **무엇이 바뀌나**. 지문의 **출처만** OS로 가르고 규칙은 한 곳에 남겼다. Windows는 레지스트리
-  `MachineGuid`를 직접 읽는다. `hardware_uuid`는 SMBIOS라 아직 **비운다**. 못 읽은 것을 지어내지
-  않는다(§2.5).
-
-## v0.5.0: 모듈 경로를 리포 주소에 맞춘다 (2026-08-18)
-**목표**: 계약을 가져다 쓰는 쪽이 `go get` 한 줄로 시작하게 만든다. 그리고 문서·화면이 같은 것을
-같은 이름으로 부르게 정리한다. **CNG 디스커버리는 한 칸씩 미뤘다**. 계약을 못 쓰는 상태를 먼저
-푸는 편이 낫다고 봤다.
-
-### 고친 것
-
-- **모듈 경로가 리포 주소와 달라 `go get`으로 받아지지 않던 것**(v0.1.0–v0.4.0).
-
-  **무엇이 잘못이었나**. `go.mod`가 `github.com/pqcota/pqcota`를 선언했는데 그 주소에는 리포가
-  없다. `gen/`을 커밋해 둔 이유가 *"소비자가 `go get`만으로 계약 타입을 쓸 수 있어야 한다"* 인데,
-  경로가 그 목적을 무효로 만들고 있었다.
-
-  **무엇이 잘못 나왔나**. 가져다 쓰는 쪽이 자기 `go.mod`에 `replace`를 **영구히** 들고 있어야
-  했다. 문서가 그 우회를 안내하고 있었으니 알려진 흠이었는데, 우회를 적어 두는 것으로 넘긴 것이
-  잘못이다. 새로 오는 쪽은 "모듈이 자기 경로를 다르게 선언한다"는 오류만 보고 원인을 짚기 어렵다.
-
-  **무엇이 바뀌나**. 경로가 `github.com/randyinthedev-hash/pqcota`가 된다. Go에서 경로 변경은
-  **새 모듈**이라 import를 전부 옮겨야 한다. v0.4.0 이하를 쓰던 쪽은 `replace`를 지우고 새 경로로
-  받는다. 시그니처·타입은 하나도 바뀌지 않았다([호환성 정책 §3④](docs/compatibility.md)).
-
-- **`.gitignore`가 새 `*.pb.go`를 무시하던 것**(v0.1.0–v0.4.0). `gen/`을 커밋한다고 적어 둔 바로 그
-  자리에 `*.pb.go`가 함께 있었다. 이미 추적 중인 열 개는 남지만, **proto를 새로 더하면 그 생성
-  코드가 커밋에서 빠지고 아무것도 알리지 않는다**. 가져다 쓰는 쪽은 없는 타입을 만나게 된다. 규칙을 지웠다.
-
-- **빌드 바이너리 하나가 리포에 커밋돼 있던 것**(v0.4.0). 루트의 `checkdocs`(3.3MB, macOS 실행
-  파일)가 추적되고 있었다. `make check-docs`는 `build/`에 만드는데 손으로 루트에 만든 것이 딸려
-  들어갔다. 지우고 `.gitignore`에 막았다.
-
-- **샘플 산출물이 코드보다 낡아 있던 것**(v0.3.0–v0.4.0). 디스커버리 뷰의 마지막 줄이 바뀌었는데
-  `demo/expected-output/discover-view.txt`가 옛 문장을 들고 있었다. 데모를 다시 돌려 받아왔다.
-
-### 만든 것
-
-- **[여정](journey.md)**: 준비부터 관측·적재·조회·생성·적용·되돌림까지 **한 번에 따라가는**
-  문서. 규정서는 규칙을, 단계별 설계는 그 단계 안을 적는데 "처음부터 끝까지 어떤 순서로 무엇이
-  나오나"를 답하는 자리가 없었다. 입구 셋(한 노드 그 자리 · 여러 노드 Ansible · CI 위임 수신)과
-  출구 하나(플레이북)를 한 그림에 둔다.
-
-### 알아낸 것
-
-- **문서의 어휘가 바뀌어도 식별자는 그대로다.** 영어를 옮겨 온 낱말을 우리말로 풀면서
-  (`관측 창`→`관측 구간` · `실기`→`실제 장비` · `부모 사슬`→`부모 체인` · `귀속`→`어느 앱인지
-  밝힌다` · `posture`→`등급`) 화면에 나가는 문구도 함께 옮겼지만, `procs.Attribution`·
-  `pqcota-declare-attribution`·`pqcota_edge_attribution`·`pkg/kernel/posture`는 건드리지 않았다.
-  **가져다 쓰는 쪽이 고칠 것은 모듈 경로 하나뿐이다**. CLI 이름·테이블 이름·패키지 이름은
-  그대로다.
-
-
-## v0.4.0: 관측이 못 짚은 앱을 사람이 메운다 (2026-08-12)
-**목표**: v0.3.0의 자동 경로가 원리상 못 보는 자리를 채운다. 데모에서 **엣지 4개 중 3개**를
-놓쳤고 사유는 전부 "짧은 연결"이었다. 배치·헬스체크·cron·SSH가 다 그렇다.
-
-### 만든 것
-
-- **`pqcota-declare-attribution`**: CSV(`node_id,dst,app_key`)를 선언으로 임포트한다. 어느 엣지를
-  가리키는지 모르는 줄(셋 중 하나라도 빔)은 **추측하지 않고 멈춘다**. 앱을 잘못 짚으면 조치
-  대상이 바뀐다.
-- **`pqcota_edge_attribution`**: 선언이 사는 곳. **노드의 스냅샷 타임라인 밖이다.** 적재가 선언을
-  갈라내 여기로 보내고 스냅샷을 만들지 않는다. 같은 `(org, node_id, dst)`에 다시 선언하면
-  덮어쓴다. 선언은 사람이 고치는 것이라 append-only인 관측과 규칙이 다르다.
-- **`AttributionOverlay`**: 조회할 때 그 저장소를 읽어 얹는다. 관측이 이미 채운 칸은 그대로
-  두고 빈칸만 메우며, 메운 것은 `@app(declared)`로 나오고 몇 건이 선언인지도 함께 밝힌다.
-
-### 알아낸 것
-
-- **적재가 관측 엣지를 고쳐 채우면 안 된다.** 처음엔 그쪽이 간단해 보였는데 두 곳에서 막힌다:
-  ① `sign.Canonical`이 `ObservedEdge`를 `app_key`까지 덮으므로(v0.3.0), 적재가 채우면 **저장된
-  것이 collector가 서명한 것과 달라진다.** 선언은 collector의 주장이 아니다. ② 규칙이 좋아져
-  `raw_capture`에서 다시 계산하면 저장된 값과 달라져, 무엇이 원본인지 알 수 없게 된다.
-  **그래서 저장은 가르고 화면에서 합친다.**
-- **계약을 늘리지 않았다.** v0.3.0에서 넣은 `app_key_kind`가 "이 키가 무엇에 기대고 있나"를
-  답하는 자리라, `systemd-unit`·`exe-path` 옆에 `declared`가 하나 붙을 뿐이다. 서명도 그대로다.
-  v0.3.0에서 한 번 깼는데 연달아 또 깨지 않는다.
-- **`ObservedEdge.detection_method`를 쓰면 안 된다.** 그것은 *엣지를 어떻게 관측했나*이지 키의
-  출처가 아니다. 거기에 `UNSPECIFIED`를 넣으면 **"이 통신을 실제로 봤다"는 사실까지 흐려진다.**
-- **선언을 저장소부터 갈라야 했다. 화면에서 거르는 것으로는 부족했다.** 처음엔 선언을 관측과
-  같은 스냅샷 타임라인에 넣고 화면에서 걸렀는데, 데모를 두 번 돌리자 두 곳에서 샜다: ① 선언이
-  노드의 **최신 스냅샷**이 되어 기본 조회가 *관측 엣지 4개를 1개로* 보였고(관측한 것이 사라진
-  것처럼 보인다) ② 이력이 선언을 **상태 변화로 줄 세웠다**(자산 0·엣지 1인 노드였던 적이 없는데).
-  `-diff`가 셋째였을 것이다. **화면마다 거르면 화면이 늘 때마다 같은 자리가 다시 샌다**.
-  그래서 저장 자리를 갈랐다.
-- **`dst`가 이미 포트를 담는다.** 계약이 `dst_addr`를 `"ip:port"`로 정하는데 선언 CSV·저장소 키가
-  포트를 따로 들고 있었다. 같은 정보를 두 곳에 적으면 한쪽만 틀렸을 때 경고 없이 어긋난다.
-- **인메모리 테스트는 격리를 증명하지 못한다**. 저장소 객체가 애초에 다르다. 한 테이블을
-  공유하는 Postgres에서만 잴 수 있고(TV-ATTR-7), 그 짝이 없으면 초록불을 보고 격리됐다고 읽는다.
-
-
-## v0.3.0: 어느 앱이 연 통신인지 밝힌다 (2026-08-12)
-**목표**: 관측된 통신이 "이 서버 어딘가"에서 멈추던 것을 **앱까지** 데려간다. 사람이 조치할
-대상은 서버가 아니라 앱이기 때문이다.
-
-### 만든 것
-
-- **`ObservedEdge.app_key`·`app_key_kind`**: 캡처 시점에 소켓 inode(`/proc/net/tcp`)를 `/proc/*/fd`와
-  대조해 채운다. 값의 모양은 자산 쪽과 같다(systemd 유닛 우선, 없으면 exe 경로).
-- **`procs.AttributeRemote`·`Attributor`**: 앱을 **엣지를 보는 그 자리에서** 짚는다. 캡처가 끝난 뒤
-  몰아 하면 그 사이 닫힌 소켓을 더 놓치기 때문이다. 비싼 fd 스캔만 구간 안에서 1초 재사용한다.
-- **완전성 노트에 앱을 짚은 결과**: 못 잡은 건수와 사유를 낸다. 사유는 정렬해서 낸다. 순서가 흔들리면
-  같은 관측이 내용 지문 차이로 다른 스냅샷이 되어, 변화가 없는데 이력이 늘어난다.
-- **인벤토리 표시**: 엣지 줄에 `@app_key`. 못 잡은 것은 빈칸이 아니라 `@?`이고, 근거가 systemd
-  유닛이 아니면 `(exe-path)`를 함께 적는다. 같은 값이라도 얼마나 믿을지가 다르다.
-
-### 고친 것
-
-- **완전성 노트가 화면까지 오지 않던 것**(v0.1.0–v0.2.0).
-
-  **무엇이 잘못이었나**. 노트를 `layers_missing`이 있을 때만 찍고 있었다. 그런데 계층 갭이 아닌
-  노트가 실제로 있다. 관측 구간이 중간에 끊겼을 때 netcap이 남기는 경고가 그렇다.
-
-  **무엇이 잘못 나왔나**. *"관측 구간이 읽기 오류로 중단됨. 이 결과는 구간 전체를 대표하지 않는다"*가
-  **한 번도 화면에 나온 적이 없다.** 정직하게 적어 둔 것이 읽는 사람에게 도달하지 않으면 적지 않은
-  것과 같다. 이번 못 짚은 사유도 같은 자리에 걸릴 뻔했고, 테스트를 쓰다 드러났다.
-
-### 알아낸 것
-
-- **실제 장비에서 재 보고 설계가 셋 바뀌었다.** ① fd는 상속되므로 한 소켓을 여러 프로세스가 쥔다
-  (실측 3개): 먼저 찾은 PID를 쓰면 연결을 연 쪽이 아니라 물려받은 쪽을 짚게 된다. 부모 체인에서
-  가장 얕은 것을 고른다. ② 즉시 닫은 연결은 스캔 시점에 이미 없다. **앱을 늘 짚어내지는 못한다. best-effort다.**
-  ③ 남의 프로세스 fd를 읽으려면 `CAP_NET_RAW`로 부족하다.
-- **빈 `app_key`는 "앱 없음"이 아니라 "어느 앱인지 밝히지 못함"이다.** 사유를 넷으로 가른다. 소켓이 닫혔나 ·
-  권한이 없나 · 안정 키를 만들지 못했나 · 모호한가. 관측 갭에 대해 지켜 온 규칙이 여기에도 그대로 온다.
-- **모호하면 고르지 않는다.** 같은 상대로 두 앱이 통신 중이면 기계가 하나를 찍지 않는다. 앱을 잘못
-  짚으면 조치 대상이 바뀌므로 비워 두는 것보다 나쁘다.
-- **데모에서 엣지 4개 중 3개를 놓쳤다.** 그 트래픽이 설계상 전부 짧은 연결이라 최악에 가까운
-  값이지만, 짧은 연결 자체가 예외는 아니다. **선언 레인을 v0.4.0으로 확정했다**.
-  근거를 재고 나서 정했으므로 투기적 추상화가 아니다.
-- **서명 범위가 바뀌었다**. 계약에 필드가 늘어 `sign.Canonical`을 함께 갱신했고, 따라서
-  **v0.2.0 이하에서 만든 서명은 무효다.** [호환성 정책 §2](docs/compatibility.md)가 이 경우를 위해
-  적어 둔 것이고, 실 배포 전인 지금이 가장 싼 시점이다.
-- **CNG 뒤로 미뤄 뒀던 것을 앞으로 당겼다.** 미뤄 둔 근거가 「파일·레지스트리 두 substrate를 다 본
-  뒤에 앱을 짚는 모델을 정하자」였는데 축이 달랐다. substrate는 생성물을 어디에 놓느냐는 프로비저닝
-  개념이고, 앱을 짚는 것은 소켓 inode를 프로세스에 대는 디스커버리다. Windows에서 달라지는 것은
-  *수집 방법*(`GetExtendedTcpTable`)이지 앱을 짚는 방식이 아니다. 게다가 필요한 것이 이미 있었다.
-  `/proc/net/tcp`와 `/proc/*/fd`뿐이고 netcap이 이미 그 노드에서 돈다. 반면 CNG는 실제 Windows
-  장비가 있어야 하고, 없이 먼저 하면 v0.1.0의 `CngAxes` 예약처럼 **스키마는 있는데 돌려본 바 없는**
-  자리를 하나 더 만든다.
-
-
-## v0.2.0: 적재 경로를 여럿이 쓰는 전제로 옮긴다 (2026-08-12)
-**목표**: 인벤토리가 한 조직·한 실행을 전제로 돌던 자리들을 고친다. 여섯 항목 전부 **이 리포가
-이미 지키는 원칙(고지 없이 빠지면 "없다"로 읽힌다)을 적재 경로에도 적용하는 일**이다.
-계약을 소비하는 쪽에서 온 검토가 자리를 짚어 줬다.
-
-### 만든 것
-
-- **조직 축**: `pqcota_snapshots`·`observations`·`retention_events`·`provisioning_record`·
-  `endpoint`·`profile` 여섯 테이블에 조직이 붙는다. **저장소 핸들이 조직에 묶여** 모든 질의가 그
-  조건을 달고 나가고 빼는 방법이 없다. 질의마다 기억할 일이 없으니 잊을 일도 없다. `Nodes()`·
-  `ByID()`처럼 전역을 훑던 것도 인터페이스를 바꾸지 않고 조직 안으로 들어왔다.
-- **`pkg/org`**: 조직 이름의 어휘. 소문자·숫자·하이픈 2–64자(`Acme`와 `acme`가 다른 조직이 되지 않게),
-  빈 조직 금지, `PQCOTA_REQUIRE_ORG=1`이면 조직 없이 저장소를 열 수 없다. `default`는 **예약**이다.
-  모양 규칙을 통과하므로, 막지 않으면 실제 조직 이름으로 배정돼 단일 조직 시절 데이터와 한 조직이 된다.
-- **DDL 자동 실행 안전장치**: `PQCOTA_AUTO_DDL=0`이면 스키마를 만들지 않고, 없으면 오류로 중단한다.
-  가리키는 곳이 어긋났을 때 **빈 테이블이 새로 생기고 거기에 쓰던** 자리를 막는다.
-- **거절 이력**(`pqcota_rejections`): 서명 실패·미확인·오프스코프·신원충돌을 남긴다. 원문은
-  담지 않고 canonical 지문만 남긴다. 검증하지 않은 데이터를 저장소가 쥐지 않으면서 같은 것이
-  반복해 오는지는 셀 수 있다.
-- **서명 필수 모드**: `PQCOTA_REQUIRE_SIGNATURE=1`이면 검증할 키가 없을 때 **적재를 시작하지
-  않는다.** 그리고 리포트가 `Unverified`를 따로 센다. "검증했고 통과했다"와 "검증할 키가
-  없었다"를 한 숫자로 합치지 않는다.
-- **`sign.VerifyFrom`**: `collector_id → 공개키`로 대조한다. 기존 `Verify`는 넘긴 키를 **전부**
-  시도하므로, 여러 collector의 키를 한 목록으로 주면 어느 키로든 통과한 결과가 아무 이름이나
-  달고 들어올 수 있었다. 서명이 "누가 냈나"를 답하게 만든다.
-- **`raw_capture` 규약을 계약에**: 설정 파일 원문·패킷 페이로드·자격증명을 담지 않는다.
-  자유형 `bytes`라 스키마가 막아 주지 않으므로 규약으로 적었다.
-- **[호환성 정책](docs/compatibility.md)**: 계약·서명·Go API·DB 스키마·혼재 버전 다섯 면을
-  갈라 적었다. "호환된다"가 무엇을 뜻하는지 흐려지지 않게.
-
-### 고친 것
-
-- **Postgres를 못 열면 인메모리로 내려앉던 것**(v0.1.0–v0.1.3, `pqcota-ingest`·`pqcota-cbom-ingest`).
-
-  **무엇이 잘못이었나**. `PQCOTA_DSN`을 줬는데 연결이나 스키마 준비가 실패하면 경고 한 줄을
-  내고 **인메모리 저장소로 계속 진행**했다. DSN을 준 것은 영속을 요구한 것인데 그 요구가
-  경고 한 줄만 남기고 취소됐다.
-
-  **무엇이 잘못 나왔나**. 화면에 **성공이 찍혔다.** "적재 결과: 수용 N … 노드 N개 관측"까지
-  정상적으로 나오고, 그 데이터는 프로세스와 함께 사라졌다. 성공처럼 보이는 실패다.
-  이번 릴리스에서 `PQCOTA_AUTO_DDL=0`을 실제로 돌려 보다 드러났다. 스키마를 만들지 말라고
-  했고 스키마가 없는데, 적재가 성공했다고 보고했다.
-
-  **고친 것**: DSN이 주어졌는데 저장소를 열지 못하면 **멈춘다.** 조직 오류를 "Postgres 연결
-  실패"로 뒤집어씌우던 문구도 함께 고쳤다.
-
-### 알아낸 것
-
-- **소비자 코드는 한 줄도 바뀌지 않는다.** 기존 생성자를 남겨 `org.Default`에 묶고 새 생성자를
-  더했다. `history.Store` 인터페이스도 그대로다. 조직을 물으려면 `org.Scoped`로 타입 단언한다.
-  단일 조직 사용자는 조직이라는 개념을 만나지 않는다.
-- **멱등하지 않은 이행이 하나 있었다.** `pqcota_endpoint`·`pqcota_profile`은 `node_id`가 PK이자
-  upsert의 conflict target이라, org 컬럼만 붙이면 **조직 A의 `web-01`이 B의 것을 계속 덮어썼다.**
-  `ADD PRIMARY KEY`에는 `IF NOT EXISTS`가 없어, 지금 PK가 몇 컬럼인지 보고 그때만 도는 조건부
-  블록으로 넣었다. 실물 Postgres에서 두 번 돌려 확인했다. 기존 행은 `default`로 보존되고,
-  같은 `web-01`이 조직별로 공존한다.
-- **옛 바이너리가 새 스키마에 그대로 쓸 수 있다. 그것이 함정이다.** `DEFAULT`가 조직 컬럼을
-  채워 주므로 막히지 않고, 조직을 모르는 바이너리가 **남의 조직 자리에 쓰고도 아무 오류를 내지 않는다.** 그래서 이행의
-  마지막 단계로 기본값을 뗀다(선택): 그러면 `NOT NULL` 위반으로 실패한다. 알아채지 못하는 오염 대신
-  즉시 드러나는 실패다.
-- **인메모리 저장소의 격리 테스트는 격리를 증명하지 못한다.** 객체가 다르면 당연히 안 보인다.
-  한 테이블을 공유하는 Postgres 테스트를 따로 뒀다(`PQCOTA_TEST_DSN`).
-
-
-## v0.1.3: 수집 시각이 비어 있었다 (2026-08-12)
-**목표**: v0.1.0부터 있던 결함 하나를 고친다. 기능 변화는 없다. pqcota를 소비하는 쪽에서
-결과 단위 중복 키를 설계하다 드러났다.
-
-### 고친 것
-
-- **`Envelope.collected_at`이 비어 있었다** (v0.1.0–v0.1.2: 결과 생성 지점 다섯 중 넷).
-
-  **무엇이 잘못이었나**. 이 값을 채우는 곳이 openssl collector의 **gRPC 서비스 경로 하나뿐**이었다.
-  jvm collector, network collector, 그리고 데모가 실제로 쓰는 openssl **CLI 경로**
-  (`pqcota-nodescan` → `BuildResult`)는 비운 채로 결과를 냈다. 같은 collector인데 어느 문으로
-  나왔느냐에 따라 provenance가 달라졌다.
-
-  **무엇이 잘못 나왔나**. **아무것도 틀리게 나오지 않았다.** 이 리포 안에서 이 값을 읽는 곳은
-  `sign.Canonical` 하나뿐이고, 인벤토리의 "언제 봤나"는 적재
-  시각(`pqcota_observations.observed_at`)에서 온다. 잘못된 것은 **서명이 빈 값을 덮고 있었다**는 것이다. 관측 시각을 서명 범위에 넣어
-  두고 실제로는 "언제 봤는지 모른다"에 서명한 셈이다.
-
-  **언제부터 틀리게 나오나**. 이 값을 읽는 순간이다. jvm collector는 **JVM마다 결과를 하나씩**
-  내므로, 수신 측이 `(collector_id, node_id, 수집 시각)`을 결과 단위 중복 키로 삼으면 한 노드의
-  JVM 여럿이 **하나로 접힌다.** 잠복 결함이라 릴리스를 미루지 않았다.
-
-  **왜 안 보였나**. `collected_at`은 Envelope 아홉 필드 중 **유일하게 주석이 없었다.** 그래서
-  주석도 함께 고쳤다: 무엇을 채우는 값인지(적재·출력 시각이 아니다), 그리고 **관측에 실패한
-  결과에도 채운다**는 것까지 계약에 적었다. 언제 시도했는지가 갭 기록의 근거다.
-
-  **서명 호환**: `Canonical`은 값을 메시지에서 읽으므로 **기존 서명은 그대로 유효하다.** 제로값으로
-  서명된 옛 결과는 여전히 같은 바이트로 정규화된다. 계약 변경은 주석뿐이라 `buf breaking`도 깨끗하다.
-
-  **API 호환**: 시그니처를 바꾸지 않았다. 시계는 패키지 변수(`var now = time.Now`)로 두어 테스트가
-  갈아끼운다. 회귀 테스트 셋(collector마다 하나)이 이 자리를 잠근다.
-
-
-## v0.1.2: 대조 상태를 어휘에 올린다 (2026-08-11)
-
-`decision.proto`가 판정의 **결론**과 **lifecycle**은 계약에 두면서, 정작 **무엇에 대한 판정인지**를
-정의하지 않았다. 주석이 `UNOBSERVED`를 가리키는데 그 값이 계약 어디에도 없었다([#3](https://github.com/randyinthedev-hash/pqcota/issues/3)).
-
-- **`ReconState` 추가**: `CONFIRMED`(선언∩관측) · `UNDECLARED`(관측만 = shadow) ·
-  `UNOBSERVED`(선언만). **대조 엔진은 이 리포에 없다**. `DecisionConclusion`·`FinalizedPlan`과
-  같은 논리로, 소비자 엔진이 같은 어휘를 쓰게 하려고 스키마만 둔다.
-- **`Decision.state`(필드 10) 추가**: 판정이 어떤 상태를 두고 내려졌는지 담는다. 이것이 없으면
-  소비자가 `conclusion`만 받고 그 근거가 된 상태를 모른다.
-
-순수 additive다. 기존 필드 번호·타입이 그대로라 `buf breaking` 기준선에 걸리지 않는다.
+  | root README, support table | `layer ① is Linux-only; ② and ③ are OS-independent` | **the path that attaches without a JDK is Linux-only**, spelled out |
+  | 〃 | "the observed lane and the declared lane" | **what a machine saw and what a person wrote down** |
+  | 〃 | `(measured up to 25)` | `measured up to JDK 25` |
+  | collector deployment | `①` meant both a **deployment step** and an **attach layer** | the layer is spelled out |
+  | [inventory/cmd](inventory/cmd/README.md) | "② signs it" — another document's section number, **and the wrong actor** | the **collector on the node** signs |
+  | [provisioning](provisioning/README.md) | `L1/L2/L3` in the first sentence, explained only inside a **collapsed** diagram | the first sentence now says what they are |
+
+- **③ `pqcota-keygen` was documented in two places** (v0.6.3). It now lives with the command, in
+  [discovery/cmd](discovery/cmd/README.md), and the `PQCOTA_VERIFY_KEY` row points there.
+
+- **④ The support table wrote down where we measured as if it were the supported range** (v0.6.3).
+  "measured on Windows 11 build 26200" read as **only there**, which is not true — it runs on any
+  Windows with CNG. What the build decides is not *whether* it works but **what you will find**
+  (26200 had ML-DSA and no ML-KEM). The measurement belongs to the test map.
+
+## v0.6.5 — Unpacking compound loanwords and an English idiom (2026-08-21)
+**Goal** — untangle three words in the Korean documents. **No code changed**, and the English
+documents are untouched; what changes is the Korean vocabulary for things that already worked this way.
+
+### Fixed
+
+- **`해소` ("resolve")** — one word had been doing five jobs, so it is unpacked per site: an IP mapped
+  to a node is now "linked", a dependency `go get` could not fetch is "not fetched", an app key found
+  from a process is "found", a volatile process is "linked at the time", and a FIPS gap is "filled".
+
+- **"조용히 틀린다"** (a literal rendering of *silently wrong*) → **"오류 없이 틀린다"** — *wrong
+  without raising an error*. The point is that nothing fails, not that the code is quiet.
+
+- **`갈리다`** now only means branching. Where it meant values diverging, it is "달라진다" — one word
+  covering both "splits" and "does not match" left the reader to work out which.
+- Identifiers are untouched — `ProcessMatch`, `TestResolve`, `procs.Attribution`.
+
+## v0.6.4 — The documents catch up with the code (2026-08-21)
+**Goal** — close the stale spots the documents were left with after the screen and the code moved on.
+**Not a line of code changed** — there is nothing to upgrade for.
+
+### Learned
+
+- **When the screen changes, quotations in the documents go stale quietly.** `checkdocs` looks at
+  links, anchors and wording, but **not at whether the output a document quotes still matches
+  reality**. Re-running the demo and diffing the quotes against the run surfaced one. That gate does
+  not exist.
+
+### Fixed
+
+- **Four documents were brought in line with the screen and the code.** The openssl collector's
+  "Assumptions" named the wrong build tag (v0.1.0–v0.6.3); the example's `os` column description
+  (v0.6.3); `pqcota-cngscan` missing from the architecture document's list of collectors (v0.6.0); and
+  the rollback-record quotation in `expected-output` still being Korean (v0.6.2).
+- **[Observing OpenSSL on Windows] was added to the roadmap**, and the fact that `pqcota-nodescan` is
+  Linux-only was written wherever that command is shown. The per-collector table stays in one place —
+  the command reference.
+
+## v0.6.3 — Windows nodes join the discovery path (2026-08-21)
+**Goal** — v0.6.0 made CNG observable, but **there was no way to get that collector onto a node and the
+result back.** Reach a real Windows machine with Ansible and run the whole loop.
+
+### Built
+
+- **`os` and `connection` columns in `hosts.csv`** — `pqcota-hosts` emits `[targets_linux]` and
+  `[targets_windows]` groups plus the connection settings (`ansible_connection=winrm`, or
+  `ansible_shell_type=powershell`). `targets` is their **parent**, so playbooks written against
+  `hosts: targets` keep working. **The connection belongs in the CSV** because `targets.ini` is
+  overwritten on every run — anything added there by hand is gone next time.
+- **`discover.yml` branches on the node's OS** — `os_family` from `gather_facts` selects the three
+  Linux collectors or `pqcota-cngscan` and `pqcota-jvmscan`. **Nothing is shipped to a node just to
+  find out what it is.** Deploy → recon → run → fetch → clean is the same shape; only the modules
+  differ (`ansible.windows` required).
+- **The jvm reconnaissance runs on Windows** — Toolhelp32 for processes, and the module list for
+  `jvm.dll` when the launcher is not `java.exe` (the same place as `/proc` and `maps` on Linux). It
+  calls no `certutil`, PowerShell or WMI, for the same reason the cng-collector does not. **It
+  also never reads another process's memory (the PEB)** — so the command line, and with it the app
+  name, stays empty. That fact is carried as a value and reported on screen.
+- **`pqcota-windows-amd64.zip` is attached to the release** — until now you had to build it yourself.
+- **The command reference is complete again** — `pqcota-cngscan` (added in v0.6.0 but never listed) and
+  `pqcota-keygen` are in, and the per-collector OS table now lives in **one** place. It also points to
+  where `hosts.csv` is explained.
+
+> **The contract is unchanged; one more kind of result appears.** Not a line of `.proto` was touched.
+> But the jvm-collector can now emit a `CollectionResult` **carrying only a completeness gap, with no
+> CBOM body** — a JVM that was found but could not be observed (Fixed ③ below). Anything counting
+> components may receive an empty body.
+
+### Learned
+
+- **On Windows, privilege decides more than half of what is visible.** A normal user could not open
+  **163** of 265 processes; an Administrator could not open **3** of 264. Those 3 are the floor. Java
+  servers on Windows commonly run as services under SYSTEM, so running without privilege **hides
+  exactly the JVMs worth looking at**.
+- **The three-layer attach paid off here.** Layer ① (Go native) is Linux-only, but ② and ③ were
+  already OS-independent — **there was nothing to port**. ② attached for real, and the target JVM
+  printed `A Java agent has been loaded dynamically`. Attach on Windows injects a thread; this machine
+  did not block it.
+- **Something can be named `java.exe` and not be a JVM.** Oracle's javapath launcher shim is one. The
+  JDK says so itself: `jvm.dll not loaded by target process`. There is no such shape on Linux, so
+  **only real hardware could surface it**.
+- **Three defects that Linux had been hiding came out on Windows** — because ① usually succeeds first,
+  the client happens to be the target's own JDK, and there are no launcher shims. All three are the
+  same kind: **the tool writing down something it made or borrowed as an observation.**
+- **Even with every code path correct, Ansible reaching the node is its own thing.** That was
+  confirmed last, against a real Windows machine over Win32-OpenSSH with a key (TD-WIN-1, TD-WIN-2).
+  One thing broke, and it was a missing `ssh` client in my container — nothing in the repo.
+
+### Fixed
+
+- **① When the ② JDK client could not attach, it reported its own configuration as the target's**
+  (v0.1.0–v0.6.2).
+
+  **What was wrong** — `Attacher` caught the failure and read `java.security` from
+  `System.getProperty("java.home")`. That `java.home` is **the client's, not the target's**.
+
+  **What came out wrong** — the javapath shim was given **the client JDK's 13 providers**, character
+  for character identical to the JVM that had genuinely been attached. The degraded marks
+  (`inferred_high`, `artifact`) do not make the values right — this is **worse than an empty result**:
+  a plausible answer attached to the wrong asset.
+
+  **What changes** — ② no longer falls back; it ends with the reason. The static fallback belongs to
+  the Go side, which uses **the target's** JAVA_HOME and reports a gap when it does not know it. Some
+  places that used to produce values now produce gaps; what disappears was someone else's data all
+  along. `StaticFallback.java` had no caller left and was removed.
+
+- **② With no JVM running, the tool started one and reported it as an observation** (v0.1.0–v0.6.2).
+
+  **What was wrong** — the probe path ran `java`, read that JVM's provider chain, and emitted it as
+  `confirmed` / `runtime-introspection`. That contradicts `nodescan`, which only sees libssl actually
+  **loaded** in `/proc`.
+
+  **What came out wrong** — the screen contradicted itself: `1 JVMs observed · confirmed` directly
+  below `recon: JVMs 0`.
+
+  **What changes** — the value is kept but named for what it is: degraded, with the reason ("no JVM
+  was running — the machine's java launcher was started for this probe"), and the headline reads
+  `0 JVMs observed`.
+
+- **③ A JVM that was found but not observed never reached the centre** (v0.1.0–v0.6.2).
+
+  **What was wrong** — when every attach path failed, no result was emitted for that JVM at all.
+
+  **What came out wrong** — the failure lived only on stderr, so **the centre did not even know such a
+  JVM existed**. "Not observed" wore the face of "not there". netcap sends its capture failure
+  onward as a gap; only this place did not.
+
+  **What changes** — the gap and its reason travel through the contract. **No component is built** —
+  an empty provider chain would read as "this JVM has no providers".
+
+- **④ The security policy said the project was "before the first release"** (v0.1.0–v0.6.2), and the
+  supported-versions table said "none yet". It now states the actual policy (no backports). For the
+  same reason, sentences pinning already-working features to "as of vN" were removed — that is not an
+  answer to someone asking what works now, and version history belongs to these notes.
+
+## v0.6.2 — What the program says, in English (2026-08-19)
+**Goal** — set the rule that **code and its output default to English** while the documents stay
+Korean-first, and bring the whole repo in line. A console line ends up in a log and gets pasted into
+an issue; there, Korean narrows who can read it.
+
+### Built
+
+- **The «Language» rule — [CONTRIBUTING](CONTRIBUTING.md)** — which language each kind of text
+  uses, and **why**. Comments are Korean (they never leave the program). Console output, flag help,
+  error values, test failure messages, and **strings that travel out through the contract** are
+  English (where an error flows is the caller's decision). The three exceptions the rule sets for
+  itself are written down too: comments in `.proto` and the CI workflows, comments inside SQL DDL
+  strings, and the **patterns** in `tools/checkdocs` (it is a tool for catching Korean prose — what
+  it **says** is English).
+- **Scope** — console output and flag help, the narration in the demo and example scripts, 53 error
+  values, 396 test failure messages across 65 files, and the strings carried by the contract:
+  `Completeness.Note`, `Attribution.Reason`, the `Remediation` rationale, and the maturity labels
+  (`standard`/`draft`/`experimental`/`broken`).
+- **Regenerated samples** — the demo was actually run again and
+  [expected-output](demo/expected-output/README.md) was captured fresh. The console blocks in the
+  READMEs and examples now match, as do output strings the documents had only named — `added`,
+  `removed` and `changed` for `-diff`. Display names in the demo and examples are English as well,
+  because they appear on screen verbatim.
+
+> **The contract's shape is unchanged; some values are not.** Not one line of `.proto` was touched.
+> But the **string values** in the four places above differ, so anything branching on those sentences
+> must move to the new ones. Matching on prose was never advisable — to tell reasons apart, compare
+> against the `Attribution.Reason` constants.
+
+### Learned
+
+- **Korean has no number agreement, so some faults only surface after the move.** The `-history`
+  header printed `1 change points`. The Korean original had no place to be wrong. `inventory.Plural`
+  now covers the view and `pqcota-prune` alike.
+- **Reordering a sentence silently misaligns format arguments.** Korean puts the subject first
+  ("web-01 records: 2"), English the count ("2 records for web-01") — translate the sentence and
+  `%s` and `%d` swap places while the arguments stay put. It still builds. `go vet` caught it twice;
+  the fix is explicit argument indexes (`%[2]d`). **This is where translation becomes a type error.**
+- **A test whose input is non-ASCII has nothing left to check once translated.**
+  `safeName("노드/1")` checks that non-ASCII collapses to hyphens and leading/trailing hyphens are
+  trimmed. Translating the input broke the test, and the right response was to restore the input,
+  not to adjust the expectation.
+
+### Fixed
+
+- **Nothing.** Everything touched here is a string this release wrote itself; no published version
+  emitted anything wrong. The two mistakes made during the move (format arguments, the non-ASCII
+  test) were caught by `go vet` and the tests before release.
+
+## v0.6.1 — The two gaps left in CNG observation (2026-08-19)
+**Goal** — fill the two slots left open after v0.6.0. Both were confirmed in **a single run on the
+real hardware**.
+
+### Built
+
+- **`CngAlgorithm.providers`** — for each algorithm, `BCryptEnumProviders` answers **who actually
+  serves it**. The registration list (`provider_set`) only says what exists on the machine, so
+  choosing what to act on needs this. Purely additive. When it could not be asked, the list stays
+  **empty** — "not asked" and "asked and found none" are not written the same way.
+- **Windows `hardware_uuid`** — SMBIOS Type 1, read via `GetSystemFirmwareTable('RSMB')`; no WMI or
+  PowerShell. `MachineGuid` is per **installation** (a reinstall changes it), so a per
+  **hardware** anchor is needed as well. The formatting matches Linux's
+  `/sys/class/dmi/id/product_uuid` — the first three groups are little-endian, and without reversing
+  them the same machine looks like a different UUID when dual-booted. Firmware placeholders (all
+  `0x00` or all `0xFF`) are **not used as identifiers** (they would merge distinct machines into one node).
+
+### Learned
+
+- **A premise inherited from JCA does not hold for CNG.** In the measurement, **all 50 algorithms had
+  exactly one provider** — no algorithm is served by two, so there is no priority contention at all.
+  The order in `provider_set` is preserved for a different reason: **it is what was observed**, and
+  sorting it would be editing the observation.
+- **Of the nine registered providers, the one that actually serves algorithms is `Microsoft Primitive
+  Provider`.** The other eight are key-storage providers and do not appear in an algorithm
+  enumeration. This narrows "what must be touched to use ML-DSA" for v0.7.0.
+- **Adding a fingerprint did not move `node_id`.** Self-id priority consults `machine-id` first, so
+  `derived_from` stayed put even once `hardware_uuid` appeared. The thing to fear when adding
+  fingerprints is a split history, and the priority order already covered that.
+- **The SMBIOS value matched what Windows itself reports** (`Win32_ComputerSystemProduct.UUID`).
+
+### Fixed
+
+- **A sentence asserting something never verified**(v0.6.0).
+
+  **What was wrong** — the contract comment, `contracts/README`, the collector README, and the test
+  case table all called the order of `provider_set` a **"priority"**. That premise was carried over
+  from JCA and had never been checked for CNG.
+
+  **What came out wrong** — whoever reads the contract reads it **as a verified fact**. And the
+  measurement pointed the other way: with no overlapping providers, order has no place to act as a
+  priority at all.
+
+  **What changes** — it now says the order is kept **as observed**, and whether that order means
+  priority is stated as **unverified**. It will be measured again on a machine with a third-party
+  provider where two overlap.
+
+## v0.6.0 — Observing Windows CNG (2026-08-19)
+**Goal** — fill `CngAxes`, which v0.1.0 **reserved as schema only**. Measure it on real Windows and
+confirm the observation reaches the inventory screen. This release closes the state where the
+contract had a slot but no code to fill it.
+
+### Built
+
+- **`pqcota-cngscan` · cng-collector** — calls
+  `bcrypt.dll` directly (`BCryptEnumRegisteredProviders`, `BCryptEnumAlgorithms`). It does not invoke
+  `certutil`, PowerShell, or WMI — on servers where script execution is blocked by policy, a failed
+  observation must not scatter into "environment problems". **Off Windows it emits a gap, not
+  an empty result**, and exits 0.
+- **`CngAxes.algorithms` and `CngAlgorithm`** — added after the measurement, with new field numbers
+  (purely additive), exactly as the v0.1.0 reservation note prescribed. Provider names alone do not
+  answer the question (below).
+- **`COLLECTION_LAYER_CNG_INTROSPECTION`** — for the same reason JCA has its own layer. It is neither
+  process nor artifact but **a query of the providers registered on the machine**, so what it fails to
+  see differs from every other layer.
+- **The screen** — the file view and the inventory view both render CNG assets. `readiness` is derived
+  through `registry.MatchPQC` and is **a summary of the observation, not a verdict**.
+- **A Windows cross-compilation gate** — `make build` and CI now also build windows/amd64. It was put
+  in place **before any Windows code was written**: Linux-only code leaking outside its build tag
+  breaks only on Windows, and only this gate catches that.
+- **A sample** — `examples/data/results/node-d-cng.json`. The demo is six Linux containers and cannot
+  host a Windows node, so a real measurement rides in as a sample that runs with the Go toolchain
+  alone (the machine fingerprint was removed).
+
+### Learned
+
+- **The CNG on Windows 11 Pro 25H2 (build 26200) has `ML-DSA` and does not have `ML-KEM`.** Nine
+  providers and fifty algorithms were observed. Signatures can go post-quantum; **TLS key exchange
+  cannot** — that is this node's fact, and it is not generalized to other builds.
+- **Provider names tell nodes apart not at all.** All nine observed are `Microsoft …` names, so the
+  capability difference between nodes appears only in the algorithm list. That is the evidence behind
+  adding the algorithm axis to the contract.
+- **`dwClass` is an interface constant, not the operation bitmask used to request enumeration.** The
+  values overlap (both have a 4), so 18 of 50 came back with an empty class and the five DH/ECDH
+  entries were labelled `asymmetric-encryption` **instead of** `secret-agreement`. A rule that leaves
+  the unknown blank does not save you: **overlapping values fail silently.** Classification buried
+  inside an OS call cannot be caught without the real hardware — it was pulled out into a pure
+  function and pinned to the measurement.
+- **Adding one runtime means two places to render.** Had this been closed at the derived view, the
+  file view and the inventory view would both have shipped **blank**. An observation that never
+  reaches the screen is the same as one never written down.
+- **CNG's FIPS mode cannot be known from an algorithm enumeration** — `fips_validation` is `unknown`.
+
+### Fixed
+
+- **Windows nodes hung on the hostname**(v0.1.0–v0.5.0; surfaced by the first Windows observation).
+
+  **What was wrong** — machine fingerprinting only read `/etc/machine-id` and DMI. Those paths do not
+  exist on Windows, so every field came back empty and the last-resort `fqdn` became the anchor.
+
+  **What came out wrong** — the first measurement's `derived_from` was `fqdn`. **Rename the host and
+  the same machine becomes a different node**, splitting its history. Linux nodes never showed this
+  because they were already on `machine-id`.
+
+  **What changes** — only the *source* of the fingerprint is split per OS; the rules stay in one
+  place. Windows reads the registry's `MachineGuid` directly. `hardware_uuid` stays **empty** for now
+  — it lives in SMBIOS, and what cannot be read is not invented.
+
+## v0.5.0 — Aligning the module path with the repository address (2026-08-18)
+**Goal** — let anyone consuming the contract start with a single `go get`, and make the documents and
+the screen call the same thing by the same name. **CNG discovery moved back one slot** — unblocking a
+contract nobody could fetch came first.
+
+### Fixed
+
+- **`go get` could not resolve the module, because its path did not match the repository**(v0.1.0–v0.4.0).
+
+  **What was wrong** — `go.mod` declared `github.com/pqcota/pqcota`, and no repository lives at that
+  address. `gen/` is committed precisely so that *"a consumer can use the contract types with `go get`
+  alone"*, and the path was cancelling that.
+
+  **What came out wrong** — consumers had to carry a `replace` line in their own `go.mod`
+  **permanently**. The documentation described that workaround, so it was a known flaw — and settling
+  for documenting it was the mistake. A newcomer only sees "module declares its path as …" and has no
+  way to trace the cause.
+
+  **What changes** — the path becomes `github.com/randyinthedev-hash/pqcota`. In Go a path change makes
+  it a **new module**, so every import must move. Anyone on v0.4.0 or below drops the `replace` and
+  fetches the new path. No signature or type changed ([compatibility policy, section 3④](docs/compatibility.md)).
+
+- **`.gitignore` swallowed new `*.pb.go` files**(v0.1.0–v0.4.0). `*.pb.go` sat in the very block that
+  says `gen/` is committed. The ten already tracked stay, but **adding a new proto would silently drop
+  its generated code** — a consumer would meet a type that isn't there. The rule was removed.
+
+- **A build binary was committed to the repository**(v0.4.0). `checkdocs` (3.3 MB, a macOS
+  executable) sat tracked at the root. `make check-docs` builds into `build/`; one made by hand at the
+  root had slipped in. Removed, and blocked in `.gitignore`.
+
+- **A sample artifact had gone stale against the code**(v0.3.0–v0.4.0). The last line of the discovery
+  view had changed, but `demo/expected-output/discover-view.txt` still carried the old sentence. The
+  demo was re-run and the artifact recaptured.
+
+### Built
+
+- **The journey** (this document is no longer part of the repository) — one document that walks the whole way: preparation,
+  observation, ingestion, querying, generation, application, rollback. The process rules
+  and each stage's design covered its own inside, but nothing answered "in what order does what come out,
+  from start to finish". It puts the three entrances (one node in place · many nodes over Ansible ·
+  delegated CBOM intake from CI) and the single exit (a playbook) in one picture.
+
+### Learned
+
+- **The documents' vocabulary changed; the identifiers did not.** Words carried over from English were
+  rewritten in Korean and the on-screen strings moved with them, but `procs.Attribution`,
+  `pqcota-declare-attribution`, `pqcota_edge_attribution`, and `pkg/kernel/posture` were left alone.
+  **The only thing a consumer has to change is the module path** — CLI names, table names, and package
+  names are unchanged.
+
+
+## v0.4.0 — a person fills what observation could not attribute (2026-08-12)
+**Goal** — fill the place v0.3.0's automatic path cannot see by construction. The demo **missed 3 of 4
+edges**, all for the same reason: short-lived connections — which is what batch jobs, health checks,
+cron, and SSH all are.
+
+### What was built
+
+- **`pqcota-declare-attribution`** — imports a CSV (`node_id,dst,app_key`) as declarations. A row that
+  does not identify an edge (any of the three empty) **stops rather than being guessed at** —
+  attributing to the wrong app changes what gets acted on.
+- **`pqcota_edge_attribution`** — where declarations live, **outside the node's snapshot timeline.**
+  Ingest separates declarations out and routes them here without creating a snapshot. Declaring the same
+  `(org, node_id, dst)` again overwrites — a declaration is something a person corrects, so it does not
+  follow the append-only rule that observation does.
+- **`AttributionOverlay`** — reads that store at query time and lays it over. What observation already
+  filled stays untouched; only blanks are filled, shown as `@app(declared)`, with a line saying how many
+  came from declarations.
+
+### What was learned
+
+- **Ingest must not patch the observed edge.** That looked simpler at first, but two things block it:
+  ① `sign.Canonical` covers `ObservedEdge` including `app_key` (v0.3.0), so filling it at ingest makes
+  **what is stored differ from what the collector signed** — and a declaration is not the collector's
+  claim. ② When rules improve and results are recomputed from `raw_capture`, the recomputed and stored
+  values diverge, and it stops being clear which is the original. **So storage stays separate and the
+  screen joins them.**
+- **The contract did not grow.** `app_key_kind`, added in v0.3.0, already answers "what does this key
+  rest on", so `declared` simply joins `systemd-unit` and `exe-path`. Signatures are untouched too — one
+  break in v0.3.0 was enough without a second right behind it.
+- **`ObservedEdge.detection_method` must not be used for this.** It says *how the edge was observed*, not
+  where the key came from. Putting `UNSPECIFIED` there would **blur the fact that the communication
+  really was seen.**
+- **Declarations had to be separated at the storage layer — filtering per view was not enough.** The first
+  attempt put declarations on the same snapshot timeline and filtered them out on screen. Two demo runs
+  showed two leaks: ① a declaration became the node's **latest snapshot**, so the default view showed
+  *1 observed edge instead of 4* (observation appearing to have vanished), and ② history **lined the
+  declaration up as a state change** (a node that had never had 0 assets and 1 edge). `-diff` would have
+  been the third. **Filter per view and every new view leaks the same way** — so the storage was split.
+- **`dst` already carries the port.** The contract defines `dst_addr` as `"ip:port"`, yet the CSV and the
+  store key also held a port — writing the same fact twice means one of them can be wrong and the match
+  fails silently.
+- **In-memory tests cannot prove isolation** — the store objects differ to begin with. Only Postgres,
+  where one table is shared, can measure it (TV-ATTR-7); without that counterpart, a green light reads
+  as isolation.
+
+
+## v0.3.0 — attributing edges to apps (2026-08-12)
+**Goal** — carry observed communication past "somewhere on this server" and **all the way to the app**.
+What a person acts on is an app, not a server.
+
+### What was built
+
+- **`ObservedEdge.app_key` and `app_key_kind`** — filled at capture time by correlating the socket inode
+  from `/proc/net/tcp` against `/proc/*/fd`. The value has the same shape as asset attribution: systemd
+  unit first, exe path otherwise.
+- **`procs.AttributeRemote` and `Attributor`** — attribution happens **where the edge is seen**. Doing it
+  after the capture window loses sockets that closed in between. Only the expensive fd scan is reused,
+  for one second inside the window.
+- **Attribution results in the completeness note** — the count and reasons for what was missed. The
+  reasons are sorted: if their order wobbles, the same observation becomes a different snapshot through
+  its content fingerprint, and history grows without anything having changed.
+- **The inventory shows it** — `@app_key` on the edge line. What was missed is `@?`, not a blank, and if
+  the basis was not a systemd unit, `(exe-path)` is shown alongside. The same value can deserve different
+  trust.
+
+### What was fixed
+
+- **Completeness notes never reached the screen** (v0.1.0–v0.2.0).
+
+  **What was wrong** — the note was printed only when `layers_missing` was non-empty. But notes that are
+  not layer gaps do exist — netcap's warning when the capture window is cut short is one.
+
+  **What came out wrong** — *"the capture window was cut short by a read error — this result does not
+  represent the whole window"* **has never once appeared on screen.** Something written down honestly
+  that never reaches its reader is the same as not writing it. This release's attribution reasons were
+  about to land in the same place; writing the test is what exposed it.
+
+### What was learned
+
+- **Measuring on real hardware changed three things in the design.** ① File descriptors are inherited, so
+  several processes hold one socket (three, measured) — taking the first PID found attributes the edge to
+  the process that inherited it, not the one that opened it. Take the shallowest up the parent chain.
+  ② A connection closed immediately is already gone by scan time — **attribution is best-effort.**
+  ③ Reading another user's file descriptors takes more than `CAP_NET_RAW`.
+- **An empty `app_key` means "could not attribute", not "no app".** Four distinct reasons: the socket
+  closed, permission was missing, no stable key could be derived, or it was ambiguous. The rule this repo
+  keeps for observation gaps carries over unchanged.
+- **Ambiguity is not guessed.** When two apps talk to the same peer, the machine does not pick one.
+  Attributing to the wrong app changes what gets acted on — worse than leaving it blank.
+- **The demo missed 3 of 4 edges.** Its traffic is short-lived by construction, so that is close to a
+  worst case, but short-lived connections themselves are not the exception. **The declared lane is now
+  fixed as v0.4.0** — decided after measuring, so it is not speculative abstraction.
+- **The signature range changed** — a contract field was added and `sign.Canonical` updated with it, so
+  **signatures produced at v0.2.0 or earlier are invalid.** [Compatibility policy, section 2](docs/compatibility.md)
+  is written for exactly this case, and before any real deployment is the cheapest time for it.
+- **What had been deferred behind CNG was pulled forward.** The reason for deferring was "settle the
+  app-pinning model after seeing both substrates, files and the registry" — but the axes were
+  different. A substrate is a provisioning concept, where generated output is placed; pinning an app is
+  discovery, matching a socket inode to a process. What changes on Windows is the *collection method*
+  (`GetExtendedTcpTable`), not the way an app is pinned. And the materials were already here:
+  `/proc/net/tcp` and `/proc/*/fd`, with netcap already running on that node. CNG, by contrast, needs
+  real Windows hardware, and doing it first without that would add one more place like the v0.1.0
+  `CngAxes` reservation — **schema present, never run**.
+
+
+## v0.2.0 — moving the ingest path onto a many-users premise (2026-08-12)
+**Goal** — fix the places where the inventory still ran on the assumption of one organization and one
+execution. All six items apply **a principle this repo already keeps — drop something silently and it
+reads as "absent" — to the ingest path.** A review from a consumer of the contract pointed at the spots.
+
+### What was built
+
+- **An organization axis** across six tables — `pqcota_snapshots` · `observations` ·
+  `retention_events` · `provisioning_record` · `endpoint` · `profile`. **The store handle is bound to an
+  organization**, so every query carries that condition and there is no way to drop it — nothing to
+  remember per query means nothing to forget. `Nodes()` and `ByID()`, which used to sweep globally, came
+  inside the organization without any interface change.
+- **`pkg/org`** — the vocabulary for organization names. Lowercase, digits, hyphen, 2–64 characters (so
+  `Acme` and `acme` cannot diverge); no empty organization; with `PQCOTA_REQUIRE_ORG=1` a store cannot be
+  opened without one. `default` is **reserved** — it passes the shape rule, so leaving it open would let
+  it be assigned as a real organization name and merge with single-organization-era data.
+- **A guard on automatic DDL** — with `PQCOTA_AUTO_DDL=0` the schema is not created, and a missing schema
+  is an error. This closes the case where a misdirected connection **created a fresh empty set of tables
+  and wrote into them.**
+- **A rejection history** (`pqcota_rejections`) — signature failures, unverified results, off-scope
+  entries, and identity conflicts are recorded. The payload is not stored, only its canonical
+  fingerprint: the store never holds unverified data, yet repeats can still be counted.
+- **A mandatory signature mode** — with `PQCOTA_REQUIRE_SIGNATURE=1`, ingest **does not start** when there
+  is no key to verify with. The report also counts `Unverified` separately: "verified and passed" and
+  "there was no key to verify with" do not collapse into one number.
+- **`sign.VerifyFrom`** — matches on `collector_id → public key`. The existing `Verify` tries **every**
+  key it is handed, so a single list covering several collectors let a result that passed under any key
+  arrive wearing any collector's name. Signatures now answer *who* produced this.
+- **A `raw_capture` convention in the contract** — no file contents, packet payloads, or credentials.
+  The field is free-form `bytes`, so the schema cannot enforce it; it is written down as a convention.
+- **A [compatibility policy](docs/compatibility.md)** — five distinct faces: contract, signature, Go API,
+  DB schema, mixed versions. So that "it is compatible" does not stay vague about which.
+
+### What was fixed
+
+- **Falling back to an in-memory store when Postgres could not be opened** (v0.1.0–v0.1.3,
+  `pqcota-ingest` · `pqcota-cbom-ingest`).
+
+  **What was wrong** — with `PQCOTA_DSN` set, a failure to connect or to prepare the schema printed one
+  warning and **carried on with the in-memory store.** Supplying a DSN is a request for persistence, and
+  that request was being silently cancelled.
+
+  **What came out wrong** — the screen said **success.** The full "ingested: N accepted … N nodes
+  observed" line printed normally, and the data vanished with the process. A failure that looks like a
+  success. It surfaced while actually running `PQCOTA_AUTO_DDL=0` in this release: the schema was not to
+  be created, there was no schema, and ingest reported success.
+
+  **The fix** — if a DSN is given and the store cannot be opened, **stop.** The message that blamed an
+  organization error on "Postgres connection failed" was corrected too.
+
+### What was learned
+
+- **Consumer code does not change by a single line.** The existing constructors stay, bound to
+  `org.Default`, and new ones were added alongside. The `history.Store` interface is untouched — to ask
+  about the organization, type-assert to `org.Scoped`. Single-organization users never meet the concept.
+- **One migration was not idempotent.** In `pqcota_endpoint` and `pqcota_profile`, `node_id` was both the
+  primary key and the upsert conflict target, so merely adding a column left **organization A's `web-01`
+  still overwriting B's.** `ADD PRIMARY KEY` has no `IF NOT EXISTS`, so it runs conditionally on how many
+  columns the current primary key has. Verified against real Postgres, run twice: existing rows are
+  preserved as `default`, and the same `web-01` now coexists per organization.
+- **An old binary can still write to the new schema — and that is the trap.** `DEFAULT` fills the
+  organization column, so nothing blocks it, and a binary that knows nothing about organizations
+  **writes silently into someone else's place.** The last (optional) migration step is therefore to drop
+  the default, after which such an insert fails on `NOT NULL`. A loud failure instead of quiet
+  contamination.
+- **An in-memory isolation test does not prove isolation.** Separate objects cannot see each other by
+  construction. A Postgres test that shares one table sits alongside it (`PQCOTA_TEST_DSN`).
+
+
+## v0.1.3 — the collection timestamp was empty (2026-08-12)
+**Goal** — fix one defect that had been there since v0.1.0. No functional change. It surfaced while a
+downstream consumer was designing a per-result deduplication key.
+
+### What was fixed
+
+- **`Envelope.collected_at` was empty** (v0.1.0–v0.1.2 — four of the five places a result is built).
+
+  **What was wrong** — only **one** place filled it: the openssl collector's gRPC service path. The jvm
+  collector, the network collector, and the openssl **CLI path the demo actually uses**
+  (`pqcota-nodescan` → `BuildResult`) emitted results with it left empty. Same collector, different
+  provenance depending on which door the result came out of.
+
+  **What came out wrong** — **nothing did.** The only reader of this value inside the repo is
+  `sign.Canonical`, and the inventory's "when was this seen" comes from the ingest timestamp
+  (`pqcota_observations.observed_at`). What was wrong is that **the signature was covering an empty
+  field** — the collection time was inside the signed range, and what got signed was "we don't know
+  when we looked".
+
+  **When it would start coming out wrong** — the moment anything reads it. The jvm collector emits
+  **one result per JVM**, so a receiver keying deduplication on `(collector_id, node_id, collected_at)`
+  would **collapse several JVMs on one node into one.** It is latent, which is why the fix did not wait
+  for a release.
+
+  **Why it went unseen** — `collected_at` was the **only one of the Envelope's nine fields without a
+  comment**. So the comment was fixed too: what the value means (not the ingest or output time), and
+  that it **is filled on failed collections as well** — when the attempt happened is the basis of the
+  gap record.
+
+  **Signature compatibility** — `Canonical` reads the value out of the message, so **existing signatures
+  remain valid**: an old result signed with a zero timestamp still canonicalizes to the same bytes. The
+  contract change is comment-only, so `buf breaking` stays clean.
+
+  **API compatibility** — no signature changed. The clock is a package variable (`var now = time.Now`)
+  that tests swap out. Three regression tests, one per collector, hold the place.
+
+
+## v0.1.2 — Putting reconciliation state in the vocabulary (2026-08-11)
+
+`decision.proto` had the **conclusion** and the **lifecycle** of a verdict in the contract, but never
+defined **what the verdict is about**. A comment pointed at `UNOBSERVED` while that value existed
+nowhere in the contract ([#3](https://github.com/randyinthedev-hash/pqcota/issues/3)).
+
+- **`ReconState` added** — `CONFIRMED` (declared ∩ observed), `UNDECLARED` (observed only = shadow),
+  `UNOBSERVED` (declared only). **The reconciliation engine is not in this repository** — like
+  `DecisionConclusion` and `FinalizedPlan`, only the schema lives here, so that consumer engines
+  speak the same vocabulary.
+- **`Decision.state` (field 10) added** — which state the verdict was made against. Without it a
+  consumer receives a `conclusion` with no idea what it was about.
+
+Purely additive — existing field numbers and types are untouched, so the `buf breaking` baseline holds.
 
 ---
 
-## v0.1.1: 계약을 받아 쓸 수 있게 (2026-08-11)
+## v0.1.1 — Making the contract consumable (2026-08-11)
 
-**고친 것**: 생성 코드(`gen/`)가 `.gitignore`에 있어, 계약을 소비하려는 쪽이 `go get`으로
-받아도 타입이 없었다. `contracts/README.md`가 "소비자 엔진이 같은 어휘를 쓰도록"이라고 적어
-두었는데 정작 그 어휘를 import할 수 없었다. 첫 외부 소비가 생기며 드러났다.
+**What was wrong** — the generated code (`gen/`) sat in `.gitignore`, so anyone trying to consume
+the contract got no types from `go get`. `contracts/README.md` said the schemas were SSOT "so that
+consumer engines speak the same vocabulary", yet that vocabulary could not be imported. The first
+outside consumer surfaced it.
 
-- **`gen/` 커밋**: `go get` 만으로 `commonv1`·`discoveryv1`·`inventoryv1`·`provisioningv1`을 쓴다.
-  손으로 고친 생성 코드는 CI의 generate 드리프트 검사가 막는다(이제 그 검사가 실제로 구실을 한다).
-- **buf 버전 고정**(CI, 1.69.0): 생성 코드를 커밋했으므로, 도구 버전이 바뀌어 출력이 달라지면
-  코드 변경 없이도 드리프트 검사가 실패한다.
-- 소비 방법과 모듈 경로 우회를 [contracts/README](contracts/README.md#소비자가-쓰는-법)에 적었다.
+- **`gen/` is committed** — `go get` alone now gives you `commonv1`, `discoveryv1`, `inventoryv1`
+  and `provisioningv1`. Hand-edited generated code is cut by the CI generate-drift check, which
+  only now has anything to check.
+- **buf pinned** (CI, 1.69.0) — with generated code committed, a tool version change could fail the
+  drift check without any code change.
+- How to consume it, and the module-path workaround, are written up in
+  [contracts/README](contracts/README.md).
 
-계약(proto) 자체는 바뀌지 않았다. `buf breaking` 기준선 그대로다.
+The contract itself (proto) did not change — the `buf breaking` baseline is untouched.
 
 ---
 
-## v0.1.0: 첫 릴리스 (2026-08-11)
+## v0.1.0 — First release (2026-08-11)
 
-**목표**: 받아서 바로 쓸 수 있는 **3단계 종단**. arch별 정적 바이너리와 `SHA256SUMS`가 릴리스에 붙는다. **서명**(ed25519)은 이후 릴리스로 미뤘다(위 로드맵).
+**Goal** — a **three-stage end-to-end** you can download and run. Per-arch static binaries and `SHA256SUMS` ship with the release; **signing** (ed25519) is deferred to a later release (see the roadmap above).
 
-### 만든 것
+### What was built
 
-- **계약 SSOT**: protobuf 4 네임스페이스(`common`·`discovery`·`inventory`·`provisioning`), `make generate`로 코드 생성.
-- **Discovery**: 레퍼런스 collector 셋. **openssl·jvm은 `/proc` 선행 정찰**로 시작한다. openssl은 로드된 lib을, jvm은 실행 중 JVM을 열거해 attach하고 다중 JVM을 앱 단위로 구별한다. **network는 `/proc`을 쓰지 않고** `AF_PACKET`으로 회선을 수동 관측한다. 그 위에 정규화 파이프라인(evidence·완전성 맵), 히스토리 적재·ed25519 서명(collector 주장 전부 서명), CBOM 위임 수신.
-- **Inventory**: 중앙 적재·조회(Postgres), 머신 메타데이터(엔드포인트·프로필), 앱 표시, **이력 열람·스냅샷 상세·변화 diff**(`-history`·`-snapshot`·`-diff`).
-- **보존 정책**: 관측 기록/스냅샷 2층 분리(같은 상태 반복 관측은 저장을 늘리지 않되 "언제 봤나"는 보존) + 절단(`pqcota-prune`, 기본 dry-run·최신 불가침·절단 사실 기록).
-- **자산 스코프**: 노드 등재 게이트(§1.4)를 자산 단위로 확장. 사용자가 선언한 관리 대상만 적재하고 제외 건수를 고지한다(`pqcota-ingest -scope-assets`).
-- **Provisioning 생성**: 실행 게이트(finalized-only), taxonomy→config 아티팩트, 적용·롤백 Ansible 플레이북(**L1/L2/L3**), before 캡처·롤백 레코드.
-- **L3 활성화·재시작**: 계획의 `activation` 훅(pre·activate·deactivate·restart)에 **사용자가 적은 명령**을 의미 순서(내리고 → 바꾸고 → 켜고 → 재시작)로 배치하고, 롤백은 정확한 역순으로 낸다. 활성화 방법은 환경마다 달라 **도구가 추측하지 않는다**. 빈 훅은 만들지 않고 무엇이 일어나지 않는지 고지한다.
-- **CNG 스키마 예약**: `CRYPTO_RUNTIME_WIN_CNG` enum + `CngAxes`(oneof arm)를 계약에 추가한다(**미구현**이다. 채우는 콜렉터·정규화·프로비저닝은 v0.2.0/v0.3.0이었는데, **당시 계획이다. 지금은 v0.4.0/v0.5.0이고, 옮긴 이유는 [로드맵](#로드맵-예정-릴리스-계획)에 있다**). 단계적 도입의 시작점이다. **계약에 넣을 곳이 생긴다는 것까지** 확인했다(순수 additive: 기존 필드 번호·타입 불변). 실물 Windows에서 무엇 하나 돌려본 바 없으므로 "CNG를 지원한다"는 뜻이 아니다.
-- **검증**: 데모 6단계 종단(생성한 플레이북을 실제 노드에 **적용·활성화·되돌림**까지 실행해 확인), 단계별 examples, 테스트 172개 전부 그린([레벨 분포](docs/test-map.md)), 문서 게이트(`make check-docs`: 링크·앵커·낡은 범위 표현·개인정보).
-- **실물 provider 확인 (선택 단계)**: `DEMO_REAL_PROVIDER=1`이면 데모가 실물 oqsprovider를 빌드해 OpenSSL 3.0–3.4 노드에 배치·활성화하고, **능력이 실제로 생겼는지**를 `openssl list`로 잰다(ML-KEM KEM 0개 → 14개, 되돌리면 다시 0개). 이 확인이 설정 파일을 만드는 쪽의 결함 하나를 잡았다. 생성한 조각에 최상위 `openssl_conf = openssl_init`이 없어, 조각을 `OPENSSL_CONF`로 가리키는 환경에서 **배치도 sha256 게이트도 통과하는데 provider가 올라오지 않았다**. 고치고 회귀 테스트를 붙였다.
+- **Contract SSOT** — protobuf across 4 namespaces (`common` · `discovery` · `inventory` · `provisioning`), code generated with `make generate`.
+- **Discovery** — three reference collectors. **openssl and jvm both start with a `/proc` sweep** — openssl for loaded libs, jvm enumerating running JVMs to attach to, distinguishing multiple JVMs per app. **network does not touch `/proc`**; it observes the wire passively through `AF_PACKET`. On top of those: a normalization pipeline (evidence · completeness map), history ingestion with ed25519 signing (every collector assertion is signed), and delegated CBOM intake.
+- **Inventory** — central ingestion/query (Postgres), machine metadata (endpoints · profiles), app attribution, and **history browsing · snapshot detail · change diff** (`-history` · `-snapshot` · `-diff`).
+- **Retention policy** — two-tier separation of observation records and snapshots (repeated observations of the same state don't grow storage, yet "when it was seen" is preserved) + pruning (`pqcota-prune`, dry-run by default · latest is inviolable · pruning is recorded).
+- **Asset scope** — extends the node-registration gate to the asset level. Only the assets the user declared as managed are ingested, and the excluded count is reported (`pqcota-ingest -scope-assets`).
+- **Provisioning generation** — the execution gate (finalized-only), taxonomy→config artifacts, apply/rollback Ansible playbooks (**L1/L2/L3**), before-state capture and rollback records.
+- **L3 activation and restart** — the commands come from the plan's `activation` hooks (pre·activate·deactivate·restart), **written by the user**; the generator places them in the order that makes them safe (bring down → change → make referenced → restart), and rollback is the exact reverse. How to activate differs per environment, so **the tool does not guess**: an empty hook generates nothing, and what will not happen is reported.
+- **CNG schema reservation** — adds `CRYPTO_RUNTIME_WIN_CNG` enum + `CngAxes` (oneof arm) to the contract (**not implemented** — the collector, normalization, and provisioning that fill it come in v0.2.0/v0.3.0 — **that was the plan at the time; they are now v0.4.0/v0.5.0, and the reason for the move is in the [roadmap](#roadmap--upcoming-releases-planned)**). This is the starting point of the staged rollout. What was confirmed is that **the contract has room for it** (purely additive — existing field numbers and types unchanged). Nothing has been run on real Windows, so this does not mean "CNG is supported".
+- **Verification** — the demo's 6-stage end-to-end (the generated playbook is actually **applied, activated, and rolled back** on a real node), per-stage examples, all 172 tests green (level distribution), and a docs gate (`make check-docs` — links, anchors, stale scope claims, personal data).
+- **Real-provider check (optional stage)** — with `DEMO_REAL_PROVIDER=1` the demo builds a real oqsprovider, deploys and activates it on an OpenSSL 3.0–3.4 node, and measures whether the capability **actually appeared**, via `openssl list` (ML-KEM KEMs 0 → 14; back to 0 after rollback). This check caught a defect in the config-file generation: the generated fragment lacked the top-level `openssl_conf = openssl_init`, so in environments that point `OPENSSL_CONF` at it, **the module was placed and the sha256 gate passed while the provider never loaded**. Fixed, with a regression test.
 
-- **릴리스 발행**: 태그를 밀면 CI가 arch별 정적 바이너리(`linux-amd64`·`linux-arm64`)와 `collector.jar`를 만들고 `SHA256SUMS`를 붙인다. 받은 뒤 `sha256sum -c SHA256SUMS`로 확인한다.
+- **Releasing** — pushing a tag makes CI build per-arch static binaries (`linux-amd64`, `linux-arm64`) and `collector.jar`, then attach `SHA256SUMS`. Verify what you download with `sha256sum -c SHA256SUMS`.
 
-### 알아낸 것
+### What was established
 
-- **지원 커널 하한 = 3.2** (Go 툴체인이 정하는 값: 1.24에서 이 값이 됐고 이후 유지된다. 빌드에 필요한 Go는 `go.mod` 기준 1.26.4다). 이 리포는 그보다 새 기능을 요구하지 않고, 기능별 추가 요구는 컨테이너 안 JVM attach의 `NSpid`(4.1) 하나뿐이며 그마저 호스트 PID로 폴백한다. 표는 [discovery/cmd: 지원 범위](discovery/cmd/README.md#실행-요건-커널권한).
-- **레거시 실제 장비 확인 완료**: 커널 **3.2**(Ubuntu 12.04)와 **3.10**(CentOS 7.9) VM에서 세 collector 실행. 하한 그 자체에서 돌고, 둘 다 `NSpid`가 없어 호스트 PID 폴백까지 실물로 확인됐다. 3.2에는 systemd가 없어 앱을 실행 파일 경로로 짚는 것도 관측됐다.
+- **Minimum supported kernel = 3.2** (the floor the Go toolchain sets — it became this in 1.24 and has held since. Building needs Go 1.26.4, per `go.mod`). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.md).
+- **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real. 3.2 has no systemd, so app attribution by executable path was observed as well.
+
 ---
 
-<!-- 새 버전은 이 위에 새 섹션으로 추가한다(최신이 맨 위). -->
+<!-- Add each new version as a new section above this line (newest on top). -->

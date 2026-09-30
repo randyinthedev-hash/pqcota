@@ -1,138 +1,127 @@
-한국어 · [English](licensing.en.md)
+# License notes (third-party & project licensing)
 
-# 라이선스 정리 (Third-Party & Project Licensing)
 
-**문서 성격**: 현 시점 `pqcota`가 **내부적으로 사용하는 모든 라이선스**를 소비 형태별로 정리한다.
-소비 형태를 나누는 이유는 라이선스 의무가 "배포 바이너리에 링크되는가"에 따라 완전히 달라지기 때문이다.
+**What this document is**: an accounting of **every license `pqcota` uses internally** as of today, organized by how it is consumed. The consumption form matters because license obligations change completely depending on whether something is linked into a distributed binary.
 
-> 여기는 **라이선스 축**이다. 어느 부문에 무엇을 왜 도입했고 무엇을 만들지 않았는지는
-> [관리체계](governance.md)의 「무엇에 기대나」가 본다.
+> This is the **licensing axis**: what each dependency is licensed under, and how it is consumed.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](regulation.md)의 절 번호다.
+> **§ notation**: a `§N` in this document is a section number of **this document**.
 
-> ⚠️ **면책**: 이 문서는 법률 자문이 아니다. 배포 전 OSS 라이선스 전문 변호사의
-> 실사(GPL vs AGPL, or-later, 정확한 버전별 조건)가 필수다.
+> ⚠️ **Disclaimer**: this document is not legal advice. Before distribution, due diligence by counsel specializing in OSS licensing (GPL vs AGPL, or-later, the exact per-version conditions) is required.
 
 ---
 
-## 0. 핵심 결론 (한 줄)
+## 0. The conclusion in one line
 
-**pqcota 제품 바이너리에 링크·번들되는 서드파티는 전부 허용적 라이선스(Apache-2.0 / MIT / BSD-3)뿐이다.**
-카피레프트(GPL 등)는 **오직 별도 프로세스로 실행되는 도구**(데모 환경의 Ansible·JDK 등)에만 존재하며,
-프로세스 경계로 전염이 차단된다(§5). 따라서 **이 리포의 Apache-2.0 배포에 카피레프트 오염이 없다.**
+**Every third party linked or bundled into a pqcota product binary is permissively licensed (Apache-2.0 / MIT / BSD-3).**
+Copyleft (GPL and friends) exists **only in tools that run as separate processes** (Ansible, the JDK in the demo environment), and the process boundary blocks contagion (§5). So **this repo's Apache-2.0 distribution carries no copyleft contamination.**
 
 ---
 
-## 1. pqcota 자체 라이선싱
+## 1. pqcota's own licensing
 
-**이 리포(`pqcota`)는 Apache-2.0**이다. 배포되는 산출물(Go 바이너리·Java 사이드카)에 링크·번들되는
-서드파티는 전부 허용적 라이선스뿐이다(§2 표).
+**This repo (`pqcota`) is Apache-2.0.** Every third party linked or bundled into the distributed outputs (Go binaries, the Java sidecar) is permissively licensed (the §2 table).
 
-GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않는다**. 그 도구가 낸 CycloneDX 파일을
-받기만 한다(`pqcota-cbom-ingest`). 파일 교환이라 전염 경로가 없다 → [위임 수신 설계](../inventory/cbom-intake.md).
+GPL-family tools (CBOMkit and friends) are **neither linked nor executed** — we only receive the CycloneDX files they produce (`pqcota-cbom-ingest`). That is a file exchange, so there is no contagion path → delegated CBOM intake design.
 
-## 2. 빌드 산출물에 링크되는 런타임 의존성 (Go)
+## 2. Runtime dependencies linked into the build output (Go)
 
-이 리포를 빌드한 Go 정적 바이너리(collector·CLI)에 **컴파일·링크되는** 의존성이다. **전부 허용적이다.**
+Dependencies **compiled and linked** into the static Go binaries built from this repo (collectors, CLIs). **All permissive.**
 
-| 모듈 | 버전 | 라이선스 | 비고 |
+| Module | Version | License | Note |
 |---|---|---|---|
-| `github.com/jackc/pgx/v5` | v5.10.0 | **MIT** | Postgres 드라이버(영속화) |
-| `github.com/jackc/pgpassfile` | v1.0.0 | MIT | pgx 간접 |
-| `github.com/jackc/pgservicefile` | v0.0.0-20240606120523-5a60cdf6a761 | MIT | pgx 간접 |
-| `github.com/jackc/puddle/v2` | v2.2.2 | MIT | pgx 커넥션 풀 |
-| `google.golang.org/grpc` | v1.82.1 | **Apache-2.0** | intake 계약 전송 |
-| `google.golang.org/protobuf` | v1.36.11 | **BSD-3-Clause** | 계약 직렬화(protojson 포함) |
-| `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260414002931-afd174a4e478 | Apache-2.0 | grpc 간접 |
-| `golang.org/x/sys` | v0.46.0 | **BSD-3-Clause** | AF_PACKET(network-collector) |
-| `golang.org/x/net` | v0.56.0 | BSD-3-Clause | grpc 간접 |
-| `golang.org/x/sync` | v0.21.0 | BSD-3-Clause | 간접 |
-| `golang.org/x/text` | v0.39.0 | BSD-3-Clause | 간접 |
+| `github.com/jackc/pgx/v5` | v5.10.0 | **MIT** | Postgres driver (persistence) |
+| `github.com/jackc/pgpassfile` | v1.0.0 | MIT | pgx indirect |
+| `github.com/jackc/pgservicefile` | v0.0.0-20240606120523-5a60cdf6a761 | MIT | pgx indirect |
+| `github.com/jackc/puddle/v2` | v2.2.2 | MIT | pgx connection pool |
+| `google.golang.org/grpc` | v1.82.1 | **Apache-2.0** | intake contract transport |
+| `google.golang.org/protobuf` | v1.36.11 | **BSD-3-Clause** | contract serialization (protojson included) |
+| `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260414002931-afd174a4e478 | Apache-2.0 | grpc indirect |
+| `golang.org/x/sys` | v0.46.0 | **BSD-3-Clause** | AF_PACKET (network collector) |
+| `golang.org/x/net` | v0.56.0 | BSD-3-Clause | grpc indirect |
+| `golang.org/x/sync` | v0.21.0 | BSD-3-Clause | indirect |
+| `golang.org/x/text` | v0.39.0 | BSD-3-Clause | indirect |
 
-`gopkg.in/yaml.v3`(MIT)는 위 목록에 없다. 데모 토폴로지 생성기와 테스트에서만 쓰여 collector·CLI에 링크되지 않는다.
+`gopkg.in/yaml.v3` (MIT) is not in the list above — it is used only by the demo topology generator and by tests, so it is not linked into the collectors or CLIs.
 
-**정리**: 링크되는 카피레프트는 **없다**. Apache-2.0/MIT/BSD-3은 상호 호환이며 Apache-2.0 배포에 문제 없다.
-BSD-3·MIT는 저작권 고지 유지 의무만 있으므로 배포물에 `THIRD-PARTY-NOTICES` 동봉을 권장한다.
+**Summary**: **no** copyleft is linked. Apache-2.0, MIT, and BSD-3 are mutually compatible and pose no problem for an Apache-2.0 distribution.
+(BSD-3 and MIT only require preserving the copyright notice → shipping `THIRD-PARTY-NOTICES` with the distribution is recommended.)
 
 ---
 
-## 3. 빌드 타임 도구 (산출물에 링크되지 않음)
+## 3. Build-time tools (not linked into the output)
 
-코드 생성·컴파일에만 쓰이고 **산출 바이너리에 링크되지 않는다**.
+Used only for code generation and compilation; **not linked into the resulting binaries**.
 
-| 도구 | 라이선스 | 용도 |
+| Tool | License | Purpose |
 |---|---|---|
-| Go 툴체인 (`golang:1.26`) | BSD-3-Clause (Go) | 컴파일 |
-| `buf` (bufbuild/buf) | Apache-2.0 | proto 코드 생성(`buf generate`) |
-| `protoc-gen-go` | BSD-3-Clause | Go 메시지 생성 |
-| `protoc-gen-go-grpc` | Apache-2.0 | gRPC 스텁 생성 |
+| Go toolchain (`golang:1.26`) | BSD-3-Clause (Go) | compilation |
+| `buf` (bufbuild/buf) | Apache-2.0 | proto code generation (`buf generate`) |
+| `protoc-gen-go` | BSD-3-Clause | Go message generation |
+| `protoc-gen-go-grpc` | Apache-2.0 | gRPC stub generation |
 
 ---
 
-## 4. 데모 환경 구성요소 (`demo/`): 별도 프로세스/컨테이너, 링크 안 됨
+## 4. Demo environment components (`demo/`) — separate processes/containers, not linked
 
-> 아래 구성요소는 디스커버리 데모(`demo/`)에서 SSH·서브프로세스·컨테이너로 돌며 pqcota 바이너리에 링크되지 않는다.
+> The components below run in the discovery demo (`demo/`) over SSH, as subprocesses, or in containers, and are not linked into any pqcota binary.
 
-`demo/`는 컨테이너·별도 실행 파일로 동작한다. pqcota 바이너리에 **정적/동적 링크되지 않으며**, 전부
-SSH·서브프로세스·컨테이너 프로세스 경계 너머에서 실행된다 → **GPL/카피레프트가 있어도 전염되지 않는다**(라이선스 정리 원칙과 동일).
+`demo/` operates through containers and separate executables. Nothing there is **statically or dynamically linked** into a pqcota binary; it all runs beyond an SSH, subprocess, or container process boundary → **even where GPL/copyleft is present, there is no contagion** (the same principle as above).
 
-| 구성요소 | 버전 | 라이선스 | 소비 형태 |
+| Component | Version | License | Consumption form |
 |---|---|---|---|
-| BouncyCastle `bcprov-jdk18on` | 1.85 | **Bouncy Castle Licence**(MIT X11 계열, 허용적) | pay-app의 JCA provider(별도 JVM). 허용적 라이선스라 번들도 가능(프로비저닝 설계 §4.2) |
-| Eclipse Temurin (OpenJDK) | 21 | **GPLv2 + Classpath Exception** | pay-app 런타임(별도 컨테이너·프로세스). CPE로 Java 앱은 GPL 미전염 |
-| OpenSSL | 3.x(우분투) | **Apache-2.0** | web-gw/pay-db의 TLS(별도 프로세스) |
-| OpenSSH (server/client) | 9.x | **BSD 계열**(+일부 public domain) | sshd·ssh(Ansible 전송·SSH 엣지 관측 대상) |
-| Ansible | (배포판) | **GPL-3.0-or-later** | 컨트롤러에서 실행되는 **독립 실행 파일**. pqcota와 링크 없음(오케스트레이션 도구) |
-| Graphviz (`dot`) | (배포판) | **CPL-1.0**(Common Public License) | 토폴로지 SVG 렌더(별도 프로세스). 산출물(SVG)은 데이터 |
-| Ubuntu 24.04 base image |: | 집합(주로 GPL/LGPL/MIT/BSD 등 다수 패키지) | 컨테이너 베이스 |
-| `golang:1.26` base image |: | 집합(Go=BSD-3 + Debian 베이스) | 빌더 스테이지 |
+| BouncyCastle `bcprov-jdk18on` | 1.85 | **Bouncy Castle Licence** (MIT X11 family, permissive) | pay-app's JCA provider (a separate JVM). Being permissive, bundling would also be allowed |
+| Eclipse Temurin (OpenJDK) | 21 | **GPLv2 + Classpath Exception** | pay-app's runtime (separate container and process). With the CPE, Java apps are not infected by GPL |
+| OpenSSL | 3.x (Ubuntu) | **Apache-2.0** | TLS for web-gw/pay-db (separate processes) |
+| OpenSSH (server/client) | 9.x | **BSD family** (+ some public domain) | sshd and ssh (Ansible transport, and the subject of SSH edge observation) |
+| Ansible | (distro) | **GPL-3.0-or-later** | a **standalone executable** run on the controller. Not linked with pqcota (an orchestration tool) |
+| Graphviz (`dot`) | (distro) | **CPL-1.0** (Common Public License) | topology SVG rendering (separate process). The output (SVG) is data |
+| Ubuntu 24.04 base image | — | an aggregate (many packages, mostly GPL/LGPL/MIT/BSD) | container base |
+| `golang:1.26` base image | — | an aggregate (Go = BSD-3 + a Debian base) | builder stage |
 
-> **GPL 도구(Ansible·Temurin) 취급**: 이들은 pqcota가 **호출**하는 별도 프로그램이지 링크 대상이 아니다.
-> Ansible은 플레이북을 실행하는 오케스트레이터, Temurin은 타깃 노드의 런타임일 뿐이다. GPL은
-> "저작물의 파생·링크"에 전염되므로, 프로세스로만 부르는 이 관계엔 적용되지 않는다.
-> 데모를 배포·재배포할 때도 이 도구들은 **사용자가 각자 설치**(이미지 빌드 시 다운로드)하는 형태라 pqcota가 재배포하지 않는다.
+> **How the GPL tools (Ansible, Temurin) are treated**: these are separate programs pqcota **invokes**, not link targets.
+> Ansible is the orchestrator that runs playbooks; Temurin is just the runtime on the target node. GPL propagates through
+> "derivation from and linking against a work", so it does not apply to a relationship that is only a process call.
+> When the demo is distributed or redistributed, these tools are **installed by the user** (downloaded at image build), so pqcota does not redistribute them.
 
 ---
 
-## 5. 카피레프트 격리: 무엇이 그것을 강제하나
+## 5. Copyleft isolation — what enforces it
 
-**GPL copyleft 전염을 구조로 차단한다.** 원칙 셋:
+**GPL copyleft contagion is blocked structurally.** Three principles:
 
-1. **프로세스 분리**: GPL 컴포넌트를 라이브러리 링크가 아니라 독립 바이너리로 호출한다.
-2. **표준 데이터 경계**: 프로세스 간 교환은 CycloneDX CBOM(표준)으로만. 코어 내부 API를 넘기지 않는다.
-3. **배포 분리**: GPL 코드를 이 리포·배포물에 번들·정적 링크·소스 포함하지 않는다.
+1. **Process separation** — a GPL component is invoked as an independent binary, never linked as a library.
+2. **A standard data boundary** — inter-process exchange happens only through CycloneDX CBOM (a standard). Core internal APIs never cross it.
+3. **Distribution separation** — GPL code is never bundled, statically linked, or vendored into this repo or its distributions.
 
-자체 GPL collector를 만들더라도 같은 경계를 적용한다. 컴포넌트별 정확한 라이선스(GPL vs AGPL,
-or-later)와 SaaS로 배포할 때의 AGPL 함의는 **실사가 필요하다**. 이 문서는 법률 자문이 아니다.
+The same boundary applies even if we write our own GPL collector. The exact license per component (GPL vs AGPL, or-later) and the AGPL implications for a SaaS deployment **require due diligence** — this document is not legal advice.
 
-무엇이 그 원칙을 강제하는지는 아래 표다.
+What enforces those principles is the table below.
 
-| 원칙 | 무엇이 강제하나 |
+| Principle | What enforces it |
 |---|---|
-| 별도 프로세스 | `contracts/.../collector.proto`의 intake 계약(§1.6): GPL collector는 gRPC/CLI 뒤에 선다 |
-| 표준 데이터만 교환 | 그 계약이 주고받는 것은 CycloneDX + Envelope뿐. 코어 내부 타입은 넘지 않는다 |
-| 배포 분리 | GPL 어댑터는 **별도 리포**이고 `go.mod`에 없다. CI 라이선스 스캐너가 교차 의존을 막는다 |
+| Separate process | the intake contract in `contracts/.../collector.proto` — a GPL collector stands behind gRPC/CLI |
+| Standard data only | that contract carries nothing but CycloneDX + Envelope. Core internal types never cross it |
+| Distribution separation | the GPL adapter is a **separate repo** and is not in `go.mod`. The CI license scanner blocks a cross dependency |
 
-`demo/`의 Ansible(GPL-3)·Temurin(GPLv2+CE)도 같은 경계 밖에서 별도 프로세스로 돈다.
+Ansible (GPL-3) and Temurin (GPLv2+CE) in `demo/` likewise run as separate processes outside the same boundary.
 
-**이 리포는 Apache-2.0으로 공개한다.** 관측성을 오픈소스로 풀어 커뮤니티가 collector를 늘릴 수
-있게 하려는 것이고, 레퍼런스 collector도 같은 이유로 OSS다(§2.2 "자체 구현 공백"인 JVM 인트로스펙션 포함).
+**This repo is published under Apache-2.0.** The point is to open up observability so the community can add collectors, and the reference collectors are OSS for the same reason (including the JVM introspection, which nothing off the shelf covers).
 
-| 구분 | 라이선스 | 포함물 |
+| Category | License | What it contains |
 |---|---|---|
-| **이 리포** | **Apache-2.0** | 계약·정규화·인벤토리·프로비저닝 생성 + 레퍼런스 collector |
-| **GPL 어댑터**(선택) | GPL-3.0, 별도 리포 | CipherIQ/CBOMkit 서브프로세스 래퍼 |
-| **PQC provider 라이브러리** | 자산별 상이 | BouncyCastle(허용적) · BC-FJA(FIPS, 별도 계약): 사용자가 조달 |
+| **This repo** | **Apache-2.0** | contracts, normalization, inventory, provisioning generation + reference collectors |
+| **GPL adapter** (optional) | GPL-3.0, a separate repo | CipherIQ/CBOMkit subprocess wrappers |
+| **PQC provider libraries** | varies per asset | BouncyCastle (permissive) · BC-FJA (FIPS, separate agreement) — procured by the user |
 
-**사용자가 고를 때 함의를 보인다.** collector 선택 UI는 `CollectorCapabilities.license`로
-*"이 백엔드는 GPL 컴포넌트 별도 설치"* 인지 *"레퍼런스 = Apache-2.0 포함"* 인지 밝힌다.
+**The implications are shown at the point of choice.** The collector selection UI uses `CollectorCapabilities.license` to state whether a backend means *"a GPL component installed separately"* or *"the reference = Apache-2.0, included"*.
 
 ---
 
-## 부록: 소비 형태별 한눈 요약
+## Appendix: consumption forms at a glance
 
-| 소비 형태 | 카피레프트 존재? | 전염 위험 | 예 |
+| Consumption form | Copyleft present? | Contagion risk | Examples |
 |---|---|---|---|
-| 빌드 산출물 링크(§2) | ❌ 없음 | 없음 | pgx(MIT), grpc(Apache), protobuf(BSD) |
-| 빌드 타임(§3) | ❌ 없음 | 없음 | buf, protoc-gen-* |
-| 데모 별도 프로세스(§4) | ✅ 있음(Ansible·Temurin) | **격리로 차단** | Ansible(GPL-3), Temurin(GPLv2+CE) |
+| Linked into the build output (§2) | ❌ none | none | pgx (MIT), grpc (Apache), protobuf (BSD) |
+| Build time (§3) | ❌ none | none | buf, protoc-gen-* |
+| Separate processes in the demo (§4) | ✅ yes (Ansible, Temurin) | **blocked by isolation** | Ansible (GPL-3), Temurin (GPLv2+CE) |

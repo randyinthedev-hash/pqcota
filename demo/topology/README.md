@@ -1,128 +1,126 @@
-# demo/topology: 데모가 세우는 레거시 환경 정의
+# demo/topology: the definition of the legacy environment the demo stands up
 
-**관측 대상 환경이 이 YAML 하나로 정의된다.** 노드 수·종류·OpenSSL 버전·JCA provider·네트워크
-세그먼트·핸드셰이크 엣지를 선언하면, 생성기가 compose·groups·profiles를 만들어 그 위에서
-디스커버리→인벤토리→프로비저닝을 돌린다. 별도 모드나 플래그는 없다. 데모는 **이 경로 하나뿐**이다.
+**The environment to be observed is defined by this one YAML.** Declare the number and kind of nodes, the OpenSSL versions, the JCA providers, the network
+segments and the handshake edges, and the generator produces compose, groups and profiles, and runs
+discovery → inventory → provisioning on top of them. There is no separate mode or flag: the demo has **this one path only**.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호다.
+> **Not listed here: the two tool-side containers.** `pqcota-ctl` (the controller) and `pqcota-demo-pg` (the inventory store)
+> are not written in the spec, and the generator **adds them automatically.** This YAML is where you write **what pqcota looks at**, not
+> where you write pqcota itself (which also removes any chance of deleting them and breaking the demo).
+> Both **attach to every segment**, because the controller has to reach every node over SSH. In a real environment the
+> controller may be unable to reach an isolated segment, and that constraint is something the demo deliberately simplifies.
 
-> **여기 없는 것: 도구 쪽 컨테이너 둘.** `pqcota-ctl`(컨트롤러)과 `pqcota-demo-pg`(인벤토리 저장소)는
-> 명세에 안 적고 생성기가 **자동으로 넣는다.** 이 YAML은 **pqcota가 들여다보는 대상**을 적는 곳이지
-> pqcota 자신을 적는 곳이 아니기 때문이다(지워서 데모를 망가뜨릴 여지도 없앤다).
-> 둘은 **모든 세그먼트에 붙는다**. 컨트롤러가 어느 노드에든 SSH로 닿아야 하기 때문이다. 실제 환경에선
-> 컨트롤러가 격리 세그먼트에 못 닿을 수 있는데, 그 제약은 데모가 일부러 단순화한 부분이다.
+> **The only host prerequisite is still Docker.** The generator (`topogen`, Go) runs inside a container. You do not need Go on the host.
 
-> **호스트 전제는 여전히 Docker뿐.** 생성기(`topogen`, Go)는 컨테이너 안에서 돈다. 호스트에 Go도 설치할 필요 없다.
+## Quick start
 
-## 빠른 시작
-
-**아무것도 준비할 필요 없다.** `up.sh`가 `topology.yaml`이 없으면 샘플을 복사해 그 구성으로 돌린다:
+**You do not need to prepare anything.** If `topology.yaml` is missing, `up.sh` copies the sample and runs with that composition:
 
 ```bash
-./demo/scripts/up.sh      # (없으면 샘플 복사) → 생성 → 빌드 → 기동 → 키·IP맵
-./demo/scripts/demo.sh    # 접근준비→디스커버리→인벤토리→프로비저닝
-./demo/scripts/down.sh    # 정리 (--rmi 로 이미지까지)
+./demo/scripts/up.sh      # (copies the sample if missing) → generate → build → start → keys and IP map
+./demo/scripts/demo.sh    # access prep → discovery → inventory → provisioning
+./demo/scripts/down.sh    # clean up (--rmi removes the images too)
 ```
 
-**자기 환경에 맞추려면** 복사된 `demo/topology/topology.yaml`을 고치고 다시 `up.sh` 하면 된다.
+**To fit your own environment**, edit the copied `demo/topology/topology.yaml` and run `up.sh` again.
 
-> **추적되는 것은 샘플(`topology.example.yaml`)뿐이다.** 실제로 쓰이는 `topology.yaml`·생성물
-> (`demo/.generated/`)은 gitignore라, 마음껏 고쳐도 `git status`가 깨끗하고 `pull`이 충돌하지 않는다.
-> 기본 구성으로 되돌리려면 `topology.yaml`을 지우고 `up.sh`를 다시 돌리면 된다(샘플이 다시 복사된다).
+> **Only the sample (`topology.example.yaml`) is tracked.** The `topology.yaml` actually in use and the generated files
+> (`demo/.generated/`) are gitignored, so you can edit freely, `git status` stays clean and `pull` does not conflict.
+> To return to the default composition, delete `topology.yaml` and run `up.sh` again (the sample is copied again).
 
-### 기본 구성이 보여주는 것
+### What the default composition shows
 
-샘플은 결제 서비스 3노드를 세우고, 한 번에 여러 관측 축을 드러낸다:
+The sample stands up three payment-service nodes and exposes several observation axes at once:
 
-| 노드 | 무엇 | 무엇을 보이나 |
+| Node | What | What it shows |
 |---|---|---|
-| `web-gw` | OpenSSL **3.x** 클라이언트 (corp) | 현대 스택 · 트래픽 소스(**SSH 등급은 이 노드의 클라이언트가 가른다**) |
-| `pay-app` | Java + **BC 런타임 등록** (corp) | 정적 스캔으론 안 보이고 **attach로만** 잡히는 provider |
-| `pay-db` | OpenSSL **1.1.1** 서버, 앱 2개 (corp+db) | **레거시=양자취약** · 공유 `.so` **여러 앱에 걸침**(영향 범위) · 세그먼트 2개에 걸침 |
+| `web-gw` | OpenSSL **3.x** client (corp) | a modern stack and the traffic source (**the SSH grade is decided by this node's client**) |
+| `pay-app` | Java + **BC registered at runtime** (corp) | a provider a static scan cannot see and **only attach** catches |
+| `pay-db` | OpenSSL **1.1.1** server, two apps (corp+db) | **legacy = quantum-vulnerable** · a shared `.so` **spanning several apps** (blast radius) · spans two segments |
 
-엣지 4개가 **TLS·SSH 각각에서 현대↔레거시**를 가른다:
+Four edges split **modern from legacy on TLS and on SSH separately**:
 
-| 엣지 | 등급 | 왜 |
+| Edge | Grade | Why |
 |---|---|---|
-| `web-gw→pay-app` TLS | 🟢 X25519MLKEM768 | Go `crypto/tls` 하이브리드 |
-| `web-gw→pay-db` TLS | 🔴 x25519 | OpenSSL **1.1.1**엔 PQC 그룹이 없다 |
-| `web-gw→pay-app` SSH | 🟢 sntrup761 | 양쪽 다 OpenSSH 9+ (클라이언트가 기본 제안) |
-| `web-gw→pay-db` SSH | 🔴 curve25519 | 레거시 OS의 **OpenSSH 8.2**엔 PQC KEX가 없다 |
+| `web-gw→pay-app` TLS | 🟢 X25519MLKEM768 | Go `crypto/tls` hybrid |
+| `web-gw→pay-db` TLS | 🔴 x25519 | **OpenSSL 1.1.1** has no PQC group |
+| `web-gw→pay-app` SSH | 🟢 sntrup761 | both sides run OpenSSH 9+ (the client offers it by default) |
+| `web-gw→pay-db` SSH | 🔴 curve25519 | **OpenSSH 8.2** on the legacy OS has no PQC KEX |
 
-레거시 노드는 **TLS도 SSH도** 고전으로 남는다. 등급은 도구가 관측한 대로 매긴 것이지 지정한 것이 아니다.
+The legacy node stays classical on **both TLS and SSH**. The grade is what the tool observed, not something assigned.
 
-### 편집하는 것은 `topology.yaml` 하나다 (`hosts.csv`는 생성물)
+### What you edit is `topology.yaml` alone (`hosts.csv` is generated)
 
-데모에 CSV가 여럿 보이지만 **사용자가 손대는 파일은 `topology.yaml`뿐**이다. 나머지는 전부 생성된다:
+The demo shows several CSVs, but **the only file the user touches is `topology.yaml`**. The rest are all generated:
 
-| 파일 | 무엇 | 누가 만드나 |
+| File | What | Who makes it |
 |---|---|---|
-| **`topology.yaml`** | **무엇을 세울지**. 노드·종류·네트워크·엣지 | **사용자(편집)** |
-| `docker-compose.yml` · `groups.ini` · `profiles.csv` | 컨테이너·Ansible 그룹·CMDB 프로필 | 생성기(`demo/.generated/`) |
-| `hosts.csv` | **어디에 어떻게 접속할지**. node_id·IP·계정·키 | `up.sh` (컨테이너가 떠야 IP가 정해지므로) |
+| **`topology.yaml`** | **What to stand up**: nodes, kinds, networks, edges | **the user (edits)** |
+| `docker-compose.yml` · `groups.ini` · `profiles.csv` | containers, Ansible groups, CMDB profiles | the generator (`demo/.generated/`) |
+| `hosts.csv` | **Where and how to connect**: node_id, IP, account, key | `up.sh` (the IPs are only fixed once the containers are up) |
 
-`hosts.csv`는 제품 모델에선 **사용자가 자기 호스트를 적는 파일**이다(§1.5). 데모에선 IP를 Docker가 런타임에 배정하니 `up.sh`가 그 역할을 대신 수행한다. 플레이북 적용을 데모가 대행하는 것과 같은 구도다. 그래서 **커스텀 토폴로지에서도 `hosts.csv`를 직접 쓸 일은 없다.**
+In the product model, `hosts.csv` is **the file where the user writes their own hosts**. In the demo Docker assigns the IPs at run time, so `up.sh` plays that role instead. It is the same arrangement as the demo applying the playbook on the user's behalf. So **even with a custom topology you never write `hosts.csv` yourself.**
 
-## 명세 (`topology.yaml`)
+## The spec (`topology.yaml`)
 
 ```yaml
-networks: [dmz, app, db]        # 브리지 세그먼트(망 분리 흉내). 생략 시 단일 net
+networks: [dmz, app, db]        # bridge segments (imitating network separation). A single net if omitted
 
 nodes:
-  - id: web-gw                  # 컨테이너명·node_id (소문자/숫자/-)
-    name: Payments Web Gateway  # 인벤토리 뷰에 뜨는 이름
-    kind: openssl               # openssl | java  ← pqcota가 실제로 관측하는 것만
+  - id: web-gw                  # container name and node_id (lowercase, digits, -)
+    name: Payments Web Gateway  # the name shown in the inventory view
+    kind: openssl               # openssl | java  ← only what pqcota really observes
     role: client                # openssl: client | server
-    openssl: { fork: openssl, version: "3.0" }   # fork=openssl일 때 version→base 이미지
-    networks: [dmz, app]        # 여러 세그먼트에 걸칠 수 있다
+    openssl: { fork: openssl, version: "3.0" }   # when fork=openssl, version → base image
+    networks: [dmz, app]        # may span several segments
     profile: { env: production, role: web, owner: Platform team }
 
   - id: pay-app
     name: Payments App
     kind: java
-    jca: { providers: [BC] }    # 런타임 등록 provider(SUN·SunJCE는 JDK 기본). BC 유무가 등급을 가른다
+    jca: { providers: [BC] }    # providers registered at runtime (SUN and SunJCE are JDK defaults). Whether BC is present decides the grade
     networks: [app]
 
   - id: pay-db
     name: Payments DB
     kind: openssl
     role: server
-    openssl: { fork: openssl, version: "1.1.1" }  # 레거시 = 양자취약
-    apps: [payment-gw, api-gw]  # (openssl server) 여러 앱이 한 libssl 로드 → 공유 .so 여러 앱에 걸침
+    openssl: { fork: openssl, version: "1.1.1" }  # legacy = quantum-vulnerable
+    apps: [payment-gw, api-gw]  # (openssl server) several apps load one libssl → the shared .so spans several apps
 
-edges:                          # 관측할 핸드셰이크 → 등급(🟢 PQC / 🔴 고전)
+edges:                          # handshakes to observe → grade (🟢 PQC / 🔴 classical)
   - { from: web-gw, to: pay-app, proto: pqc, port: 8443 }
   - { from: web-gw, to: pay-db,  proto: ssl, port: 4433 }
 ```
 
-### 조절 가능한 축
+### The axes you can adjust
 
-| 축 | 값 | 무엇을 보이나 |
+| Axis | Values | What it shows |
 |---|---|---|
-| **노드 종류** | `openssl` · `java` | pqcota가 관측하는 런타임만 |
-| **openssl fork** | `openssl` · `libressl` | discovery의 **fork 판별**(수용 원칙 §2.2, 같은 soname 다른 fork) |
-| **openssl version** | `1.1.1` · `3.0` · `3` | base 이미지의 OpenSSL 버전(레거시↔현대·버전 탐지) |
-| **jca providers** | 예: `[BC]` · `[]` | BC 유무 → JCA 등급 차이(attach로 동적 등록 포착) |
-| **networks** | 임의 세그먼트 목록 | 다중 브리지로 망 분리, 노드가 여러 세그먼트에 걸침 |
-| **apps** (openssl server) | 앱 이름 목록 | 공유 `.so`를 여러 앱이 로드 → **여러 앱에 걸침 · 영향 범위** |
-| **edges** | `pqc` · `ssl` · `ssh` | 핸드셰이크 관측 → 🟢/🔴 등급 |
+| **node kind** | `openssl` · `java` | only the runtimes pqcota observes |
+| **openssl fork** | `openssl` · `libressl` | discovery's **fork detection** (the same soname, a different fork) |
+| **openssl version** | `1.1.1` · `3.0` · `3` | the OpenSSL version of the base image (legacy ↔ modern, version detection) |
+| **jca providers** | e.g. `[BC]` · `[]` | whether BC is present → a JCA grade difference (attach catches the dynamic registration) |
+| **networks** | any list of segments | network separation through several bridges; a node spans several segments |
+| **apps** (openssl server) | a list of app names | several apps load a shared `.so` → **spanning several apps · blast radius** |
+| **edges** | `pqc` · `ssl` · `ssh` | handshake observation → 🟢/🔴 grade |
 
-### 서버/트래픽 규칙 (자동 유도)
+### Server and traffic rules (derived automatically)
 
-- `to`가 `pqc` 엣지인 노드 → PQC TLS 서버(:8443)를 띄운다.
-- `to`가 `ssl` 엣지이거나 `role: server`인 openssl 노드 → 고전 s_server를 띄운다.
-- `from` 노드 → 그 엣지들로 트래픽을 생성한다(관측 구간을 채운다).
+- A node that is the `to` of a `pqc` edge → a PQC TLS server (:8443) is started.
+- An openssl node that is the `to` of an `ssl` edge or has `role: server` → a classical s_server is started.
+- A `from` node → traffic is generated toward those edges (it fills the observation window).
 
-## 정직성 경계 · 알려진 한계
+## Honesty boundaries · known limits
 
-- **관측하지 못하는 런타임은 못 넣는다.** `.NET`·`Go` 같은 종류는 거부된다. 있는 척하지 않는다(§2.5).
-- **s_server가 없는 fork**(BoringSSL·AWS-LC)는 데모 서버 노드로 못 띄우므로 **명확한 오류로 거부**한다.
-- **openssl finding이 하나도 없는 토폴로지**면 프로비저닝 시연은 생략된다(대상이 없으니).
-- **엣지 관측은 트래픽 소스 노드의 첫 세그먼트(eth0)에서** 한다(netcap이 한 인터페이스를 본다). 다중
-  세그먼트를 써도 되지만, **관측하려는 쌍은 소스 노드의 첫 세그먼트에서 서로 도달**해야 잡힌다. 소스가
-  안 닿는 격리 세그먼트의 엣지는 캡처되지 않는다(예시는 pay-db를 corp+db 양쪽에 걸쳐 corp에서 관측한다).
-- **LibreSSL은 버전을 OpenSSL로 위장한다**(`OPENSSL_VERSION_NUMBER` 호환값). 그래서 `fork: libressl`
-  노드는 실제로 LibreSSL을 로드하지만 collector는 **OpenSSL 3.1.x로 보고**한다. 같은 soname 문제(수용 원칙 §2.2)가
-  버전 위장까지 겹친 정직한 한계다. 이 축은 지원하되 예시엔 두지 않았다.
+- **A runtime that cannot be observed cannot be added.** Kinds such as `.NET` and `Go` are rejected. Nothing pretends to be there.
+- **A fork without an s_server** (BoringSSL, AWS-LC) cannot be started as a demo server node, so it is **rejected with a clear error**.
+- **A topology with no openssl finding at all** skips the provisioning demonstration (there is nothing to act on).
+- **Edge observation happens on the first segment (eth0) of the traffic-source node** (netcap watches one interface). You may use several
+  segments, but **the pair you want to observe has to reach each other on the source node's first segment** to be caught. An edge in an isolated segment the source
+  cannot reach is not captured (the example spans pay-db across corp and db and observes from corp).
+- **LibreSSL disguises its version as OpenSSL** (the `OPENSSL_VERSION_NUMBER` compatibility value). So a `fork: libressl`
+  node really loads LibreSSL, but the collector **reports OpenSSL 3.1.x**. It is an honest limit where the same-soname problem
+  is compounded by version disguise. This axis is supported but left out of the example.
 
-생성물은 `demo/.generated/`(gitignore, 리포 산출물 단일 위치)에 생긴다. 열어보면 무엇이 만들어졌는지 그대로 보인다.
+The generated files land in `demo/.generated/` (gitignored, the single place for the repo's build outputs). Open them and you see exactly what was made.

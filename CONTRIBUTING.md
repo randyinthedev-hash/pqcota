@@ -1,220 +1,168 @@
-한국어 · [English](CONTRIBUTING.en.md)
+# Contributing (CONTRIBUTING)
 
-# 기여 안내 (CONTRIBUTING)
 
-pqcota를 **포크·확장·기여**하려는 개발자를 위한 문서다. 플랫폼을 *써보려는* 사용자는 루트 [README](README.md)와 [demo/](demo/)를 보면 된다.
+> **What will not be broken** — contract, signature, Go API, DB schema, and mixed versions, written out
+> as five distinct faces: [compatibility policy](docs/compatibility.md) Read it before changing
+> any of them.
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](docs/regulation.md)의 절 번호다.
+For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.md) and [demo/](demo/).
 
-> **깨지 않기로 한 것.** 계약·서명·Go API·DB 스키마·혼재 버전, 다섯 면을 갈라 적었다:
-> [호환성 정책](docs/compatibility.md). 무언가를 바꾸기 전에 먼저 읽는다.
+## Prerequisites
 
-## 사전 요구
+You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refuses to build) and
+**buf** + `protoc-gen-go`·`protoc-gen-go-grpc`. Add **JDK 11+** if you touch the JVM collector (optional — without it only the sidecar build is skipped).
+Once the repo builds, the [examples](examples/) just run (only the JVM and OpenSSL integration
+examples need **Docker** as well).
 
-**Go 1.26.4+**(`go.mod`의 `go` 지시자보다 낮으면 툴체인이 거부한다)와 **buf** + `protoc-gen-go`·
-`protoc-gen-go-grpc`가 필요하다. JVM collector를 만진다면 **JDK 11+**도 있어야 한다(선택이다. 없으면 사이드카 빌드만 건너뛴다).
-리포를 빌드했으면 [예제](examples/)는 그대로 돌아간다(JVM·OpenSSL 통합 예제만 **Docker**를 더 쓴다).
+This document covers **contributing to the repo**. If you only use it, building and running are covered by the [root README](README.md#build).
 
-이 문서는 **리포에 기여하는** 경우를 다룬다. 쓰기만 한다면 빌드·실행은 [루트 README](README.md#빌드)로 충분하다.
+### Which OS can you build on
 
-### 어느 OS에서 빌드할 수 있나
-
-| OS | `go build` · `go test` | `make`(게이트) | 노드에 올릴 바이너리 |
+| OS | `go build` · `go test` | `make` (gates) | Node binaries |
 |---|---|---|---|
-| **Linux** | ✅ | ✅ | ✅ 그대로 |
-| **macOS** (amd64·arm64) | ✅ | ✅ | ✅ 교차 빌드 |
-| **Windows** (amd64·arm64) | ✅ | POSIX 셸 필요 → **WSL** | ✅ 교차 빌드 |
+| **Linux** | ✅ | ✅ | ✅ directly |
+| **macOS** (amd64·arm64) | ✅ | ✅ | ✅ cross-compiled |
+| **Windows** (amd64·arm64) | ✅ | needs a POSIX shell → **WSL** | ✅ cross-compiled |
 
-리눅스 전용 코드(`/proc`·AF_PACKET·attach)는 `//go:build linux`로 갈라 두고 다른 OS에는 거부 스텁을
-둔다. 그래서 macOS·Windows에선 그 코드가 컴파일 대상에서 빠지고, 깨져도 호스트 빌드는 통과한다.
-`make build`가 **호스트 + linux/amd64 + windows/amd64 교차**를 함께 확인하는 이유가 여기 있다. Windows는 CNG collector를 빌드·검증할 대상이라 함께 본다.
+Linux-only code (`/proc`, AF_PACKET, attach) sits behind `//go:build linux`, with a refusing stub on
+other platforms. So on macOS and Windows that code is excluded from compilation and breaking it would
+still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**. Windows is included because the CNG collector is built and verified there.
 
-## 개발 루프
+## Development loop
 
-빌드 절차는 [루트 README · 빌드](README.md#빌드)와 같다.
-기여할 때 더 쓰는 것은 게이트와 테스트다:
-
-```bash
-make            # 전체 게이트 (무엇을 돌리는지는 Makefile의 all 타깃)
-go test ./...   # 단위
-```
-
-`make build`는 **산출물을 남기지 않는다.** 호스트·linux/amd64·windows/amd64 교차 컴파일이 되는지만 확인한다
-(리눅스 전용 파일까지). 쓸 바이너리는 루트 README처럼 `-o`로 위치를 정해 만든다.
-`make build-jar`는 JDK가 없으면 경고 후 건너뛰므로 Go만 만지는 기여자는 JDK 없이도 `make`가 돈다.
-테스트는 실 JVM 없이 돈다.
-
-> **`no required module provides package .../gen/pqcota/...`가 뜨면** 생성을 건너뛴 것이다.
-> Go가 함께 제안하는 `go get github.com/randyinthedev-hash/pqcota/gen/...`는 **답이 아니다.** 받을 수 있는
-> 모듈이 아니라 이 리포에서 만들어내는 코드다. `make generate`를 먼저 돌린다.
-
-계약을 바꿨으면 `make lint`(buf lint) + 하위호환 확인:
+The build procedure is the same as [root README · Build](README.md#build). What you additionally use when contributing are the gates and tests:
 
 ```bash
-make breaking                  # 마지막 릴리스 태그와 대조 — 이미 나간 계약을 깨지 않는지 (CI가 도는 것)
-make breaking AGAINST=main     # 작업 중인 브랜치를 main과 대조
+make            # every gate (what it runs is the Makefile's all target)
+go test ./...   # unit
 ```
 
-릴리스 태그가 없는 동안(v0.1.0 전)에는 기준선이 없어 앞의 것이 건너뛴다. 그 사실을 로그에 찍는다.
+`make build` **leaves no artifacts** — it only checks that the host, linux/amd64, and windows/amd64 cross-builds
+compile (so Linux-only files are covered). Build the binaries you use with `-o`, as the root README does. `make build-jar` warns and skips without a JDK, so contributors touching only Go can run `make`
+without one. Tests run without a real JVM.
 
-그리고 [계약 변경 시 파급 점검](contracts/README.md)(서명 범위·변화 판정)을 함께 본다.
+> **If you see `no required module provides package .../gen/pqcota/...`**, you skipped generation.
+> The `go get github.com/randyinthedev-hash/pqcota/gen/...` that Go suggests alongside it is **not the fix** —
+> that is not a fetchable module but code this repo generates. Run `make generate` first.
 
-## 코드 구조: 최상위는 종류로, 단계는 그 안으로
+If you changed a contract, run `make lint` (buf lint) and check backward compatibility:
 
-| 최상위 | 무엇 |
+```bash
+make breaking                  # against the last release tag — does it break a contract already shipped (what CI runs)
+make breaking AGAINST=main     # compare the branch you are working on against main
+```
+
+While there is no release tag (before v0.1.0) there is no baseline, so the first one skips and says so in the log.
+
+Also read [the ripple checklist for contract changes](contracts/README.md) (signature coverage, change detection).
+
+## Code layout — top level = kind, stage = inside it
+
+| Top level | What |
 |---|---|
-| `contracts/` | 계약 SSOT (protobuf). 네임스페이스가 곧 단계: `pqcota.{common,discovery,inventory,provisioning}.v1` |
-| `gen/` | proto 생성 코드다. **커밋한다**(소비자가 `go get`만으로 쓰도록) |
-| `pkg/` | 라이브러리 로직이다. 단계 그룹 `discovery`·`inventory`·`provisioning` + 공유 `kernel`(registry·posture·scope·machineid·sign)·`cbom` |
-| `discovery/` · `inventory/` · `provisioning/` | **실행 진입점**(단계별)이다. 각 `cmd/`(스캐너·드라이버·조회·생성)가 있고, `discovery/`엔 `collectors/`(레퍼런스 collector)도 있다 |
-| `examples/` | **단계별 실행 예제**다. 샘플 입력 + `run.sh`로 각 cmd를 최소 설정으로 돌려본다 |
-| `demo/` | Docker 종단 데모(접근준비→디스커버리→인벤토리→프로비저닝) |
-| `tools/` | 리포 도구다. `checkdocs`(문서 게이트, `make check-docs`가 빌드해 실행) |
+| `contracts/` | Contract SSOT (protobuf). The namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1` |
+| `gen/` | proto-generated code — **committed** (so consumers can use it with `go get` alone) |
+| `pkg/` | Library logic — stage groups `discovery`·`inventory`·`provisioning` + shared `kernel` (registry·posture·scope·machineid·sign)·`cbom` |
+| `discovery/` · `inventory/` · `provisioning/` | **Execution entry points** (per stage) — each with `cmd/` (scanner·driver·query·generate); `discovery/` also has `collectors/` (reference collectors) |
+| `examples/` | **Per-stage runnable examples** — sample inputs + `run.sh` to run each cmd with minimal setup |
+| `demo/` | Docker end-to-end demo (access prep → discovery → inventory → provisioning) |
+| `tools/` | Repo tooling — `checkdocs` (the docs gate; `make check-docs` builds and runs it) |
 
-즉 **`pkg/`·`contracts/`는 단계로, 최상위 실행 폴더도 단계로** 갈린다. **커맨드를 실제로 돌려보려면 [`examples/`](examples/)** (각 단계 `run.sh`), 어느 커맨드가 무엇인지는 각 `<stage>/cmd/README`([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md))에 있다.
+That is, **`pkg/`·`contracts/` split by stage, and so do the top-level execution folders**. To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md)).
 
-## 계약 우선 (contract-first)
+## Contract-first
 
-- 타입·enum을 바꾸려면 **`contracts/*.proto`를 고치고 `make generate`** 한다. `gen/`을 직접 손대지 않는다.
-- `evidence_strength`·`pqc_readiness` 같은 **파생값은 Collector가 아니라 코어가 채운다**(§1.2: 재계산을 위해 규칙은 한 곳에 둔다). 상세: [contracts/README](contracts/README.md).
-- 통제 어휘의 `*_UNSPECIFIED = 0`은 "unknown"이다. 빈칸이나 누락으로 두지 않는다(§2.5).
+- To change a type/enum, **edit `contracts/*.proto` and `make generate`**. Do not touch `gen/` directly.
+- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (the rules live in one place so results can be recomputed). Details: [contracts/README](contracts/README.md).
+- A controlled-vocabulary `*_UNSPECIFIED = 0` means "unknown" — don't leave it blank/missing.
 
-## Collector 확장: 계약이 곧 seam
+## Collector extension — the contract is the seam
 
-레퍼런스 collector(openssl·jvm·network)는 세 가지 관측 방식의 예일 뿐이다. **관측 대상이 늘면 collector를 새로 붙이면 된다.** 코어는 고치지 않는다. 접점은 하나뿐이고, `CollectionResult`(정규화된 CycloneDX + `pqcota:` properties) 계약이 그것이다.
+The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector** — without touching the core. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
 
-- collector가 하는 일은 **관측 → `CollectionResult` emit**까지다. `evidence_strength`·`pqc_readiness` 같은 파생값은 **채우지 않는다.** 코어가 계약 입력에서 파생한다(§1.2: 규칙이 한 곳에 있어야 재계산으로 재현된다).
-- 계약만 맞추면 언어도 자유다(레퍼런스도 Go·Java 폴리글랏). 도구 고유 enrichment는 표준 `properties` 확장 키(규약: [contracts/README](contracts/README.md))에 싣는다.
-- 각 레퍼런스 collector의 설계 목표·경계·정직성 규칙은 [`discovery/collectors/<name>/README`](discovery/collectors)을 참고한다. 새 collector도 같은 틀(관측까지·관측하지 못한 것은 갭으로·추측 금지)을 따른다.
+- A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (the rules live in one place so results can be recomputed).
+- Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](contracts/README.md)).
+- Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
 
-> **provisioning 생성기는 아직 이런 플러그인 seam이 아니다.** 계획(`plan.proto`)은 공개 계약이지만 생성기 자체는 내부 로직이다. 오해 없게 collector 쪽만 확장 지점으로 둔다.
+> **The provisioning generator is not yet such a plugin seam** — the plan (`plan.proto`) is a public contract, but the generator itself is internal logic. To avoid confusion, only the collector side is presented as an extension point.
 
-## 새 암호 런타임을 확장하려면
+## Extending with a new crypto runtime
 
-[암호 런타임 수용 원칙](docs/runtime-acceptance.md)을 보라.
+The platform targets not one library but **a runtime that has crypto providers**, and the process is the same for every runtime. Four things vary per runtime: how discovery collects, the version and provider axis schema, the remediation branch, and the provisioning substrate. Every finding and asset carries `crypto_runtime` as a first-class field, and that field selects the branch in each stage.
 
-## 코딩 가이드라인
+A new runtime is **introduced in stages**, not all at once: contract vocabulary first, then observation, then remediation. Open an issue describing all four before writing code (see [Issues · proposals](#issues--proposals)).
 
-이 리포는 **정직성·결정론**을 코드에서 강제한다. 아래는 그 관례다. 일반 Go 스타일이 아니라 **여기서 유독 지키는 것**만 적는다.
+## Coding guidelines
 
-**포맷·검사.** `gofmt`(`go fmt ./...`)로 포맷한다. `make`(전체)가 게이트를 다 돌리니 PR 전에 **모두 통과해야 한다**. 어느 게이트가 무엇을 막는지는 [관리체계](docs/governance.md#무엇이-자동으로-막히나)의 표에 있다. 여기서 다시 나열하지 않는 이유는 게이트가 늘 때마다 두 곳을 맞춰야 하기 때문이고, 실제로 `check-collectors`가 한동안 이 문장에서 빠져 있었다. 표준 Go 관용을 따르되 도메인 용어는 규정서 어휘를 그대로 쓴다(`finding`·`app_key`·`crypto_runtime`).
+This repo enforces **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
 
-**주석은 "왜"를 국문으로, §를 달아서.** 코드가 *무엇을* 하는지는 코드에 드러난다. 주석은 *왜 이렇게* 했고 어긴 대안이 왜 틀린지를 적고, 근거를 규정서 §로 건다. 이 리포의 주석이 유독 긴 이유다. 예: `// ★ 제외는 "없음"이 아니다. 정책으로 뺀 걸 조용히 사라지게 하면 인벤토리가 거짓말한다(§2.6)`.
+**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs every gate, so all of them must pass before a PR. The gates and what each one blocks are listed in the `Makefile` and `.github/workflows/ci.yml`. Follow standard Go idioms, but use the contract's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
 
-**정직성을 코드로 강제한다.** 문서가 아니라 실행에서 지켜져야 한다:
-- **unknown은 1급**이다(§2.5). 판별 불가는 빈칸이 아니라 `*_UNSPECIFIED`/명시적 "미상"으로 둔다. 통제 어휘 enum의 `0`은 항상 unknown이다.
-- **갭은 부재가 아니다**(§2.6). 관측하지 못한 것·정책으로 뺀 것을 세지 않은 채 버리지 않는다. **세어서 돌려주고 고지**한다(제외 건수·완전성 맵·`-diff` 역순 경고처럼).
-- **추측·판정 금지**다(§2.1). 관측하지 않은 것을 지어내지 않는다. diff가 "변화 없음"이면 그것이 정답이다.
+**Comments explain "why".** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong. This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie`. Existing comments are written in Korean and cite section numbers (`§`) of a process regulation that is not part of this repository; treat those numbers as opaque labels.
 
-**파생값은 원본에서 재계산 가능하게**(§1.2). `evidence_strength` 같은 파생은 collector가 아니라 코어가 원본(`detection_method`)에서 결정론적으로 만든다. 규칙이 한 곳(`pkg/inventory/normalize`)에 있어야 재현된다. **서명·정규화 경로엔 벽시계·난수를 넣지 않는다**(같은 입력→같은 바이트). 내용 지문은 휘발 필드(관측 횟수·`last_seen`)를 뺀다.
+**Enforce honesty in code** — it must hold at runtime, not just in docs:
+- **unknown is first-class** — an undeterminable value is not a blank but `*_UNSPECIFIED` / an explicit "unknown". A controlled-vocabulary enum's `0` is always unknown.
+- **gap ≠ absence** — never silently drop what wasn't seen or what a policy excluded. **Count it, return it, and report it** (excluded counts, the completeness map, the `-diff` reverse-order warning, etc.).
+- **no guessing or judgment** — don't fabricate what wasn't observed. If a diff is "no change", that *is* the answer.
 
-**순수 함수로 테스트 가능하게.** 파싱·판정 로직을 I/O에서 떼어 실물(프로세스·DB·네트워크) 없이 단위 테스트되게 쓴다. 예를 들어 `ParseProcMaps(reader)`는 `/proc` 없이 돈다. **테스트는 동작만이 아니라 "왜 이 불변식인지"를 못 박는다**(회귀 테스트엔 그 버그의 본질을 주석으로).
+**Derived values must be recomputable from the source.** Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/inventory/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
 
-**외부 도구에 의존하지 않는다.** `ldd`·`lsof`·`ss`·`readelf`를 부르지 않고 `/proc`·ELF를 Go로 직접 파싱한다(최소 이미지 대응 · 노드에 남는 것 최소화, §2.3). 배포 바이너리는 `CGO_ENABLED=0` 정적 빌드. OS 프리미티브를 만지는 코드는 `//go:build linux`로 태그하고, 순수 헬퍼는 OS 무관으로 분리한다.
+**Keep logic pure and testable.** Separate parsing/decision logic from I/O so it unit-tests without the real thing (process, DB, network) — e.g. `ParseProcMaps(reader)` runs without `/proc`. **Tests pin not just behavior but "why this invariant holds"** (a regression test comments the essence of the bug).
 
-**계약을 바꾸면 함께 고쳐야 하는 것이 있다.** collector가 주장하는 필드는 전부 `sign.Canonical`에 들어가야 한다(서명 사각 금지). oneof arm은 **메시지 전체에서 안 쓰인** 필드 번호를 쓴다(oneof는 메시지의 번호 공간을 공유한다). 상세 체크리스트: [contracts/README](contracts/README.md).
+**Don't depend on external tools.** Parse `/proc`·ELF directly in Go instead of shelling out to `ldd`·`lsof`·`ss`·`readelf` (minimal image/footprint). Release binaries are `CGO_ENABLED=0` static builds. Tag code that touches OS primitives with `//go:build linux`, and split pure helpers out as OS-agnostic.
 
-## 테스트
+**Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](contracts/README.md).
+
+## Testing
 
 ```bash
-go test ./...                                              # 단위
-bash discovery/collectors/openssl/integration/run.sh      # openssl collector 실물 통합(Docker, SD-1·SD-3·SD-4)
-./demo/scripts/up.sh && ./demo/scripts/demo.sh            # 종단 디스커버리 데모
+go test ./...                                              # unit
+bash discovery/collectors/openssl/integration/run.sh      # openssl collector real integration (Docker, SD-1·SD-3·SD-4)
+./demo/scripts/up.sh && ./demo/scripts/demo.sh            # end-to-end discovery demo
 ```
 
-인수 기준·구현 순서는 [docs/디스커버리_테스트케이스](discovery/testcases.md)·[인벤토리_테스트케이스](inventory/testcases.md)(TDD).
+Write the test first (TDD): each stage's tests pin the acceptance criteria.
 
-## 언어
+## Language
 
-**문서는 한국어로 쓰고, 코드가 내보내는 것은 영어로 쓴다.** 갈리는 기준은 "누가 읽는가"가 아니라 **어디까지 나가는가**다.
+**Documents are English; comments are Korean; whatever the code emits is English.** The dividing line is not "who reads it" but **how far it travels**.
 
-| | 언어 | 왜 |
+| | Language | Why |
 |---|---|---|
-| 문서(`*.md`) | **한국어**(정본) · `*.en.md`는 번역본 | 메인테이너가 한국어권이고, 설계 판단은 모국어로 적을 때 정확하다 |
-| **주석** | **한국어** | 코드를 읽는 사람에게만 간다. 프로그램 밖으로 나가지 않는다 |
-| **화면 출력**(stdout·stderr·플래그 도움말) | **영어** | 로그로 남고, 이슈에 붙고, 모르는 사람이 읽는다 |
-| **계약에 실리는 문자열**(`Completeness.Note`·`Attribution.Reason`·조치 문구) | **영어** | 저장되고 **계약을 통해 밖으로 나간다.** 한국어면 그 언어가 계약의 일부가 된다 |
-| **오류 값**(`errors.New`·`fmt.Errorf`) | **영어** | 어디로 흘러갈지 부르는 쪽이 정한다 |
-| **테스트 실패 메시지** | **영어** | CI 로그에 남는다 |
+| Documents (`*.md`) | **English** (canonical); a Korean translation, when one exists, is `*.ko.md` | English reaches the widest audience; only the documents that need it are translated |
+| **Comments** | **Korean** (existing) | they reach only whoever reads the code; they never leave the program |
+| **Console output** (stdout, stderr, flag help) | **English** | it ends up in logs, gets pasted into issues, and is read by strangers |
+| **Strings carried by the contract** (`Completeness.Note`, `Attribution.Reason`, remediation notes) | **English** | they are stored and **travel out through the contract**, so the language becomes part of the contract |
+| **Error values** (`errors.New`, `fmt.Errorf`) | **English** | where they flow is the caller's decision, not ours |
+| **Test failure messages** | **English** | they land in CI logs |
 
-**주석만 한국어인 이유가 이 표의 전부다.** 나머지는 전부 프로그램이 **내보내는 것**이고, 내보내는
-것에는 읽는 사람을 고를 권리가 없다. 화면에 한국어를 보이고 싶으면 그것은 뷰에서 옮길 일이지
-관측 데이터에 한국어를 담을 일이 아니다.
+Everything except comments is something the program **emits**, and what you emit does not get to choose its reader. If Korean should appear on a screen, that is a job for the view, not a reason to put Korean into observation data.
 
-> **예외가 하나 있다.** `tools/checkdocs`의 **패턴**은 한국어다. 한국어 문서를 검사하는 도구라 찾는 대상이
-> 한국어일 수밖에 없다. 그 도구가 **내는 말**은 영어다.
+**When you edit an English document that has a `*.ko.md` translation, update the translation in the same change** (or say in the PR that it is stale). Translation contributions are welcome.
 
-문서의 정본은 **한국어**이고, 영문(`*.en.md`)은 번역본이다. 기계 번역의 도움을 받으며, 둘이 다르면 한국어가 맞다.
+### When you write "it does not", attach the reason on the spot
 
-**한국어 문서를 고치면 짝이 되는 `*.en.md`를 원문에 맞춰 다시 번역한다.** 한쪽만 고치면 번역본이 알아채지 못하는 사이에
-낡아 "둘이 다르면 한국어가 맞다"가 면죄부가 된다. 영문 문서 안의 링크는 **영문 짝이 있으면 그쪽을 가리키고**,
-없으면 한국어 문서를 가리키되 `(Korean)`으로 밝힌다.
+This repo does not hide its limits, so negative sentences are common: *it does not always work · it is not settled · we do not build it*. But **when the reason arrives two sentences later, the reader fills the gap with a guess.** A judgement and its basis belong together.
 
-**이슈·PR은 한국어가 가장 빠르다.** 메인테이너가 한국어권이라 영어는 번역을 거쳐 읽고 답한다. 받지 않는다는 뜻이 아니라 오가는 시간이 길어진다는 뜻이다. 코드·로그·오류 메시지는 원문 그대로 붙여주면 언어와 무관하게 읽힌다.
-
-문서 번역 기여는 환영한다. 다만 **정본은 한국어로 둔다.** 1인 개발이라 두 언어를 동시에 저작하면 어긋난다.
-
-**영문은 어디까지 있나.** 전부는 아니다. 1인 개발이라 두 언어를 같은 폭으로 유지하면 어느 쪽도
-못 따라간다. 그래서 범위를 정해 둔다.
-
-| 영문본이 있다 | 영문본이 없다 (한국어만) |
+| Not this | This |
 |---|---|
-| 현관(README · CONTRIBUTING · SECURITY · RELEASE_NOTES) | 테스트 케이스 목록 · 테스트 맵 · 커널 케이스 |
-| 규정서 · 아키텍처 · 단계별 설계 · 계약 | collector 배포 설계 · 각 `cmd/README` |
-| 라이선스 · 런타임 수용 · 검토 중 | **호환성 정책** · 여정 · 데모 · 예제 전부 |
+| It goes as far as the app, but **it does not always work**. (…two sentences of explanation later…) | It goes as far as the app, but **only if the socket is still alive at lookup time** |
+| The machine **does not settle it**. | The machine does not settle it. **Whether it is live or stale is something only a person knows** |
+| An admin UI **is not built**. | An admin UI is not built. **Once there is a screen, "let's approve here too" is the next step** |
 
-영문 짝이 없는 문서를 영문에서 가리킬 때는 `(Korean)`으로 밝힌다. 이 표를 넓히는 기여는 환영한다.
-다만 넓힌 만큼 유지 비용도 함께 든다는 것만 알고 시작하면 된다.
+## Issues · proposals
 
-### 한국어로 쓴다: 영어 문장을 옮기지 않는다
+**Bugs, questions, and proposals go in issues.** There's nothing to hide, and an open discussion stays for the next person. Issues and PRs may be written in English or Korean. The only thing that must stay private is **something that could expose users to attack if known before a fix** — that path is in [SECURITY](SECURITY.md).
 
-정본이 한국어인데 영어로 생각하고 옮기면 뜻은 맞고 문장은 안 읽힌다. 실제로 이 리포에서 나온 것들이다.
+Including this with a bug report speeds up reproduction:
 
-| 이렇게 쓰지 않는다 | 이렇게 쓴다 | 원문 |
-|---|---|---|
-| 전개되는 **축**은 능력이다 | 기능은 이 **순서로 늘어난다** | unfolds along a capability axis |
-| **이음새**는 `contracts/`다 | 바깥과는 `contracts/`로만 **이어진다** | the seam is |
-| **소비자**가 계약으로 **소비한다** | **가져다 쓰는 쪽**이 계약 너머에 있다 | consumers consume |
-| 순서가 **의미를 가진다** | 순서가 **곧 우선순위다** | order has meaning |
-| 두 종류를 **가진다** | **둘로 나뉜다** | has two kinds |
+- what you expected and what happened
+- the command you ran and its output (redact sensitive values)
+- environment — OS and Go version (on Linux, `uname -r` and the distro). The Linux collectors assume **kernel 3.2 or later**
+- for observation issues, the target runtime (OpenSSL version, JDK distribution)
 
-`축`·`소비자`처럼 기술 문맥에서 굳은 낱말은 그대로 써도 된다. 문제는 낱말이 아니라
-**영어 문장 구조를 그대로 끌고 오는 것**이다. `A는 B다` 자리에 `A의 C는 B다`를 넣거나,
-동사를 `~을 가진다`·`~을 제공한다`로 명사화하면 대개 옮긴 문장이다.
+**For large changes, open an issue before a PR.** Contracts (`contracts/`) are the single source of truth here, so anything touching the schema or a boundary needs design agreement first — discovering a disagreement after the code is written costs us both.
 
-### "안 된다"고 적었으면 왜인지를 그 자리에 붙인다
+## Design first
 
-이 리포는 한계를 감추지 않으므로 부정형 문장이 많다. *늘 되지는 않는다 · 확정하지 않는다 ·
-만들지 않는다*가 그렇다. 그런데 **이유가 두 문장 뒤에 오면 읽는 사람은 그 사이를 추측으로 메운다.**
-판단과 근거는 붙어 있어야 한다.
-
-| 이렇게 쓰지 말고 | 이렇게 |
-|---|---|
-| 앱까지 가되 **늘 되지는 않는다**. (…설명 두 문장 뒤…) | 앱까지 가되, **조회하는 순간 소켓이 살아 있어야 한다** |
-| 기계가 **확정하지 않는다**. | 기계가 확정하지 않는다. **실존인지 stale인지는 사람만 안다** |
-| 관리 UI는 **만들지 않는다**. | 관리 UI는 만들지 않는다. **화면이 생기면 "여기서 승인도 하자"가 다음 걸음이 된다** |
-
-같은 말을 두 번 하게 되면 그것도 신호다. 헤드라인에서 "늘 되지는 않는다"고 하고 다음 문단에서
-"항상 채워지지는 않는다"고 또 적었다면, 앞의 것이 이유 없이 떠 있었다는 뜻이다.
-
-**게이트는 일부만 잡는다.** `make check-prose`가 한 번 걷어낸 표현(엠대시·`조용히`·코드 뒤에 띄운 조사 등,
-`tools/checkprose/rules.tsv`)이 다시 들어오는 것을 막고, `make check-docs`는 링크·앵커·범위 표현을 본다. 둘 다
-문장이 자연스러운지는 보지 못한다. 읽어 보고 어색하면 그것이 근거다. 규칙에 걸린 것을 고쳐 줄였으면
-`go run ./tools/checkprose -baseline`으로 기준선을 내려 같은 커밋에 넣는다.
-
-## 이슈 · 제안
-
-**버그·질문·제안은 이슈로 연다.** 숨길 이유가 없고, 공개된 논의가 다음 사람에게 남는다. 비공개로 알려야 하는 것은 **고치기 전에 알려지면 사용자가 공격당할 수 있는 것**뿐이고, 그 경로는 [SECURITY](SECURITY.md)에 있다.
-
-버그를 적을 때 함께 주면 재현이 빠르다.
-
-- 무엇을 기대했고 무엇이 나왔나
-- 실행한 명령과 출력(민감한 값은 지우고)
-- 환경: OS·Go 버전(리눅스면 `uname -r`·배포판). 리눅스 collector는 **커널 3.2 이상**을 가정한다
-- 관측 쪽이면 대상 런타임(OpenSSL 버전·JDK 배포판)
-
-**큰 변경은 PR보다 이슈가 먼저다.** 이 리포는 계약(`contracts/`)이 단일 진실이라 스키마·경계가 걸리는 변경은 설계 합의가 먼저 있어야 한다. 코드를 다 쓴 뒤에 방향이 어긋나면 서로 손해다.
-
-## 설계를 먼저
-
-기능을 더하기 전에 근거 문서를 본다. [docs/](docs/README.md)에 규정서·서브시스템 설계가 있고, 코드의 `§` 참조는 전부 거기를 가리킨다.
+Before adding a feature, read the per-stage READMEs ([discovery](discovery/README.md) · [inventory](inventory/README.md) · [provisioning](provisioning/README.md)) and [contracts/](contracts/README.md), and open an issue if the change touches a boundary.

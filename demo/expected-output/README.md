@@ -1,57 +1,54 @@
-# 예상 결과 (샘플)
+# Expected output (sample)
 
-이 데모(`../scripts/up.sh` → `demo.sh`)를 실행하면 나오는 **대표 결과**입니다. 실행 전에 무엇을 보게 될지
-미리 확인하세요. (완전 관측된 warm 실행을 캡처한 것.) 데모는 **접근준비→SSH 확인→디스커버리→뷰→토폴로지→인벤토리→프로비저닝** 6단계이며,
-아래 샘플은 그 중 **디스커버리 뷰**(`3/6`)를 캡처한 것입니다.
+This is the **representative result** you get when you run the demo (`../scripts/up.sh` → `demo.sh`). Check what you will see
+before you run it. (Captured from a fully observed warm run.) The demo has six steps: **access prep → SSH check → discovery → view → topology → inventory → provisioning**.
+The sample below is the capture of the **discovery view** (`3/6`).
 
-> **§ 표기**: 별도 언급이 없으면 [규정서](../../docs/regulation.md)의 절 번호입니다.
-
-| 파일 | 내용 |
+| File | Contents |
 |---|---|
-| [discover-view.txt](discover-view.txt) | 콘솔 출력: 발견 자산(OpenSSL·JCA/BouncyCastle) + 관측 통신 엣지 등급 |
-| [topology.svg](topology.svg) | 관측 토폴로지 (색=등급: 🟢 PQC / 🔴 고전 / ⚪ 불명, 실선=관측) |
+| [discover-view.txt](discover-view.txt) | console output: discovered assets (OpenSSL · JCA/BouncyCastle) + the grade of each observed communication edge |
+| [topology.svg](topology.svg) | the observed topology (colour = grade: 🟢 PQC / 🔴 classical / ⚪ unknown, solid line = observed) |
 
-**핵심 서사: 현대 스택과 레거시가 TLS·SSH 양쪽에서 갈린다:**
+**The core story: a modern stack and a legacy one split on both TLS and SSH:**
 
-| 엣지 | 등급 | 왜 |
+| Edge | Grade | Why |
 |---|---|---|
-| `web-gw→pay-app` TLS | 🟢 X25519MLKEM768 | Go `crypto/tls` 하이브리드 |
-| `web-gw→pay-app` SSH | 🟢 sntrup761 | 양쪽 다 OpenSSH 9+ |
-| `web-gw→pay-db` TLS | 🔴 x25519 | **OpenSSL 1.1.1**엔 PQC 그룹이 없다 |
-| `web-gw→pay-db` SSH | 🔴 curve25519 | 레거시 OS의 **OpenSSH 8.2**엔 PQC KEX가 없다 |
+| `web-gw→pay-app` TLS | 🟢 X25519MLKEM768 | Go `crypto/tls` hybrid |
+| `web-gw→pay-app` SSH | 🟢 sntrup761 | both sides run OpenSSH 9+ |
+| `web-gw→pay-db` TLS | 🔴 x25519 | **OpenSSL 1.1.1** has no PQC group |
+| `web-gw→pay-db` SSH | 🔴 curve25519 | **OpenSSH 8.2** on the legacy OS has no PQC KEX |
 
-그리고 `pay-app`에서 **BouncyCastle 포함 JCA provider 체인**(런타임 `addProvider`: 정적 스캔으론 안 보이는 것)을
-attach로 관측합니다. 구성은 [topology/topology.yaml](../topology/README.md)이 정의하며, 고치면 이 결과도 바뀝니다.
+On `pay-app`, the **JCA provider chain including BouncyCastle** (a runtime `addProvider`, which a static scan cannot see) is also
+observed by attach. The composition is defined by [topology/topology.yaml](../topology/README.md), and editing it changes this result too.
 
-> **등급은 관측 결과이지 설정이 아닙니다.** SSH 등급은 **양쪽 KEXINIT의 교집합**(RFC 4253)으로 계산합니다.
-> 클라이언트가 sntrup761을 제안해도 서버가 지원하지 않으면 🔴입니다. 한쪽만 관측되면 협상을 지어내지 않고
-> ⚪ 불명으로 둡니다(§2.5).
+> **A grade is an observation, not a setting.** The SSH grade is computed from the **intersection of both sides' KEXINIT** (RFC 4253).
+> If the client offers sntrup761 but the server does not support it, the edge is 🔴. When only one side is observed, no negotiation is invented and
+> the edge stays ⚪ unknown.
 
-이후 단계에서 추가로 보게 되는 것:
-- **접근준비(0)**: `pqcota-hosts`가 hosts.csv→Ansible 인벤토리(접속 키·런타임 전용) + 엔드포인트 upsert. 인벤토리엔 **비밀 0건**.
-- **중앙 인벤토리(5)**: `▸ Payments DB (ip:22) │ Payments DB · production · db · owner=DBA team`처럼 **엔드포인트·프로필 헤더** + `@앱` 표시. pay-db의 공유 `libssl.so.1.1`은 `@/opt/apps/api-gw,/opt/apps/payment-gw` **두 앱 모두에 걸림**.
-- **엣지의 앱(5)**: 관측 엣지 줄 끝의 `@앱`. 관측이 잡으면 `@payment.service`, exe 경로로 잡으면
-  `@/usr/bin/openssl(exe-path)`, **못 잡으면 `@?`**입니다. 이 데모에서는 네 엣지 중 셋이 `@?`로 나오고
-  사유가 함께 찍힙니다. `socket closed between capture and lookup — short-lived connections are missed(3)`. 데모 트래픽이
-  전부 짧은 연결이라 그렇습니다. 그중 하나를 `pqcota-declare-attribution`으로 지정하면
-  `@batch-runner.service(declared)`로 바뀌고, **관측이 이미 잡은 칸은 그대로입니다.**
-- **프로비저닝(6)**: 확정 계획→L2 플레이북 + 롤백 레코드: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
+What you additionally see in later steps:
+- **Access prep (0)**: `pqcota-hosts` turns hosts.csv into an Ansible inventory (connection keys, runtime-only) plus an endpoint upsert. **Zero secrets** in the inventory.
+- **Central inventory (5)**: an **endpoint and profile header** such as `▸ Payments DB (ip:22) │ Payments DB · production · db · owner=DBA team`, plus `@app` labels. pay-db's shared `libssl.so.1.1` is **attached to both apps**: `@/opt/apps/api-gw,/opt/apps/payment-gw`.
+- **The app of an edge (5)**: the `@app` at the end of an observed-edge line. `@payment.service` when the observation caught it, `@/usr/bin/openssl(exe-path)` when it was caught by the exe path, and **`@?` when it could not be caught.** In this demo three of the four edges show `@?`
+  with the reason printed alongside: `socket closed between capture and lookup — short-lived connections are missed(3)`. That happens because all the demo traffic
+  is short-lived connections. If you assign one of them with `pqcota-declare-attribution`, it becomes
+  `@batch-runner.service(declared)`, and **a cell the observation already caught stays as it was.**
+- **Provisioning (6)**: finalized plan → L2 playbook + rollback record: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
 
-## 실제로 실행하면 달라질 수 있는 점 (그리고 이유)
+## What can differ when you actually run it (and why)
 
-결정론을 위해 두 장치를 넣어서 **첫 실행에서도 위 결과와 일치**합니다:
-- **엣지 캡처 retry-until-complete**: `demo.sh`가 목표 엣지 수(토폴로지의 엣지 개수)에 도달할 때까지 재수집(최대 4회).
-  netcap 관측 구간–트래픽 타이밍 경쟁을 흡수 → 콜드 스타트 첫 실행도 완전한 엣지를 냅니다.
-  (`DEMO_TARGET_EDGES`/`DEMO_MAX_ATTEMPTS`로 조정. 극히 제약된 환경에서 최대 시도 내 미달 시에만 엣지가 줄어듦.)
-- **base 이미지 고정** + BouncyCastle `1.85` 고정(해시 확인) → OpenSSL/Go/JDK 버전·`1.1.1f`/`3.0.13`/`3.5.5` 같은
-  문자열이 태그 갱신에도 대체로 **동일**합니다(배포판 보안 업데이트 시 마이너 갱신 가능).
+Two devices were added for determinism, so **even the first run matches the result above**:
+- **Edge capture retry-until-complete**: `demo.sh` re-collects until it reaches the target number of edges (the number of edges in the topology), up to 4 times.
+  It absorbs the race between netcap's observation window and the traffic timing, so a cold-start first run also produces the complete edges.
+  (Adjust with `DEMO_TARGET_EDGES` / `DEMO_MAX_ATTEMPTS`. Edges fall short only in an extremely constrained environment that cannot reach the target within the maximum attempts.)
+- **The base images are pinned**, and so is BouncyCastle `1.85` (hash-checked). So the OpenSSL/Go/JDK versions and strings such as `1.1.1f`/`3.0.13`/`3.5.5`
+  stay mostly **identical** across tag updates (a minor bump is possible when a distribution ships a security update).
 
-여전히 다를 수 있는 것:
-- **컨테이너 IP**(172.18.0.x)는 매 실행 동적으로 바뀝니다. 서사에는 무관합니다(노드명으로 이어 붙입니다).
-- **토폴로지를 고치면** 노드·엣지·등급이 그대로 달라집니다. 이 샘플은 **기본 구성** 기준입니다.
+What can still differ:
+- **Container IPs** (172.18.0.x) change dynamically on every run. They do not matter to the story (nodes are joined by name).
+- **If you edit the topology**, the nodes, edges and grades change accordingly. This sample is based on the **default composition**.
 
-## 결정론
+## Determinism
 
-동일 입력이면 동일 출력입니다: 등급 분류(🟢/🔴/⚪), 발견 자산, (별도 확장의) reconcile 3-상태 모두
-결정론적 로직입니다. 위 "차이"는 **무엇이 관측되는가(캡처 타이밍)**와 **base 이미지 버전**의 문제이지,
-분류·판정 로직의 비결정성이 아닙니다.
+The same input gives the same output: the grade classification (🟢/🔴/⚪), the discovered assets and the three reconcile states (in a separate extension) are all
+deterministic logic. The "differences" above are a matter of **what gets observed (capture timing)** and **the base image versions**, not non-determinism
+in the classification or judgement logic.
