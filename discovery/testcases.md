@@ -111,7 +111,7 @@
 
 | 케이스 | 레벨 | Given → When | Then | 목적 |
 |---|---|---|---|---|
-| [TD-GAP-1](../pkg/discovery/normalize/completeness_test.go) | unit | `TestCompleteness`: Describe가 선언한 계층을 Collect가 못 덮었을 때 / 전부 덮었을 때 | `layers_missing` + note를 남기고, **"부재"로 처리하지 않는다**. 전부 덮으면 갭 없음 | 볼 수 있다고 신고한 계층을 못 덮고도 덮은 것처럼 내지 않는다 |
+| [TD-GAP-1](../pkg/kernel/completeness/completeness_test.go) | unit | `TestCompleteness`: Describe가 선언한 계층을 Collect가 못 덮었을 때 / 전부 덮었을 때 | `layers_missing` + note를 남기고, **"부재"로 처리하지 않는다**. 전부 덮으면 갭 없음 | 볼 수 있다고 신고한 계층을 못 덮고도 덮은 것처럼 내지 않는다 |
 
 ### SD-7. 에어갭
 

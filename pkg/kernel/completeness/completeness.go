@@ -1,4 +1,8 @@
-package normalize
+// Package completeness — collector가 낸 계층 커버리지(완전성 맵)의 결정론적 조립.
+//
+// collector는 자기가 본 계층과 볼 수 있다고 선언한 계층만 알리고, 갭(선언−커버)은 여기서 계산한다.
+// 단계에 속하지 않고 collector(노드에 나가는 바이너리)와 인벤토리가 함께 쓰므로 kernel에 둔다(규정서 §2.6).
+package completeness
 
 import commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 

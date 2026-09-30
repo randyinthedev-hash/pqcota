@@ -23,6 +23,7 @@
 | [`registry`](registry) | 결정론적 **시그니처·참조 데이터**: OpenSSL fork 판별, PQC 알고리즘 성숙도, JCA provider 능력, remediation 권고 | 강화 단계의 입력이자 프로비저닝 분기의 근거.<br>참조 데이터라 코드가 아니라 **데이터로** 갱신된다(§2.3) |
 | [`sign`](sign) | 수집 결과 **ed25519 서명·검증**(§2.6): 서명 대상 바이트의 정규화 포함 | collector(엣지)가 서명하고 코어(중앙)가 검증한다. 양쪽이 **같은 정규화**를 써야만 성립 |
 | [`machineid`](machineid) | 머신 **상관 지문** 수집과 결정론적 self-id 부여(§1.4) | 같은 머신이면 항상 같은 값이라 중복 등록이 드러난다.<br>*IP는 ID가 아니라 로케이터*라는 원칙의 구현 |
+| [`completeness`](completeness) | collector가 낸 **계층 커버리지의 조립**: 선언한 계층 − 커버한 계층 = 갭(`MissingLayers`·`BuildCompleteness`, §2.6) | 노드로 나가는 collector가 만들고 인벤토리가 갭을 읽는다. 갭은 「없음」이 아니라 「원리상 못 봄」의 근거라 규칙이 한 곳에 있어야 한다 |
 
 ## 지켜지는 규칙 몇 가지
 

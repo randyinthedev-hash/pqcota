@@ -7,7 +7,7 @@ import (
 
 	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/kernel/completeness"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -61,7 +61,7 @@ func BuildResult(node string, obs Observation, obsErr error) *discoveryv1.Collec
 		RawFormat:            rawFormat,
 		CbomCyclonedx:        cyclone,
 		CyclonedxSpecVersion: "1.6",
-		Completeness:         normalize.BuildCompleteness(declared, covered, note),
+		Completeness:         completeness.BuildCompleteness(declared, covered, note),
 	}
 }
 
