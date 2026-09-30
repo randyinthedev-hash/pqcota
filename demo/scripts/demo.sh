@@ -214,7 +214,7 @@ docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
    "providerChoice":"oqsprovider","rollbackNote":"one cnf line + remove the module"}]}
 JSON
 approve /work/plan.json 2>&1 | sed 's/^/   /'
-echo "   ── pqcota-provision: finalized plan (§3.7 gate) → generate the L2 playbook + capture before, persist a record ──"
+echo "   ── pqcota-provision: finalized plan (the FINALIZED gate) → generate the L2 playbook + capture before, persist a record ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-provision --level l2 --dsn '$DSN' /work/plan.json > /work/ansible/provision.yml" 2>&1 | sed 's/^/   /'
 docker exec pqcota-ctl bash -lc 'grep -E "module = |dest:" /work/ansible/provision.yml' | sed 's/^/   │ /'
 echo "   ── read back the persisted rollback record (pqcota-records): affected apps (several for a shared .so) + the before state ──"
@@ -273,7 +273,7 @@ PID_AFTER=$(docker exec "$PNODE" sh -lc "pgrep -f 's_server -accept' | head -1" 
 echo "   restart check: service pid $PID_BEFORE → $PID_AFTER $([ "$PID_BEFORE" != "$PID_AFTER" ] && echo '(new process = loaded with the new config)' || echo '(same pid — it did not restart)')"
 echo "   ※ this node's OpenSSL does not know the PQC group in this fragment — so **we do not claim its capability changed**."
 echo "     what L3 shows is the activation wiring, the restart and the reversibility. The real remediation here is a fork"
-echo "     replacement, and the L2 playbook already says in a comment that this is not delivered through config (provisioning design §4.1)."
+echo "     replacement, and the L2 playbook already says in a comment that this is not delivered through config."
 echo "   ── L3 rollback (--rollback): the symmetric reverse — pre → undo activation → remove files → restart ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback /work/plan-l3.json > /work/ansible/provision-l3-rollback.yml" 2>/dev/null
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-l3-rollback.yml" | grep -E "ok=|changed=|failed=" | sed 's/^/   /'
@@ -371,7 +371,7 @@ echo "   ※ the capability clearly grew, yet the inventory did not move. That i
 echo "     · there is still no path that observes the OpenSSL provider layer — it goes as far as libssl/libcrypto in"
 echo "       /proc/maps and ELF strings (fork, version). JCA sees its provider chain via attach; OpenSSL cannot be seen that way."
 echo "     · the handshake does not change either — negotiation needs both ends, and the peer in this topology is 1.1.1."
-echo "     the reasoning is in discovery/design.md §2.1. Not pretending to have what it does not is this tool's premise (§2.5)."
+echo "     the tool does not judge whether a grade is acceptable. Not pretending to have what it does not is this tool's premise."
 
 echo "   ── roll back (L3 → L2) — return the node to its original state ──"
 docker exec pqcota-ctl bash -lc "pqcota-provision --level l3 --rollback --allow-incomplete /work/plan-real.json > /work/ansible/provision-real-l3-rollback.yml" 2>/dev/null

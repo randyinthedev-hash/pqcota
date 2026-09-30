@@ -10,12 +10,12 @@ import (
 )
 
 // ErrNotFinalized — FINALIZED 아닌 계획을 실행 근거로 쓰려 할 때(§3.7 최강 게이트).
-var ErrNotFinalized = errors.New("plan not finalized — refusing to provision (§3.7)")
+var ErrNotFinalized = errors.New("plan not finalized — refusing to provision")
 
 // ErrNotActionable — 절차는 끝났는데(FINALIZED·서명·조치 있음) 그 조치로 할 수 있는 것이
 // 없을 때. ErrNotFinalized와 가르는 이유는 **고칠 자리가 다르기** 때문이다: 앞엣것은 승인
 // 절차로 돌아가라는 말이고, 이것은 계획의 내용을 채우라는 말이다.
-var ErrNotActionable = errors.New("plan is finalized but an action cannot be acted on — refusing to provision (§3.7)")
+var ErrNotActionable = errors.New("plan is finalized but an action cannot be acted on — refusing to provision")
 
 // Executable — 확정 계획이 프로비저닝 실행 근거로 유효한지 검증한다(§3.7 Inventory→Deploy 게이트).
 // 규칙은 두 층이다. **절차**: FINALIZED 상태 + 승인 서명(§3.3③) + 조치 최소 1건.

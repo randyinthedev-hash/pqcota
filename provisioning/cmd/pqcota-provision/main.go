@@ -70,9 +70,9 @@ func main() {
 	if err := provisioning.Executable(plan); err != nil {
 		// 꼬리말은 사유에 맞춰 붙인다. 조치 내용이 모자란 계획은 **이미 확정된** 것이라,
 		// "확정된 계획만 근거가 된다"고 덧붙이면 고칠 자리를 잘못 가리킨다.
-		tail := "Fill the action in — a finalized plan is the only grounds, and it has to say what to do (§3.7)."
+		tail := "Fill the action in — a finalized plan is the only grounds, and it has to say what to do."
 		if errors.Is(err, provisioning.ErrNotFinalized) {
-			tail = "Only a finalized plan justifies provisioning (§3.7)."
+			tail = "Only a finalized plan justifies provisioning."
 		}
 		fmt.Fprintf(os.Stderr, "refused: %v. %s\n", err, tail)
 		os.Exit(1)

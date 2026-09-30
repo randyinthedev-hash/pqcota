@@ -92,4 +92,4 @@ changed=$(diff <(sed -n '/registered provider order/,/is the target algorithm/p'
 echo
 echo '※ security.provider.2 **takes over slot 2 instead of inserting** — the comparison above shows the'
 echo "   provider that used to be number 2 dropping off. Its services (RSA on JDK defaults) move to the"
-echo "   new provider's implementation. That is the blast radius of a global change (provisioning design §4.2)."
+echo "   new provider's implementation. That is the blast radius of a global change."
