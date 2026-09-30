@@ -328,20 +328,23 @@ pqcota/            # Apache-2.0 · 공개 · 전 범위(Discovery·인벤토리�
   ├─ contracts/proto/pqcota/{common,discovery,inventory,provisioning}/v1/  # 계약 SSOT — 네임스페이스=단계
   ├─ gen/               # protobuf 생성 코드 (커밋한다 · proto를 고치면 make generate)
   ├─ pkg/               # 라이브러리 로직 — 단계 그룹:
-  │    ├─ discovery/    #   관측 레인: normalize(§2.4)·history(§2.4⑥ 스냅샷 스토어)
-  │    ├─ inventory/    #   ingest(적재·CBOM 수신 SV-2)·중앙 뷰(§5)·머신 메타데이터 저장소(엔드포인트·프로필 upsert)·hosts 파서 + declaration(선언 레인). 대조·판정 엔진은 없다
+  │    ├─ discovery/    #   관측 레인: procs(프로세스↔앱 잇기)뿐이다. 이력·정규화는 인벤토리가 소유한다
+  │    ├─ inventory/    #   history(§2.4⑥ 스냅샷 스토어)·normalize(§2.4 정규화)·resultio(결과 파일 디코더)·ingest(적재·CBOM 수신 SV-2)·중앙 뷰(§5)·머신 메타데이터 저장소(엔드포인트·프로필 upsert)·hosts 파서 + declaration(선언 레인). 대조·판정 엔진은 없다
   │    ├─ provisioning/ #   확정계획 게이트(§3.7)·taxonomy→config 생성기(프로비저닝 설계 §4.1·§4.2)·L1/L2 플레이북·before 캡처·롤백 레코드 저장소. 생성·영속까지
-  │    └─ kernel/       #   단계 가로지르는 공유 규칙: registry·등급·scope·machineid·sign
+  │    └─ kernel/       #   단계 가로지르는 공유 규칙: registry·등급·scope·machineid·sign·completeness
   ├─ discovery/         # 실행 진입점(단계별):
   │    ├─ collectors/{openssl(Go),jvm(Java 사이드카 ★),network(Go)}  # §1.6 플러그인·GPL 격리 경계
   │    └─ cmd/{pqcota-hosts(접근준비),nodescan,netcap,jvmscan,cngscan,procs,keygen}  # (테스트 하네스는 collectors/openssl/integration/probe)
   ├─ inventory/cmd/     # pqcota-ingest(적재) · pqcota-cbom-ingest(CBOM 수신) · pqcota-discover-view(파일 뷰) · pqcota-inventory(중앙 Postgres 조회: 엔드포인트·프로필·앱 표시) · pqcota-profile(프로필 upsert) · pqcota-declare(선언 임포트) · pqcota-prune(보존 절단)
   ├─ provisioning/cmd/  # pqcota-provision(확정계획→L2 플레이북+before/롤백 레코드) · pqcota-records(롤백 레코드 조회) — 생성까지
+  ├─ test/crossstage/   # 단계 간 통합 테스트(doc.go와 _test.go만)
   └─ LICENSE (Apache-2.0), CONTRIBUTING.md, README.md
 
 pqcota-collectors-gpl/  # GPL-3.0 · 별도 리포 · 절대 번들·링크 금지 (라이선스 정리 — 배포 분리)
   └─ adapters/cipheriq/  adapters/cbomkit/   # 서브프로세스 어댑터만
 ```
+
+**의존 방향은 인벤토리가 허브다.** 디스커버리와 프로비저닝이 인벤토리를 참조하고, 인벤토리는 두 단계를 참조하지 않으며, 공통(`gen`·`kernel`·`org`)은 어느 단계도 참조하지 않는다. collector는 노드로 나가는 바이너리라 공통과 `procs`만 쓴다. 이 방향은 `make check-deps`가 잰다([pkg/README](../pkg/README.md)).
 
 
 ---

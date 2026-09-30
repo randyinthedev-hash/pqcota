@@ -206,6 +206,8 @@ The passive observation window, coverage dependence, and encryption limits → *
 
 ## 7. History and retention (2026-07-21)
 
+**Where it is implemented.** The history store lives in `pkg/inventory/history` and normalization (enrichment and identity resolution) in `pkg/inventory/normalize`. What regulation §2.4⑥ calls the "discovery history" is this store: the concept keeps its name and inventory owns the implementation (discovery is a consumer of it).
+
 ### 7.1 There are three reasons to keep history, and their demands differ
 
 | Purpose | What it needs | The value of repeated measurement |

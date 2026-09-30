@@ -334,20 +334,23 @@ pqcota/            # Apache-2.0 · public · the whole scope (Discovery, invento
   ├─ contracts/proto/pqcota/{common,discovery,inventory,provisioning}/v1/  # the contract SSOT — namespace = stage
   ├─ gen/               # protobuf-generated code (committed · regenerate with make generate when a proto changes)
   ├─ pkg/               # library logic — grouped by stage:
-  │    ├─ discovery/    #   the observed lane: normalize (§2.4), history (§2.4⑥ the snapshot store)
-  │    ├─ inventory/    #   ingest (ingestion, CBOM intake SV-2), the central view (§5), the machine metadata store (endpoint/profile upsert), the hosts parser + declaration (the declared lane). There is no reconciliation or verdict engine
+  │    ├─ discovery/    #   the observed lane: only procs (linking processes to apps). History and normalization are owned by inventory
+  │    ├─ inventory/    #   history (§2.4⑥ the snapshot store), normalize (§2.4 normalization), resultio (the result-file decoder), ingest (ingestion, CBOM intake SV-2), the central view (§5), the machine metadata store (endpoint/profile upsert), the hosts parser + declaration (the declared lane). There is no reconciliation or verdict engine
   │    ├─ provisioning/ #   the finalized-plan gate (§3.7), taxonomy→config generator (provisioning design §4.1·§4.2), L1/L2 playbooks, before capture, the rollback record store. Generation and persistence only
-  │    └─ kernel/       #   shared rules crossing stages: registry, posture, scope, machineid, sign
+  │    └─ kernel/       #   shared rules crossing stages: registry, posture, scope, machineid, sign, completeness
   ├─ discovery/         # execution entry points (per stage):
   │    ├─ collectors/{openssl(Go),jvm(a Java sidecar ★),network(Go)}  # §1.6 plugins, the GPL isolation boundary
   │    └─ cmd/{pqcota-hosts(access prep),nodescan,netcap,jvmscan,cngscan,procs,keygen}  # (the test harness is collectors/openssl/integration/probe)
   ├─ inventory/cmd/     # pqcota-ingest (ingestion) · pqcota-cbom-ingest (CBOM intake) · pqcota-discover-view (file view) · pqcota-inventory (central Postgres queries: endpoints, profiles, app attribution) · pqcota-profile (profile upsert) · pqcota-declare (declaration import) · pqcota-prune (retention truncation)
   ├─ provisioning/cmd/  # pqcota-provision (finalized plan → L2 playbook + before/rollback records) · pqcota-records (querying rollback records) — generation only
+  ├─ test/crossstage/   # cross-stage integration tests (doc.go and _test.go only)
   └─ LICENSE (Apache-2.0), CONTRIBUTING.md, README.md
 
 pqcota-collectors-gpl/  # GPL-3.0 · a separate repo · never bundled or linked (distribution separation)
   └─ adapters/cipheriq/  adapters/cbomkit/   # subprocess adapters only
 ```
+
+**Inventory is the hub of the dependency direction.** Discovery and provisioning refer to inventory; inventory refers to neither stage; the common part (`gen`, `kernel`, `org`) refers to no stage. A collector ships to nodes as a binary, so it uses only the common part and `procs`. `make check-deps` measures this direction ([pkg/README](../pkg/README.md) (Korean)).
 
 
 ---
