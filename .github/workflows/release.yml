@@ -149,8 +149,14 @@ jobs:
             echo
             echo "Docker만 있으면 전 범위가 한 번에 돈다 — 관측부터 전환물 생성·적용·되돌림까지."
             echo
+            echo "데모는 다섯 리포를 **나란히** 받아 한 이미지로 묶는다. \`pqcota\`만 받으면 빌드할 소스가 모자란다."
+            echo
             echo '```bash'
-            echo "git clone $REPO_URL && cd ${GITHUB_REPOSITORY#*/}"
+            echo "OWNER_URL=${REPO_URL%/*}"
+            echo 'for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do'
+            echo '  git clone "$OWNER_URL/$r"'
+            echo 'done'
+            echo "cd ${GITHUB_REPOSITORY#*/}"
             echo "./demo/scripts/up.sh && ./demo/scripts/demo.sh"
             echo '```'
             echo

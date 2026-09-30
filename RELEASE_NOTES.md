@@ -27,7 +27,7 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** , not all at once.
 
-- **v0.10.0 (planned)** — **CNG provisioning** (moved back two more slots because v0.8.0 went to the approval handoff and v0.9.0 to evidence traceability): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided.
+- **v0.11.0 (planned)** — **CNG provisioning** (moved back three slots because v0.8.0 went to the approval handoff, v0.9.0 to evidence traceability and v0.10.0 to the repository split): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided.
 
 - **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
   implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
@@ -74,6 +74,65 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 
 ---
+
+## v0.10.0 — The repository is split into five (2026-09-30)
+
+**Goal** — give the contracts, the shared code and each stage a module of their own, so each has one
+owner and a dependency direction that a machine checks. Nothing observable changes: the wire format, the
+signatures and the behavior of every command are the same as v0.9.1. **Every consumer changes its imports.**
+
+**One release is five tags.** `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`,
+`pqcota-provisioning` and `pqcota` all carry `v0.10.0`, and the release workflow builds from the five
+together. The stage modules do not release on their own schedule.
+
+### Built
+
+- **Five repositories.** `pqcota-common` holds the contracts (`proto`, `gen`), `pkg/kernel`, `pkg/org`
+  and `pqcota-keygen`. `pqcota-inventory` holds the inventory stage. `pqcota-discovery` holds the
+  collectors, their commands and the reference playbook. `pqcota-provisioning` holds the provisioning
+  stage. `pqcota` keeps the demo, the checks across stages, the gate tools and the release bundle.
+- **The dependency direction is a rule, and `make check-deps` enforces it across the five.**
+  `common ← inventory ← {discovery, provisioning}`. Discovery and provisioning never reference each other,
+  and inventory references neither. Before the split, inventory used code that lived under discovery
+  (`history`, `normalize`, `resultio`). That code now lives in inventory, which is why the split needed
+  no cycle.
+- **Sibling modules resolve through `replace => ../pqcota-*` for local work, and `require` names the
+  real tag.** A consumer outside this workspace ignores the `replace` and fetches `v0.10.0`.
+
+### Module path mapping
+
+Every path below is under `github.com/randyinthedev-hash/`. Left is the v0.9.1 path (inside `pqcota`),
+right is the v0.10.0 path.
+
+| v0.9.1 | v0.10.0 |
+|---|---|
+| `pqcota/gen/pqcota/{common,discovery,inventory,provisioning}/v1` | `pqcota-common/gen/pqcota/{common,discovery,inventory,provisioning}/v1` |
+| `pqcota/pkg/kernel/...` (`machineid`, `posture`, `registry`, `scope`, `sign`) | `pqcota-common/pkg/kernel/...` |
+| `pqcota/pkg/org` | `pqcota-common/pkg/org` |
+| `pqcota/pkg/inventory/...` (`declaration`, `ingest`) | `pqcota-inventory/pkg/inventory/...` |
+| `pqcota/pkg/discovery/{history,normalize,resultio}` | `pqcota-inventory/pkg/inventory/{history,normalize,resultio}` |
+| `pqcota/pkg/discovery/procs` | `pqcota-discovery/pkg/discovery/procs` |
+| `pqcota/pkg/provisioning` | `pqcota-provisioning/pkg/provisioning` |
+
+Commands move with their stage: `discovery/cmd/*` and `discovery/collectors/*` to `pqcota-discovery`,
+`inventory/cmd/*` to `pqcota-inventory`, `provisioning/cmd/*` to `pqcota-provisioning`, and
+`pqcota-keygen` to `pqcota-common/cmd`. The `pqcota` module keeps `tools/checkprose`, so
+`go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.9.1` and later tags keep working.
+
+### Learned
+
+- **The wire format did not change.** Only the `go_package` option of each proto file did. `buf breaking`
+  (FILE) of the new contracts against v0.9.1 reports nine `go_package` differences and nothing else.
+  From this release on, `pqcota-common` compares against its own previous tag, and v0.10.0 is the first
+  baseline.
+- **A path change is a decision about the people who import it.** See
+  [compatibility policy](docs/compatibility.md), on module paths.
+
+### Not done
+
+- **A change in a stage repository does not yet start the checks that span stages.** The integration
+  checks run on this repository's own pushes and pull requests. Until a stage repository triggers them,
+  run `make all` here after changing a stage.
 
 ## v0.9.1 — The prose gate lives in this repo (2026-09-17)
 
