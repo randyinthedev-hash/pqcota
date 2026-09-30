@@ -15,7 +15,7 @@ The sample collector results that the discovery and inventory examples share are
 
 - **The Go toolchain.** The generated contract code is committed in `pqcota-common`, so right after cloning you can run from source with `go run`, and no Postgres or target nodes are needed. If you changed a proto, run `make generate` in `pqcota-common` first (it needs buf).
 - **One exception:** the JVM example needs a **live JVM**, so it uses **Docker** (the JDK is inside the container).
-- Clone the repositories side by side, as described in the [README](../README.md#build). Run an example from the root of its own repository, for example:
+- Clone the repositories side by side, as described in the [build guide](../docs/build.md#get-the-source). Run an example from the root of its own repository, for example:
 
 ```bash
 cd ../pqcota-inventory

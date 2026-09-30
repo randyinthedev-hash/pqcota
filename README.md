@@ -1,221 +1,144 @@
 # pqcota
 
-
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![go](https://img.shields.io/github/go-mod/go-version/randyinthedev-hash/pqcota)](go.mod)
 
-> **v0.9.0** — Discovery · Inventory · Provisioning run end to end on Linux, and the [demo](demo/README.md) applies generated artifacts to real nodes and rolls them back. Actions carry **which snapshot state they came from**, and the generator resolves that evidence against the real history and records it. **Windows nodes run through the same discovery path** (CNG and JCA) — generating their migration artifacts is not there yet → [roadmap](RELEASE_NOTES.md)
+**See which cryptography your systems use, and prepare the move to post-quantum cryptography with changes you can review, apply and remove.**
 
-A PQC migration management platform ([OSS](https://opensource.org/osd), [Apache-2.0](LICENSE)). It handles the PQC migration of legacy crypto runtimes (OpenSSL · Java JCE/JCA) across three stages: **Discovery → Inventory → Provisioning**.
+pqcota is open-source software (Apache-2.0) for the people who run a post-quantum cryptography (PQC) migration inside an organization, and for the people who receive their reports. You do not need to be a developer or a cryptographer to follow what it does and what it hands you.
 
-**Name** — *pqcota* (pronounced **P-cota**) = **PQC** (post-quantum cryptography) + **Orchestra** (-ota). **This software is a *player* in the orchestra, not the maestro.** The **maestro who decides what to migrate and when is the user** wielding the tool; pqcota plays its own part (observe · normalize · generate) precisely.
-
-[platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)
-
-[demo video (2 min 55 s)](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) — from observation through applying and rolling back the generated artifacts: ML-KEM goes **0 → 14 → 0** on a real node.
-
-**Read on** → [roadmap](RELEASE_NOTES.md#roadmap--upcoming-releases-planned) · [contributing](CONTRIBUTING.md) · [compatibility policy](docs/compatibility.md)
+> **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
 
 ---
 
-## What it looks like
+## Who this page is for
 
-Observations are tied to nodes and apps, and the **group actually negotiated on the wire** is shown alongside.
+| You are… | Start here |
+|---|---|
+| **A manager or business owner** who receives migration reports | [What you receive](#what-you-receive), [How to read a result](#how-to-read-a-result), [What pqcota does not do](#what-pqcota-does-not-do), and the [reporting guide](docs/reporting-guide.md) |
+| **The person running the migration** | [The three stages](#the-three-stages), [Supported systems](#supported-systems), [Data and operations](#data-and-operations), [Try it](#try-it), and the [reporting guide](docs/reporting-guide.md) |
+| **New to PQC** | [Background](#background), then the [glossary](#glossary) |
+| **An engineer or security architect** | [CONTRIBUTING](CONTRIBUTING.md) and the [build guide](docs/build.md) |
+
+## What you receive
+
+| Question you are asked | What pqcota gives you |
+|---|---|
+| "Which cryptography do we use, and where?" | For each observed system: the cryptography libraries loaded, the Java security providers registered, and, for network connections it watched, the algorithm the two ends agreed on |
+| "How many of our connections are post-quantum?" | A count of observed connections graded post-quantum or hybrid (🟢), classical (🔴) or undetermined (⚪) |
+| "What changed since last time?" | A comparison of two observations: what was added, removed or replaced |
+| "What did you *not* see?" | An explicit "not observed" record for anything a collector could not reach. A gap is not reported as "nothing there" |
+| "What will you change, and how do we undo it?" | For each planned change that can be delivered through configuration: the files that make it, the files that remove it, and a record of the system's state before. Changes that cannot be delivered that way are listed as manual steps |
+| "Who approved this?" | Generation requires a plan that carries an approval signature. By default the signature is checked against the approver's registered public key |
+
+The figures describe the systems pqcota was able to observe, in the environments it supports, at the moment it looked. They are evidence for your migration report, not a certification.
+
+## The three stages
+
+| Stage | In plain words | Produces |
+|---|---|---|
+| **① Discovery** | Small programs visit a system, observe it, and are removed afterwards. They read which cryptography libraries are loaded, which Java security providers are registered, and which algorithms were negotiated in connections they watched. | One observation per system |
+| **② Inventory** | Collects the observations in one place, ties each to its system and application, and keeps every change as a new record without editing old ones. | A central history you can query and compare |
+| **③ Provisioning** | Takes a plan that people wrote and approved and generates the files to carry it out: configuration changes, the modules to place, and the matching removal. | Standard Ansible files and a "before" record |
+
+The stages can be used separately. To look at one system you need one small program, no database and no central server.
+
+## How to read a result
+
+An abbreviated demo result (assets shortened; every connection of the demo is shown):
 
 ```
 ──────── ① discovered assets (per node) ────────
   pay-app
-    • JCA provider chain: SUN,SunRsaSign,…,BC   [EVIDENCE_STRENGTH_CONFIRMED]
-        ↑ this BC appears nowhere in java.security (grep: 0 hits).
-          The app registered it at runtime — invisible to static scans.
-    • OpenSSL  libcrypto.so.3 3.5.5 (OpenSSL)   [EVIDENCE_STRENGTH_CONFIRMED]
+    • JCA provider chain: SUN,SunRsaSign,…,BC   [confirmed]
+        ↑ this BC appears in no configuration file. The application
+          registered it while running, so a scan of files would miss it.
+    • OpenSSL libcrypto 3.5.5                    [confirmed]
   pay-db
-    • OpenSSL  libcrypto.so.1.1 1.1.1f (OpenSSL) [EVIDENCE_STRENGTH_CONFIRMED]
+    • OpenSSL libcrypto 1.1.1f                   [confirmed]
 
-──────── ② observed edges + quantum-resistance grade ────────
-  🟢 web-gw  → pay-app   TLS  X25519MLKEM768 [fips-standard]
-  🟢 web-gw  → pay-app   SSH  sntrup761x25519-sha512@openssh.com [experimental]
-  🔴 web-gw  → pay-db    TLS  x25519
-  🔴 web-gw  → pay-db    SSH  curve25519-sha256
+──────── ② observed connections + quantum-resistance grade ────────
+  🟢 web-gw → pay-app   TLS  X25519MLKEM768
+  🟢 web-gw → pay-app   SSH  sntrup761x25519-sha512@openssh.com
+  🔴 web-gw → pay-db    TLS  x25519
+  🔴 web-gw → pay-db    SSH  curve25519-sha256
 
-  grade totals: 🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0
+  grade totals: 🟢 2 · 🔴 2 · ⚪ 0
 ```
 
-The same observation is also rendered as a topology.
+- **🟢** a post-quantum or hybrid algorithm was negotiated. **🔴** a classical algorithm was negotiated. **⚪** undetermined.
+- **🔴 does not mean "vulnerable" or "non-compliant".** It means this connection used a classical algorithm while pqcota watched it. Whether and when to change it is your decision. pqcota does not score risk.
+- **"confirmed"** is the strength of evidence, assigned by how the fact was collected. Facts seen in a running system, in source, or by tracing are "confirmed". Facts taken from a supplied bill of materials (CBOM) are graded lower ("inferred, high"), because nobody looked at the running system.
+- **Confirming a change by re-observing has limits.** For OpenSSL, pqcota observes the library and its version, not which providers are loaded, so adding a provider does not show up in the inventory by itself. Java provider chains can be observed directly. A connection changes grade only when both ends support the new algorithm.
+- Grades come from what was observed. A library that is loaded is not proof that it is used for every connection, and a connection is only seen if it happened while the observer was watching.
+- The same data can be drawn as a map of systems and connections coloured by grade.
 
-![Observed topology — colour is the grade (🟢 PQC/hybrid · 🔴 classical · ⚪ unknown)](demo/expected-output/topology.svg)
+## What pqcota does not do
 
-**🔴 is not a verdict of "vulnerable" — it is the observation that a classical algorithm was negotiated.** What to change, and when, is the user's call. Full expected output lives in [demo/expected-output](demo/expected-output/README.md).
+- **It does not decide what to migrate or when.** People write and approve the plan.
+- **It does not judge or score.** There is no risk rating and no pass or fail.
+- **It does not apply changes.** It generates standard Ansible files that you run with your own tools. There is no remote-execution engine.
+- **It does not scan source code.** If your build already produces a cryptographic bill of materials (CBOM, CycloneDX), pqcota can receive it into the same inventory.
+- **It is not a compliance product.** It supplies evidence and certifies nothing.
+- **It does not manage your review process.** It checks a cryptographic approval signature on the plan. Who reviews, in what order, and who holds the approver keys is your organization's process. Reconciling a declared list of systems (a CMDB) against what was observed is not part of this software either.
 
-## What it does — three stages
+## Supported systems
 
-| Stage | What it does | Output |
+| | Observe | Generate a change |
 |---|---|---|
-| ① **[Discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
-| ② **[Inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
-| ③ **[Provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
+| **OpenSSL on Linux** | ✅ | ✅ OpenSSL 3.5+: a configuration fragment only. 3.0–3.4: staging a provider module that you supply, plus a configuration fragment. 1.1.1 and older: nothing is generated; replacing the library is a manual step and the output says so |
+| **Java (JCA)** | ✅ Linux, and Windows machines that have a JDK | ✅ on **Linux** targets. JDK 24+: a `java.security` fragment only, and it keeps a classical group alongside. JDK 8+: staging a provider library plus a registration fragment. Older, end-of-life JDKs: nothing is generated; a JDK upgrade is required |
+| **Windows (CNG)** | ✅ | ❌ not yet |
+| **Network connections** | ✅ Linux | not applicable |
 
-**What it does not do** — declaration (CMDB) reconciliation, review-and-sign-off governance and
-fleet orchestration are **not in these repositories.** The contracts ([`contracts/`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md))
-hold their place, and no judgment engine is built — once the tool decides for you, the line that
-"🔴 is an observation, not a verdict" collapses. What each stage promises, and where it stops, is written in its own README and in the contracts.
+pqcota is **pre-1.0** (current release: v0.10.0). Observation and generation work end to end on Linux and are demonstrated on test systems. Windows change generation is planned, not delivered; see the [release notes](RELEASE_NOTES.md).
 
-## Try it — demo
+## Data and operations
 
-**With just Docker**, run the whole scope at once — access prep → discovery → inventory →
-provisioning (generate, apply, roll back), against nodes it stands up as containers. The demo builds all five repositories, so clone them side by side first ([Build](#build)).
+**What it collects.** For each system: the cryptography libraries loaded and their versions, the Java security providers registered, and, for connections it watched, the peer address and port, the protocol, the negotiated key-exchange group and the cipher. This is information about your infrastructure and should be handled as such. It does not decrypt traffic and does not keep message contents.
 
-```bash
-./demo/scripts/up.sh && ./demo/scripts/demo.sh   # tear down: ./demo/scripts/down.sh
-```
+**Where results go.** To files and to the database you point it at. The pqcota programs contain no built-in upload or telemetry path. Downloads happen when you install it or run the demo (source code, container images), and Ansible reaches your systems over SSH.
 
-**Pick where to start.**
+**What runs on the observed systems.** No resident agent and no service. The supplied playbook copies the observation programs to a temporary directory, runs them, collects the results and deletes that directory when the run completes. If a run fails or is interrupted, that directory can be left behind and you should check for it. Some observations have prerequisites: capturing connections needs a network-capture privilege, and reaching Java runtimes needs a JDK on some paths.
 
-- **The whole scope at once, with Docker** → the two lines above. Setup, expected output, and how to point it at your own hosts are in [demo/](demo/README.md)
-- **One command at a time, minimal setup** → [examples/](examples/README.md). Go is all you need — no Postgres, no target nodes
-- **Working on the repo** → [CONTRIBUTING](CONTRIBUTING.md), and the stage READMEs above
+**Access credentials.** The inventory has no field for logins or keys. The Ansible target list that does contain them is written for the run, readable only by its owner, and is not stored in the inventory. Treat any file you write yourself as sensitive.
 
----
+**Undoing a change.** For each generated change there is a matching removal file. Changes add files instead of overwriting existing ones, so removal deletes what pqcota added; where a plan defines activation steps (a restart, for example) the removal runs the plan's deactivation steps first. This is not a restore of a previous deployment: if the same paths were deployed to twice, removal deletes the files and does not bring back the earlier version. A change that cannot be delivered through configuration is marked as a manual step, and so is its undoing.
 
-## Requirements
+**Approval.** Generation stops unless the plan is finalized and approved. By default it verifies the approval signatures against the approvers' registered public keys and refuses when it cannot. A command-line option exists to continue without verifying; using it prints a warning that it was your choice.
 
-**To build**
-- Go 1.26.4+
-- buf (+`protoc-gen-go`, `protoc-gen-go-grpc`) — **only when you change a proto** (in `pqcota-common`). The generated `gen/` is committed, so a plain build does not need it
-- JDK 11+ — **optional**, only to build the JVM attach sidecar; without it that step is skipped
+**History.** The inventory records changes by adding new records, and its normal commands never edit an old one. One command, `pqcota-prune`, cuts old history you no longer want to keep, and it records that it did. This describes the tool's behavior. It is not tamper-proofing against someone with administrator access to the database.
 
-**To run**
-- Multiple nodes — Ansible on the controller, SSH access to the targets
-- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [pqcota-discovery cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)
+## Try it
 
-## Build
+- **Watch (about 3 minutes):** the [demo video](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) goes from observation to applying and removing a generated change on test systems.
+- **Run it:** with Docker, [demo/](demo/README.md) runs the whole flow on containers. An optional stage (`DEMO_REAL_PROVIDER=1`) builds a real post-quantum provider, applies the generated files to a test node running OpenSSL 3.0.13 and undoes them. In a run on 2026-09-30 the number of ML-KEM entries in that node's `openssl list -kem-algorithms` went from 0 to 14 after applying and back to 0 after the undo. **That shows the algorithms became available on that node. It does not show that any connection used them:** the demo's own output notes that re-observing left the inventory unchanged, because pqcota does not yet observe OpenSSL's provider layer and a connection needs both ends to support the algorithm.
+- **Your own systems:** ask your engineers to start from the [build guide](docs/build.md). Observation needs no resident software on the systems being observed, but some paths need a privilege or a JDK; see [Data and operations](#data-and-operations).
 
-pqcota is **five repositories**: this one (demo, examples, release bundles, contributing guide) and four
-modules. Clone them side by side, because `go.mod` reads the four from `../` until they are tagged:
+## Background
 
-```bash
-git clone https://github.com/randyinthedev-hash/pqcota
-git clone https://github.com/randyinthedev-hash/pqcota-common        # contracts, generated code, shared logic
-git clone https://github.com/randyinthedev-hash/pqcota-inventory     # the inventory stage
-git clone https://github.com/randyinthedev-hash/pqcota-discovery     # collectors, their commands, the reference playbook
-git clone https://github.com/randyinthedev-hash/pqcota-provisioning  # the provisioning stage
-cd pqcota
-```
+**Why the topic exists.** NIST states that no one knows exactly when a quantum computer able to break today's public-key cryptography will exist, with estimates from a few years to a few decades, that moving systems to new standards can take 10 to 20 years, and that adversaries can record encrypted data now to decrypt it later. It encourages organizations to begin their transition ([NIST](https://www.nist.gov/cybersecurity-and-privacy/what-post-quantum-cryptography)). Data that must stay confidential for many years is the first concern.
 
-pqcota consists of one **central controller node** and the **target nodes** it reaches over
-Ansible/SSH. **You build on the controller** — both the CLIs you run there and the collectors you
-ship to the target nodes are produced here.
+**What the new standards are.** On 13 August 2024 NIST published FIPS 203 (ML-KEM, for establishing keys), FIPS 204 (ML-DSA) and FIPS 205 (SLH-DSA), both for digital signatures ([NIST announcement](https://csrc.nist.gov/news/2024/postquantum-cryptography-fips-approved)).
 
-**It builds straight from a clone.** The Go code generated from the contracts is committed in
-`pqcota-common`, so you need no code-generation tooling of your own; consumers can use the contract
-types with `go get` alone. It is regenerated only when a proto changes (see the end of this section).
+**Hybrid.** A hybrid key exchange combines a classical and a post-quantum algorithm, aiming to keep the shared secret protected while at least one of them holds. It does not repair flaws in authentication or in an implementation ([IETF RFC 9954](https://datatracker.ietf.org/doc/html/rfc9954)).
 
-**① The CLIs you run on the controller** — ingest and query observations, generate playbooks.
+**A program, not a patch.** PQC migration is not a single update. An organization typically works through four questions: where cryptography is used and which algorithms; which of it to change first (a human decision); how to change it without disrupting operations; and how to confirm afterwards, and keep confirming. pqcota helps with the first, third and fourth, and leaves the second to you.
 
-```bash
-D=github.com/randyinthedev-hash
-go build -o bin/ $D/pqcota-common/cmd/... $D/pqcota-discovery/cmd/... $D/pqcota-inventory/cmd/... $D/pqcota-provisioning/cmd/...
-```
+## Glossary
 
-**② The collectors that go on the target nodes** — built statically **for the node's OS and arch**.
-Which collector runs on which OS is in
-the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
+| Term | Meaning |
+|---|---|
+| **PQC** | Post-quantum cryptography: algorithms designed to withstand attacks by both conventional and quantum computers |
+| **Key exchange** | How two systems agree on a shared secret at the start of a connection. This is the part exposed to "record now, decrypt later" |
+| **Hybrid** | A classical and a post-quantum algorithm used together |
+| **CBOM** | Cryptographic bill of materials: a standard list (CycloneDX) of the cryptography a piece of software uses |
+| **Provider** | A plug-in library that supplies algorithms to OpenSSL or Java. Adding one can add post-quantum algorithms without replacing the product |
+| **Node** | One machine, virtual machine or container that is observed |
+| **Snapshot** | The recorded state of one node at one time. A new snapshot is stored only when the state changes; repeat observations are counted against the existing one |
+| **Ansible** | A common tool for applying configuration to many machines. pqcota's generated files are standard Ansible files |
+| **Approval signature** | A cryptographic signature on the plan by a named approver, which pqcota checks before generating changes |
 
-```bash
-D=github.com/randyinthedev-hash/pqcota-discovery/cmd
+## License and more
 
-# Linux nodes
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ $D/pqcota-nodescan $D/pqcota-netcap $D/pqcota-jvmscan
-
-# Windows nodes
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ $D/pqcota-cngscan $D/pqcota-jvmscan
-
-make build-jar                  # only if you have JVM nodes: attach sidecar → build/collector.jar
-```
-
-`CGO_ENABLED=0` (static linking — distro/libc agnostic) is fixed; what you change is `GOOS` and
-`GOARCH`. For the accepted values see the [Go documentation](https://go.dev/doc/install/source#environment).
-
-**Linux nodes need kernel 3.2 or newer.** That is the floor the Go toolchain sets, and this repo asks
-for nothing newer. CentOS 7 (3.10) and Debian 8 (3.16) are above it; RHEL 6 (2.6.32) is below. What
-individual features additionally require is in the [supported scope](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
-
-Privileges and environment variables for running the collectors on a node → [pqcota-discovery cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
-
-**If you changed a proto, regenerate the contract code.** This is the procedure for someone working
-on the contracts, and it runs in `pqcota-common`. `make tools` installs the generator plugins
-(`protoc-gen-go`, `-grpc`) and `make generate` does the conversion. Put the resulting `gen/` in
-**the same commit** as the proto you changed.
-
-```bash
-cd ../pqcota-common
-make tools && make generate     # contracts/proto → gen/
-```
-
-> `make tools` puts the plugins in `$(go env GOPATH)/bin`. If that directory isn't on your `PATH`,
-> `make generate` fails with "plugin not found" — which looks like a failed install but really means
-> **it just isn't visible**. Both targets call that case out, but adding it to your shell profile
-> saves you from hitting it every time: `export PATH="$PATH:$(go env GOPATH)/bin"`.
-
-Contributing to the repos (tests, gates, contract changes) → [CONTRIBUTING](CONTRIBUTING.md).
-
-## Stack
-
-- **Go** — every collector and CLI; `CGO_ENABLED=0` static single binaries
-- **Java** — only the JVM attach sidecar (that observation is possible only from inside the JVM)
-- **Protobuf/gRPC** — the contracts that join the stages ([`contracts/`](https://github.com/randyinthedev-hash/pqcota-common/tree/main/contracts))
-- **Postgres** — only when accumulating and querying many nodes over time; not used for single-node observation
-
-## Supported scope
-
-### Observation (Discovery)
-
-| What is observed | Target | Why |
-|---|---|---|
-| OpenSSL assets · communication edges | **Linux** (amd64·arm64) | depends on `/proc`, ELF, AF_PACKET |
-| JVM provider chains | **Java 8+** · Linux (full) · Windows (with a JDK) | **the path that attaches without a JDK is Linux-only**. On Windows the machine needs a JDK to reach runtime registrations; without one only `java.security` is read |
-| Windows CNG providers and algorithms | **Windows** (amd64·arm64) | it asks `bcrypt.dll` directly for the registered providers — no WMI, no PowerShell |
-
-### Inventory
-
-| What | Target | Why |
-|---|---|---|
-| the ingest and query CLIs | **anywhere** — Linux, macOS, Windows | they touch only files and a database, no OS primitives |
-| the store | **Postgres** (append-only) | only when you want history and changes. For a single look, `pqcota-discover-view` needs no store |
-| accepted input | a collector's `CollectionResult` · **CycloneDX 1.6/1.7** CBOM · a declaration written by a person | **what a machine saw and what a person wrote down never share a lane** |
-
-### Migration (Provisioning)
-
-What is generated depends on the remediation kind in the plan.
-
-| Runtime | Situation | What is generated |
-|---|---|---|
-| **OpenSSL** | 3.5+ (native PQC) | a config fragment only — the legacy runtime is untouched |
-| | 3.0–3.4 | provider module staging + a config fragment referencing it. You supply the module |
-| | 1.1.1 and older | **nothing** — a fork replacement is required, so it is marked as a manual step |
-| **JCA** (Java) | **JDK 24+** (native PQC) | a `java.security` fragment only. It keeps a classical group alongside — released JDKs still do not negotiate the hybrid TLS group (measured up to JDK 25) |
-| | **JDK 8+** (provider injection) | provider JAR staging + a `java.security` registration fragment. Staging the JAR alone does not load it, so activation is a separate step |
-| | older (EOL) | **nothing** — a JDK upgrade is required, so it is marked as a manual step |
-
-Application goes through Ansible playbooks. The generated playbook assumes POSIX paths and modules (`ansible.builtin.copy`, `/opt/pqcota`), so the target nodes are **Linux** — Ansible itself also drives Windows, but this output does not yet.
-
-Windows (CNG) is **observed** (`pqcota-cngscan`). Generating its migration artifacts needs the substrate generalization first, so it stays on the [roadmap](RELEASE_NOTES.md).
-
----
-
-## Status · version
-
-**Every release attaches per-architecture static binaries and `SHA256SUMS` to the
-[releases](https://github.com/randyinthedev-hash/pqcota/releases).** The bundles are split **by where they
-go**: the node bundles (`pqcota-linux-*`, `pqcota-windows-*`) are carried onto the hosts you observe, and
-the controller bundle (`pqcota-ctl-linux-*`) sits on the one central machine. The latter carries every
-ingest, query, approval and generation CLI. Verify what you download with `sha256sum -c SHA256SUMS`; signed
-releases are on the [roadmap](RELEASE_NOTES.md).
-Per-version goals and results are in the [release notes](RELEASE_NOTES.md).
-
-## License
-
-- **Apache-2.0** — full text in [LICENSE](LICENSE)
-- Dependency licensing → [License notes](docs/licensing.md)
-- Third-party notices → [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)
+Apache-2.0, see [LICENSE](LICENSE); dependency licensing in [License notes](docs/licensing.md) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). [Release notes](RELEASE_NOTES.md) · [Reporting guide](docs/reporting-guide.md) · [Build guide](docs/build.md) · [Contributing](CONTRIBUTING.md) · [Compatibility policy](docs/compatibility.md) · [Platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html). pqcota is one of five repositories, listed in CONTRIBUTING. The name is *PQC* plus *orchestra*: pqcota plays one part; you are the conductor.

@@ -14,7 +14,7 @@ You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refu
 Once the repo builds, the [examples](examples/README.md) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
-pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` until they are tagged, and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [README](README.md#build).
+pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` until they are tagged, and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [build guide](docs/build.md).
 
 ### Which OS can you build on
 
@@ -30,7 +30,7 @@ still pass a host build — which is why `make build` also cross-compiles **linu
 
 ## Development loop
 
-The build procedure is the same as [README · Build](README.md#build). What you additionally use when contributing are the gates and tests:
+The build procedure is the same as [Build guide](docs/build.md#build). What you additionally use when contributing are the gates and tests:
 
 ```bash
 make            # in any repo: that repo's own checks. In pqcota (this repo): every sibling's `make`, then the gates across all five
