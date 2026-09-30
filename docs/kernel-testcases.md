@@ -38,8 +38,8 @@
 
 | 케이스 | Given → When | Then | 목적 |
 |---|---|---|---|
-| [TK-RAW-1](../pkg/discovery/normalize/rawcapture_test.go) | `TestRawFormatImpliesRawCapture`: openssl·jvm·network·선언 네 빌더의 산출물 | `raw_format`이 있으면 `raw_capture`도 반드시 있다 | 강화 규칙이 좋아지면 원본에서 다시 정규화한다고 계약이 적는다(§1.2·§2.4). 형식 이름만 있고 내용이 없으면 **재정규화할 것이 없다**. 빌더는 늘어나고 원본 채우기는 잊기 쉽다 |
-| [TK-RAW-2](../pkg/discovery/normalize/rawcapture_test.go) | `TestRawCaptureDeterministic`: 같은 탐지 집합을 두 번 | 같은 바이트 | `raw_capture`는 서명이 덮는 값이라(§2.6) 흔들리면 검증이 깨진다 |
+| [TK-RAW-1](../test/crossstage/rawcapture_test.go) | `TestRawFormatImpliesRawCapture`: openssl·jvm·network·선언 네 빌더의 산출물 | `raw_format`이 있으면 `raw_capture`도 반드시 있다 | 강화 규칙이 좋아지면 원본에서 다시 정규화한다고 계약이 적는다(§1.2·§2.4). 형식 이름만 있고 내용이 없으면 **재정규화할 것이 없다**. 빌더는 늘어나고 원본 채우기는 잊기 쉽다 |
+| [TK-RAW-2](../test/crossstage/rawcapture_test.go) | `TestRawCaptureDeterministic`: 같은 탐지 집합을 두 번 | 같은 바이트 | `raw_capture`는 서명이 덮는 값이라(§2.6) 흔들리면 검증이 깨진다 |
 
 ### TK-POSTURE. 등급·권고: 관측을 판정으로
 

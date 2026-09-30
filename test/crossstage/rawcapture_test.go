@@ -1,4 +1,4 @@
-package normalize_test
+package crossstage_test
 
 import (
 	"strings"

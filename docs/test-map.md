@@ -33,6 +33,8 @@ CI는 Postgres 서비스와 JDK도 붙여 나머지 케이스를 실제로 돌�
 
 **`_test.go`는 대상 코드와 같은 디렉터리에 있다**. Go에서 그래야 그 패키지의 테스트가 된다. 별도 테스트 트리를 두지 않는 이유다.
 
+**한 가지 예외는 `test/crossstage/`다.** 단계 둘 이상의 패키지를 함께 import하는 테스트만 둔다. 어느 한 단계의 소유가 아니라 대상 코드 옆에 둘 수 없다(옆에 두면 그 패키지가 다른 단계를 import하게 된다). 이 디렉터리에는 `doc.go`(패키지 문서뿐)와 `_test.go`만 있다. 지금은 [`rawcapture_test.go`](../test/crossstage/rawcapture_test.go)(collector·선언 임포터 산출의 원시 결과 불변식)와 [`org_scoped_test.go`](../test/crossstage/org_scoped_test.go)(저장소 다섯의 `org.Scoped` 만족)가 있다.
+
 대부분은 **외부 테스트 패키지**(`package foo_test`)라 공개 API로만 돈다. 공개 표면만으로 실제로 쓸 수 있는지가 함께 확인된다. 비공개 로직을 직접 봐야 하는 여섯 파일만 내부(`package foo`)로 남았다: `parseDetectionMethod` · `mergeByPath` · `machineKey` · `edgeFor` 메서드 · JVM 정찰·attach 파서 둘.
 
 케이스와 테스트는 **한 방향으로** 이어져 있다. 케이스 표의 ID가 테스트 파일을 링크하고 테스트 함수 이름까지
