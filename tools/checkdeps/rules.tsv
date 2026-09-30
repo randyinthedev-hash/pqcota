@@ -1,0 +1,34 @@
+# check-deps 규칙. 탭으로 가른다. 지적받을 때마다 늘어나는 목록이라 코드 밖에 둔다.
+#
+# class <경로 접두어, 끝에 /> <영역>
+#     가장 긴 접두어가 이긴다. 어디에도 안 걸리는 모듈 내부 경로는 실패다(새 디렉터리로 규칙을 피하지 못하게).
+# allow <영역> <import해도 되는 영역, 콤마로 이음> <규칙 번호> <고치는 방향>
+#     여기 적힌 영역만 import할 수 있다. 자기 영역도 적어야 한다.
+# bare <영역>
+#     그 영역에는 doc.go(패키지 문서와 package 선언뿐)와 _test.go만 둔다.
+#
+# 단계 방향: common ← inventory ← discovery, inventory ← provisioning. collector는 노드로 나가는 바이너리라
+# common과 procs만 쓴다.
+class	gen/	common
+class	pkg/kernel/	common
+class	pkg/org/	common
+class	pkg/discovery/procs/	procs
+class	discovery/collectors/	collector
+class	discovery/	discovery
+class	pkg/discovery/	discovery
+class	inventory/	inventory
+class	pkg/inventory/	inventory
+class	provisioning/	provisioning
+class	pkg/provisioning/	provisioning
+class	test/crossstage/	crossstage
+class	tools/	leaf
+class	demo/	leaf
+allow	common	common	R1	공통은 단계를 참조하지 않는다. 공유할 코드면 공통에 두고, 단계 여럿을 엮는 테스트면 test/crossstage로 옮긴다
+allow	procs	common,procs	R5b	procs는 공통과 자기 자신만 참조한다. collector가 procs를 거쳐 다른 단계에 닿지 않게 하려는 것이다
+allow	collector	common,collector,procs	R5	collector는 공통·collector·procs만 참조한다. 노드로 나가는 바이너리에 다른 단계 코드가 딸려 가지 않게 한다
+allow	discovery	common,discovery,collector,procs,inventory	R4	디스커버리는 인벤토리까지만 참조한다. 프로비저닝을 참조하지 않는다
+allow	inventory	common,inventory	R2	인벤토리는 허브라서 공통만 참조한다. 디스커버리·프로비저닝을 참조하지 않는다
+allow	provisioning	common,inventory,provisioning	R3	프로비저닝은 공통과 인벤토리만 참조한다. 디스커버리를 참조하지 않는다
+allow	crossstage	common,procs,collector,discovery,inventory,provisioning,crossstage,leaf	R6	단계 간 통합 테스트는 모든 영역을 볼 수 있다
+allow	leaf	common,procs,collector,discovery,inventory,provisioning,leaf	R7	tools·demo는 어느 영역이든 쓸 수 있다. crossstage만은 참조하지 않는다
+bare	crossstage

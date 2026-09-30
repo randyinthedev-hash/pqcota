@@ -94,6 +94,10 @@ jobs:
       - name: check-gates
         run: make check-gates
 
+      # 단계 사이의 import 방향 — 인벤토리가 허브이고 collector는 노드로 나가는 바이너리라서, 방향이 어긋나는 것을 막는다.
+      - name: check-deps
+        run: make check-deps
+
       # 문체 게이트 — 한 번 걷어낸 한국어 표현이 문서·HTML·도구 출력에 다시 들어오는 것을 막는다.
       - name: check-prose
         run: make check-prose

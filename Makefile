@@ -5,9 +5,9 @@
 # (.gitignore 머리말). 그래서 클론 직후 바로 빌드된다. proto를 고쳤을 때만 `make generate`로 다시
 # 만들어 함께 커밋한다.
 
-.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors check-gates check-prose
+.PHONY: all generate lint breaking fmt-check build build-jar test vet tools check-boundary check-docs check-collectors check-gates check-deps check-prose
 
-all: generate lint breaking fmt-check check-boundary check-docs check-collectors check-gates check-prose vet build build-jar test
+all: generate lint breaking fmt-check check-boundary check-docs check-collectors check-gates check-deps check-prose vet build build-jar test
 
 # 전체 빌드 — Go(호스트 + **리눅스 타깃**) + Java 사이드카.
 #
@@ -149,6 +149,10 @@ check-collectors:
 #   아무 표시 없이 무의미해진다 — 모든 스냅샷이 같은 자리표시자를 달기 때문이다.
 check-gates:
 	@go build -o build/checkgates ./tools/checkgates && ./build/checkgates
+
+# 단계 사이의 import 방향(인벤토리가 허브, collector는 common과 procs만). 규칙은 tools/checkdeps/rules.tsv.
+check-deps:
+	@go build -o build/checkdeps ./tools/checkdeps && ./build/checkdeps
 
 # 문체 게이트 — 문서·HTML·도구 출력의 한국어에서 **한 번 걷어낸 말이 다시 들어오지 않게** 한다.
 # 지금 있는 것은 tools/checkprose/baseline.tsv에 파일마다 적어 두고 늘면 막는다. 고쳐서 줄었으면

@@ -14,8 +14,8 @@
 |---|---|---|
 | 커밋 | 377 (2026-08-05 이후, 2026-09-30 기준) | `git log --oneline \| wc -l` |
 | 릴리스 | 26 | `gh release list` |
-| 자동 게이트 | 13 | `Makefile`의 `all` 타깃 |
-| 테스트 함수 | 301 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
+| 자동 게이트 | 14 | `Makefile`의 `all` 타깃 |
+| 테스트 함수 | 309 | `grep -rh '^func Test' --include='*_test.go' . \| wc -l` |
 | 케이스 그룹 | 4 (`TD`·`TV`·`TP`·`TK`) | [테스트 맵](test-map.md) |
 | 설계 문서 | 규정서 · 아키텍처 · 단계별 셋 · 수용 원칙 · 호환성 · 검토 중 | [docs/](README.md) |
 
@@ -29,7 +29,7 @@
 
 ## 무엇이 자동으로 막히나
 
-`make` 하나가 열두 가지를 돌리고 **CI가 그 전부를 다시 돌린다**([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+`make` 하나가 열네 가지를 돌리고 **CI가 그 전부를 다시 돌린다**([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
 게이트를 건너뛰고 올릴 방법이 없다.
 
 | 게이트 | 막는 것 |
@@ -45,6 +45,7 @@
 | `build` | 호스트뿐 아니라 **linux/amd64·windows/amd64 교차**가 깨지는 것 |
 | `build-jar` | JVM 사이드카 빌드 |
 | `check-gates` | **규칙은 적어 뒀는데 제품이 부르지 않는 게이트.** 배선을 미뤘다면 왜 미뤘는지를 함수 자리에 적어야 통과한다. 미룬 것은 통과시키되 화면에 낸다 |
+| `check-deps` | **단계 사이의 import 방향.** 인벤토리가 허브라서 디스커버리·프로비저닝이 인벤토리를 참조하고 인벤토리는 단계를 참조하지 않는다. 공통(`gen`·`kernel`·`org`)은 어느 단계도 참조하지 않고 collector는 공통과 `procs`만 쓴다. 규칙은 `tools/checkdeps/rules.tsv`의 **허용 목록**이고, 분류표에 없는 경로도 실패로 센다. 배포 명령의 의존 폐포는 재지 않는다 |
 | `check-prose` | **한 번 걷어낸 한국어 표현이 문서·HTML·도구 출력에 다시 들어오는 것.** 엠대시·`조용히`·코드 뒤에 띄운 조사 같은 규칙이 `tools/checkprose/rules.tsv`에 있고, 지금 남은 것은 `baseline.tsv`에 파일마다 적어 두어 **늘면 막고 줄어도 막는다**(줄었으면 기준선을 내려 같은 커밋에 넣는다). `notices.tsv`는 관문이 아니라 알림이다. 영문 짝(`*.en.md`)·코드 블록·주석은 보지 않는다 |
 | `test` | 단위·통합 테스트 전부 |
 
@@ -131,7 +132,7 @@ Mac과 리눅스에서 한글 문장을 다르게 세어 같은 게이트가 서
 | **OS 프리미티브** | `golang.org/x/sys` | AF_PACKET 원시 소켓. 표준 라이브러리가 제공하지 않는 유일한 부분이다 |
 | **오케스트레이션** | Ansible | 노드 도달은 이미 풀린 문제다. 자체 원격 실행 엔진을 만들지 않는다(§4.4) |
 | **코드 생성** | `buf` · `protoc-gen-go` · `protoc-gen-go-grpc` | 생성 결과가 사람마다 달라지지 않게 **버전을 고정**한다 |
-| **CI** | GitHub Actions · dependabot | 게이트 열두 가지를 건너뛸 수 없게 만드는 곳이다 |
+| **CI** | GitHub Actions · dependabot | 게이트 열네 가지를 건너뛸 수 없게 만드는 곳이다 |
 | **그림** | Graphviz | 토폴로지를 DOT로 내고 렌더는 밖에 맡긴다. 산출물(SVG)은 데이터다 |
 | **관측 대상 런타임** | OpenSSL · JDK/JCA · Windows CNG · BouncyCastle · oqsprovider | 만드는 것이 아니라 **보는 대상**이다. 각각의 열거 API를 그대로 쓴다 |
 | **표준·규격** | NIST FIPS 203/204/205 · RFC 4253 · IANA TLS 코드포인트 | 이름과 판정 기준을 스스로 정하지 않는다 |
