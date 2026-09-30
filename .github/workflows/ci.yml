@@ -2,17 +2,29 @@ name: ci
 
 # 이 리포의 검사를 사람이 기억하지 않아도 걸리게 한다. 리포 사이에 걸친 검사(import 방향·게이트 배선·문서 링크의
 # 교차 확인)는 통합 리포 pqcota의 ci.yml이 다섯 리포를 함께 받아 잰다.
+# 이 파일은 단계 리포도 부른다(workflow_call). 단계 리포가 바뀌면 그 리포의 커밋을 나머지 넷의 main과 함께 받아
+# 같은 검사를 돌린다. 부르는 쪽이 `caller`(리포 이름)와 `ref`(커밋)를 넘긴다.
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      caller:
+        description: '이 검사를 부른 리포의 이름 (예: pqcota-common). 그 리포만 ref로 받는다'
+        type: string
+        default: ''
+      ref:
+        description: '부른 리포에서 받을 커밋'
+        type: string
+        default: ''
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ inputs.caller || 'pqcota' }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,28 +34,35 @@ jobs:
       # 계약 하위호환은 pqcota-common의 CI가 맡는다. 여기서는 다섯 리포를 **함께** 받아
       # 리포 사이에 걸친 검사만 한다.
       # 형제 리포를 이 리포와 **나란히** 받는다 — go.mod가 replace로 ../ 를 읽는 배치다.
+      # `ref`가 비면 기본 브랜치다. 부른 리포만 넘겨받은 커밋으로 받고 나머지 넷은 main이다.
       - uses: actions/checkout@v7
         with:
+          repository: randyinthedev-hash/pqcota
+          ref: ${{ inputs.caller == 'pqcota' && inputs.ref || '' }}
           path: pqcota
           fetch-depth: 0
       - uses: actions/checkout@v7
         with:
           repository: randyinthedev-hash/pqcota-common
+          ref: ${{ inputs.caller == 'pqcota-common' && inputs.ref || '' }}
           path: pqcota-common
           fetch-depth: 0
       - uses: actions/checkout@v7
         with:
           repository: randyinthedev-hash/pqcota-inventory
+          ref: ${{ inputs.caller == 'pqcota-inventory' && inputs.ref || '' }}
           path: pqcota-inventory
           fetch-depth: 0
       - uses: actions/checkout@v7
         with:
           repository: randyinthedev-hash/pqcota-discovery
+          ref: ${{ inputs.caller == 'pqcota-discovery' && inputs.ref || '' }}
           path: pqcota-discovery
           fetch-depth: 0
       - uses: actions/checkout@v7
         with:
           repository: randyinthedev-hash/pqcota-provisioning
+          ref: ${{ inputs.caller == 'pqcota-provisioning' && inputs.ref || '' }}
           path: pqcota-provisioning
           fetch-depth: 0
 
