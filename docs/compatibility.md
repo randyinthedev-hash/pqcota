@@ -67,9 +67,11 @@ To ask a value received through an interface about a new capability, **make one 
 breaks every import on the consuming side. So this is the one thing that cannot be absorbed by adding, and the only way is to
 ship it in a minor release and **write down what changes and how**.
 
-We did it once, in v0.5.0: `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
+We did it in v0.5.0: `github.com/pqcota/pqcota` → `github.com/randyinthedev-hash/pqcota`.
 No repo existed at the declared path, so `go get` could not fetch it at all, and consumers had to carry a `replace` in their own
-`go.mod` permanently. **We do not change it again.** The path now equals the repo address, so the same reason cannot arise again.
+`go.mod` permanently. The path then equalled the repo address, so that reason could not arise again.
+
+The path changed a second time when the repository was split into five (`pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning`, and the integration repository `pqcota`). This time the reason was structural: the contracts and the shared code moved to their own module, so `github.com/randyinthedev-hash/pqcota/gen/...`, `.../pkg/kernel/...` and `.../pkg/org` became `github.com/randyinthedev-hash/pqcota-common/...`, the inventory packages became `.../pqcota-inventory/...`, and so on for discovery and provisioning. The release that carries the split lists the mapping. **The wire format did not change:** only the `go_package` option of each proto file did, and `buf breaking` against the previous release shows no other difference. **Splitting again is a decision to make as carefully as this one**, because each module path is a promise to whoever imports it.
 
 ## 4. DB schema: idempotent, and never half-applied
 
@@ -112,3 +114,4 @@ Users running a single organization do not take this step. The default stays, an
 | v0.1.3 | Filled the empty `collected_at`. **Because it fills a value, past signatures stay valid** (§2). The clock became a package variable so no signature changed (§3①) |
 | v0.2.0 | Added the organization axis with a new constructor (§3③) and without touching an interface (§3②). Only the PK change used conditional DDL (§4), and dropping the default is an optional step (§5) |
 | v0.5.0 | Aligned the module path with the repo address (§3④). It is the one kind that cannot be absorbed by adding, so it went into a minor release with a note of what changes |
+| the split | Moved the contracts and stages into their own modules (§3④). The wire format and the signatures are unchanged, so §1 and §2 are untouched. Consumers change imports and require the new modules |
