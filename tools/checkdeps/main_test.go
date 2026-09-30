@@ -223,33 +223,49 @@ func TestRulesFileErrors(t *testing.T) {
 }
 
 // 이 리포 자신이 규칙을 지킨다. 위 케이스들은 만든 입력으로 재는 것이라, 진짜 리포에서 맞는지는 여기서 잰다.
+// 분리된 형제 리포가 옆에 있으면 함께 잰다(작업 공간 배치). 없으면 이 리포만 잰다.
 func TestThisRepoPasses(t *testing.T) {
 	root, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
 	}
-	module, err := moduleOf(filepath.Join(root, "go.mod"))
+	roots := []string{root}
+	for _, sib := range []string{"pqcota-common", "pqcota-inventory", "pqcota-discovery", "pqcota-provisioning"} {
+		p := filepath.Join(filepath.Dir(root), sib)
+		if _, err := os.Stat(filepath.Join(p, "go.mod")); err == nil {
+			roots = append(roots, p)
+		}
+	}
+	var modules []string
+	for _, r := range roots {
+		m, err := moduleOf(filepath.Join(r, "go.mod"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		modules = append(modules, m)
+	}
+	cfg, err := loadConfig("rules.tsv", modules...)
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("git", "-c", "core.quotePath=off", "ls-files", "*.go")
-	cmd.Dir = root
-	out, err := cmd.Output()
-	if err != nil {
-		t.Skipf("git ls-files를 못 돌린다(체크아웃이 아니다): %v", err)
+	total := 0
+	for _, r := range roots {
+		cmd := exec.Command("git", "-c", "core.quotePath=off", "ls-files", "*.go")
+		cmd.Dir = r
+		out, err := cmd.Output()
+		if err != nil {
+			t.Skipf("git ls-files를 못 돌린다(체크아웃이 아니다): %v", err)
+		}
+		bad, n, err := check(r, strings.Fields(string(out)), cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(bad) != 0 {
+			t.Fatalf("%s가 규칙을 어긴다:\n%s", filepath.Base(r), strings.Join(bad, "\n"))
+		}
+		total += n
 	}
-	cfg, err := loadConfig("rules.tsv", module)
-	if err != nil {
-		t.Fatal(err)
-	}
-	bad, n, err := check(root, strings.Fields(string(out)), cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(bad) != 0 {
-		t.Fatalf("리포가 규칙을 어긴다:\n%s", strings.Join(bad, "\n"))
-	}
-	if n == 0 {
+	if total == 0 {
 		t.Fatal("모듈 내부 import가 하나도 안 잡혔다. 관문이 아무것도 재지 않는다")
 	}
 }

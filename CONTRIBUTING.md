@@ -2,7 +2,7 @@
 
 
 > **What will not be broken** — contract, signature, Go API, DB schema, and mixed versions, written out
-> as five distinct faces: [compatibility policy](docs/compatibility.md) Read it before changing
+> as five distinct faces: [compatibility policy](docs/compatibility.md). Read it before changing
 > any of them.
 
 For developers who want to **fork·extend·contribute** to pqcota. Users who just want to *try* the platform should see the root [README](README.md) and [demo/](demo/).
@@ -14,7 +14,7 @@ You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refu
 Once the repo builds, the [examples](examples/) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
-This document covers **contributing to the repo**. If you only use it, building and running are covered by the [root README](README.md#build).
+pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` until they are tagged, and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [README](README.md#build).
 
 ### Which OS can you build on
 
@@ -30,50 +30,46 @@ still pass a host build — which is why `make build` also cross-compiles **linu
 
 ## Development loop
 
-The build procedure is the same as [root README · Build](README.md#build). What you additionally use when contributing are the gates and tests:
+The build procedure is the same as [README · Build](README.md#build). What you additionally use when contributing are the gates and tests:
 
 ```bash
-make            # every gate (what it runs is the Makefile's all target)
+make            # in any repo: that repo's own checks. In pqcota (this repo): every sibling's `make`, then the gates across all five
 go test ./...   # unit
 ```
 
 `make build` **leaves no artifacts** — it only checks that the host, linux/amd64, and windows/amd64 cross-builds
-compile (so Linux-only files are covered). Build the binaries you use with `-o`, as the root README does. `make build-jar` warns and skips without a JDK, so contributors touching only Go can run `make`
+compile (so Linux-only files are covered). Build the binaries you use with `-o`, as the README does. `make build-jar` warns and skips without a JDK, so contributors touching only Go can run `make`
 without one. Tests run without a real JVM.
 
-> **If you see `no required module provides package .../gen/pqcota/...`**, you skipped generation.
-> The `go get github.com/randyinthedev-hash/pqcota/gen/...` that Go suggests alongside it is **not the fix** —
-> that is not a fetchable module but code this repo generates. Run `make generate` first.
-
-If you changed a contract, run `make lint` (buf lint) and check backward compatibility:
+If you changed a contract, work in `pqcota-common`: run `make generate`, `make lint` (buf lint) and check backward compatibility:
 
 ```bash
 make breaking                  # against the last release tag — does it break a contract already shipped (what CI runs)
 make breaking AGAINST=main     # compare the branch you are working on against main
 ```
 
-While there is no release tag (before v0.1.0) there is no baseline, so the first one skips and says so in the log.
+While there is no release tag there is no baseline, so the first one skips and says so in the log.
 
-Also read [the ripple checklist for contract changes](contracts/README.md) (signature coverage, change detection).
+Also read [the ripple checklist for contract changes](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md) (signature coverage, change detection). The change-detection function `history.ContentHash` lives in `pqcota-inventory`, so a contract change that adds a content field is a change in two repositories.
 
-## Code layout — top level = kind, stage = inside it
+## Repositories
 
-| Top level | What |
+| Repository | What |
 |---|---|
-| `contracts/` | Contract SSOT (protobuf). The namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1` |
-| `gen/` | proto-generated code — **committed** (so consumers can use it with `go get` alone) |
-| `pkg/` | Library logic — stage groups `discovery`·`inventory`·`provisioning` + shared `kernel` (registry·posture·scope·machineid·sign)·`cbom` |
-| `discovery/` · `inventory/` · `provisioning/` | **Execution entry points** (per stage) — each with `cmd/` (scanner·driver·query·generate); `discovery/` also has `collectors/` (reference collectors) |
-| `examples/` | **Per-stage runnable examples** — sample inputs + `run.sh` to run each cmd with minimal setup |
-| `demo/` | Docker end-to-end demo (access prep → discovery → inventory → provisioning) |
-| `tools/` | Repo tooling — `checkdocs` (the docs gate; `make check-docs` builds and runs it) |
+| [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | Contract SSOT (protobuf; the namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1`), the **committed** generated Go code in `gen/`, and the shared logic in `pkg/kernel` (registry·posture·scope·machineid·sign·completeness) and `pkg/org` |
+| [`pqcota-inventory`](https://github.com/randyinthedev-hash/pqcota-inventory) | The inventory stage: `pkg/inventory` (history·normalize·ingest·resultio·declaration) and the commands in `inventory/cmd` |
+| [`pqcota-discovery`](https://github.com/randyinthedev-hash/pqcota-discovery) | The discovery stage: `discovery/collectors` (reference collectors), `discovery/cmd`, the reference Ansible playbook, `pkg/discovery/procs` |
+| [`pqcota-provisioning`](https://github.com/randyinthedev-hash/pqcota-provisioning) | The provisioning stage: `pkg/provisioning` and the commands in `provisioning/cmd` |
+| `pqcota` (this repository) | `demo/` (Docker end-to-end demo), `examples/` (per-stage runnable examples), `tools/` (the gates that measure all five repos), `test/crossstage/` (tests that span stages), the release workflow |
 
-That is, **`pkg/`·`contracts/` split by stage, and so do the top-level execution folders**. To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](discovery/cmd/README.md)·[inventory](inventory/cmd/README.md)·[provisioning](provisioning/cmd/README.md)).
+**Direction of dependence.** `pqcota-common` imports no other module; `pqcota-inventory` imports only common; `pqcota-discovery` and `pqcota-provisioning` import common and inventory and never each other. Inside discovery, the collectors import only common and `pkg/discovery/procs`, because they are built into binaries that go onto the observed nodes. `make check-deps` enforces this (rules in `tools/checkdeps/rules.tsv`).
+
+To **actually run the commands, use [`examples/`](examples/)** (each stage's `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)·[inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/cmd/README.md)·[provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/cmd/README.md)).
 
 ## Contract-first
 
-- To change a type/enum, **edit `contracts/*.proto` and `make generate`**. Do not touch `gen/` directly.
-- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (the rules live in one place so results can be recomputed). Details: [contracts/README](contracts/README.md).
+- To change a type/enum, **edit `contracts/proto/**/*.proto` in `pqcota-common` and run `make generate`**. Do not touch `gen/` directly.
+- Derived values like `evidence_strength`·`pqc_readiness` are **filled by the core, not the collector** (the rules live in one place so results can be recomputed). Details: [contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md).
 - A controlled-vocabulary `*_UNSPECIFIED = 0` means "unknown" — don't leave it blank/missing.
 
 ## Collector extension — the contract is the seam
@@ -81,8 +77,8 @@ That is, **`pkg/`·`contracts/` split by stage, and so do the top-level executio
 The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector** — without touching the core. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
 
 - A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (the rules live in one place so results can be recomputed).
-- Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](contracts/README.md)).
-- Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
+- Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md)).
+- Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](https://github.com/randyinthedev-hash/pqcota-discovery/tree/main/discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
 
 > **The provisioning generator is not yet such a plugin seam** — the plan (`plan.proto`) is a public contract, but the generator itself is internal logic. To avoid confusion, only the collector side is presented as an extension point.
 
@@ -94,11 +90,11 @@ A new runtime is **introduced in stages**, not all at once: contract vocabulary 
 
 ## Coding guidelines
 
-This repo enforces **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
+These repos enforce **honesty and determinism in the code itself**. Below are the conventions — not generic Go style, only **what is specifically upheld here**.
 
-**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs every gate, so all of them must pass before a PR. The gates and what each one blocks are listed in the `Makefile` and `.github/workflows/ci.yml`. Follow standard Go idioms, but use the contract's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
+**Formatting & checks.** Format with `gofmt` (`go fmt ./...`). `make` (full) runs every gate, so all of them must pass before a PR (run it in each repo you touched, and in `pqcota` for the cross-repo gates). The gates and what each one blocks are listed in the `Makefile` and `.github/workflows/ci.yml`. Follow standard Go idioms, but use the contract's vocabulary for domain terms (`finding` · `app_key` · `crypto_runtime`).
 
-**Comments explain "why".** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong. This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie`. Existing comments are written in Korean and cite section numbers (`§`) of a process regulation that is not part of this repository; treat those numbers as opaque labels.
+**Comments explain "why".** *What* the code does, the code says — comments say *why it's done this way* and why the rejected alternative is wrong. This is why comments here run long. Example: `// exclusion is not "absence" — silently dropping a policy-excluded asset makes the inventory lie`. Existing comments are written in Korean and cite section numbers (`§`) of a process regulation that is not part of these repositories; treat those numbers as opaque labels.
 
 **Enforce honesty in code** — it must hold at runtime, not just in docs:
 - **unknown is first-class** — an undeterminable value is not a blank but `*_UNSPECIFIED` / an explicit "unknown". A controlled-vocabulary enum's `0` is always unknown.
@@ -111,13 +107,13 @@ This repo enforces **honesty and determinism in the code itself**. Below are the
 
 **Don't depend on external tools.** Parse `/proc`·ELF directly in Go instead of shelling out to `ldd`·`lsof`·`ss`·`readelf` (minimal image/footprint). Release binaries are `CGO_ENABLED=0` static builds. Tag code that touches OS primitives with `//go:build linux`, and split pure helpers out as OS-agnostic.
 
-**Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](contracts/README.md).
+**Change the contract, change what rides on it.** Every field a collector asserts must be covered by `sign.Canonical` (no signing blind spots). A oneof arm uses a field number **unused across the whole message** (a oneof shares the message's number space). Full checklist: [contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md).
 
 ## Testing
 
 ```bash
-go test ./...                                              # unit
-bash discovery/collectors/openssl/integration/run.sh      # openssl collector real integration (Docker, SD-1·SD-3·SD-4)
+go test ./...                                              # unit (run it in each repo)
+(cd ../pqcota-discovery && bash discovery/collectors/openssl/integration/run.sh)   # openssl collector real integration (Docker, SD-1·SD-3·SD-4)
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh            # end-to-end discovery demo
 ```
 
@@ -165,4 +161,4 @@ Including this with a bug report speeds up reproduction:
 
 ## Design first
 
-Before adding a feature, read the per-stage READMEs ([discovery](discovery/README.md) · [inventory](inventory/README.md) · [provisioning](provisioning/README.md)) and [contracts/](contracts/README.md), and open an issue if the change touches a boundary.
+Before adding a feature, read the per-stage READMEs ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/README.md) · [inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/README.md) · [provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/README.md)) and [contracts/](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md), and open an issue if the change touches a boundary.

@@ -1,4 +1,6 @@
-# pqcota 디스커버리 데모 — OSS, 단일 리포로 완결(Docker만 있으면 됨).
+# pqcota 디스커버리 데모 — OSS, Docker만 있으면 된다.
+# ★ 빌드 컨텍스트는 **리포의 부모 디렉터리**다. pqcota와 pqcota-common·-inventory·-discovery·-provisioning을
+#   나란히 클론해 두면(go.mod의 replace가 ../ 를 읽는 배치와 같다) 그 다섯을 컨트롤러 이미지에 담는다.
 # 컨트롤러·저장소·타깃 노드를 한 네트워크에 묶어 OpenSSL·JCA·통신 핸드셰이크를 실측 디스커버리한다.
 # (노드 수·구성은 기본 데모가 고정, demo/topology는 사용자 명세로 생성 — 스테이지는 양쪽이 공유.)
 # (선언 대비 3-상태 대조·토폴로지는 이 리포 범위 밖. 여기선 관측 등급까지.)
@@ -15,7 +17,12 @@ ARG OPENSSL_BASE=ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c0
 # 둘 다 contracts에 의존하지 않아 buf 없이 빌드된다.
 FROM golang:1.26@sha256:b900de91b15b2e2953d930ece1d0ecff0a1590ab2006088d20dcf0f56f1e979f AS builder
 WORKDIR /src
-COPY . .
+COPY pqcota-common /src/pqcota-common
+COPY pqcota-inventory /src/pqcota-inventory
+COPY pqcota-discovery /src/pqcota-discovery
+COPY pqcota-provisioning /src/pqcota-provisioning
+COPY pqcota /src/pqcota
+WORKDIR /src/pqcota
 RUN CGO_ENABLED=0 go build -o /out/ ./demo/workloads/pqc-echo ./demo/topology/topogen
 
 # ─────────────────────────── node-openssl ───────────────────────────
@@ -26,10 +33,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && mkdir -p /run/sshd /root/.ssh && chmod 700 /root/.ssh
 # ★ collector는 여기 없다 — Ansible이 반입한다. 노드엔 관측 대상(워크로드)만.
 COPY --from=builder /out/pqc-echo /usr/local/bin/pqc-echo
-COPY demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
-COPY demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
-COPY demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
-COPY demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
+COPY pqcota/demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
+COPY pqcota/demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
+COPY pqcota/demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
+COPY pqcota/demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
 RUN chmod +x /usr/local/bin/node-entrypoint.sh /usr/local/bin/pqcota-gen-traffic.sh /usr/local/bin/pqcota-observe.sh
 ENTRYPOINT ["/usr/local/bin/node-entrypoint.sh"]
 
@@ -44,10 +51,10 @@ RUN apk add --no-cache bash libressl openssh openssh-server iproute2 iputils pyt
  && mkdir -p /etc/ssl && printf '[req]\ndistinguished_name=dn\n[dn]\n' > /etc/ssl/libressl.cnf
 # ★ collector는 여기 없다 — Ansible이 반입한다. 노드엔 관측 대상(워크로드)만.
 COPY --from=builder /out/pqc-echo /usr/local/bin/pqc-echo
-COPY demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
-COPY demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
-COPY demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
-COPY demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
+COPY pqcota/demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
+COPY pqcota/demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
+COPY pqcota/demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
+COPY pqcota/demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
 RUN chmod +x /usr/local/bin/node-entrypoint.sh /usr/local/bin/pqcota-gen-traffic.sh /usr/local/bin/pqcota-observe.sh
 ENTRYPOINT ["/usr/local/bin/node-entrypoint.sh"]
 
@@ -67,14 +74,14 @@ ARG BC_SHA256=20af26bf6060bb8005cc2389916812c1e0e998dc48d2ced7131b89461b54cff7
 RUN curl -fsSL -o /opt/bcprov.jar \
       "https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/${BC_VERSION}/bcprov-jdk18on-${BC_VERSION}.jar" \
  && echo "${BC_SHA256}  /opt/bcprov.jar" | sha256sum -c -
-COPY demo/workloads/CryptoApp.java /opt/CryptoApp.java
+COPY pqcota/demo/workloads/CryptoApp.java /opt/CryptoApp.java
 # ★ collector는 여기 없다 — Ansible이 실행 시점에 반입한다(배포 경로 실증). 노드엔 **관측 대상**인
 # 워크로드만 둔다(pqc-echo = PQC TLS 서버).
 COPY --from=builder /out/pqc-echo /usr/local/bin/pqc-echo
-COPY demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
-COPY demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
-COPY demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
-COPY demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
+COPY pqcota/demo/scripts/internal/node-entrypoint.sh /usr/local/bin/node-entrypoint.sh
+COPY pqcota/demo/scripts/internal/pqcota-gen-traffic.sh /usr/local/bin/pqcota-gen-traffic.sh
+COPY pqcota/demo/scripts/internal/pqcota-observe.sh /usr/local/bin/pqcota-observe.sh
+COPY pqcota/demo/scripts/internal/ssl-apps.sh /usr/local/bin/ssl-apps.sh
 RUN chmod +x /usr/local/bin/node-entrypoint.sh /usr/local/bin/pqcota-gen-traffic.sh /usr/local/bin/pqcota-observe.sh
 ENTRYPOINT ["/usr/local/bin/node-entrypoint.sh"]
 
@@ -92,15 +99,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Go 툴체인 — apt판은 go.mod가 요구하는 버전보다 낮아 공식 tarball을 쓴다(호스트 arch에 맞춰).
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" | tar -C /usr/local -xz
 ENV PATH="/usr/local/go/bin:/root/go/bin:${PATH}"
-# proto 코드 생성 도구 — 버전 고정(리포의 CONTRIBUTING이 안내하는 그것).
+# proto 코드 생성 도구 — 버전 고정(pqcota-common의 CONTRIBUTING이 안내하는 그것).
+# 호스트에서 만든 gen/은 이미지로 넣지 않는다(demo/Dockerfile.dockerignore) — 컨트롤러가 계약에서 직접 만든다.
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11 \
  && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1 \
  && go install github.com/bufbuild/buf/cmd/buf@v1.71.0
-COPY . /src
-COPY demo/scripts/ansible/ /work/ansible/
+COPY pqcota-common /src/pqcota-common
+COPY pqcota-inventory /src/pqcota-inventory
+COPY pqcota-discovery /src/pqcota-discovery
+COPY pqcota-provisioning /src/pqcota-provisioning
+COPY pqcota /src/pqcota
+COPY pqcota/demo/scripts/ansible/ /work/ansible/
 # 참조 플레이북은 데모 것이 아니라 제품 산출물이다 — 실환경에 그대로 이식하라고 만든 것이라
-# discovery/ 아래 두고, 데모는 그걸 가져다 쓴다.
-COPY discovery/ansible/discover.yml /work/ansible/discover.yml
+# pqcota-discovery의 discovery/ 아래 두고, 데모는 그걸 가져다 쓴다.
+COPY pqcota-discovery/discovery/ansible/discover.yml /work/ansible/discover.yml
 WORKDIR /work
 RUN mkdir -p /work/results
 CMD ["sleep", "infinity"]

@@ -58,7 +58,11 @@ type gate struct {
 }
 
 func main() {
-	files, err := goFiles()
+	roots := os.Args[1:]
+	if len(roots) == 0 {
+		roots = []string{"."}
+	}
+	files, err := goFiles(roots)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -97,19 +101,25 @@ func main() {
 	fmt.Printf("✓ gates check passed (%d개 등록 · 보류 %d개 · 규칙 판 자리표시자 없음)\n", len(notes)+countWired(files), len(notes))
 }
 
-// goFiles — 추적 중인 Go 파일. **testdata는 뺀다.** 이 검사기 자신의 fixture가 들어 있어,
+// goFiles — 루트마다 추적 중인 Go 파일. **testdata는 뺀다.** 이 검사기 자신의 fixture가 들어 있어,
 // 빼지 않으면 가짜 표시가 진짜로 잡혀 게이트가 자기 fixture 때문에 깨진다.
-func goFiles() ([]string, error) {
-	out, err := exec.Command("git", "-c", "core.quotePath=off", "ls-files", "*.go").Output()
-	if err != nil {
-		return nil, fmt.Errorf("git ls-files: %w", err)
-	}
+//
+// 루트가 여럿인 것은 리포가 나뉘었기 때문이다. 게이트 함수와 그것을 부르는 명령이 서로 다른 리포에
+// 있으므로(예: `sign.VerifyFrom`은 pqcota-common, 호출부는 다른 리포) 한 리포만 읽으면 배선이 없다고
+// 오판한다. 돌려주는 경로는 루트를 앞에 붙인 형태다.
+func goFiles(roots []string) ([]string, error) {
 	var keep []string
-	for _, f := range strings.Fields(string(out)) {
-		if strings.HasPrefix(f, "gen/") || hasDir(f, "testdata") {
-			continue
+	for _, root := range roots {
+		out, err := exec.Command("git", "-C", root, "-c", "core.quotePath=off", "ls-files", "*.go").Output()
+		if err != nil {
+			return nil, fmt.Errorf("git ls-files (%s): %w", root, err)
 		}
-		keep = append(keep, f)
+		for _, f := range strings.Fields(string(out)) {
+			if strings.HasPrefix(f, "gen/") || hasDir(f, "testdata") {
+				continue
+			}
+			keep = append(keep, filepath.ToSlash(filepath.Join(root, f)))
+		}
 	}
 	return keep, nil
 }

@@ -47,15 +47,15 @@ edges:
 // 생성물 위치(demo/.generated/)를 옮기면 build context도 함께 고쳐야 한다 — 안 그러면
 // 리포 '바깥'을 가리킨다. compose는 context를 **compose 파일 기준**으로 푼다.
 func TestBuildContext(t *testing.T) {
-	if buildContext != "../.." {
-		t.Fatalf("compose lands in demo/.generated/, so the repo root is ../.. (got %q)", buildContext)
+	if buildContext != "../../.." {
+		t.Fatalf("compose lands in demo/.generated/, so the parent of the repo root is ../../.. (got %q)", buildContext)
 	}
 	out := Compose(parse(t, sample))
-	if strings.Contains(out, "context: ../../..") {
-		t.Errorf("the build context points outside the repo:\n%s", out)
+	if !strings.Contains(out, "context: ../../..,") {
+		t.Errorf("the build context is not the parent of the repo:\n%s", out)
 	}
-	if !strings.Contains(out, "context: ../..") {
-		t.Errorf("no build context:\n%s", out)
+	if !strings.Contains(out, "dockerfile: pqcota/demo/Dockerfile") || strings.Contains(out, "dockerfile: demo/Dockerfile") {
+		t.Errorf("the Dockerfile path is not relative to the parent context:\n%s", out)
 	}
 }
 

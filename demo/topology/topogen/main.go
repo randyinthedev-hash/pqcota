@@ -96,10 +96,15 @@ var forkUnsupported = map[string]string{
 
 var idRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
-// buildContext — 생성된 compose 파일(demo/.generated/docker-compose.yml)에서 리포 루트까지.
+// buildContext — 생성된 compose 파일(demo/.generated/docker-compose.yml)에서 **리포의 부모 디렉터리**까지.
+// 다섯 리포(pqcota·pqcota-common·-inventory·-discovery·-provisioning)를 나란히 두는 배치라 컨트롤러 이미지가
+// 그 다섯을 모두 담으려면 컨텍스트가 리포 하나가 아니라 그 부모여야 한다. Dockerfile은 그 안의 pqcota/ 아래에 있다.
 // ★ compose는 build context를 **compose 파일 위치 기준**으로 푼다 — 산출물 경로가 바뀌면
-// 이 값도 함께 바뀌어야 한다 — 안 맞추면 리포 밖을 가리킨다. TestBuildContext가 못 박는다.
-const buildContext = "../.."
+// 이 값도 함께 바뀌어야 한다 — 안 맞추면 엉뚱한 곳을 가리킨다. TestBuildContext가 못 박는다.
+const buildContext = "../../.."
+
+// dockerfile — 위 컨텍스트 기준 Dockerfile 경로.
+const dockerfile = "pqcota/demo/Dockerfile"
 
 // ── 검증 ───────────────────────────────────────────────────────────────────
 
@@ -256,7 +261,7 @@ func Compose(s *Spec) string {
 
 	// 컨트롤러 + Postgres — 모든 세그먼트에 붙여 어디서든 접근·적재 가능하게.
 	writeSvc(&b, "pqcota-ctl", func(sb *strings.Builder) {
-		fmt.Fprintf(sb, "    build: { context: %s, dockerfile: demo/Dockerfile, target: ctl }\n", buildContext)
+		fmt.Fprintf(sb, "    build: { context: %s, dockerfile: %s, target: ctl }\n", buildContext, dockerfile)
 		// ctl은 **빌드 머신**이라 Go 캐시를 볼륨에 둔다 — 두 번째 up.sh부터 컴파일이 짧아진다.
 		sb.WriteString("    volumes: [pqcota-gocache:/root/.cache/go-build, pqcota-gomod:/root/go/pkg/mod]\n")
 		sb.WriteString("    image: pqcota-demo/ctl\n    container_name: pqcota-ctl\n    hostname: pqcota-ctl\n")
@@ -285,7 +290,7 @@ func Compose(s *Spec) string {
 		}
 		node := n
 		writeSvc(&b, n.ID, func(sb *strings.Builder) {
-			fmt.Fprintf(sb, "    build: { context: %s, dockerfile: demo/Dockerfile, target: %s%s }\n", buildContext, target, args)
+			fmt.Fprintf(sb, "    build: { context: %s, dockerfile: %s, target: %s%s }\n", buildContext, dockerfile, target, args)
 			fmt.Fprintf(sb, "    image: pqcota-demo/%s\n    container_name: %s\n    hostname: %s\n", node.ID, node.ID, node.ID)
 			sb.WriteString("    environment:\n")
 			for _, kv := range nodeEnv(node, s.Edges) {

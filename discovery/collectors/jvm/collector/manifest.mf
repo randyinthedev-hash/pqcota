@@ -1,2 +1,0 @@
-Agent-Class: pqcota.jvm.IntrospectAgent
-Can-Redefine-Classes: false

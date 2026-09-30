@@ -9,6 +9,7 @@ This document is for **the person running the demo**.
 
 ## Requirements
 - Docker (Compose v2) · internet (for the first image build) · your user in the `docker` group (no root, no KVM)
+- The five repositories cloned **side by side** (`pqcota` as the directory name of this one, next to `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning`): the demo image builds all of them. See [README · Build](../README.md#build)
 
 The repo is built inside the `pqcota-ctl` container.
 What gets built is **the source as currently checked out**, including uncommitted changes.
@@ -98,7 +99,7 @@ It does not end at `hosts.csv`:
 |---|---|---|---|
 | 1 | **`hosts.csv`** | required for remote multi-node | node_id, ip, port, account, key → `pqcota-hosts` generates the Ansible inventory (`targets.ini`, 0600, not persisted). With `--dsn` it also upserts the endpoint (secrets excluded). **Not needed** if you are scanning one host in place |
 | 2 | **the collector binaries on each node** | required | build `pqcota-nodescan`, `pqcota-jvmscan`, and `pqcota-netcap` on ctl — **the demo's playbook ships them for you** (`discover.yml` ships → runs → retrieves → cleans up). Build commands are in [the root README · Build](../README.md#build) (per-arch prebuilt binaries are already in the releases and their integrity is checked with `SHA256SUMS`; only the signature that proves they came from this repo is still on the [roadmap](../RELEASE_NOTES.md)) |
-| 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](../discovery/ansible/discover.yml) is the **reference implementation** |
+| 3 | **a way to run them** | required | Ansible or by hand, run the collectors on each node and retrieve the result JSON. The demo's [`discover.yml`](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/ansible/discover.yml) is the **reference implementation** |
 
 After that it is the same as the demo — hand the collected results to `pqcota-ingest` and they are normalized and stored; view them with `pqcota-inventory`.
 
@@ -111,7 +112,7 @@ After that it is the same as the demo — hand the collected results to `pqcota-
 > - **Traffic generation** (`traffic=` in `groups.ini`, `pqcota-gen-traffic.sh`): the demo has no handshakes to observe, so it **manufactures them on purpose.** A real environment has real traffic, so you only need to **observe** with `pqcota-netcap <node> <iface> <window>`.
 > - **Group membership** (`[java]` in `groups.ini`): that is just the demo's way of picking which nodes get `pqcota-jvmscan`; use whatever your own inventory does.
 
-**Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](../discovery/cmd/README.md).
+**Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [discovery/cmd README](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 
 ## Beyond discovery
 Discovery shows you as far as "what is actually negotiated" (the grade). **"How well does that match what was declared (CONFIRMED/UNDECLARED/UNOBSERVED)"**, along with governance and reconciliation, is not done by this repo, so it is not in the demo either.

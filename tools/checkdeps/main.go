@@ -5,6 +5,10 @@
 // pkg/kernel/README.md가 「kernel은 단계를 import하지 않는다」를 적어 왔지만 그것을 지키는 기계가
 // 없었고, 실제로 인벤토리가 디스커버리 디렉터리에서 자기 저장소를 가져오는 방향이 한동안 반대였다.
 //
+// **리포가 여럿이어도 규칙표는 하나다.** 분리된 리포마다 원래 상대 경로(gen/·pkg/kernel/·discovery/ 등)를
+// 그대로 지키므로, 파일의 영역은 리포 안 경로로 정하고, 형제 모듈을 가리키는 import는 그 모듈 경로를
+// 떼어 낸 나머지 경로로 정한다. 돌릴 때 루트를 여러 개 준다(`checkdeps [-rules f] <root>...`).
+//
 // 규칙은 코드가 아니라 rules.tsv에 있다(경로 분류표와, 영역마다 import해도 되는 영역의 허용 목록).
 // **금지 목록이 아니라 허용 목록**이다. 금지 목록은 새 영역이나 새 경로가 생기는 날 조용히 통과한다.
 // 그래서 분류표에 없는 모듈 내부 경로도 실패로 센다.
@@ -30,6 +34,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,8 +49,8 @@ type allowRow struct {
 }
 
 type config struct {
-	module  string
-	classes []class // 접두어가 긴 순
+	modules []string // 함께 재는 모듈 경로들. 이 가운데 하나를 접두어로 하는 import가 「모듈 내부」다
+	classes []class  // 접두어가 긴 순
 	allow   map[string]allowRow
 	bare    map[string]bool
 	areas   map[string]bool
@@ -53,13 +58,13 @@ type config struct {
 
 // loadConfig — rules.tsv를 읽는다. 잘못된 줄은 알리지 않고 넘기지 않고 오류로 멈춘다:
 // 넘기면 그 규칙이 사라져 관문이 조용히 헐거워진다.
-func loadConfig(rulesPath, module string) (*config, error) {
+func loadConfig(rulesPath string, modules ...string) (*config, error) {
 	f, err := os.Open(rulesPath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	cfg := &config{module: module, allow: map[string]allowRow{}, bare: map[string]bool{}, areas: map[string]bool{}}
+	cfg := &config{modules: modules, allow: map[string]allowRow{}, bare: map[string]bool{}, areas: map[string]bool{}}
 	sc := bufio.NewScanner(f)
 	for n := 1; sc.Scan(); n++ {
 		line := strings.TrimRight(sc.Text(), "\r")
@@ -121,6 +126,21 @@ func loadConfig(rulesPath, module string) (*config, error) {
 	}
 	sort.SliceStable(cfg.classes, func(i, j int) bool { return len(cfg.classes[i].prefix) > len(cfg.classes[j].prefix) })
 	return cfg, nil
+}
+
+// relOf — import 경로가 이 규칙이 다루는 모듈 안이면 그 모듈 루트를 뗀 상대 경로를 돌려준다.
+// 표준 라이브러리와 외부 모듈이면 false다. 모듈 경로가 서로 접두어일 수 있어(`…/pqcota`와
+// `…/pqcota-common`) 경로 마디 단위로 맞춘다.
+func (c *config) relOf(p string) (string, bool) {
+	for _, m := range c.modules {
+		if p == m {
+			return "", true
+		}
+		if strings.HasPrefix(p, m+"/") {
+			return strings.TrimPrefix(p, m+"/"), true
+		}
+	}
+	return "", false
 }
 
 // areaOf — 패키지 디렉터리(리포 상대, 슬래시)가 어느 영역인가. 어디에도 안 걸리면 빈 문자열이다.
@@ -188,11 +208,11 @@ func check(root string, files []string, cfg *config) ([]string, int, error) {
 			if err != nil {
 				return nil, 0, fmt.Errorf("%s: %w", f, err)
 			}
-			if p != cfg.module && !strings.HasPrefix(p, cfg.module+"/") {
+			rel, internal := cfg.relOf(p)
+			if !internal {
 				continue // 표준 라이브러리와 외부 모듈은 재지 않는다
 			}
 			imports++
-			rel := strings.TrimPrefix(strings.TrimPrefix(p, cfg.module), "/")
 			to := cfg.areaOf(rel)
 			line := fset.Position(imp.Pos()).Line
 			switch {
@@ -233,38 +253,59 @@ func moduleOf(gomod string) (string, error) {
 	return "", fmt.Errorf("%s에 module 줄이 없다", gomod)
 }
 
-func goFiles() ([]string, error) {
-	out, err := exec.Command("git", "-c", "core.quotePath=off", "ls-files", "*.go").Output()
+func goFiles(root string) ([]string, error) {
+	out, err := exec.Command("git", "-C", root, "-c", "core.quotePath=off", "ls-files", "*.go").Output()
 	if err != nil {
-		return nil, fmt.Errorf("git ls-files: %w", err)
+		return nil, fmt.Errorf("git ls-files (%s): %w", root, err)
 	}
 	return strings.Fields(string(out)), nil
 }
 
 func main() {
 	rules := "tools/checkdeps/rules.tsv"
-	if len(os.Args) > 2 && os.Args[1] == "-rules" {
-		rules = os.Args[2]
+	args := os.Args[1:]
+	if len(args) >= 2 && args[0] == "-rules" {
+		rules, args = args[1], args[2:]
 	}
-	module, err := moduleOf("go.mod")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "go.mod:", err)
-		os.Exit(2)
+	roots := args
+	if len(roots) == 0 {
+		roots = []string{"."}
 	}
-	cfg, err := loadConfig(rules, module)
+	var modules []string
+	for _, r := range roots {
+		m, err := moduleOf(filepath.Join(r, "go.mod"))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "go.mod:", err)
+			os.Exit(2)
+		}
+		modules = append(modules, m)
+	}
+	cfg, err := loadConfig(rules, modules...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	files, err := goFiles()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-	bad, n, err := check(".", files, cfg)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+	var bad []string
+	nFiles, nImports := 0, 0
+	for _, r := range roots {
+		files, err := goFiles(r)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		b, n, err := check(r, files, cfg)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		nFiles += len(files)
+		nImports += n
+		for _, line := range b {
+			if len(roots) > 1 {
+				line = filepath.Base(filepath.Clean(r)) + "/" + line
+			}
+			bad = append(bad, line)
+		}
 	}
 	if len(bad) > 0 {
 		fmt.Println("✗ 단계 사이의 import 방향이 어긋난다:")
@@ -275,5 +316,5 @@ func main() {
 		fmt.Println("deps check failed — fix the locations above and run `make check-deps` again.")
 		os.Exit(1)
 	}
-	fmt.Printf("✓ deps check passed (Go 파일 %d개 · 모듈 내부 import %d건 · 영역 %d개)\n", len(files), n, len(cfg.areas))
+	fmt.Printf("✓ deps check passed (리포 %d개 · Go 파일 %d개 · 모듈 내부 import %d건 · 영역 %d개)\n", len(roots), nFiles, nImports, len(cfg.areas))
 }

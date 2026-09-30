@@ -308,7 +308,9 @@ func checkLicenseTable() []string {
 
 	out, err := exec.Command("go", "list", "-deps",
 		"-f", "{{if .Module}}{{.Module.Path}} {{.Module.Version}}{{end}}",
-		"./discovery/cmd/...", "./inventory/cmd/...", "./provisioning/cmd/...").Output()
+		"github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/...",
+		"github.com/randyinthedev-hash/pqcota-inventory/inventory/cmd/...",
+		"github.com/randyinthedev-hash/pqcota-provisioning/provisioning/cmd/...").Output()
 	if err != nil {
 		// 환경 미비(gen/ 없음)를 문서 오류와 같은 실패로 다루지 않는다. 다만 **검사하지 못했다는
 		// 사실**은 크게 남긴다 — `make`(전체)는 generate 뒤에 돌므로 거기서는 항상 검사된다.
@@ -319,7 +321,7 @@ func checkLicenseTable() []string {
 	var miss []string
 	for _, line := range strings.Split(string(out), "\n") {
 		f := strings.Fields(line)
-		if len(f) != 2 || strings.HasPrefix(f[0], "github.com/pqcota/") || seen[f[0]] {
+		if len(f) != 2 || strings.HasPrefix(f[0], "github.com/randyinthedev-hash/pqcota") || seen[f[0]] {
 			continue
 		}
 		seen[f[0]] = true

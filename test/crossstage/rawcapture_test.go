@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/randyinthedev-hash/pqcota/discovery/collectors/jvm"
-	"github.com/randyinthedev-hash/pqcota/discovery/collectors/network"
-	"github.com/randyinthedev-hash/pqcota/discovery/collectors/openssl"
-	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/inventory/declaration"
+	discoveryv1 "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/discovery/v1"
+	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/jvm"
+	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/network"
+	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/openssl"
+	"github.com/randyinthedev-hash/pqcota-inventory/pkg/inventory/declaration"
 )
 
 // 불변식: **raw_format이 있으면 raw_capture도 있다.**

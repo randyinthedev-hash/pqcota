@@ -6,6 +6,19 @@
 set -euo pipefail
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT="$(cd "$DEMO_DIR/.." && pwd)"
+# 빌드 컨텍스트는 리포의 부모 디렉터리다 — 다섯 리포가 나란히 있어야 한다(pqcota-common·-inventory·-discovery·-provisioning).
+CTX="$(cd "$ROOT/.." && pwd)"
+for sib in pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do
+  if [ ! -f "$CTX/$sib/go.mod" ]; then
+    echo "✗ $CTX/$sib not found — the demo builds all five repositories, so clone them side by side:" >&2
+    echo "    pqcota  pqcota-common  pqcota-inventory  pqcota-discovery  pqcota-provisioning" >&2
+    exit 1
+  fi
+done
+if [ "$(basename "$ROOT")" != "pqcota" ]; then
+  echo "✗ this repository has to be checked out as a directory named 'pqcota' (found '$(basename "$ROOT")') — the demo's Dockerfile path assumes it." >&2
+  exit 1
+fi
 cd "$DEMO_DIR"
 
 TOPO_FILE="$DEMO_DIR/topology/topology.yaml"
@@ -18,7 +31,7 @@ fi
 echo "▶ 0/6 generating the topology (topogen container — Docker is the only host dependency)…"
 # 리포에 생기는 산출물은 전부 demo/.generated/ 아래로 모은다(down.sh가 통째로 지운다).
 GEN="$DEMO_DIR/.generated"; rm -rf "$GEN"; mkdir -p "$GEN"
-docker build -q --target topo-gen -t pqcota-demo/topo-gen -f "$DEMO_DIR/Dockerfile" "$ROOT" >/dev/null
+docker build -q --target topo-gen -t pqcota-demo/topo-gen -f "$DEMO_DIR/Dockerfile" "$CTX" >/dev/null
 docker run --rm -v "$TOPO_FILE:/in.yaml:ro" -v "$GEN:/out" pqcota-demo/topo-gen /in.yaml /out
 DC=(docker compose -f "$GEN/docker-compose.yml")
 source "$GEN/manifest.env"   # NODES · EDGE_COUNT · human()
@@ -35,16 +48,23 @@ echo "▶ 2/6 starting containers…"
 echo "▶ 3/6 building the repo — the source is compiled **on the ctl machine (pqcota-ctl)**"
 docker exec pqcota-ctl bash -lc '
   set -e
-  cd /src
   ARCH=$(go env GOARCH)
+  D=github.com/randyinthedev-hash
   echo "   [ctl] $(. /etc/os-release; echo $PRETTY_NAME) · $(uname -m) · $(go version | cut -d" " -f3)"
-  echo "   [ctl] make generate                       # contracts/*.proto → gen/"
-  make generate >/dev/null
+  echo "   [ctl] make generate                       # pqcota-common: contracts/proto → gen/"
+  make -C /src/pqcota-common generate >/dev/null
+  cd /src/pqcota
   echo "   [ctl] go build -o /usr/local/bin/ …        # the central CLIs used on this machine"
-  CGO_ENABLED=0 go build -o /usr/local/bin/     ./inventory/cmd/pqcota-ingest ./discovery/cmd/pqcota-hosts     ./inventory/cmd/pqcota-inventory ./inventory/cmd/pqcota-discover-view     ./inventory/cmd/pqcota-profile ./inventory/cmd/pqcota-declare ./inventory/cmd/pqcota-prune \
-    ./inventory/cmd/pqcota-declare-attribution     ./provisioning/cmd/pqcota-provision ./provisioning/cmd/pqcota-records ./provisioning/cmd/pqcota-approve ./discovery/cmd/pqcota-keygen
+  CGO_ENABLED=0 go build -o /usr/local/bin/ \
+    $D/pqcota-inventory/inventory/cmd/pqcota-ingest $D/pqcota-discovery/discovery/cmd/pqcota-hosts \
+    $D/pqcota-inventory/inventory/cmd/pqcota-inventory $D/pqcota-inventory/inventory/cmd/pqcota-discover-view \
+    $D/pqcota-inventory/inventory/cmd/pqcota-profile $D/pqcota-inventory/inventory/cmd/pqcota-declare $D/pqcota-inventory/inventory/cmd/pqcota-prune \
+    $D/pqcota-inventory/inventory/cmd/pqcota-declare-attribution \
+    $D/pqcota-provisioning/provisioning/cmd/pqcota-provision $D/pqcota-provisioning/provisioning/cmd/pqcota-records $D/pqcota-provisioning/provisioning/cmd/pqcota-approve \
+    $D/pqcota-discovery/discovery/cmd/pqcota-keygen
   echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # collectors to carry onto the nodes"
-  CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/"     ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
+  CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/" \
+    $D/pqcota-discovery/discovery/cmd/pqcota-nodescan $D/pqcota-discovery/discovery/cmd/pqcota-netcap $D/pqcota-discovery/discovery/cmd/pqcota-jvmscan
   echo "   [ctl] make build-jar                      # JVM attach sidecar"
   make build-jar >/dev/null 2>&1 && cp build/collector.jar /work/dist/collector.jar
   echo "   [ctl] artifacts: $(ls /work/dist/linux-$ARCH | tr "\n" " ")· collector.jar"

@@ -52,19 +52,19 @@ The same observation is also rendered as a topology.
 
 | Stage | What it does | Output |
 |---|---|---|
-| ① **[Discovery](discovery/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
-| ② **[Inventory](inventory/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
-| ③ **[Provisioning](provisioning/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
+| ① **[Discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
+| ② **[Inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
+| ③ **[Provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
 
 **What it does not do** — declaration (CMDB) reconciliation, review-and-sign-off governance and
-fleet orchestration are **not in this repository.** The contracts ([`contracts/`](contracts/README.md))
+fleet orchestration are **not in these repositories.** The contracts ([`contracts/`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md))
 hold their place, and no judgment engine is built — once the tool decides for you, the line that
 "🔴 is an observation, not a verdict" collapses. What each stage promises, and where it stops, is written in its own README and in the contracts.
 
 ## Try it — demo
 
 **With just Docker**, run the whole scope at once — access prep → discovery → inventory →
-provisioning (generate, apply, roll back), against nodes it stands up as containers.
+provisioning (generate, apply, roll back), against nodes it stands up as containers. The demo builds all five repositories, so clone them side by side first ([Build](#build)).
 
 ```bash
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh   # tear down: ./demo/scripts/down.sh
@@ -82,41 +82,54 @@ provisioning (generate, apply, roll back), against nodes it stands up as contain
 
 **To build**
 - Go 1.26.4+
-- buf (+`protoc-gen-go`, `protoc-gen-go-grpc`) — **only when you change a proto**. `gen/` is committed, so a plain build does not need it
+- buf (+`protoc-gen-go`, `protoc-gen-go-grpc`) — **only when you change a proto** (in `pqcota-common`). The generated `gen/` is committed, so a plain build does not need it
 - JDK 11+ — **optional**, only to build the JVM attach sidecar; without it that step is skipped
 
 **To run**
 - Multiple nodes — Ansible on the controller, SSH access to the targets
-- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [discovery/cmd](discovery/cmd/README.md)
+- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [discovery/cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)
 
 ## Build
+
+pqcota is **five repositories**: this one (demo, examples, release bundles, contributing guide) and four
+modules. Clone them side by side, because `go.mod` reads the four from `../` until they are tagged:
+
+```bash
+git clone https://github.com/randyinthedev-hash/pqcota
+git clone https://github.com/randyinthedev-hash/pqcota-common        # contracts, generated code, shared logic
+git clone https://github.com/randyinthedev-hash/pqcota-inventory     # the inventory stage
+git clone https://github.com/randyinthedev-hash/pqcota-discovery     # collectors, their commands, the reference playbook
+git clone https://github.com/randyinthedev-hash/pqcota-provisioning  # the provisioning stage
+cd pqcota
+```
 
 pqcota consists of one **central controller node** and the **target nodes** it reaches over
 Ansible/SSH. **You build on the controller** — both the CLIs you run there and the collectors you
 ship to the target nodes are produced here.
 
-**It builds straight from a clone.** The `gen/` produced from the contracts is committed, so you need
-no code-generation tooling of your own; it is kept that way so consumers can use the contract types
-with `go get` alone. It is regenerated only when a proto changes, and that procedure is at the end of
-this section.
+**It builds straight from a clone.** The Go code generated from the contracts is committed in
+`pqcota-common`, so you need no code-generation tooling of your own; consumers can use the contract
+types with `go get` alone. It is regenerated only when a proto changes (see the end of this section).
 
 **① The CLIs you run on the controller** — ingest and query observations, generate playbooks.
 
 ```bash
-go build -o bin/ ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
+D=github.com/randyinthedev-hash
+go build -o bin/ $D/pqcota-discovery/discovery/cmd/... $D/pqcota-inventory/inventory/cmd/... $D/pqcota-provisioning/provisioning/cmd/...
 ```
 
-**② The collectors that go on the target nodes** — built statically **for the node's OS and arch**
+**② The collectors that go on the target nodes** — built statically **for the node's OS and arch**.
 Which collector runs on which OS is in
-the [command reference](discovery/cmd/README.md).
+the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 
 ```bash
+D=github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd
+
 # Linux nodes
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ \
-  ./discovery/cmd/pqcota-nodescan ./discovery/cmd/pqcota-netcap ./discovery/cmd/pqcota-jvmscan
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ $D/pqcota-nodescan $D/pqcota-netcap $D/pqcota-jvmscan
 
 # Windows nodes
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ ./discovery/cmd/pqcota-cngscan
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/ $D/pqcota-cngscan $D/pqcota-jvmscan
 
 make build-jar                  # only if you have JVM nodes: attach sidecar → build/collector.jar
 ```
@@ -126,17 +139,18 @@ make build-jar                  # only if you have JVM nodes: attach sidecar →
 
 **Linux nodes need kernel 3.2 or newer.** That is the floor the Go toolchain sets, and this repo asks
 for nothing newer. CentOS 7 (3.10) and Debian 8 (3.16) are above it; RHEL 6 (2.6.32) is below. What
-individual features additionally require is in the [supported scope](discovery/cmd/README.md).
+individual features additionally require is in the [supported scope](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 
-Privileges and environment variables for running the collectors on a node → [discovery/cmd](discovery/cmd/README.md).
+Privileges and environment variables for running the collectors on a node → [discovery/cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 
-**If you changed a proto, regenerate the contract code.** From here on this is the procedure for
-someone working on the repo. `make tools` installs the generator plugins (`protoc-gen-go`, `-grpc`)
-and `make generate` does the conversion. Put the resulting `gen/` in **the same commit** as the proto
-you changed.
+**If you changed a proto, regenerate the contract code.** This is the procedure for someone working
+on the contracts, and it runs in `pqcota-common`. `make tools` installs the generator plugins
+(`protoc-gen-go`, `-grpc`) and `make generate` does the conversion. Put the resulting `gen/` in
+**the same commit** as the proto you changed.
 
 ```bash
-make tools && make generate     # contracts/*.proto → gen/
+cd ../pqcota-common
+make tools && make generate     # contracts/proto → gen/
 ```
 
 > `make tools` puts the plugins in `$(go env GOPATH)/bin`. If that directory isn't on your `PATH`,
@@ -144,13 +158,13 @@ make tools && make generate     # contracts/*.proto → gen/
 > **it just isn't visible**. Both targets call that case out, but adding it to your shell profile
 > saves you from hitting it every time: `export PATH="$PATH:$(go env GOPATH)/bin"`.
 
-Contributing to the repo (tests, gates, contract changes) → [CONTRIBUTING](CONTRIBUTING.md).
+Contributing to the repos (tests, gates, contract changes) → [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Stack
 
 - **Go** — every collector and CLI; `CGO_ENABLED=0` static single binaries
 - **Java** — only the JVM attach sidecar (that observation is possible only from inside the JVM)
-- **Protobuf/gRPC** — the contracts that join the stages ([`contracts/`](contracts/))
+- **Protobuf/gRPC** — the contracts that join the stages ([`contracts/`](https://github.com/randyinthedev-hash/pqcota-common/tree/main/contracts))
 - **Postgres** — only when accumulating and querying many nodes over time; not used for single-node observation
 
 ## Supported scope

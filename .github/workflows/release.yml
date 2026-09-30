@@ -1,7 +1,8 @@
 name: release
 
 # 태그를 밀면 노드에 올릴 정적 바이너리를 만들어 릴리스에 붙인다.
-# 평가하려는 사람이 Go·buf를 깔고 소스를 빌드하게 두지 않기 위해서다.
+# 평가하려는 사람이 Go를 깔고 소스를 빌드하게 두지 않기 위해서다.
+# 다섯 리포를 같은 태그로 받아 나란히 두고 빌드한다(한 릴리스는 다섯 리포의 같은 태그다).
 on:
   push:
     tags: ['v*']
@@ -20,12 +21,34 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          path: pqcota
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: randyinthedev-hash/pqcota-common
+          path: pqcota-common
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: randyinthedev-hash/pqcota-inventory
+          path: pqcota-inventory
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: randyinthedev-hash/pqcota-discovery
+          path: pqcota-discovery
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/checkout@v7
+        with:
+          repository: randyinthedev-hash/pqcota-provisioning
+          path: pqcota-provisioning
           ref: ${{ github.event.inputs.tag || github.ref }}
 
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: pqcota/go.mod
           cache: true
+          cache-dependency-path: pqcota/go.sum
 
       # JVM attach 사이드카 — 레거시 JVM에 붙어야 해서 --release 8로 빌드된다.
       - uses: actions/setup-java@v6
@@ -33,24 +56,18 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: bufbuild/buf-action@v1
-        with:
-          setup_only: true
-
-      - name: 계약 생성
-        run: make tools && make generate
-
       # 리눅스 노드에 올리는 것은 이 셋이다(배포 설계). arch만 바꿔 정적으로 만든다.
       - name: collector 정적 빌드 (리눅스)
+        working-directory: pqcota
         run: |
           set -eu
           for arch in amd64 arm64; do
             out="dist/pqcota-linux-$arch"
             mkdir -p "$out"
             CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags='-s -w' -o "$out/" \
-              ./discovery/cmd/pqcota-nodescan \
-              ./discovery/cmd/pqcota-netcap \
-              ./discovery/cmd/pqcota-jvmscan
+              github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/pqcota-nodescan \
+              github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/pqcota-netcap \
+              github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/pqcota-jvmscan
             file "$out"/* | grep -q 'statically linked' \
               || { echo "✗ $arch: 정적 링크가 아니다 — 배포판·libc를 가리게 된다"; exit 1; }
             tar -C dist -czf "dist/pqcota-linux-$arch.tar.gz" "pqcota-linux-$arch"
@@ -61,32 +78,36 @@ jobs:
       # 쓸 CLI」 빌드 명령과 같은 세 트리를 그대로 낸다. collector도 함께 들어가는데, 노드로 보낼
       # 것을 고르는 일도 컨트롤러에서 하기 때문이다.
       - name: 컨트롤러 CLI 정적 빌드 (리눅스)
+        working-directory: pqcota
         run: |
           set -eu
+          B=github.com/randyinthedev-hash
           for arch in amd64 arm64; do
             out="dist/pqcota-ctl-linux-$arch"
             mkdir -p "$out"
             CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags='-s -w' -o "$out/" \
-              ./discovery/cmd/... ./inventory/cmd/... ./provisioning/cmd/...
+              $B/pqcota-discovery/discovery/cmd/... $B/pqcota-inventory/inventory/cmd/... $B/pqcota-provisioning/provisioning/cmd/...
             file "$out"/* | grep -q 'statically linked' \
               || { echo "✗ $arch: 정적 링크가 아니다 — 배포판·libc를 가리게 된다"; exit 1; }
             tar -C dist -czf "dist/pqcota-ctl-linux-$arch.tar.gz" "pqcota-ctl-linux-$arch"
           done
 
-      # Windows 노드가 올리는 것은 이 둘이다 — 플레이북(discovery/ansible/discover.yml)의 Windows
+      # Windows 노드가 올리는 것은 이 둘이다 — 플레이북(pqcota-discovery의 discovery/ansible/discover.yml)의 Windows
       # 블록이 반입하는 것과 같아야 한다. 리눅스 셋과는 겹치지 않는다(/proc·ELF·AF_PACKET이 없다).
       # `file`의 정적 링크 확인은 하지 않는다 — PE에는 그 표기가 없다.
       - name: collector 정적 빌드 (Windows)
+        working-directory: pqcota
         run: |
           set -eu
           out="dist/pqcota-windows-amd64"
           mkdir -p "$out"
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o "$out/" \
-            ./discovery/cmd/pqcota-cngscan \
-            ./discovery/cmd/pqcota-jvmscan
+            github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/pqcota-cngscan \
+            github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd/pqcota-jvmscan
           (cd dist && zip -qr "pqcota-windows-amd64.zip" "pqcota-windows-amd64")
 
       - name: JVM 사이드카
+        working-directory: pqcota
         run: |
           make build-jar
           [ -f build/collector.jar ] && cp build/collector.jar dist/ || echo "collector.jar 없음 — attach 경로는 이 릴리스에 없다"
@@ -95,11 +116,13 @@ jobs:
       # collector.jar가 없을 수 있다(javac 없는 환경) — 그때 sha256sum이 실패해
       # 릴리스 전체가 멈추면 안 된다. 있는 것만 센다.
       - name: SHA256SUMS
+        working-directory: pqcota
         run: |
           cd dist
           sha256sum *.tar.gz *.zip $([ -f collector.jar ] && echo collector.jar) | tee SHA256SUMS
 
       - name: 릴리스 발행
+        working-directory: pqcota
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}

@@ -5,10 +5,11 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
+	"github.com/randyinthedev-hash/pqcota-inventory/pkg/inventory/normalize"
 )
 
 // 규칙 판 자리표시자 검사 — **상수는 있는데 제품이 자기 문자열을 쓰는** 자리를 막는다.
@@ -44,12 +45,19 @@ import (
 // 자기 자신을 검사 대상에서 빼는 검사기는 그 규칙이 무엇을 막는지 보장하지 못한다.
 const rulesetHome = "pkg/inventory/normalize/pipeline.go"
 
+// isRulesetHome — 파일이 그 정의 자리인가. 리포가 나뉘어 경로 앞에 루트가 붙으므로 접미어로 맞춘다
+// (`../pqcota-inventory/pkg/inventory/normalize/pipeline.go`).
+func isRulesetHome(f string) bool {
+	f = filepath.ToSlash(f)
+	return f == rulesetHome || strings.HasSuffix(f, "/"+rulesetHome)
+}
+
 // rulesetPlaceholders — 규칙 판 식별자처럼 생긴 리터럴이 있는 자리.
 func rulesetPlaceholders(files []string) ([]string, error) {
 	fset := token.NewFileSet()
 	var out []string
 	for _, f := range files {
-		if f == rulesetHome || strings.HasSuffix(f, "_test.go") {
+		if isRulesetHome(f) || strings.HasSuffix(f, "_test.go") {
 			continue
 		}
 		af, err := parser.ParseFile(fset, f, nil, 0)

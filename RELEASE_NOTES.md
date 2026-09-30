@@ -35,7 +35,7 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   (`procmaps.go` → the Toolhelp32 module list) and pulling strings out of a binary (`elfstrings.go` →
   PE). **Fork detection (`registry.MatchFork`) takes only the extracted strings, so it is reused
   as-is** — the same shape the jvm reconnaissance took, per-OS I/O over shared pure matching. Which
-  collector runs on which OS is in the [command reference](discovery/cmd/README.md).
+  collector runs on which OS is in the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is still being worked out.
 
@@ -506,11 +506,11 @@ read with another document open say what they mean where they stand.
   | 〃 | "the observed lane and the declared lane" | **what a machine saw and what a person wrote down** |
   | 〃 | `(measured up to 25)` | `measured up to JDK 25` |
   | collector deployment | `①` meant both a **deployment step** and an **attach layer** | the layer is spelled out |
-  | [inventory/cmd](inventory/cmd/README.md) | "② signs it" — another document's section number, **and the wrong actor** | the **collector on the node** signs |
-  | [provisioning](provisioning/README.md) | `L1/L2/L3` in the first sentence, explained only inside a **collapsed** diagram | the first sentence now says what they are |
+  | [inventory/cmd](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/cmd/README.md) | "② signs it" — another document's section number, **and the wrong actor** | the **collector on the node** signs |
+  | [provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/README.md) | `L1/L2/L3` in the first sentence, explained only inside a **collapsed** diagram | the first sentence now says what they are |
 
 - **③ `pqcota-keygen` was documented in two places** (v0.6.3). It now lives with the command, in
-  [discovery/cmd](discovery/cmd/README.md), and the `PQCOTA_VERIFY_KEY` row points there.
+  [discovery/cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md), and the `PQCOTA_VERIFY_KEY` row points there.
 
 - **④ The support table wrote down where we measured as if it were the supported range** (v0.6.3).
   "measured on Windows 11 build 26200" read as **only there**, which is not true — it runs on any
@@ -1101,7 +1101,7 @@ outside consumer surfaced it.
 - **buf pinned** (CI, 1.69.0) — with generated code committed, a tool version change could fail the
   drift check without any code change.
 - How to consume it, and the module-path workaround, are written up in
-  [contracts/README](contracts/README.md).
+  [contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md).
 
 The contract itself (proto) did not change — the `buf breaking` baseline is untouched.
 
@@ -1128,7 +1128,7 @@ The contract itself (proto) did not change — the `buf breaking` baseline is un
 
 ### What was established
 
-- **Minimum supported kernel = 3.2** (the floor the Go toolchain sets — it became this in 1.24 and has held since. Building needs Go 1.26.4, per `go.mod`). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](discovery/cmd/README.md).
+- **Minimum supported kernel = 3.2** (the floor the Go toolchain sets — it became this in 1.24 and has held since. Building needs Go 1.26.4, per `go.mod`). Nothing here needs anything newer; the one per-feature addition is `NSpid` (4.1) for JVM attach inside containers, and that falls back to the host PID. Table: [discovery/cmd — supported range](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
 - **Legacy verification done** — all three collectors ran on kernel **3.2** (Ubuntu 12.04) and **3.10** (CentOS 7.9) VMs. They work at the floor itself, and neither kernel has `NSpid`, so the host-PID fallback was exercised for real. 3.2 has no systemd, so app attribution by executable path was observed as well.
 
 ---

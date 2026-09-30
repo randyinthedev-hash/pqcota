@@ -3,10 +3,10 @@ package crossstage_test
 import (
 	"testing"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
-	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
-	"github.com/randyinthedev-hash/pqcota/pkg/org"
-	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"
+	"github.com/randyinthedev-hash/pqcota-common/pkg/org"
+	"github.com/randyinthedev-hash/pqcota-inventory/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota-inventory/pkg/inventory/history"
+	"github.com/randyinthedev-hash/pqcota-provisioning/pkg/provisioning"
 )
 
 // TestScopedIsSatisfiedByTheStores — 저장소 인터페이스를 안 건드리고 조직을 물을 수 있다.
