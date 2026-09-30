@@ -1,7 +1,8 @@
 # check-deps 규칙. 탭으로 가른다. 지적받을 때마다 늘어나는 목록이라 코드 밖에 둔다.
 #
-# class <경로 접두어, 끝에 /> <영역>
-#     가장 긴 접두어가 이긴다. 어디에도 안 걸리는 모듈 내부 경로는 실패다(새 디렉터리로 규칙을 피하지 못하게).
+# class <[리포:]경로 접두어, 끝에 /> <영역>
+#     가장 긴 접두어가 이긴다. `리포:`를 붙이면 그 리포에서만 맞는다(모든 단계 리포에 `cmd/`가 있어서 경로만으로는
+#     어느 단계의 명령인지 가릴 수 없다). 리포 이름은 모듈 경로의 마지막 마디다. 어디에도 안 걸리는 모듈 내부 경로는 실패다(새 디렉터리로 규칙을 피하지 못하게).
 # allow <영역> <import해도 되는 영역, 콤마로 이음> <규칙 번호> <고치는 방향>
 #     여기 적힌 영역만 import할 수 있다. 자기 영역도 적어야 한다.
 # bare <영역>
@@ -10,16 +11,16 @@
 # 단계 방향: common ← inventory ← discovery, inventory ← provisioning. collector는 노드로 나가는 바이너리라
 # common과 procs만 쓴다.
 class	gen/	common
-class	cmd/	common
+class	pqcota-common:cmd/	common
 class	pkg/kernel/	common
 class	pkg/org/	common
 class	pkg/discovery/procs/	procs
-class	discovery/collectors/	collector
-class	discovery/	discovery
+class	collectors/	collector
+class	pqcota-discovery:cmd/	discovery
 class	pkg/discovery/	discovery
-class	inventory/	inventory
+class	pqcota-inventory:cmd/	inventory
 class	pkg/inventory/	inventory
-class	provisioning/	provisioning
+class	pqcota-provisioning:cmd/	provisioning
 class	pkg/provisioning/	provisioning
 class	test/crossstage/	crossstage
 class	tools/	leaf

@@ -20,5 +20,5 @@ pqcota/demo/.generated
 pqcota/demo/results
 pqcota/demo/*.svg
 pqcota/demo/*.dot
-pqcota-discovery/discovery/collectors/jvm/collector/build
-pqcota-discovery/discovery/collectors/jvm/collector/.gradle
+pqcota-discovery/collectors/jvm/collector/build
+pqcota-discovery/collectors/jvm/collector/.gradle

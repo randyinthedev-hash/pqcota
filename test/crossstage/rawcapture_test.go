@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/jvm"
-	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/network"
-	"github.com/randyinthedev-hash/pqcota-discovery/discovery/collectors/openssl"
+	"github.com/randyinthedev-hash/pqcota-discovery/collectors/jvm"
+	"github.com/randyinthedev-hash/pqcota-discovery/collectors/network"
+	"github.com/randyinthedev-hash/pqcota-discovery/collectors/openssl"
 	"github.com/randyinthedev-hash/pqcota-inventory/pkg/inventory/declaration"
 )
 

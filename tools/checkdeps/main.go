@@ -40,7 +40,7 @@ import (
 	"strings"
 )
 
-type class struct{ prefix, area string }
+type class struct{ repo, prefix, area string } // repo가 비면 모든 리포에 적용된다
 
 type allowRow struct {
 	rule  string
@@ -50,6 +50,7 @@ type allowRow struct {
 
 type config struct {
 	modules []string // 함께 재는 모듈 경로들. 이 가운데 하나를 접두어로 하는 import가 「모듈 내부」다
+	self    string   // 지금 재는 리포 이름(모듈 경로의 마지막 마디). 리포로 한정한 class가 이것과 맞는다
 	classes []class  // 접두어가 긴 순
 	allow   map[string]allowRow
 	bare    map[string]bool
@@ -74,10 +75,20 @@ func loadConfig(rulesPath string, modules ...string) (*config, error) {
 		col := strings.Split(line, "\t")
 		switch col[0] {
 		case "class":
-			if len(col) != 3 || !strings.HasSuffix(col[1], "/") {
-				return nil, fmt.Errorf("%s:%d: class는 「class<탭>접두어/<탭>영역」 꼴이다", rulesPath, n)
+			if len(col) != 3 {
+				return nil, fmt.Errorf("%s:%d: class는 「class<탭>[리포:]접두어/<탭>영역」 꼴이다", rulesPath, n)
 			}
-			cfg.classes = append(cfg.classes, class{col[1], col[2]})
+			repo, prefix := "", col[1]
+			if i := strings.Index(prefix, ":"); i >= 0 {
+				repo, prefix = prefix[:i], prefix[i+1:]
+				if repo == "" {
+					return nil, fmt.Errorf("%s:%d: class의 리포 한정자가 비었다", rulesPath, n)
+				}
+			}
+			if !strings.HasSuffix(prefix, "/") {
+				return nil, fmt.Errorf("%s:%d: class는 「class<탭>[리포:]접두어/<탭>영역」 꼴이다", rulesPath, n)
+			}
+			cfg.classes = append(cfg.classes, class{repo, prefix, col[2]})
 			cfg.areas[col[2]] = true
 		case "allow":
 			if len(col) < 4 || len(col) > 5 {
@@ -124,38 +135,50 @@ func loadConfig(rulesPath string, modules ...string) (*config, error) {
 			return nil, fmt.Errorf("%s: bare가 분류에 없는 영역 %q를 다룬다", rulesPath, a)
 		}
 	}
-	sort.SliceStable(cfg.classes, func(i, j int) bool { return len(cfg.classes[i].prefix) > len(cfg.classes[j].prefix) })
+	// 가장 긴 접두어가 이기고, 같은 길이면 리포로 한정한 것이 먼저다.
+	sort.SliceStable(cfg.classes, func(i, j int) bool {
+		a, b := cfg.classes[i], cfg.classes[j]
+		if len(a.prefix) != len(b.prefix) {
+			return len(a.prefix) > len(b.prefix)
+		}
+		return a.repo != "" && b.repo == ""
+	})
 	return cfg, nil
 }
 
-// relOf — import 경로가 이 규칙이 다루는 모듈 안이면 그 모듈 루트를 뗀 상대 경로를 돌려준다.
+// relOf — import 경로가 이 규칙이 다루는 모듈 안이면 그 모듈 루트를 뗀 상대 경로와 리포 이름을 돌려준다.
 // 표준 라이브러리와 외부 모듈이면 false다. 모듈 경로가 서로 접두어일 수 있어(`…/pqcota`와
 // `…/pqcota-common`) 경로 마디 단위로 맞춘다.
-func (c *config) relOf(p string) (string, bool) {
+func (c *config) relOf(p string) (rel, repo string, ok bool) {
 	for _, m := range c.modules {
 		if p == m {
-			return "", true
+			return "", path.Base(m), true
 		}
 		if strings.HasPrefix(p, m+"/") {
-			return strings.TrimPrefix(p, m+"/"), true
+			return strings.TrimPrefix(p, m+"/"), path.Base(m), true
 		}
 	}
-	return "", false
+	return "", "", false
 }
 
-// areaOf — 패키지 디렉터리(리포 상대, 슬래시)가 어느 영역인가. 어디에도 안 걸리면 빈 문자열이다.
-func (c *config) areaOf(dir string) string {
+// areaIn — 리포 repo 안의 패키지 디렉터리(리포 상대, 슬래시)가 어느 영역인가. 어디에도 안 걸리면 빈 문자열이다.
+// 리포로 한정한 class(`pqcota-discovery:cmd/`)는 그 리포에서만 맞는다 — 모든 단계 리포가 `cmd/`를 가지므로
+// 경로만으로는 어느 단계의 것인지 가릴 수 없다.
+func (c *config) areaIn(repo, dir string) string {
 	d := strings.Trim(dir, "/") + "/"
 	if d == "/" {
 		return "" // 모듈 루트
 	}
 	for _, cl := range c.classes {
-		if strings.HasPrefix(d, cl.prefix) {
+		if strings.HasPrefix(d, cl.prefix) && (cl.repo == "" || cl.repo == repo) {
 			return cl.area
 		}
 	}
 	return ""
 }
+
+// areaOf — 지금 재는 리포 안의 디렉터리가 어느 영역인가.
+func (c *config) areaOf(dir string) string { return c.areaIn(c.self, dir) }
 
 // check — 파일 목록(리포 상대 경로)을 재어 위반을 돌려준다. root는 파일을 읽을 자리다.
 // 파일 목록을 인자로 받는 것은 테스트가 fixture 디렉터리를 가리킬 수 있게 하려는 것이다.
@@ -208,12 +231,15 @@ func check(root string, files []string, cfg *config) ([]string, int, error) {
 			if err != nil {
 				return nil, 0, fmt.Errorf("%s: %w", f, err)
 			}
-			rel, internal := cfg.relOf(p)
+			rel, irepo, internal := cfg.relOf(p)
 			if !internal {
 				continue // 표준 라이브러리와 외부 모듈은 재지 않는다
 			}
 			imports++
-			to := cfg.areaOf(rel)
+			to := cfg.areaIn(irepo, rel)
+			if irepo != cfg.self {
+				rel = irepo + "/" + rel // 다른 리포의 것은 어느 리포인지 함께 보인다
+			}
 			line := fset.Position(imp.Pos()).Line
 			switch {
 			case to == "":
@@ -287,7 +313,8 @@ func main() {
 	}
 	var bad []string
 	nFiles, nImports := 0, 0
-	for _, r := range roots {
+	for i, r := range roots {
+		cfg.self = path.Base(modules[i])
 		files, err := goFiles(r)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

@@ -52,9 +52,9 @@ The same observation is also rendered as a topology.
 
 | Stage | What it does | Output |
 |---|---|---|
-| ① **[Discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
-| ② **[Inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
-| ③ **[Provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
+| ① **[Discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/README.md)** | **Observes which cryptography is in use** on running systems — loaded libraries, JVM provider chains, algorithms negotiated in the handshake | per-node observations (canonical CBOM) |
+| ② **[Inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/README.md)** | **Ties each observation to the node and the apps it belongs to, and accumulates them** — machine metadata, diffs between snapshots | a central, append-only inventory |
+| ③ **[Provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/README.md)** | **Generates the PQC migration artifacts** from a finalized plan — config fragments, apply/rollback Ansible playbooks (L1/L2/L3), rollback basis | playbooks + before records |
 
 **What it does not do** — declaration (CMDB) reconciliation, review-and-sign-off governance and
 fleet orchestration are **not in these repositories.** The contracts ([`contracts/`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md))
@@ -87,7 +87,7 @@ provisioning (generate, apply, roll back), against nodes it stands up as contain
 
 **To run**
 - Multiple nodes — Ansible on the controller, SSH access to the targets
-- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [discovery/cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)
+- A single node — nothing to install; run the binary on that node directly (`pqcota-netcap` needs `CAP_NET_RAW`) → [pqcota-discovery cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)
 
 ## Build
 
@@ -115,15 +115,15 @@ types with `go get` alone. It is regenerated only when a proto changes (see the 
 
 ```bash
 D=github.com/randyinthedev-hash
-go build -o bin/ $D/pqcota-common/cmd/... $D/pqcota-discovery/discovery/cmd/... $D/pqcota-inventory/inventory/cmd/... $D/pqcota-provisioning/provisioning/cmd/...
+go build -o bin/ $D/pqcota-common/cmd/... $D/pqcota-discovery/cmd/... $D/pqcota-inventory/cmd/... $D/pqcota-provisioning/cmd/...
 ```
 
 **② The collectors that go on the target nodes** — built statically **for the node's OS and arch**.
 Which collector runs on which OS is in
-the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
+the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
 
 ```bash
-D=github.com/randyinthedev-hash/pqcota-discovery/discovery/cmd
+D=github.com/randyinthedev-hash/pqcota-discovery/cmd
 
 # Linux nodes
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/ $D/pqcota-nodescan $D/pqcota-netcap $D/pqcota-jvmscan
@@ -139,9 +139,9 @@ make build-jar                  # only if you have JVM nodes: attach sidecar →
 
 **Linux nodes need kernel 3.2 or newer.** That is the floor the Go toolchain sets, and this repo asks
 for nothing newer. CentOS 7 (3.10) and Debian 8 (3.16) are above it; RHEL 6 (2.6.32) is below. What
-individual features additionally require is in the [supported scope](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
+individual features additionally require is in the [supported scope](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
 
-Privileges and environment variables for running the collectors on a node → [discovery/cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md).
+Privileges and environment variables for running the collectors on a node → [pqcota-discovery cmd](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
 
 **If you changed a proto, regenerate the contract code.** This is the procedure for someone working
 on the contracts, and it runs in `pqcota-common`. `make tools` installs the generator plugins

@@ -21,11 +21,6 @@ build/
 __pycache__/
 *.pyc
 
-# 통합 테스트용 빌드 바이너리 (Docker COPY 대상)
-discovery/collectors/openssl/integration/openssl-collector
-collectors/**/*.class
-collectors/**/*.jar
-
 # 로컬 설정
 .env
 .env.local

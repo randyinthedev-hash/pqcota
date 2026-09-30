@@ -56,15 +56,15 @@ docker exec pqcota-ctl bash -lc '
   cd /src/pqcota
   echo "   [ctl] go build -o /usr/local/bin/ …        # the central CLIs used on this machine"
   CGO_ENABLED=0 go build -o /usr/local/bin/ \
-    $D/pqcota-inventory/inventory/cmd/pqcota-ingest $D/pqcota-discovery/discovery/cmd/pqcota-hosts \
-    $D/pqcota-inventory/inventory/cmd/pqcota-inventory $D/pqcota-inventory/inventory/cmd/pqcota-discover-view \
-    $D/pqcota-inventory/inventory/cmd/pqcota-profile $D/pqcota-inventory/inventory/cmd/pqcota-declare $D/pqcota-inventory/inventory/cmd/pqcota-prune \
-    $D/pqcota-inventory/inventory/cmd/pqcota-declare-attribution \
-    $D/pqcota-provisioning/provisioning/cmd/pqcota-provision $D/pqcota-provisioning/provisioning/cmd/pqcota-records $D/pqcota-provisioning/provisioning/cmd/pqcota-approve \
+    $D/pqcota-inventory/cmd/pqcota-ingest $D/pqcota-discovery/cmd/pqcota-hosts \
+    $D/pqcota-inventory/cmd/pqcota-inventory $D/pqcota-inventory/cmd/pqcota-discover-view \
+    $D/pqcota-inventory/cmd/pqcota-profile $D/pqcota-inventory/cmd/pqcota-declare $D/pqcota-inventory/cmd/pqcota-prune \
+    $D/pqcota-inventory/cmd/pqcota-declare-attribution \
+    $D/pqcota-provisioning/cmd/pqcota-provision $D/pqcota-provisioning/cmd/pqcota-records $D/pqcota-provisioning/cmd/pqcota-approve \
     $D/pqcota-common/cmd/pqcota-keygen
   echo "   [ctl] CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -o dist/linux-$ARCH/ …   # collectors to carry onto the nodes"
   CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -o "/work/dist/linux-$ARCH/" \
-    $D/pqcota-discovery/discovery/cmd/pqcota-nodescan $D/pqcota-discovery/discovery/cmd/pqcota-netcap $D/pqcota-discovery/discovery/cmd/pqcota-jvmscan
+    $D/pqcota-discovery/cmd/pqcota-nodescan $D/pqcota-discovery/cmd/pqcota-netcap $D/pqcota-discovery/cmd/pqcota-jvmscan
   echo "   [ctl] make build-jar                      # JVM attach sidecar"
   make build-jar >/dev/null 2>&1 && cp build/collector.jar /work/dist/collector.jar
   echo "   [ctl] artifacts: $(ls /work/dist/linux-$ARCH | tr "\n" " ")· collector.jar"

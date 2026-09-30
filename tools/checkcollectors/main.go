@@ -3,7 +3,7 @@
 // 같은 목록이 릴리스 워크플로와 참조 플레이북 양쪽에 있다:
 //
 //	.github/workflows/release.yml   무엇을 빌드해 번들에 넣나 (이 리포)
-//	discovery/ansible/discover.yml  무엇을 노드로 반입하나 (pqcota-discovery 리포)
+//	ansible/discover.yml            무엇을 노드로 반입하나 (pqcota-discovery 리포)
 //
 // 한쪽만 바뀌면 **받아서 돌릴 때** 드러난다 — v0.6.3에서 플레이북에 `pqcota-jvmscan`을 더하고
 // 워크플로를 안 고쳐, 릴리스만 받은 사람은 반입 단계에서 실패했다(v0.6.6에서 고침). 사람 기억에
@@ -24,11 +24,11 @@ const workflow = ".github/workflows/release.yml"
 
 // playbook — 참조 플레이북. 디스커버리 리포에 있으므로 그 리포 루트를 인자로 받는다
 // (기본은 작업 공간에서 이 리포 옆에 있는 `../pqcota-discovery`).
-var playbook = "../pqcota-discovery/discovery/ansible/discover.yml"
+var playbook = "../pqcota-discovery/ansible/discover.yml"
 
 func main() {
 	if len(os.Args) > 1 {
-		playbook = strings.TrimRight(os.Args[1], "/") + "/discovery/ansible/discover.yml"
+		playbook = strings.TrimRight(os.Args[1], "/") + "/ansible/discover.yml"
 	}
 	wf, err := os.ReadFile(workflow)
 	if err != nil {
@@ -73,7 +73,7 @@ func main() {
 // 덩이의 끝은 **줄 이음(`\`)이 끊기는 줄**이다. 인자가 `./`로 시작하지 않고 import 경로(`github.com/…`)여도 이음이
 // 이어지는 동안은 같은 명령이므로, 다음 줄의 첫 글자로 끝을 짐작하지 않는다.
 var buildStep = regexp.MustCompile(`GOOS=(linux|windows)[^\n]*go build(?:[^\n]*\\\n)*[^\n]*`)
-var cmdPath = regexp.MustCompile(`(?:\./|github\.com/randyinthedev-hash/pqcota-discovery/)discovery/cmd/(pqcota-[a-z]+)`)
+var cmdPath = regexp.MustCompile(`github\.com/randyinthedev-hash/pqcota-discovery/cmd/(pqcota-[a-z]+)`)
 
 // builtByOS — 워크플로가 OS별로 무엇을 빌드하나.
 func builtByOS(s string) map[string][]string {

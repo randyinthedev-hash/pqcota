@@ -57,14 +57,14 @@ Also read [the ripple checklist for contract changes](https://github.com/randyin
 | Repository | What |
 |---|---|
 | [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | Contract SSOT (protobuf; the namespace *is* the stage: `pqcota.{common,discovery,inventory,provisioning}.v1`), the **committed** generated Go code in `gen/`, the shared logic in `pkg/kernel` (registry·posture·scope·machineid·sign·completeness) and `pkg/org`, and `cmd/pqcota-keygen` (used by both collector signing and plan approval) |
-| [`pqcota-inventory`](https://github.com/randyinthedev-hash/pqcota-inventory) | The inventory stage: `pkg/inventory` (history·normalize·ingest·resultio·declaration) and the commands in `inventory/cmd` |
-| [`pqcota-discovery`](https://github.com/randyinthedev-hash/pqcota-discovery) | The discovery stage: `discovery/collectors` (reference collectors), `discovery/cmd`, the reference Ansible playbook, `pkg/discovery/procs` |
-| [`pqcota-provisioning`](https://github.com/randyinthedev-hash/pqcota-provisioning) | The provisioning stage: `pkg/provisioning` and the commands in `provisioning/cmd` |
+| [`pqcota-inventory`](https://github.com/randyinthedev-hash/pqcota-inventory) | The inventory stage: `pkg/inventory` (history·normalize·ingest·resultio·declaration) and the commands in `cmd/` |
+| [`pqcota-discovery`](https://github.com/randyinthedev-hash/pqcota-discovery) | The discovery stage: `collectors/` (reference collectors), `cmd/`, the reference Ansible playbook in `ansible/`, `pkg/discovery/procs` |
+| [`pqcota-provisioning`](https://github.com/randyinthedev-hash/pqcota-provisioning) | The provisioning stage: `pkg/provisioning` and the commands in `cmd/` |
 | `pqcota` (this repository) | `demo/` (Docker end-to-end demo), `tools/` (the gates that measure all five repos), `test/crossstage/` (tests that span stages), the release workflow. The per-stage runnable examples live in the stage repositories (`examples/` in each); [examples/README.md](examples/README.md) here is the signpost |
 
 **Direction of dependence.** `pqcota-common` imports no other module; `pqcota-inventory` imports only common; `pqcota-discovery` and `pqcota-provisioning` import common and inventory and never each other. Inside discovery, the collectors import only common and `pkg/discovery/procs`, because they are built into binaries that go onto the observed nodes. `make check-deps` enforces this (rules in `tools/checkdeps/rules.tsv`).
 
-To **actually run the commands, use the examples** ([signpost](examples/README.md); each stage repository has an `examples/` with a `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/cmd/README.md)·[inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/cmd/README.md)·[provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/cmd/README.md)).
+To **actually run the commands, use the examples** ([signpost](examples/README.md); each stage repository has an `examples/` with a `run.sh`); for what each command is, see each `<stage>/cmd/README` ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)·[inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md)·[provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/cmd/README.md)).
 
 ## Contract-first
 
@@ -78,7 +78,7 @@ The reference collectors (openssl·jvm·network) are just three examples of ways
 
 - A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (the rules live in one place so results can be recomputed).
 - Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md)).
-- Each reference collector's design goals, boundary, and honesty rules are in [`discovery/collectors/<name>/README`](https://github.com/randyinthedev-hash/pqcota-discovery/tree/main/discovery/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
+- Each reference collector's design goals, boundary, and honesty rules are stated in the comments of its code under [`collectors/<name>`](https://github.com/randyinthedev-hash/pqcota-discovery/tree/main/collectors) — a new collector follows the same shape (observe only · unseen = gap · no guessing).
 
 > **The provisioning generator is not yet such a plugin seam** — the plan (`plan.proto`) is a public contract, but the generator itself is internal logic. To avoid confusion, only the collector side is presented as an extension point.
 
@@ -113,7 +113,7 @@ These repos enforce **honesty and determinism in the code itself**. Below are th
 
 ```bash
 go test ./...                                              # unit (run it in each repo)
-(cd ../pqcota-discovery && bash discovery/collectors/openssl/integration/run.sh)   # openssl collector real integration (Docker, SD-1·SD-3·SD-4)
+(cd ../pqcota-discovery && bash collectors/openssl/integration/run.sh)   # openssl collector real integration (Docker, SD-1·SD-3·SD-4)
 ./demo/scripts/up.sh && ./demo/scripts/demo.sh            # end-to-end discovery demo
 ```
 
@@ -161,4 +161,4 @@ Including this with a bug report speeds up reproduction:
 
 ## Design first
 
-Before adding a feature, read the per-stage READMEs ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/discovery/README.md) · [inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/inventory/README.md) · [provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/provisioning/README.md)) and [contracts/](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md), and open an issue if the change touches a boundary.
+Before adding a feature, read the per-stage READMEs ([discovery](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/README.md) · [inventory](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/README.md) · [provisioning](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/README.md)) and [contracts/](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md), and open an issue if the change touches a boundary.
