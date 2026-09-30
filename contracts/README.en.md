@@ -143,7 +143,7 @@ Fixing the proto is not the end. **Two things in the code are derived from the c
 | Also look at | When | If you forget |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | **adding a field** to `CollectionResult`, `Envelope`, `MachineIdentity`, `Completeness`, or `ObservedEdge` | the new field becomes a **signature blind spot** — tamper with it and verification still passes.<br>Widening the scope **invalidates every existing signature**, so after a release it needs a migration |
-| [`history.ContentHash`](../pkg/discovery/history) | **adding a substantive content field** to `Finding`, `ObservedEdge`, or `Completeness` | a change to that field folds into "no change" and **vanishes silently from the history** ([inventory design §7.3](../inventory/design.en.md)) |
+| [`history.ContentHash`](../pkg/inventory/history) | **adding a substantive content field** to `Finding`, `ObservedEdge`, or `Completeness` | a change to that field folds into "no change" and **vanishes silently from the history** ([inventory design §7.3](../inventory/design.en.md)) |
 
 **Tests watch both** — if the field count changes, `TestCanonicalCoversAllFields` fails and tells you what to do. Do not wave the failure away by editing the expected value. That is precisely how blind spots get made.
 

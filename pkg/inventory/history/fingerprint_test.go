@@ -5,7 +5,7 @@ import (
 
 	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 )
 
 // TV-HISTORY-CNG — CNG 축이 바뀌면 **변화로 잡혀야 한다**.

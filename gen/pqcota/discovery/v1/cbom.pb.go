@@ -168,7 +168,7 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 }
 
 // CngAxes — Windows CNG 분기축. v0.1.0에서 스키마로만 예약했고 **v0.6.0에서 채워졌다**:
-// pqcota-cngscan이 관측하고 정규화(pkg/discovery/normalize)가 이 축을 파생한다. 필드는 provider
+// pqcota-cngscan이 관측하고 정규화(pkg/inventory/normalize)가 이 축을 파생한다. 필드는 provider
 // 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정한 나머지(algorithms)는 그때
 // **번호를 새로 부여해 더했다**(proto3 additive — 하위호환). 상세: docs/runtime-acceptance.md
 type CngAxes struct {

@@ -19,9 +19,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 

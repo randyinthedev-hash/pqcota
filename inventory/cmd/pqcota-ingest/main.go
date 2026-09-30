@@ -6,7 +6,7 @@
 // usage: pqcota-ingest [-scope-assets <csv>] <results-dir> [scope-master-file]
 //
 //	results-dir       : *.json(단일 객체)·*.jsonl(한 줄=한 결과) — Ansible/업로드로 회수된 것.
-//	                    형식은 확장자가 아니라 내용으로 판별한다(pkg/discovery/resultio).
+//	                    형식은 확장자가 아니라 내용으로 판별한다(pkg/inventory/resultio).
 //	                    **해독하지 못한 입력이 하나라도 있으면 적재하지 않는다** — 반쪽짜리
 //	                    적재는 빠진 자산과 없는 자산을 구별할 수 없게 만든다(§2.6).
 //	scope-master-file : (선택) 등재 노드 ID 목록(한 줄에 하나). 없으면 게이트 생략(로컬/데모).
@@ -30,10 +30,10 @@ import (
 	"time"
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/resultio"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/scope"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"

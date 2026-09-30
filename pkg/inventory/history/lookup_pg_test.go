@@ -8,7 +8,7 @@ import (
 	"time"
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 )
 
 // TV-HISTORY-7 — Postgres에서 중복 억제가 v1로 접히고, (node, ruleset, digest)로 찾힌다.

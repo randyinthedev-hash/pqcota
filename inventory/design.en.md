@@ -225,7 +225,7 @@ Heavy storage grows **only with the number of changes**, while the fact "we look
 
 The history view (`-history`) now shows "the point of change + how many times and until when that state was reconfirmed (obs, observed)".
 
-### 7.3 Defining equality — the weak point of this design (`pkg/discovery/history/fingerprint.go`)
+### 7.3 Defining equality — the weak point of this design (`pkg/inventory/history/fingerprint.go`)
 
 Everything hinges on what decides "is this the same state". **Include a volatile field and it becomes "changed" every time, which defeats the split.**
 

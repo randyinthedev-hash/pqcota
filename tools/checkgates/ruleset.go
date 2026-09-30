@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
 )
 
 // 규칙 판 자리표시자 검사 — **상수는 있는데 제품이 자기 문자열을 쓰는** 자리를 막는다.
@@ -42,7 +42,7 @@ import (
 // 고쳐도 따라오지 않으므로, 판이 올라간 다음부터는 새 값을 베낀 자리를 못 잡는다. 그래서
 // 상수는 `normalize`에서 직접 읽고, 이름은 마디로만 본다(아래 [looksLikeRuleset]).
 // 자기 자신을 검사 대상에서 빼는 검사기는 그 규칙이 무엇을 막는지 보장하지 못한다.
-const rulesetHome = "pkg/discovery/normalize/pipeline.go"
+const rulesetHome = "pkg/inventory/normalize/pipeline.go"
 
 // rulesetPlaceholders — 규칙 판 식별자처럼 생긴 리터럴이 있는 자리.
 func rulesetPlaceholders(files []string) ([]string, error) {

@@ -15,9 +15,9 @@ import (
 
 	commonv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/common/v1"
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/resultio"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/posture"
 )
 
@@ -271,7 +271,7 @@ func loadNodeMap(path string) map[string]string {
 	return m
 }
 
-// loadResults — 결과 디렉터리를 읽는다. 형식 판별은 공용 디코더에 맡긴다(pkg/discovery/resultio).
+// loadResults — 결과 디렉터리를 읽는다. 형식 판별은 공용 디코더에 맡긴다(pkg/inventory/resultio).
 //
 // 여기서 직접 `*.json`만 훑고 단일 객체로만 읽던 때, JVM이 둘 이상인 노드의 JCA 결과가
 // **통째로 화면에서 빠졌다.** 그 파일은 JSON Lines였는데 단일 객체로 파싱해 보고 실패하면

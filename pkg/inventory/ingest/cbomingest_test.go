@@ -3,7 +3,7 @@ package ingest_test
 import (
 	"testing"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory/ingest"
 )
 

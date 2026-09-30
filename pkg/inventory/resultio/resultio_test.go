@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/resultio"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/resultio"
 )
 
 // Decode는 단일 객체(compact·multiline)와 JSON Lines를 모두 감당해야 한다.

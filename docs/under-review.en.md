@@ -196,7 +196,7 @@ that fills it is missing.
 ### 5.3 Two value conventions to settle
 
 **`dst_addr` is emitted as `peerIP:0`.** In the server role the peer is a client, and its port is an ephemeral
-one that changes per connection. Carrying it verbatim makes [`edgeKey`](../pkg/discovery/normalize/pipeline.go)
+one that changes per connection. Carrying it verbatim makes [`edgeKey`](../pkg/inventory/normalize/pipeline.go)
 differ every time, so the same service with the same peer becomes as many edges as there were connections,
 `observed_count` stays at 1, and the snapshot fingerprint changes on every run — which breaks "snapshots
 accumulate only at points of change" from [inventory design §7.2](../inventory/design.en.md). That collides
@@ -429,7 +429,7 @@ fact is recorded here.
 Raise the cadence and the same edge is seen many times. **Repeated observations of the same target have to be
 merged into one.** Today they are not.
 
-**What happens now.** Identity resolution in [`pipeline.go`](../pkg/discovery/normalize/pipeline.go) only
+**What happens now.** Identity resolution in [`pipeline.go`](../pkg/inventory/normalize/pipeline.go) only
 **drops** duplicate edges.
 
 ```go

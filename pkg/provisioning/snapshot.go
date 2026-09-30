@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 )
 
 // 스냅샷 참조를 해석한다 — 레코드 → 계획 → 스냅샷으로 되짚는 사슬의 마지막 고리.

@@ -12,9 +12,9 @@ import (
 	"fmt"
 
 	discoveryv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/discovery/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/normalize"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/normalize"
 )
 
 // Render — 수집 결과들을 정규화해 인벤토리 뷰 문자열로 만든다.

@@ -108,7 +108,7 @@ This repo enforces **honesty and determinism in the code itself**. Below are the
 - **gap ≠ absence** (§2.6) — never silently drop what wasn't seen or what a policy excluded. **Count it, return it, and report it** (excluded counts, the completeness map, the `-diff` reverse-order warning, etc.).
 - **no guessing or judgment** (§2.1) — don't fabricate what wasn't observed. If a diff is "no change", that *is* the answer.
 
-**Derived values must be recomputable from the source** (§1.2). Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/discovery/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
+**Derived values must be recomputable from the source** (§1.2). Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/inventory/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
 
 **Keep logic pure and testable.** Separate parsing/decision logic from I/O so it unit-tests without the real thing (process, DB, network) — e.g. `ParseProcMaps(reader)` runs without `/proc`. **Tests pin not just behavior but "why this invariant holds"** (a regression test comments the essence of the bug).
 

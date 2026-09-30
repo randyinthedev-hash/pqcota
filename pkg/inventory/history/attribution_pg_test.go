@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 )
 
 // TestPgAttributionsShareATableAndStillDoNotSeeEachOther — **격리의 진짜 시험은 여기다.**

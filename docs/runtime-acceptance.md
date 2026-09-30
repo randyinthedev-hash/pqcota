@@ -128,7 +128,7 @@
 |---|---|---|
 | 계약 | `contracts/.../common.proto`(enum), `.../cbom.proto`(oneof `XxxAxes`) | 순수 additive: `make breaking`이 릴리스한 계약과 대조한다 |
 | 수집 | `discovery/collectors/<r>/` | `CollectionResult` emit + `detection_method` 표기 |
-| 정규화 | `pkg/discovery/normalize/`(강화 단계) | `detection_method`→`evidence_strength` 파생 |
+| 정규화 | `pkg/inventory/normalize/`(강화 단계) | `detection_method`→`evidence_strength` 파생 |
 | 프로비저닝 | `pkg/provisioning/render.go`(분기) + `renderXxx` + `paths.go` | render + stage + **롤백 대칭** |
 
 각 층 최소 테스트 1. **흡수는 은폐가 아니다**: Python을 openssl로 흡수해도 뷰엔 "이 Python 앱이 쓴다"로

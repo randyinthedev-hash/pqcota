@@ -31,7 +31,7 @@ import (
 	"strings"
 
 	provisioningv1 "github.com/randyinthedev-hash/pqcota/gen/pqcota/provisioning/v1"
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/kernel/sign"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 	"github.com/randyinthedev-hash/pqcota/pkg/provisioning"

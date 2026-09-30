@@ -214,7 +214,7 @@ EDGE_ROLE_SERVER = 2;     // src가 수신자
 ### 5.3 정할 값 규약 둘
 
 **`dst_addr`는 `상대IP:0`으로 낸다.** 서버 역할에서 상대는 클라이언트이고 그 포트는 연결마다 바뀌는
-임시 포트다. 그대로 담으면 [`edgeKey`](../pkg/discovery/normalize/pipeline.go)가 매번 달라져 같은
+임시 포트다. 그대로 담으면 [`edgeKey`](../pkg/inventory/normalize/pipeline.go)가 매번 달라져 같은
 상대와의 같은 서비스가 연결 수만큼 다른 엣지가 되고, `observed_count`는 1에 머물며, 스냅샷 지문이
 매번 달라져 [인벤토리 §7.2](../inventory/design.md)의 「변화 지점에만 쌓인다」가 무너진다. 관측을
 자주 돌리려는 방향과 정면으로 부딪힌다.
@@ -430,7 +430,7 @@ netcap이 172.18.0.9:443과의 연결을 관측한다
 주기를 올리면 같은 엣지를 여러 번 보게 된다. **같은 대상의 반복 관측은 하나로 합쳐야 한다.** 지금은
 그렇게 되지 않는다.
 
-**지금 무슨 일이 벌어지나.** [`pipeline.go`](../pkg/discovery/normalize/pipeline.go)의 동일성 해소가
+**지금 무슨 일이 벌어지나.** [`pipeline.go`](../pkg/inventory/normalize/pipeline.go)의 동일성 해소가
 중복 엣지를 **버리기만 한다.**
 
 ```go

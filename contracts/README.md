@@ -142,7 +142,7 @@ proto만 고치고 끝나지 않는다. **계약에서 파생된 두 가지가 �
 | 함께 볼 것 | 언제 | 잊으면 |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | `CollectionResult`·`Envelope`·`MachineIdentity`·`Completeness`·`ObservedEdge`에 **필드 추가** | 새 필드가 **서명 사각지대**가 된다. 변조해도 검증이 통과.<br>범위를 넓히면 **기존 서명은 전부 무효**가 되므로 릴리스 후엔 마이그레이션 필요 |
-| [`history.ContentHash`](../pkg/discovery/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에 남지 않는다**([인벤토리 설계 §7.3](../inventory/design.md)) |
+| [`history.ContentHash`](../pkg/inventory/history) | `Finding`·`ObservedEdge`·`Completeness`에 **실질 내용 필드 추가** | 그 필드가 바뀌어도 "변화 없음"으로 접혀 **이력에 남지 않는다**([인벤토리 설계 §7.3](../inventory/design.md)) |
 
 둘 다 **테스트가 지켜본다**. 필드 수가 바뀌면 `TestCanonicalCoversAllFields`가 실패하며 무엇을 해야 하는지 알려준다. 실패를 기대값 수정만으로 넘기지 않는다. 그것이 바로 사각지대를 만드는 경로다.
 

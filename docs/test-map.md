@@ -51,7 +51,7 @@ make test
 `integration`은 리눅스에서만 컴파일된다(collector 핵심이 `//go:build linux`). 한 케이스만 보려면 이름으로 좁힌다.
 
 ```bash
-go test ./pkg/discovery/normalize/ -run TestEvidenceStrength -v
+go test ./pkg/inventory/normalize/ -run TestEvidenceStrength -v
 ```
 
 종단(생성 → 적용 → 되돌림)은 Docker로 돈다.

@@ -20,8 +20,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/randyinthedev-hash/pqcota/pkg/discovery/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/inventory"
+	"github.com/randyinthedev-hash/pqcota/pkg/inventory/history"
 	"github.com/randyinthedev-hash/pqcota/pkg/org"
 )
 

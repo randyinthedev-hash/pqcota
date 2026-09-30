@@ -122,7 +122,7 @@ Only after passing all four (distinct observation + provider-injection-shaped re
 |---|---|---|
 | Contract | `contracts/.../common.proto` (enum), `.../cbom.proto` (the `XxxAxes` oneof) | purely additive — `make breaking` compares against the released contract |
 | Collection | `discovery/collectors/<r>/` | emit a `CollectionResult` and record `detection_method` |
-| Normalization | `pkg/discovery/normalize/` (the enrichment step) | derive `evidence_strength` from `detection_method` |
+| Normalization | `pkg/inventory/normalize/` (the enrichment step) | derive `evidence_strength` from `detection_method` |
 | Provisioning | `pkg/provisioning/render.go` (the branch) + `renderXxx` + `paths.go` | render + stage + **rollback symmetry** |
 
 One minimum test per layer. **Absorption is not concealment**: absorbing Python into openssl still shows up in the view as "attributed to a Python app", and absorbing Go as `REBUILD` is still reported honestly as "static, so a rebuild is required" — we never call something absent just because it is not visible.
