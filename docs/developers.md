@@ -80,6 +80,8 @@ Each stage repository follows the same pattern: an overview README, a command re
 
 Suggested order for a new contributor: the stage README (what it does and where it stops), then its examples (run something), then its command reference (the details).
 
+Every environment variable the programs read is listed in the [environment variable reference](environment-variables.md).
+
 ## Changing a contract
 
 Contracts live in `pqcota-common` and change before anything else does. Read them in this order:
