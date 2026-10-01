@@ -90,7 +90,8 @@ for pg, p in pages.items():
                 cnt["internal broken (anchor)"] += 1; bad.append((pg, h, "anchor missing"))
             else:
                 cnt["internal ok (anchor)"] += 1
-# 한국어 쪽 본문이 영어 쪽으로 가는 링크는 「영문」(또는 English)이라고 표시돼 있어야 한다: 한국어 문서인 줄 알고 눌렀다가 영문이 열리는 일이 없게.
+# 한국어 쪽 본문(문단·목록 항목·표 칸 단위)에 사이트 안 영문 쪽으로 가는 링크가 있으면 그 블록 어딘가에 「영문」(또는 English)이 있어야 한다.
+# 보장하는 범위: 블록 단위다. 링크가 여럿이면 하나만 표시해도 통과하고, 사이트 밖(GitHub 등)으로 가는 링크는 보지 않는다. 링크마다의 표시는 글쓴이가 지킨다.
 unmarked = 0
 for pg, p in pages.items():
     if not pg.startswith("ko/"): continue
