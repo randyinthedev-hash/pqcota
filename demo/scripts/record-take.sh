@@ -257,8 +257,8 @@ take_gap() {
 	cut_mark
 
 	say "the exit status above is 0 — the collection ends normally — and this is what the result carries"
-	type_cmd "python3 -m json.tool result.json | grep -A6 completeness"
-	docker exec -u nobody pqcota-ctl bash -lc 'python3 -m json.tool /tmp/result.json | grep -A6 completeness'
+	type_cmd "python3 -m json.tool --no-ensure-ascii result.json | grep -A6 completeness"
+	docker exec -u nobody pqcota-ctl bash -lc 'python3 -m json.tool --no-ensure-ascii /tmp/result.json | grep -A6 completeness'
 	docker exec -u nobody pqcota-ctl bash -lc 'rm -f /tmp/result.json /tmp/stderr.txt'
 	printf '\n'
 	note "   layersMissing = [NETWORK].  Not \"zero edges\" but \"this layer was not observed\"."
