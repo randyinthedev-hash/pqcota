@@ -22,6 +22,7 @@ permissions:
 
 env:
   REF: ${{ inputs.ref }}
+  TOOLS: ${{ inputs.tools }}
   ORG: randyinthedev-hash
 
 jobs:
@@ -38,9 +39,9 @@ jobs:
           done
       - name: 빌드 도구를 고정된 커밋에서 받기
         run: |
-          [[ "${{ inputs.tools }}" =~ ^[0-9a-f]{40}$ ]] || { echo "tools는 40자 커밋 SHA여야 한다"; exit 1; }
+          [[ "$TOOLS" =~ ^[0-9a-f]{40}$ ]] || { echo "tools는 40자 커밋 SHA여야 한다"; exit 1; }
           git clone -q "https://github.com/$ORG/pqcota.git" tools-src
-          git -C tools-src checkout -q --detach "${{ inputs.tools }}"
+          git -C tools-src checkout -q --detach "$TOOLS"
           git -C tools-src rev-parse HEAD
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
@@ -49,7 +50,7 @@ jobs:
           pip install -r tools-src/tools/site/requirements.txt
           pip freeze | diff - tools-src/tools/site/requirements.txt
       - name: 빌드 (쪽 목록 고정, 랜딩·구조도·원문 얹기, 최종 트리 링크 검사)
-        run: PAGES=ws/pqcota/tools/site/pages.txt TOOLS_REF="${{ inputs.tools }}" tools-src/tools/site/build.sh ws site "$REF"
+        run: PAGES=ws/pqcota/tools/site/pages.txt TOOLS_REF="$TOOLS" tools-src/tools/site/build.sh ws site "$REF"
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
 
