@@ -56,7 +56,7 @@ SCENES = [
     ("pv-landed", "clip", "provision", "provision.apply", "provision.activation", 1),
     ("pv-14", "clip", "provision", "provision.activation", "provision.after", 1),   # 0 → 14: 배속 금지
     ("hold-14", "hold", "provision", "provision.after", -0.05),
-    ("pv-rollback", "clip", "provision", "provision.after", "provision.deactivated", 1.5),
+    ("pv-rollback", "clip", "provision", "provision.after", "provision.deactivated", 1),
     ("pv-back0", "clip", "provision", "provision.deactivated", "provision.rollback", 1),
     ("hold-final", "hold", "provision", "provision.rollback", -0.05),
     ("card3", "still", "c3.png"),
@@ -141,10 +141,30 @@ def ass_time(x):
     return "%d:%02d:%02d.%02d" % (cs // 360000, cs // 6000 % 60, cs // 100 % 60, cs % 100)
 
 
+CLIP_SCENES = [(sc[0], sc[2], at(sc[3]), at(sc[4]), sc[5]) for sc in SCENES if sc[1] == "clip"]
+
+
+def T(ref, d, is_end=False):
+    """자막의 한 지점을 조립본 시각으로 바꾼다.
+    ref가 장면 이름이면 '그 장면 시작 + d초'(조립본 초). '@표지'면 '그 표지의 .cast 시각 + d초'(녹화 초)이고,
+    그 시각이 속한 클립 장면을 찾아 배속을 반영해 옮긴다 — 녹화 속도가 달라져 장면 길이가 변해도 자막은 화면 내용을
+    따라간다. 장면 안에서 시작하는 자막은 시작 쪽 장면을, 끝나는 자막은 끝 쪽 장면을 고른다(경계에서 모호하지 않게)."""
+    if not ref.startswith("@"):
+        return start[ref] + d
+    name = ref[1:]
+    cut, tc = name.split(".")[0], at(name) + d
+    for sc, src, s0, s1, sp in CLIP_SCENES:
+        if src == cut and ((s0 < tc <= s1) if is_end else (s0 <= tc < s1)):
+            return start[sc] + (tc - s0) / sp
+    sys.exit(f"caption anchor {ref}{d:+} falls outside every clip scene of {cut}")
+
+
 caps, prev_end = [], 0.0
-for s0, o0, s1, o1, text in L["captions"]:
-    a, b = start[s0] + o0, start[s1] + o1
-    assert b > a and o0 <= dur[s0] + 0.05 and o1 <= dur[s1] + 0.05, ("caption outside its scene", text)
+for r0, o0, r1, o1, text in L["captions"]:
+    a, b = T(r0, o0), T(r1, o1, True)
+    assert b > a, ("caption has no length", text, a, b)
+    if not r0.startswith("@"): assert o0 <= dur[r0] + 0.05, ("caption starts after its scene", text)
+    if not r1.startswith("@"): assert o1 <= dur[r1] + 0.05, ("caption ends after its scene", text)
     assert a >= prev_end - 1e-6, ("caption overlaps the previous one", text, a, prev_end)
     cps = len(text) / (b - a)
     assert cps <= L.get("max_cps", 16.5), ("caption too fast", round(cps, 1), text)

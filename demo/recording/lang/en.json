@@ -1,30 +1,194 @@
 {
-  "stills": {"title": 4.0, "card1": 3.5, "topo": 8.0, "card2": 4.5, "card3": 3.5},
-  "holds": {"hold-0": 2.5, "hold-chain": 5.0, "hold-edges": 6.0, "hold-14": 6.0, "hold-final": 7.0, "hold-gap": 6.0},
+  "stills": {
+    "title": 4.0,
+    "card1": 3.5,
+    "topo": 8.0,
+    "card2": 4.5,
+    "card3": 3.5
+  },
+  "holds": {
+    "hold-0": 2.5,
+    "hold-chain": 5.0,
+    "hold-edges": 6.0,
+    "hold-14": 6.0,
+    "hold-final": 7.0,
+    "hold-gap": 6.0
+  },
   "captions": [
-    ["obs-static", 2.0, "obs-static", 9.3, "Static view: the providers listed in java.security."],
-    ["obs-static", 9.5, "hold-0", 2.4, "BouncyCastle: 0 matches in this file."],
-    ["obs-chain", 2.0, "hold-chain", 4.9, "The stored result from the running JVM: BC, at the end of the chain, was registered by the app at runtime."],
-    ["hold-edges", 0.3, "hold-edges", 5.8, "The connections seen earlier, graded by what the handshake negotiated."],
-    ["pv-before", 2.2, "pv-before", 7.2, "Before: this node's OpenSSL lists 0 ML-KEM-related entries."],
-    ["pv-plan", 2.2, "pv-plan", 5.2, "A person writes the plan: a provider per node."],
-    ["pv-plan", 5.4, "pv-plan", 9.6, "The plan is finalized and carries an approval signature."],
-    ["pv-module", 2.0, "pv-module", 6.3, "The provider module is yours to build or get from a vendor."],
-    ["pv-gen", 2.0, "pv-gen", 8.4, "From the plan, the tool generates apply and rollback playbooks."],
-    ["pv-gen", 8.7, "pv-gen", 11.7, "A config fragment, and a module-hash check."],
-    ["pv-apply", 1.4, "pv-apply", 9.8, "Your own Ansible applies the generated playbook, passing the module hash."],
-    ["pv-apply", 10.4, "pv-apply", 13.1, "Then L3 activation: a second playbook."],
-    ["pv-landed", 2.0, "pv-landed", 5.6, "Landed: module, config fragment, activation point."],
-    ["pv-landed", 5.8, "pv-landed", 7.5, "Files alone change nothing."],
-    ["pv-14", 2.2, "pv-14", 6.0, "Same question, same node, now with the new configuration."],
-    ["pv-14", 6.4, "pv-14", 12.4, "OpenSSL now lists the oqs provider. Count the ML-KEM-related entries again."],
-    ["pv-14", 13.1, "hold-14", 5.9, "0 → 14 ML-KEM-related entries. This does not prove that any connection negotiated PQC."],
-    ["pv-rollback", 1.4, "pv-rollback", 7.8, "Rollback: the L3 playbook removes the activation and restarts the service."],
-    ["pv-rollback", 8.2, "pv-rollback", 12.8, "Then the staged files are removed. Nothing original was overwritten."],
-    ["pv-back0", 0.1, "hold-final", 6.9, "Back to 0. The same plan produced both the apply and the rollback."],
-    ["gap", 1.9, "gap", 5.3, "Without CAP_NET_RAW, handshake observation cannot run."],
-    ["gap", 5.5, "gap", 9.0, "One run: exit 0, and stderr says nothing was observed."],
-    ["gap", 9.4, "hold-gap", 2.6, "The result records the missed layer: NETWORK, not observed."],
-    ["hold-gap", 2.8, "hold-gap", 5.9, "Not observed is not the same as not there."]
+    [
+      "obs-static",
+      2.0,
+      "obs-static",
+      9.3,
+      "Static view: the providers listed in java.security."
+    ],
+    [
+      "obs-static",
+      9.5,
+      "hold-0",
+      2.4,
+      "BouncyCastle: 0 matches in this file."
+    ],
+    [
+      "obs-chain",
+      2.0,
+      "hold-chain",
+      4.9,
+      "The stored result from the running JVM: BC, at the end of the chain, was registered by the app at runtime."
+    ],
+    [
+      "hold-edges",
+      0.3,
+      "hold-edges",
+      5.8,
+      "The connections seen earlier, graded by what the handshake negotiated."
+    ],
+    [
+      "pv-before",
+      2.2,
+      "pv-before",
+      7.2,
+      "Before: this node's OpenSSL lists 0 ML-KEM-related entries."
+    ],
+    [
+      "@provision.before",
+      2.2,
+      "@provision.plan",
+      1.9,
+      "A person writes the plan: a provider per node."
+    ],
+    [
+      "@provision.plan",
+      2.0,
+      "@provision.approve",
+      -0.3,
+      "The plan is finalized and carries an approval signature."
+    ],
+    [
+      "@provision.approve",
+      2.0,
+      "@provision.module",
+      -0.2,
+      "The provider module is yours to build or get from a vendor."
+    ],
+    [
+      "@provision.module",
+      2.0,
+      "@provision.generate",
+      1.9,
+      "From the plan, the tool generates apply and rollback playbooks."
+    ],
+    [
+      "@provision.generate",
+      2.2,
+      "@provision.output",
+      -0.1,
+      "A config fragment, and a module-hash check."
+    ],
+    [
+      "@provision.output",
+      2.0,
+      "@provision.apply",
+      -4.8,
+      "Your own Ansible applies the generated playbook, passing the module hash."
+    ],
+    [
+      "@provision.apply",
+      -4.4,
+      "@provision.apply",
+      -0.2,
+      "Then L3 activation: a second playbook."
+    ],
+    [
+      "@provision.apply",
+      2.0,
+      "@provision.landed",
+      1.8,
+      "Landed: module, config fragment, activation point."
+    ],
+    [
+      "@provision.landed",
+      1.9,
+      "@provision.activation",
+      -0.05,
+      "Files alone change nothing."
+    ],
+    [
+      "@provision.activation",
+      2.2,
+      "@provision.activation",
+      6.0,
+      "Same question, same node, now with the new configuration."
+    ],
+    [
+      "@provision.activation",
+      6.4,
+      "@provision.activation",
+      12.4,
+      "OpenSSL now lists the oqs provider. Count the ML-KEM-related entries again."
+    ],
+    [
+      "@provision.after",
+      -1.9,
+      "hold-14",
+      5.9,
+      "0 → 14 ML-KEM-related entries. This does not prove that any connection negotiated PQC."
+    ],
+    [
+      "@provision.after",
+      2.2,
+      "@provision.after",
+      8.0,
+      "Rollback: the L3 playbook removes the activation and restarts the service."
+    ],
+    [
+      "@provision.after",
+      8.5,
+      "@provision.deactivated",
+      -0.2,
+      "Then the staged files are removed. Nothing original was overwritten."
+    ],
+    [
+      "@provision.deactivated",
+      0.3,
+      "@provision.rollback",
+      -2.2,
+      "The same question once more, with the default configuration."
+    ],
+    [
+      "@provision.rollback",
+      -2.0,
+      "hold-final",
+      6.9,
+      "Back to 0. The same plan produced both the apply and the rollback."
+    ],
+    [
+      "gap",
+      1.9,
+      "gap",
+      5.3,
+      "Without CAP_NET_RAW, handshake observation cannot run."
+    ],
+    [
+      "gap",
+      5.5,
+      "gap",
+      9.0,
+      "One run: exit 0, and stderr says nothing was observed."
+    ],
+    [
+      "gap",
+      9.4,
+      "hold-gap",
+      2.6,
+      "The result records the missed layer: NETWORK, not observed."
+    ],
+    [
+      "hold-gap",
+      2.8,
+      "hold-gap",
+      5.9,
+      "Not observed is not the same as not there."
+    ]
   ]
 }
