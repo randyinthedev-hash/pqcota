@@ -1,3 +1,5 @@
+English · [한국어](pqc-migration-primer.ko.md)
+
 # A first PQC migration, step by step
 
 For someone who has just been asked to run, or to follow, a post-quantum cryptography (PQC) migration. It follows one small example through the five steps of a migration and says, at each step, **what pqcota gives you and what a person has to decide.** It is an introduction to the order of work, not a project plan. For the overview of pqcota, see the [README](../README.md); for operational questions, the [FAQ](faq.md); for turning results into a report, the [reporting guide](reporting-guide.md).

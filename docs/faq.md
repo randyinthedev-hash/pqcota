@@ -1,3 +1,5 @@
+English · [한국어](faq.ko.md)
+
 # Frequently asked questions
 
 The questions a security team, an operations team or a manager tends to ask before allowing pqcota near real systems. Each answer says what pqcota does, and where it stops. For the overview, start at the [README](../README.md); for how to use results in a report, see the [reporting guide](reporting-guide.md); for building and running it, see the [build guide](build.md).

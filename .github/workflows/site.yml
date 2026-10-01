@@ -50,7 +50,7 @@ jobs:
           pip install -r tools-src/tools/site/requirements.txt
           pip freeze | diff - tools-src/tools/site/requirements.txt
       - name: 빌드 (쪽 목록 고정, 랜딩·구조도·원문 얹기, 최종 트리 링크 검사)
-        run: PAGES=ws/pqcota/tools/site/pages.txt TOOLS_REF="$TOOLS" LANDING_ROOT="$PWD/tools-src" tools-src/tools/site/build.sh ws site "$REF"
+        run: PAGES=ws/pqcota/tools/site/pages.txt PAGES_KO=ws/pqcota/tools/site/pages.ko.txt TOOLS_REF="$TOOLS" LANDING_ROOT="$PWD/tools-src" tools-src/tools/site/build.sh ws site "$REF"
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
 

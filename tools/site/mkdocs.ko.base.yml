@@ -1,0 +1,31 @@
+site_name: pqcota
+docs_dir: docs
+theme:
+  name: material
+  font: false
+  language: ko
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - search.suggest
+plugins:
+  - search
+markdown_extensions:
+  - tables
+  - md_in_html
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+validation:
+  links:
+    not_found: warn
+    absolute_links: info
+    unrecognized_links: warn
+    anchors: warn

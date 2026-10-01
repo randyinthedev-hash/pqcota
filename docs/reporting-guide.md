@@ -1,3 +1,5 @@
+English · [한국어](reporting-guide.ko.md)
+
 # Reporting guide
 
 For the person who reports on a PQC migration, and for the people who read those reports. It explains which parts of a report pqcota can support with evidence, what to say about what it could not see, and which sentences a pqcota result does not support.

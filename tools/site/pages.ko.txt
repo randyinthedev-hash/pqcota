@@ -1,0 +1,5 @@
+pqcota	README.ko.md	overview.md
+pqcota	docs/pqc-migration-primer.ko.md	users/first-migration.md
+pqcota	docs/faq.ko.md	users/faq.md
+pqcota	docs/reporting-guide.ko.md	users/reporting-guide.md
+pqcota	demo/README.ko.md	demo/index.md

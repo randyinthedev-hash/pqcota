@@ -15,6 +15,7 @@ pqcota	SECURITY.md	project/security.md
 pqcota	THIRD-PARTY-NOTICES.md	project/third-party-notices.md
 pqcota	demo/README.md	demo/index.md
 pqcota	demo/expected-output/README.md	demo/expected-output/index.md
+pqcota	demo/recording/README.md	demo/recording/index.md
 pqcota	demo/scripts/ansible/README.md	demo/scripts/ansible/index.md
 pqcota	demo/topology/README.md	demo/topology/index.md
 pqcota	demo/workloads/README.md	demo/workloads/index.md

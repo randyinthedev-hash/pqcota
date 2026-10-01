@@ -1,3 +1,5 @@
+English · [한국어](README.ko.md)
+
 # The pqcota demo (OSS) — access prep → discovery → inventory → provisioning
 
 
@@ -39,7 +41,7 @@ If this is your first time, these three scripts in [`scripts/`](scripts) are all
 |---|---|
 | **0/6 access prep** | The Ansible inventory is generated from `hosts.csv`, and the endpoints and CMDB profiles are registered. The inventory table is counted by SQL for access secrets: **0** |
 | **1/6 SSH check** | Ansible ping from the controller to every node |
-| **2/6 discovery** | On each node, OpenSSL assets · the JCA provider chain (including the BouncyCastle added at runtime with `addProvider`) · TLS/SSH handshakes are observed and the results are retrieved. Nothing is left on the nodes afterward |
+| **2/6 discovery** | On each node, OpenSSL assets · the JCA provider chain (including the BouncyCastle added at runtime with `addProvider`) · TLS/SSH handshakes are observed and the results are retrieved. When a run completes, the playbook's temporary directory is deleted from the nodes (the Java observation leaves a small file in the target's `/tmp`; see the [FAQ](../docs/faq.md#effect-on-running-systems)) |
 | **3/6 discovery view** | The discovered assets and the grade of the observed edges: 🟢 PQC/hybrid · 🔴 classical (quantum-vulnerable) · ⚪ unknown. In the default topology `web-gw → pay-app` is 🟢 and `web-gw → pay-db` is 🔴 (for both TLS and SSH) |
 | **4/6 topology** | The observations drawn as a picture, saved to `demo/.generated/topology.svg` |
 | **5/6 central inventory** | Ingest, then query: the endpoint and profile header, an `@app` label on every asset (pay-db's shared `libssl.so.1.1` is attributed to both `payment-gw` and `api-gw`), **no new snapshot** from ingesting the same results a second time (`-history`), that snapshot's assets and edges (`-snapshot`), asset scope (the number excluded is reported) with a `-diff` **across it**, and a `pqcota-prune` dry run |
@@ -104,7 +106,7 @@ It does not end at `hosts.csv`:
 After that it is the same as the demo — hand the collected results to `pqcota-ingest` and they are normalized and stored; view them with `pqcota-inventory`.
 
 > **✅ You can copy the demo's collector deployment as-is.** The node images contain **no** collector; `discover.yml`
-> ships them from ctl, runs them, retrieves the results, and cleans up (zero residue on the nodes afterward). The JVM
+> ships them from ctl, runs them, retrieves the results, and cleans up (when a run completes, nothing of its own is left on the nodes except the small Java file in `/tmp`). The JVM
 > add-on goes **only to nodes that have a JVM**, via `-recon`. Porting it to a real environment is just pointing
 > `collector_bin_dir` at your own build output (per arch).
 >

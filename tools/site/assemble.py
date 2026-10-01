@@ -2,6 +2,11 @@
 """Spike: assemble one documentation tree from the five pqcota repositories.
 
 usage: assemble.py <workspace-root> <out-dir> [--ref main] [--hugo] [--home index.md] [--pages FILE | --write-pages FILE]
+                   [--lang en|ko] [--site-prefix /pqcota]
+
+--lang ko assembles the Korean tree from the tracked `*.ko.md` files (the page keeps the destination of its English
+twin). A link written to an English page that has no Korean twin becomes a site-root link to the English page
+(`<site-prefix>/<page>/`); a link written to a `*.ko.md` file stays inside the Korean tree.
 
 --pages fails when the discovered page list differs from FILE ("repo<TAB>path<TAB>destination" per line);
 --write-pages writes that list.
@@ -19,6 +24,10 @@ USERS = {"docs/pqc-migration-primer.md": "users/first-migration.md", "docs/faq.m
          "docs/reporting-guide.md": "users/reporting-guide.md"}
 DIRNAME = {"cmd": "commands", "ansible": "playbook", "contracts": "contracts"}
 HOME = "index.md"   # --home overview.md keeps the site root free for a hand-written landing page
+LANG = "en"
+SITE_PREFIX = "/pqcota"
+EN_MAP = {}         # --lang ko: (repo, path) -> destination of the English pages, for links to untranslated pages
+KO_MAP = {}         # --lang en: (repo, path of a *.ko.md) -> destination of its Korean page, for the language links
 REPOS = ["pqcota", "pqcota-common", "pqcota-inventory", "pqcota-discovery", "pqcota-provisioning"]
 
 
@@ -40,17 +49,18 @@ def destination(repo, path):
     return base + os.path.basename(path)
 
 
-def discover(root, with_release_notes=False):
+def discover(root, with_release_notes=False, lang="en"):
     out = []
     for repo in REPOS:
         files = subprocess.check_output(["git", "-C", os.path.join(root, repo), "ls-files", "*.md"], text=True).split("\n")
         for f in files:
             if not f or (f == "RELEASE_NOTES.md" and not with_release_notes): continue
-            if f.endswith(".ko.md"): continue      # 사이트는 영문만 낸다. 한국어 번역(X.ko.md)은 GitHub에서 읽는다
+            if f.endswith(".ko.md") != (lang == "ko"): continue      # 영어 트리는 *.md만, 한국어 트리는 *.ko.md만
             text = open(os.path.join(root, repo, f), encoding="utf-8").read()
             m = re.search(r"^#\s+(.+?)\s*$", text, re.M)
             title = re.sub(r"[`*]", "", m.group(1)) if m else os.path.basename(f)
-            out.append((repo, f, destination(repo, f), title))
+            # 한국어 쪽은 영어 짝과 같은 자리에 놓인다(README.ko.md도 영어 README처럼 개요가 된다)
+            out.append((repo, f, destination(repo, f[:-len(".ko.md")] + ".md" if lang == "ko" else f), title))
     return out
 
 
@@ -63,6 +73,20 @@ GH = re.compile(r'https://github\.com/%s/(pqcota[\w-]*)/(blob|tree)/(?:main|v[\w
 def github_url(repo, path, ref, kind="blob", anchor=""):
     u = "https://github.com/%s/%s/%s/%s/%s" % (ORG, repo, kind, ref, path)
     return u + ("#" + anchor if anchor else "")
+
+
+def ko_link(key, anchor=""):
+    """영어 쪽에서 한국어 짝으로 가는 링크: 한국어 사이트의 같은 쪽(사이트 루트 기준)."""
+    d = KO_MAP[key]
+    page = d[:-len("index.md")] if d.endswith("index.md") else d[:-len(".md")] + "/"
+    return SITE_PREFIX + "/ko/" + page + ("#" + anchor if anchor else "")
+
+
+def en_link(key, anchor=""):
+    """한국어 쪽에서 영어 쪽으로 가는 링크: 영어 사이트의 같은 쪽(사이트 루트 기준)."""
+    d = EN_MAP[key]
+    page = "" if d == HOME and False else d[:-len("index.md")] if d.endswith("index.md") else d[:-len(".md")] + "/"
+    return SITE_PREFIX + "/" + page + ("#" + anchor if anchor else "")
 
 
 def rewrite(text, repo, src, ref, root, stats, detail):
@@ -91,6 +115,16 @@ def rewrite(text, repo, src, ref, root, stats, detail):
                     stats["cross-repo github -> internal"] += 1
                     detail.append((dest_src, target, rel))
                     return "%s[%s](%s%s)" % (bang, label, rel, title)
+                if key in KO_MAP:
+                    new = ko_link(key, anchor)
+                    stats["cross-repo github -> Korean page"] += 1
+                    detail.append((dest_src, target, new))
+                    return "%s[%s](%s%s)" % (bang, label, new, title)
+                if key in EN_MAP:
+                    new = en_link(key, anchor)
+                    stats["cross-repo github -> English page"] += 1
+                    detail.append((dest_src, target, new))
+                    return "%s[%s](%s%s)" % (bang, label, new, title)
                 stats["cross-repo github -> github (ref)"] += 1
                 new = github_url(trepo, tpath, ref, kind, anchor)
                 detail.append((dest_src, target, new))
@@ -119,6 +153,16 @@ def rewrite(text, repo, src, ref, root, stats, detail):
                 stats["relative -> internal"] += 1
                 detail.append((dest_src, target, rel))
                 return "%s[%s](%s%s)" % (bang, label, rel, title)
+            if key in KO_MAP:
+                new = ko_link(key, anchor)
+                stats["relative -> Korean page"] += 1
+                detail.append((dest_src, target, new))
+                return "%s[%s](%s%s)" % (bang, label, new, title)
+            if key in EN_MAP:
+                new = en_link(key, anchor)
+                stats["relative -> English page (no Korean twin)"] += 1
+                detail.append((dest_src, target, new))
+                return "%s[%s](%s%s)" % (bang, label, new, title)
             full = os.path.join(root, repo, tpath)
             kind = "tree" if os.path.isdir(full) else "blob"
             if not os.path.exists(full):
@@ -156,12 +200,18 @@ OUT = ""
 
 
 def main():
-    global OUT, PAGES, MAP, TITLE, HOME
+    global OUT, PAGES, MAP, TITLE, HOME, LANG, SITE_PREFIX, EN_MAP, KO_MAP
     root, OUT = sys.argv[1], sys.argv[2]
     ref = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else "main"
     hugo = "--hugo" in sys.argv
     if "--home" in sys.argv: HOME = sys.argv[sys.argv.index("--home") + 1]
-    PAGES = sorted(discover(root, "--with-release-notes" in sys.argv), key=lambda p: order_key(p[2]))
+    if "--lang" in sys.argv: LANG = sys.argv[sys.argv.index("--lang") + 1]
+    if "--site-prefix" in sys.argv: SITE_PREFIX = sys.argv[sys.argv.index("--site-prefix") + 1].rstrip("/")
+    PAGES = sorted(discover(root, "--with-release-notes" in sys.argv, LANG), key=lambda p: order_key(p[2]))
+    if LANG == "ko":
+        EN_MAP = {(r, p): d for r, p, d, _ in discover(root, False, "en")}
+    else:
+        KO_MAP = {(r, p): d for r, p, d, _ in discover(root, False, "ko")}
     listing = "".join("%s\t%s\t%s\n" % (r, p, d) for r, p, d, _ in PAGES)
     if "--write-pages" in sys.argv: open(sys.argv[sys.argv.index("--write-pages") + 1], "w").write(listing)
     if "--pages" in sys.argv:
@@ -198,18 +248,23 @@ def write_nav(out):
     def item(d): return "- %s: %s" % (yq(TITLE[d]), d)
     def yq(t): return '"%s"' % t.replace('"', "'")
     lines = ["nav:"]
-    lines.append("  - Overview: " + HOME)   # the site root (Home) is the hand-written landing page, not this page
-    for label, prefix in [("For users", "users/"), ("For developers", "developers/"), ("Project", "project/"),
-                          ("Demo", "demo/"), ("Examples", "examples/")]:
+    ko = LANG == "ko"
+    lines.append("  - %s: %s" % ("개요" if ko else "Overview", HOME))   # the site root (Home) is the hand-written landing page, not this page
+    for label, prefix in ([("사용자용", "users/"), ("개발자용", "developers/"), ("프로젝트", "project/"), ("데모", "demo/"), ("예제", "examples/")]
+                          if ko else [("For users", "users/"), ("For developers", "developers/"), ("Project", "project/"),
+                                      ("Demo", "demo/"), ("Examples", "examples/")]):
         ds = [d for _, _, d, _ in PAGES if d.startswith(prefix)]
         if not ds: continue
         lines.append("  - %s:" % label)
         for d in ds: lines.append("      " + item(d))
-    lines.append("  - Stages:")
-    for st in ["common", "discovery", "inventory", "provisioning"]:
-        ds = [d for _, _, d, _ in PAGES if d.startswith("stages/%s/" % st)]
-        lines.append("      - %s:" % st.capitalize())
-        for d in ds: lines.append("          " + item(d))
+    stages = [st for st in ["common", "discovery", "inventory", "provisioning"]
+              if any(d.startswith("stages/%s/" % st) for _, _, d, _ in PAGES)]
+    if stages:
+        lines.append("  - %s:" % ("단계" if ko else "Stages"))
+        for st in stages:
+            ds = [d for _, _, d, _ in PAGES if d.startswith("stages/%s/" % st)]
+            lines.append("      - %s:" % st.capitalize())
+            for d in ds: lines.append("          " + item(d))
     open(os.path.join(out, "nav.yml"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
 
