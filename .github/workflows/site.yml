@@ -23,6 +23,7 @@ permissions:
 env:
   REF: ${{ inputs.ref }}
   TOOLS: ${{ inputs.tools }}
+  DEPLOY: ${{ inputs.deploy }}
   ORG: randyinthedev-hash
 
 jobs:
@@ -32,9 +33,11 @@ jobs:
       - name: 다섯 리포를 같은 태그로 받기
         run: |
           mkdir ws && cd ws
+          # 배포(deploy=true)는 릴리스 태그만 받는다. 배포하지 않는 빌드 시험은 main이나 다른 ref도 받을 수 있다.
+          if [ "$DEPLOY" = true ] && ! [[ "$REF" =~ ^v[0-9] ]]; then echo "배포는 릴리스 태그로만 한다(ref=$REF)"; exit 1; fi
           for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do
             git clone -q "https://github.com/$ORG/$r.git" "$r"
-            git -C "$r" checkout -q --detach "refs/tags/$REF"
+            git -C "$r" checkout -q --detach "$REF"
             echo "$r $(git -C "$r" rev-parse HEAD)" | tee -a ../refs.txt
           done
       - name: 빌드 도구를 고정된 커밋에서 받기
