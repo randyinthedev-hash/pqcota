@@ -1,14 +1,20 @@
 #!/bin/bash
 # usage: build.sh <workspace-with-five-repos> <out-site-dir> <ref>
+# 환경변수: PAGES = 고정 쪽 목록 파일(기본은 이 스크립트 옆 pages.txt. 도구와 문서를 다른 커밋에서 받을 때 문서 쪽 것을 준다)
+#          TOOLS_REF = 이 도구를 받은 커밋(산출물의 build-info.txt에 적는다)
 # 고정된 쪽 목록(pages.txt)으로 모으고, 빌드하고, 기존 랜딩·구조도를 얹은 뒤, 그 최종 트리를 검사한다.
 set -euo pipefail
 WS=$(cd "$1" && pwd); OUT=$2; REF=$3; ORG=randyinthedev-hash
 S=$(cd "$(dirname "$0")" && pwd)
 W=$(mktemp -d)
-python "$S/assemble.py" "$WS" "$W" --home overview.md --pages "$S/pages.txt" --ref "$REF" > "$W/assemble.txt"
+PAGES=${PAGES:-$S/pages.txt}
+# 어느 릴리스 기준인지 사이트에 적는다. 태그(v로 시작)가 아니면 릴리스가 아닌 빌드로 적는다.
+if [[ "$REF" =~ ^v[0-9] ]]; then LABEL="pqcota $REF"; NOTE="This documentation matches release $REF. The development version is on GitHub (main)."
+else LABEL="pqcota (unreleased: $REF)"; NOTE="This documentation was built from $REF, not from a release."; fi
+python "$S/assemble.py" "$WS" "$W" --home overview.md --pages "$PAGES" --ref "$REF" > "$W/assemble.txt"
 ( cd "$W"
   cat "$S/mkdocs.full.base.yml" nav.yml > mkdocs.yml
-  sed -i "s#^site_name:.*#site_name: pqcota\nsite_url: https://$ORG.github.io/pqcota/#" mkdocs.yml
+  sed -i "s#^site_name:.*#site_name: \"$LABEL\"\nsite_url: https://$ORG.github.io/pqcota/\ncopyright: \"$NOTE\"#" mkdocs.yml
   zensical build -f mkdocs.yml )
 rm -rf "$OUT"; mv "$W/site" "$OUT"; cp "$W/assemble.txt" "$OUT/../assemble.txt" 2>/dev/null || true
 # 루트 index.html과 구조도는 손으로 쓴 쪽이 맡는다. 생성물과 겹치면 멈춘다.
@@ -31,4 +37,9 @@ grep -q "$OLD" "$OUT/index.html" || { echo "랜딩에 기대한 개발자 링크
 sed -i "s#$OLD#developers/#" "$OUT/index.html"
 python "$S/check_site.py" "$OUT" --prefix /pqcota | tee "$OUT/../check.txt"
 grep -q "^problems: 0" "$OUT/../check.txt" || { echo "링크 검사에서 문제가 나왔다"; exit 1; }
+# 다시 만들 수 있도록 입력을 적는다: 문서 입력(다섯 리포의 같은 ref와 각 커밋), 도구 커밋, 도구 버전.
+{ echo "docs ref: $REF"
+  for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do echo "$r $(git -C "$WS/$r" rev-parse HEAD)"; done
+  echo "tools commit: ${TOOLS_REF:-$(git -C "$S" rev-parse HEAD 2>/dev/null || echo unknown)}"
+  echo "zensical: $(zensical --version 2>/dev/null)"; } > "$OUT/build-info.txt"
 ( cd "$OUT" && find . -type f -print0 | sort -z | xargs -0 sha256sum ) > "$OUT/../tree.sha256"
