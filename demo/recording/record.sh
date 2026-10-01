@@ -3,7 +3,7 @@
 #
 # 전제: ./demo/scripts/up.sh 와 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh 가 한 번 돌아 있어야 한다
 # (record-take.sh가 그 결과를 그대로 읽는다).
-# 쓰는 법:  demo/recording/record.sh [out-dir]       (기본: demo/recording/out)
+# 쓰는 법:  [VIDEO_VER=v0.10.1] demo/recording/record.sh [out-dir]       (기본: demo/recording/out)
 # 만드는 것: <out>/clips/{observe,provision,gap}.{cast,mp4} 와 PROVENANCE.txt
 #
 # 시각의 규칙 — build.py가 컷 경계를 .cast의 이름 있는 표지(record-take.sh의 mark)로 찾는다.
@@ -25,6 +25,7 @@ for c in asciinema agg ffmpeg; do command -v "$c" >/dev/null || { echo "$c is re
 mkdir -p "$CLIPS"
 
 for cut in observe provision gap; do
+	[ -z "${PROVENANCE_ONLY:-}" ] || break      # PROVENANCE_ONLY=1: 녹화는 건너뛰고 기록만 다시 쓴다
 	echo "▶ recording $cut"
 	(cd "$ROOT" && TERM=xterm-256color asciinema rec "$CLIPS/$cut.cast" --cols "$COLS" --rows "$ROWS" \
 		--overwrite -q -c "./demo/scripts/record-take.sh $cut" </dev/null >/dev/null)
@@ -42,6 +43,11 @@ done
 		d=$ROOT/../$r; [ "$r" = pqcota ] && d=$ROOT
 		printf '%s %s tag=%s dirty=%s\n' "$r" "$(git -C "$d" rev-parse HEAD)" \
 			"$(git -C "$d" describe --tags --exact-match 2>/dev/null || echo none)" "$(git -C "$d" status --short | wc -l | tr -d ' ')"
+		# VIDEO_VER를 주면, 찍은 커밋이 그 릴리스 태그와 어떻게 다른지(문서가 아닌 파일만) 적는다.
+		if [ -n "${VIDEO_VER:-}" ]; then
+			printf '  vs %s: %s\n' "$VIDEO_VER" "$(git -C "$d" diff --name-only "$VIDEO_VER" HEAD 2>/dev/null |
+				grep -v -E '\.md$|^docs/|RELEASE_NOTES' | tr '\n' ' ' | sed 's/ $//' | sed 's/^$/(no non-doc file differs)/')"
+		fi
 	done
 	echo "asciinema: $(asciinema --version 2>&1 | head -1)"
 	echo "agg: $(agg --version 2>&1 | head -1)"
