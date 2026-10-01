@@ -93,7 +93,7 @@ Contracts live in `pqcota-common` and change before anything else does. Read the
 
 ## Checking and contributing
 
-- **Check your work:** the [build guide](build.md#check-your-work) explains what `make all` runs and how it differs from CI.
+- **Check your work:** the [build guide](build.md#check-your-work) explains how to run the checks, and [Checks and gates](checks-and-gates.md) says what each one guards, where it runs and what a pass does not show.
 - **[CONTRIBUTING](../CONTRIBUTING.md):** the development loop, coding guidelines, testing, and how to propose a change.
 - **Conventions across the repositories:** documents are English; code comments are Korean; whatever the code emits (output, errors, strings carried by the contract) is English. The generated code in `gen/` is committed, and is changed only by regenerating it from the contracts.
 - **[Security policy](../SECURITY.md)** and **[Code of conduct](../CODE_OF_CONDUCT.md).**

@@ -100,7 +100,7 @@ From `pqcota`, after `make tools` in `pqcota-common`:
 make all
 ```
 
-`make all` runs each sibling repository's own checks, then the checks that span all five: formatting, wording boundaries, documentation links, the collector lists, gate wiring, import direction between stages, the prose gate, vet, build and tests. The local checks regenerate the protobuf code and run contract lint; **CI additionally rejects any difference between the regenerated code and the committed files**, so commit regenerated code together with the proto change. CI also provides a Postgres service, runs the tests that need `CAP_NET_RAW` in a privileged job, and cross-builds for arm64. A passing local `make all` does not reproduce those. A change to any stage repository also triggers the cross-stage checks in CI.
+`make all` runs each sibling repository's own checks, then the checks that span all five: formatting, wording boundaries, documentation links, the collector lists, gate wiring, import direction between stages, the prose gate, vet, build and tests. The local checks regenerate the protobuf code and run contract lint; **CI additionally rejects any difference between the regenerated code and the committed files**, so commit regenerated code together with the proto change. CI also provides a Postgres service, runs the tests that need `CAP_NET_RAW` in a privileged job, and cross-builds for arm64. A passing local `make all` does not reproduce those. For what each check guards and what a pass does not show, see [Checks and gates](checks-and-gates.md). A change to any stage repository also triggers the cross-stage checks in CI.
 
 ## Change a contract
 
