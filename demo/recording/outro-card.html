@@ -41,7 +41,7 @@
     <div class="line"></div>
     <div class="cmd">./demo/scripts/up.sh &amp;&amp; DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh</div>
     <div class="meta">
-      <span><span class="en">Docker + the five repositories side by side, checked out at one release tag (this video: <b id="ver"></b>)</span><span class="ko">Docker와 다섯 리포를 나란히 두고 하나의 릴리스 태그로 체크아웃합니다 (이 영상: <b id="ver"></b>)</span></span>
+      <span><span class="en">Docker + the five repositories side by side, checked out at one release tag (this video: <b class="ver"></b>)</span><span class="ko">Docker와 다섯 리포를 나란히 두고 하나의 릴리스 태그로 체크아웃합니다 (이 영상: <b class="ver"></b>)</span></span>
     </div>
     <div class="meta">
       <span><span class="en">The ML-KEM change needs the real-provider stage (<b>DEMO_REAL_PROVIDER=1</b>) · see docs/build.md</span><span class="ko">ML-KEM 변화를 보려면 실물 provider 단계(<b>DEMO_REAL_PROVIDER=1</b>)가 필요합니다 · docs/build.md 참고</span></span>
@@ -66,6 +66,6 @@
     if (+c.dataset.n === n) c.style.display = 'grid';
   });
   // ?ver=v0.10.1 — 영상을 찍은 릴리스 태그를 카드에 적는다.
-  document.getElementById('ver').textContent = new URLSearchParams(location.search).get('ver') || '(tag)';
+  document.querySelectorAll('.ver').forEach(e => e.textContent = new URLSearchParams(location.search).get('ver') || '(tag)');
 </script>
 </html>
