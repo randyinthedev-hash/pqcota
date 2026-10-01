@@ -75,6 +75,67 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.1 — Two commands ignored the organization, and the documents were rewritten (2026-10-01)
+
+**Goal** — fix two commands that wrote to the wrong organization, and replace the documents written for
+the people who built this with documents written for the people who use it. **No contract changed.** The
+only edits to the `.proto` files and the generated code are comments; no field, number, type or enum value
+differs from v0.10.0.
+
+**One release is five tags**, as in v0.10.0: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`,
+`pqcota-provisioning` and `pqcota` all carry `v0.10.1`.
+
+### Fixed
+
+- **`pqcota-hosts` and `pqcota-profile` ignored `PQCOTA_ORG`.**
+  - *What was wrong.* When either command opened the metadata store through `--dsn` (endpoints and
+    profiles), it did not pass the organization on, so it **always wrote to the `default` organization.**
+    With `PQCOTA_REQUIRE_ORG=1`, neither command could open the store at all, whatever `PQCOTA_ORG` said.
+  - *Which version it entered in.* v0.2.0, the release that added the organization axis. Both commands
+    already opened the store without an organization there, and stayed that way.
+  - *What came out wrong.* In a deployment that sets an organization, the endpoints and profiles these two
+    commands wrote landed in `default`, while `pqcota-inventory` reads under the configured organization,
+    so that metadata did not show up in its results. A deployment that never sets `PQCOTA_ORG` saw no
+    difference.
+  - **Rows already written to `default` are not moved automatically.** The tool cannot know which
+    organization they belonged to, and moving them would risk filing them under the wrong one. To move
+    them, decide the organization yourself, set `PQCOTA_ORG`, and run the command again: the new rows
+    appear under that organization and the old rows stay where they are.
+  - *Tests.* Each command has rule tests (no database) and a Postgres test for the default organization,
+    an explicit one and the required mode. Without the fix they fail.
+- **`pqcota-jvmscan` explained a probe result wrongly.** When it found a JVM but was not given an agent,
+  the note said "no JVM was running". The note now says which of three things happened. The result itself
+  did not change; only the explanation did.
+
+### Built
+
+- **Documents for readers who do not write code.** A new front page, a build guide, a reporting guide for
+  people who receive the report, an FAQ, and a primer on PQC migration. They state what observation can and
+  cannot show, and every claim was checked against the code.
+- **Documents for contributors.** A developer home page, an environment-variable reference, a guide to
+  changing a contract, and a guide to the checks and gates.
+- **Paths moved.** The documents now live at `docs/build.md`, `docs/reporting-guide.md`, `docs/faq.md`,
+  `docs/pqc-migration-primer.md`, `docs/developers.md`, `docs/environment-variables.md`,
+  `docs/change-a-contract.md` and `docs/checks-and-gates.md`. Links to the v0.10.0 layout need updating.
+- **A build for an online documentation site** (`tools/site`): it gathers the Markdown from the five
+  repositories at one tag, with a pinned tool version, a pinned page list and a link check. **Nothing is
+  published from it yet. GitHub Pages has not been switched over;** the site you can reach at
+  `https://randyinthedev-hash.github.io/pqcota/` is still the hand-written landing page, whose display
+  now defaults to English (the Korean toggle stays).
+
+### Known limitations (unchanged)
+
+These are not new and are not fixed here. They are written down so nobody is surprised.
+
+- **`PQCOTA_AUTO_DDL=0` covers only the inventory history schema.** The metadata store and the provisioning
+  record store create their tables regardless.
+- **A zero or negative observation window is not an error.** `pqcota-netcap` accepts it, and the window
+  actually used is 3 seconds; the start-up message still prints the value you gave.
+
+### Not done
+
+- **Pages is not switched to the new site**, and no policy has been decided for the two limitations above.
+
 ## v0.10.0 — The repository is split into five (2026-09-30)
 
 **Goal** — give the contracts, the shared code and each stage a module of their own, so each has one

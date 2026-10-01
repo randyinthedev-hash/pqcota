@@ -91,7 +91,7 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
 | **Windows (CNG)** | ✅ | ❌ not yet |
 | **Network connections** | ✅ Linux | not applicable |
 
-pqcota is **pre-1.0** (current release: v0.10.0). Observation and generation work end to end on Linux and are demonstrated on test systems. Windows change generation is planned, not delivered; see the [release notes](RELEASE_NOTES.md).
+pqcota is **pre-1.0** (current release: v0.10.1). Observation and generation work end to end on Linux and are demonstrated on test systems. Windows change generation is planned, not delivered; see the [release notes](RELEASE_NOTES.md).
 
 ## Data and operations
 
