@@ -38,7 +38,7 @@ Consumers inside the workspace see your change immediately, because each module 
 5. **Update the data model document** for the messages you changed.
 6. **Update the consumers**, in the order of the dependency direction: inventory, then discovery and provisioning, then the integration repository. Each repository reads the new generated code directly through `replace`.
 7. **Run the checks** from `pqcota`: `make all` runs every sibling's own checks and then the cross-stage ones. See [Check your work](build.md#check-your-work).
-8. **Release.** Releases are currently coordinated: the same tag on all five repositories. For a contract change that means publishing `pqcota-common` first, raising each stage's `require` to that tag, and checking the combination before tagging the integration repository. This is how v0.10.0 was released and how [the build guide](build.md#get-the-source) describes tags; it is the current practice, not a rule that is enforced, and the release commands are not repeated here.
+8. **Release.** Releases are currently coordinated: the same tag on all five repositories. For a contract change that means publishing `pqcota-common` first, raising each stage's `require` to that tag, and checking the combination before tagging the integration repository. This is how v0.10.0 and v0.10.1 were released and how [the build guide](build.md#get-the-source) describes tags; it is the current practice, not a rule that is enforced, and the release commands are not repeated here.
 
 ## The ripple check
 
