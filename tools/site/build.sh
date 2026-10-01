@@ -34,10 +34,10 @@ for f in "$WS"/pqcota/docs/*.md; do
   N=$((N+1))
 done
 test "$N" -eq 10 || { echo "원문이 10편이 아니다($N). 보존 범위를 다시 정한다"; exit 1; }
-# 랜딩의 개발자 링크는 이 빌드 결과 안의 주소로만 바꾼다(리포의 docs/index.html은 그대로).
-OLD="https://github.com/$ORG/pqcota/blob/main/docs/developers.md"
-grep -q "$OLD" "$OUT/index.html" || { echo "랜딩에 기대한 개발자 링크가 없다"; exit 1; }
-sed -i "s#$OLD#developers/#" "$OUT/index.html"
+# 랜딩의 __VERSION__ 자리를 이 빌드의 릴리스로 채운다(태그가 아니면 릴리스가 아닌 빌드로 적는다).
+if [[ "$REF" =~ ^v[0-9] ]]; then VLABEL=$REF; else VLABEL="unreleased ($REF)"; fi
+grep -q '__VERSION__' "$OUT/index.html" || { echo "랜딩에 __VERSION__ 자리가 없다"; exit 1; }
+sed -i "s#__VERSION__#$VLABEL#g" "$OUT/index.html"
 python "$S/check_site.py" "$OUT" --prefix /pqcota | tee "$OUT/../check.txt"
 grep -q "^problems: 0" "$OUT/../check.txt" || { echo "링크 검사에서 문제가 나왔다"; exit 1; }
 # 다시 만들 수 있도록 입력을 적는다: 문서 입력(다섯 리포의 같은 ref와 각 커밋), 도구 커밋, 도구 버전.
