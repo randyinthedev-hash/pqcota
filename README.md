@@ -95,11 +95,13 @@ pqcota is **pre-1.0** (current release: v0.10.0). Observation and generation wor
 
 ## Data and operations
 
-**What it collects.** For each system: the cryptography libraries loaded and their versions, the Java security providers registered, and, for connections it watched, the peer address and port, the protocol, the negotiated key-exchange group and the cipher. This is information about your infrastructure and should be handled as such. It does not decrypt traffic and does not keep message contents.
+A security or operations team will have more questions than this page answers. See the [FAQ](docs/faq.md).
+
+**What it collects.** For each system: the cryptography libraries loaded and their versions, the Java security providers registered, and, for connections it watched, the peer address and port, the protocol, the negotiated key-exchange group and the cipher. This is information about your infrastructure and should be handled as such. It does not decrypt traffic and does not write raw packet captures.
 
 **Where results go.** To files and to the database you point it at. The pqcota programs contain no built-in upload or telemetry path. Downloads happen when you install it or run the demo (source code, container images), and Ansible reaches your systems over SSH.
 
-**What runs on the observed systems.** No resident agent and no service. The supplied playbook copies the observation programs to a temporary directory, runs them, collects the results and deletes that directory when the run completes. If a run fails or is interrupted, that directory can be left behind and you should check for it. Some observations have prerequisites: capturing connections needs a network-capture privilege, and reaching Java runtimes needs a JDK on some paths.
+**What runs on the observed systems.** No resident agent and no service. The supplied playbook copies the observation programs to a temporary directory, runs them, collects the results and deletes that directory when the run completes. If a run fails or is interrupted, that directory can be left behind and you should check for it. The Java observation also writes a small file under the target's `/tmp`, outside that directory, which is not deleted. Some observations have prerequisites: capturing connections needs a network-capture privilege, and reaching Java runtimes needs a JDK on some paths.
 
 **Access credentials.** The inventory has no field for logins or keys. The Ansible target list that does contain them is written for the run, readable only by its owner, and is not stored in the inventory. Treat any file you write yourself as sensitive.
 
@@ -141,4 +143,4 @@ pqcota is **pre-1.0** (current release: v0.10.0). Observation and generation wor
 
 ## License and more
 
-Apache-2.0, see [LICENSE](LICENSE); dependency licensing in [License notes](docs/licensing.md) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). [Release notes](RELEASE_NOTES.md) · [Reporting guide](docs/reporting-guide.md) · [Build guide](docs/build.md) · [Contributing](CONTRIBUTING.md) · [Compatibility policy](docs/compatibility.md) · [Platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html). pqcota is one of five repositories, listed in CONTRIBUTING. The name is *PQC* plus *orchestra*: pqcota plays one part; you are the conductor.
+Apache-2.0, see [LICENSE](LICENSE); dependency licensing in [License notes](docs/licensing.md) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). [Release notes](RELEASE_NOTES.md) · [FAQ](docs/faq.md) · [Reporting guide](docs/reporting-guide.md) · [Build guide](docs/build.md) · [Contributing](CONTRIBUTING.md) · [Compatibility policy](docs/compatibility.md) · [Platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html). pqcota is one of five repositories, listed in CONTRIBUTING. The name is *PQC* plus *orchestra*: pqcota plays one part; you are the conductor.
