@@ -29,10 +29,10 @@ pqcota is open-source software (Apache-2.0) for the people who run a post-quantu
 | Question you are asked | What pqcota gives you |
 |---|---|
 | "Which cryptography do we use, and where?" | For each observed system: the cryptography libraries loaded, the Java security providers registered, and, for network connections it watched, the algorithm the two ends agreed on |
-| "How many of our connections are post-quantum?" | A count of observed connections graded post-quantum or hybrid (🟢), classical (🔴) or undetermined (⚪) |
+| "How many of our connections are post-quantum?" | A count of observed connections graded post-quantum or hybrid (🟢), classical (🔴), or not graded (⚪) |
 | "What changed since last time?" | A comparison of two observations: what was added, removed or replaced |
 | "What did you *not* see?" | An explicit "not observed" record for anything a collector could not reach. A gap is not reported as "nothing there" |
-| "What will you change, and how do we undo it?" | For each planned change that can be delivered through configuration: the files that make it, the files that remove it, and a record of the system's state before. Changes that cannot be delivered that way are listed as manual steps |
+| "What will you change, and how do we undo it?" | For each planned change that can be delivered through configuration: the files that make it, the files that remove it, and, when you give the generator the inventory database (`--dsn`), a record of the system's state before. Changes that cannot be delivered that way are listed as manual steps |
 | "Who approved this?" | Generation requires a plan that carries an approval signature. By default the signature is checked against the approver's registered public key |
 
 The figures describe the systems pqcota was able to observe, in the environments it supports, at the moment it looked. They are evidence for your migration report, not a certification.
@@ -41,9 +41,9 @@ The figures describe the systems pqcota was able to observe, in the environments
 
 | Stage | In plain words | Produces |
 |---|---|---|
-| **① Discovery** | Small programs visit a system, observe it, and are removed afterwards. They read which cryptography libraries are loaded, which Java security providers are registered, and which algorithms were negotiated in connections they watched. | One observation per system |
+| **① Discovery** | Small programs visit a system, observe it, and are removed when the run completes (what a failed run can leave behind is under [Data and operations](#data-and-operations)). They read which cryptography libraries are loaded, which Java security providers are registered, and which algorithms were negotiated in connections they watched. | One observation per system |
 | **② Inventory** | Collects the observations in one place, ties each to its system and application, and keeps every change as a new record without editing old ones. | A central history you can query and compare |
-| **③ Provisioning** | Takes a plan that people wrote and approved and generates the files to carry it out: configuration changes, the modules to place, and the matching removal. | Standard Ansible files and a "before" record |
+| **③ Provisioning** | Takes a plan that people wrote and approved and generates the files to carry it out: configuration changes, the modules to place, and the matching removal. | Standard Ansible files and, with `--dsn`, a "before" record |
 
 The stages can be used separately. To look at one system you need one small program, no database and no central server.
 
@@ -55,8 +55,8 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
 ──────── ① discovered assets (per node) ────────
   pay-app
     • JCA provider chain: SUN,SunRsaSign,…,BC   [confirmed]
-        ↑ this BC appears in no configuration file. The application
-          registered it while running, so a scan of files would miss it.
+        ↑ this BC is not in java.security. The application registered
+          it while running, so reading that file would miss it.
     • OpenSSL libcrypto 3.5.5                    [confirmed]
   pay-db
     • OpenSSL libcrypto 1.1.1f                   [confirmed]
@@ -70,7 +70,7 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
   grade totals: 🟢 2 · 🔴 2 · ⚪ 0
 ```
 
-- **🟢** a post-quantum or hybrid algorithm was negotiated. **🔴** a classical algorithm was negotiated. **⚪** undetermined.
+- **🟢** a post-quantum or hybrid algorithm was negotiated. **🔴** a classical algorithm was negotiated. **⚪** the grade could not be determined.
 - **🔴 does not mean "vulnerable" or "non-compliant".** It means this connection used a classical algorithm while pqcota watched it. Whether and when to change it is your decision. pqcota does not score risk.
 - **"confirmed"** is the strength of evidence, assigned by how the fact was collected. Facts seen in a running system, in source, or by tracing are "confirmed". Facts taken from a supplied bill of materials (CBOM) are graded lower ("inferred, high"), because nobody looked at the running system.
 - **Confirming a change by re-observing has limits.** For OpenSSL, pqcota observes the library and its version, not which providers are loaded, so adding a provider does not show up in the inventory by itself. Java provider chains can be observed directly. A connection changes grade only when both ends support the new algorithm.
@@ -80,7 +80,7 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
 ## What pqcota does not do
 
 - **It does not decide what to migrate or when.** People write and approve the plan.
-- **It does not judge or score.** There is no risk rating and no pass or fail.
+- **It does not judge risk or compliance, and it does not score.** There is no risk rating and no pass or fail.
 - **It does not apply changes.** It generates standard Ansible files that you run with your own tools. There is no remote-execution engine.
 - **It does not scan source code.** If your build already produces a cryptographic bill of materials (CBOM, CycloneDX), pqcota can receive it into the same inventory.
 - **It is not a compliance product.** It supplies evidence and certifies nothing.
