@@ -1,0 +1,59 @@
+name: site
+
+# 온라인 문서 사이트를 만든다. 수동 실행만 한다(푸시로는 돌지 않는다).
+# 다섯 리포의 같은 릴리스 태그를 받아 tools/site/build.sh로 빌드한다. deploy를 켜야만 배포 작업이 돈다.
+# 배포는 Pages 소스가 'GitHub Actions'일 때만 의미가 있다(지금 소스를 바꾸는 것은 이 파일의 일이 아니다).
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: '다섯 리포에서 같이 받을 릴리스 태그 (예: v0.10.1)'
+        required: true
+      deploy:
+        description: 'Pages에 배포한다 (끄면 빌드와 검사만)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  REF: ${{ inputs.ref }}
+  ORG: randyinthedev-hash
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 다섯 리포를 같은 태그로 받기
+        run: |
+          mkdir ws && cd ws
+          for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do
+            git clone -q "https://github.com/$ORG/$r.git" "$r"
+            git -C "$r" checkout -q --detach "refs/tags/$REF"
+            echo "$r $(git -C "$r" rev-parse HEAD)" | tee -a ../refs.txt
+          done
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: 도구 설치 (고정 목록과 같아야 한다)
+        run: |
+          pip install -r ws/pqcota/tools/site/requirements.txt
+          pip freeze | diff - ws/pqcota/tools/site/requirements.txt
+      - name: 빌드 (쪽 목록 고정, 랜딩·구조도·원문 얹기, 최종 트리 링크 검사)
+        run: ws/pqcota/tools/site/build.sh ws site "$REF"
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+
+  deploy:
+    if: ${{ inputs.deploy }}
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
