@@ -113,7 +113,7 @@ make tools && make generate     # contracts/proto → gen/
 
 `make tools` installs the plugins into `$(go env GOPATH)/bin`. If that directory is not on your `PATH`, `make generate` reports that a plugin is not found, which looks like a failed install but only means it is not visible. Add it to your shell profile: `export PATH="$PATH:$(go env GOPATH)/bin"`.
 
-Contract changes must stay additive; see the [compatibility policy](compatibility.md). `make breaking` compares against the last release tag.
+Contract changes must stay additive; see the [compatibility policy](compatibility.md). `make breaking` compares against the last release tag. For the order of work and what else has to change with a contract, see [Change a contract](change-a-contract.md).
 
 ## Stack
 

@@ -89,7 +89,7 @@ Contracts live in `pqcota-common` and change before anything else does. Read the
 1. [Contracts overview](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md): the design decisions, the versioning rules and the checklist of what else moves when a contract changes.
 2. [Data model](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/data-model.md): every message, field and enum.
 3. [Compatibility policy](compatibility.md): what is never broken (the wire format, signatures, the Go API, the database schema) and how a module path change is handled.
-4. [Build guide, Change a contract](build.md#change-a-contract): how to regenerate and check.
+4. [Change a contract](change-a-contract.md): the order of work, what else has to move with a contract, and how the local checks differ from CI. The [build guide](build.md#change-a-contract) has the regeneration commands.
 
 ## Checking and contributing
 
