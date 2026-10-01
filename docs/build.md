@@ -124,4 +124,4 @@ Contract changes must stay additive; see the [compatibility policy](compatibilit
 
 ## Where to go next
 
-[CONTRIBUTING](../CONTRIBUTING.md) for tests, gates and how to propose a change · the [demo](../demo/README.md) for the whole flow on containers · the [examples](../examples/README.md) for one command at a time, with Go only.
+The [developer documentation](developers.md) for how the five repositories fit together and what to read next · [CONTRIBUTING](../CONTRIBUTING.md) for tests, gates and how to propose a change · the [demo](../demo/README.md) for the whole flow on containers · the [examples](../examples/README.md) for one command at a time, with Go only.
