@@ -56,7 +56,11 @@ note() { printf '\033[1m%s\033[0m\n' "$1"; }
 # 정작 봐야 하는 것은 `changed`(무엇을 바꿨나)와 `failed=0`(깨지지 않았나) 둘뿐이다.
 # 나머지 칸(unreachable·skipped·rescued·ignored)은 이 촬영에서 늘 0이라 정보가 없다.
 recap() { sed -nE 's/^([^ ]+) +: +(ok=[0-9]+) +(changed=[0-9]+).* (failed=[0-9]+).*/  \1  \2 \3 \4/p'; }
-cut_mark() { printf '\n\033[2m%s\033[0m\n\n' "────────────────────────────────────────────────────────"; sleep "$PAUSE"; }
+# 구간 표지 — 영상 조립이 컷 경계를 찾는 근거다. 화면에는 보이지 않는 OSC 시퀀스를 찍어 녹화본(.cast)에
+# 이름과 시각이 남게 한다. 표지 이름은 "그 구간이 끝나는 곳"이다(예: provision.plan = 계획 보이기가 끝난 곳).
+# 이름은 recording/build.py의 편집표가 그대로 쓰므로 바꾸면 편집표도 함께 바꾼다.
+mark() { printf '\033]777;pqcota-mark;%s\a' "$1"; }
+cut_mark() { mark "$1"; printf '\n\033[2m%s\033[0m\n\n' "────────────────────────────────────────────────────────"; sleep "$PAUSE"; }
 big() { printf '\n\033[1;33m%s\033[0m\n' "$1"; sleep "$PAUSE"; }
 
 need_ctl() {
@@ -88,7 +92,7 @@ take_observe() {
 	type_cmd "grep -ci bouncycastle $jsec"
 	docker exec "$jnode" sh -lc "grep -ci bouncycastle $jsec || true"
 	note "   BouncyCastle appears nowhere in this file."
-	cut_mark
+	cut_mark observe.static
 
 	say "what the collector found earlier by attaching to the running JVM — read back from the stored results"
 	type_cmd "pqcota-discover-view /work/results"
@@ -97,12 +101,13 @@ take_observe() {
 		sed -n '/discovered assets/,/observed edges/p' | sed '$d' | head -14
 	note "   the BC at the end of the chain: the app registered it at runtime with addProvider()."
 	note "   it is not in this java.security, so reading the file would not show it. Observing the running JVM does."
-	cut_mark
+	cut_mark observe.chain
 
 	say "the connections observed earlier — what was negotiated in the handshake, no decryption"
 	docker exec pqcota-ctl bash -lc 'pqcota-discover-view /work/results 2>/dev/null' |
 		sed -n '/observed edges/,/grade totals/p' | head -10
 	note "   the same gateway splits by peer — this is the negotiated result, not a capability."
+	mark observe.edges
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -139,14 +144,14 @@ take_provision() {
 	type_cmd "openssl list -kem-algorithms 2>/dev/null | grep -ci mlkem"
 	BEFORE=$(docker exec "$NODE" sh -lc "$KEMQ" | tr -d '[:space:]')
 	big "$BEFORE"
-	cut_mark
+	cut_mark provision.before
 
 	# ★ 이 세 컷이 "우리가 만든다"를 보인다. 없으면 영상이 앤서블 사용법으로 읽힌다 —
 	#   플레이북만 돌리는 화면은 이 도구가 무엇을 했는지 말해 주지 않는다.
 	say "a person writes one thing: the plan — which provider goes on which node"
 	type_cmd "cat plan-real.json"
 	docker exec pqcota-ctl bash -lc "python3 -m json.tool --no-ensure-ascii /work/plan-real.json | head -18"
-	cut_mark
+	cut_mark provision.plan
 
 	# 승인은 데모가 pqcota-approve로 서명해 둔 것이다. 생성기는 FINALIZED가 아니거나 서명이 없는
 	# 계획에서는 아무것도 만들지 않는다(Executable 관문). 그 사실을 계획의 필드로 보인다.
@@ -155,7 +160,7 @@ take_provision() {
 	docker exec pqcota-ctl bash -lc "python3 -m json.tool /work/plan-real.json | grep -E 'status|reviewer-1' | cut -c1-72"
 	note "   the demo signs the plan with a local approver key (pqcota-approve). A real deployment checks it"
 	note "   against the approver's registered public key."
-	cut_mark
+	cut_mark provision.approve
 
 	# 사람이 준비하는 것은 둘이다 — 계획과 **모듈 파일**. 이 컷이 없으면 .so가 어디선가
 	# 튀어나온 것처럼 보이고, "도구가 provider도 준다"는 오해가 남는다(§4.2 — 선택·조달은 사용자).
@@ -165,18 +170,18 @@ take_provision() {
 	type_cmd "sha256sum ansible/files/oqsprovider.so"
 	docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -c1-24' | sed 's/$/…/'
 	note "   this hash goes to the playbook — if what lands is not that file, it stops."
-	cut_mark
+	cut_mark provision.module
 
 	say "the tool generates the artifacts from that plan — one to apply, one to roll back"
 	type_cmd "pqcota-provision --level l2 --allow-incomplete plan-real.json > provision-real.yml"
 	docker exec pqcota-ctl bash -lc "pqcota-provision --level l2 --allow-incomplete /work/plan-real.json > /work/ansible/provision-real.yml" 2>&1 | sed 's/^/   /'
 	docker exec pqcota-ctl bash -lc 'ls -1 /work/ansible/provision-real*.yml'
-	cut_mark
+	cut_mark provision.generate
 
 	say "what came out — a config fragment nobody wrote by hand, and an integrity gate"
 	type_cmd "grep -A3 'config fragment\|sha256' provision-real.yml"
 	docker exec pqcota-ctl bash -lc "grep -E 'name:|module|sha256|state:' /work/ansible/provision-real.yml | head -10"
-	cut_mark
+	cut_mark provision.output
 
 	say "apply — your own Ansible runs the generated playbooks: L2 staging first, then L3 activation"
 	type_cmd "ansible-playbook -i targets.ini -i groups.ini -e pqcota_module_sha256_oqsprovider=\$SHA provision-real.yml"
@@ -188,14 +193,14 @@ take_provision() {
 	note "   \$SHA = the sha256 shown above"
 	type_cmd "ansible-playbook -i targets.ini -i groups.ini provision-real-l3.yml"
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-l3.yml" | recap
-	cut_mark
+	cut_mark provision.apply
 
 	# L3까지 돌린 뒤라 활성화 지점(service.env)도 함께 놓인다 — "둘"이라고 적으면 화면과 어긋난다.
 	say "what landed on the node — three things: the provider module (.so), the config fragment (.cnf), the activation point (service.env)"
 	type_cmd "ls /opt/pqcota /etc/pqcota"
 	docker exec "$NODE" sh -lc 'ls -1 /opt/pqcota /etc/pqcota'
 	note "   the existing /etc/ssl/openssl.cnf was never opened: nothing that was already there was overwritten."
-	cut_mark
+	cut_mark provision.landed
 
 	# ★ 파일만 놓아서는 아무것도 안 바뀐다. 그 조각을 **읽게 만드는 것**이 L3 활성화이고,
 	#   그 방법은 환경마다 달라 계획의 activation 훅에 사용자가 적는다. 이 컷이 없으면
@@ -205,7 +210,7 @@ take_provision() {
 	docker exec "$NODE" sh -lc 'cat /etc/pqcota/service.env 2>/dev/null || echo "(L2 only — not activated)"'
 	note "   L3 activation wrote this one line and restarted the service. The commands come from the"
 	note "   plan's activation hooks, written by you — activation points differ per environment, so the tool does not guess."
-	cut_mark
+	cut_mark provision.activation
 
 	say "after — the same question to the same node, now pointing at that configuration"
 	type_cmd "OPENSSL_CONF=/etc/pqcota/openssl-pqc.cnf openssl list -providers | grep -A2 -i oqs"
@@ -216,7 +221,7 @@ take_provision() {
 	big "$AFTER"
 	note "   ${BEFORE} → ${AFTER}: ML-KEM-related entries in OpenSSL's list when started with that configuration."
 	note "   this does not show that any connection negotiated post-quantum cryptography."
-	cut_mark
+	cut_mark provision.after
 
 	say "rollback — undo the activation first, then remove what was staged"
 	type_cmd "ansible-playbook -i targets.ini -i groups.ini provision-real-l3-rollback.yml"
@@ -225,11 +230,13 @@ take_provision() {
 	docker exec pqcota-ctl bash -lc "$ANS-playbook $INV provision-real-rollback.yml" | recap
 	note "   the activation line is removed and the service restarted, then the staged files are removed."
 	note "   nothing original was overwritten, so there is nothing to restore."
+	mark provision.deactivated
 	sleep 1
 	type_cmd "openssl list -kem-algorithms 2>/dev/null | grep -ci mlkem   # default configuration again"
 	BACK=$(docker exec "$NODE" sh -lc "$ACT $KEMQ" | tr -d '[:space:]')
 	big "$BACK"
 	note "   ${BEFORE} → ${AFTER} → ${BACK}: the same plan produced both the apply and the rollback."
+	mark provision.rollback
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -254,7 +261,7 @@ take_gap() {
 	printf '\n'
 	type_cmd "head -5 stderr.txt"
 	docker exec -u nobody pqcota-ctl bash -lc 'head -5 /tmp/stderr.txt'
-	cut_mark
+	cut_mark gap.attempt
 
 	say "the exit status above is 0 — the collection ends normally — and this is what the result carries"
 	type_cmd "python3 -m json.tool --no-ensure-ascii result.json | grep -A6 completeness"
@@ -264,6 +271,7 @@ take_gap() {
 	note "   layersMissing = [NETWORK].  Not \"zero edges\" but \"this layer was not observed\"."
 	note "   why it reports success rather than failure — an error exit would keep this record from reaching"
 	note "   the centre, and the inventory would read it as 'this node has no links'. That is a different fact."
+	mark gap.result
 }
 
 case "${1:-provision}" in

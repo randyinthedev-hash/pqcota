@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pqcota 시연영상: 도입 슬라이드 (템플릿)</title>
+<title>pqcota demo video: intro slides (English)</title>
 <!--
   시연영상의 도입 두 컷. **문구를 고쳐 쓰는 템플릿**이다 — 아래 <section>의 텍스트만 바꾸면 된다.
   구조: .slide 하나가 한 컷이고, 그 안의 .step 하나가 → 한 번에 켜지는 한 줄이다.
@@ -62,36 +62,36 @@
 
   <!-- ── 컷 1 (0:00–0:12) — 훅 ─────────────────────────────────────────── -->
   <section class="slide on" data-steps="3">
-    <h1 class="step dim">양자컴퓨터가 오기 전에</h1>
-    <h1 class="step dim">먼저 답해야 하는 질문이 있습니다.</h1>
+    <h1 class="step dim">Before quantum computers arrive,</h1>
+    <h1 class="step dim">there is a question to answer first.</h1>
     <div class="step"><div class="rule"></div></div>
-    <h1 class="big step">우리 서버는 지금 <span class="accent">무슨 암호 알고리즘</span>을 쓰고 있나?</h1>
+    <h1 class="big step">What <span class="accent">cryptography</span> are our servers actually using right now?</h1>
   </section>
 
   <!-- ── 컷 2 (0:12–0:34) — 문제: 설정은 허용 목록일 뿐 ──────────────────── -->
   <section class="slide" data-steps="4">
-    <h1 class="step dim" style="font-size:3.8vh">설정 파일을 열어 봐도 답이 나오지 않습니다.</h1>
+    <h1 class="step dim" style="font-size:3.8vh">Opening the config files does not answer it.</h1>
 
     <pre class="step">
 <span class="cmt"># openssl.cnf</span>
-<span class="key">Groups</span> = X25519MLKEM768:x25519   <span class="cmt">← 적어 두면 그렇게 쓰이나?</span>
+<span class="key">Groups</span> = X25519MLKEM768:x25519   <span class="cmt">← listed here — but is it what gets used?</span>
 <span class="mark">✗</span></pre>
 
     <pre class="step">
 <span class="cmt"># java.security</span>
 <span class="key">security.provider.1</span>=SUN
-<span class="key">security.provider.2</span>=SunRsaSign        <span class="cmt">← 실행 중 등록된 provider는 여기 없다</span>
+<span class="key">security.provider.2</span>=SunRsaSign        <span class="cmt">← a provider registered at runtime is not listed here</span>
 <span class="mark">✗</span></pre>
 
     <div class="step verdict">
       <span class="x">✗</span>
-      <span>설정은 <span class="accent">허용 목록</span>일 뿐이다. 실제로 무엇이 협상됐는지는 말해 주지 않는다.</span>
+      <span>A config is only a <span class="accent">permitted set</span> — not what was actually negotiated.</span>
     </div>
   </section>
 
 </div>
 
-<div class="hint">→ / 클릭 : 다음  ·  ← : 이전  ·  F : 전체화면  ·  R : 처음부터</div>
+<div class="hint">→ / click: next  ·  ←: back  ·  F: fullscreen  ·  R: restart</div>
 
 <script>
   const slides = [...document.querySelectorAll('.slide')];
