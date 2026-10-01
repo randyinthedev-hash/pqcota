@@ -16,3 +16,5 @@ demo/recording/outro-card.html
 demo/recording/section-cards.html
 demo/recording/title-card.html
 demo/recording/topology-frame.html
+demo/recording/lang/ko.json
+demo/recording/lang/take.ko.sh

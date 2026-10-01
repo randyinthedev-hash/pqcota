@@ -3,8 +3,8 @@
 #
 # 전제: ./demo/scripts/up.sh 와 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh 가 한 번 돌아 있어야 한다
 # (record-take.sh가 그 결과를 그대로 읽는다).
-# 쓰는 법:  [VIDEO_VER=v0.10.1] demo/recording/record.sh [out-dir]       (기본: demo/recording/out)
-# 만드는 것: <out>/clips/{observe,provision,gap}.{cast,mp4} 와 PROVENANCE.txt
+# 쓰는 법:  [VIDEO_LANG=en|ko] [VIDEO_VER=v0.10.1] demo/recording/record.sh [out-dir]       (기본: demo/recording/out)
+# 만드는 것: <out>/clips/<lang>/{observe,provision,gap}.{cast,mp4} 와 PROVENANCE.txt
 #
 # 시각의 규칙 — build.py가 컷 경계를 .cast의 이름 있는 표지(record-take.sh의 mark)로 찾는다.
 # 조립본의 시각이 .cast의 시각과 같으려면 agg가 대기 시간을 줄이면 안 된다. 그래서 --idle-time-limit을
@@ -14,12 +14,14 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 OUT=${1:-$HERE/out}
-CLIPS=$OUT/clips
+VIDEO_LANG=${VIDEO_LANG:-en}        # 설명 문구의 언어(lang/take.<lang>.sh). 명령과 도구 출력은 언어와 무관하다
+CLIPS=$OUT/clips/$VIDEO_LANG
+export VIDEO_LANG
 COLS=${COLS:-132} ROWS=${ROWS:-32}
 FONT_SIZE=${FONT_SIZE:-24} LINE_HEIGHT=${LINE_HEIGHT:-1.2}
 IDLE_LIMIT=${IDLE_LIMIT:-60}
 THEME=0e1420,e6ebf2,161f2e,e0736b,7fc08a,e2c08d,7aa2f7,c0a3e0,7fd1c5,c3cbd8   # 구조도 팔레트
-FONTS="DejaVu Sans Mono,Noto Color Emoji"                                      # 고정폭을 앞에: 셀 폭 계산
+FONTS="DejaVu Sans Mono,Noto Sans CJK KR,Noto Color Emoji"                     # 고정폭을 앞에 둔다: CJK를 앞에 두면 셀 폭을 잘못 센다
 
 for c in asciinema agg ffmpeg; do command -v "$c" >/dev/null || { echo "$c is required" >&2; exit 1; }; done
 mkdir -p "$CLIPS"
@@ -54,5 +56,6 @@ done
 	echo "ffmpeg: $(ffmpeg -version | head -1)"
 	echo "options: cols=$COLS rows=$ROWS font=\"$FONTS\" size=$FONT_SIZE line-height=$LINE_HEIGHT idle-limit=$IDLE_LIMIT fps-cap=30"
 	echo "demo: DEMO_REAL_PROVIDER=1 (real provider stage)"
+	echo "language: $VIDEO_LANG"
 } > "$CLIPS/PROVENANCE.txt"
 cat "$CLIPS/PROVENANCE.txt"

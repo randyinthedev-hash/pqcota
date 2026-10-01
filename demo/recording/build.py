@@ -8,8 +8,8 @@
 시각의 규칙: 조립본의 시각은 .cast의 시각과 같다. agg가 대기 시간을 줄이지 않았다는 전제이고(record.sh의
 IDLE_LIMIT), 아래 검사가 이를 확인한다. 녹화 영상은 마지막 화면을 몇 초 더 잡으므로 길이는 .cast보다 약간 길다.
 
-usage: build.py [--lang en] [--out demo/recording/out] [--version v0.10.1]
-필요: ffmpeg(ass 필터 포함 — libass), out/clips/*.{cast,mp4}, out/cards/<lang>/*
+usage: build.py [--lang en|ko] [--out demo/recording/out] [--version v0.10.1]
+필요: ffmpeg(ass 필터 포함 — libass), out/clips/<lang>/*.{cast,mp4}, out/cards/<lang>/*
 만드는 것: out/pqcota-demo.<lang>.mp4(자막 포함) · .nocaps.mp4(자막 없는 업로드용) · .srt · .ass · .provenance.txt
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys, tempfile
@@ -20,7 +20,7 @@ ap.add_argument("--lang", default=os.environ.get("VIDEO_LANG", "en"))
 ap.add_argument("--out", default=os.path.join(HERE, "out"))
 args = ap.parse_args()
 LANG, OUT = args.lang, args.out
-CLIPS, CARDS = f"{OUT}/clips", f"{OUT}/cards/{LANG}"
+CLIPS, CARDS = f"{OUT}/clips/{LANG}", f"{OUT}/cards/{LANG}"
 LANGFILE = f"{HERE}/lang/{LANG}.json"
 L = json.load(open(LANGFILE, encoding="utf-8"))
 

@@ -28,11 +28,14 @@
   .meta{display:flex;gap:2.4vh;align-items:baseline;color:var(--muted);
         font-family:var(--mono);font-size:2.3vh}
   .meta .date{color:var(--ink)}
+  /* 언어 — ?lang=ko 이면 .ko만, 아니면 .en만 보인다(영어가 기준) */
+  :root[data-lang="ko"] .en{display:none}
+  :root:not([data-lang="ko"]) .ko{display:none}
 </style>
 <div class="stage">
-  <h1><span class="n">pqcota</span> demo</h1>
+  <h1><span class="en"><span class="n">pqcota</span> demo</h1></span><span class="ko"><span class="n">pqcota</span> <span class="en">demo</span><span class="ko">데모</span></h1></span>
   <div class="line"></div>
-  <div class="sub">PQC migration of legacy crypto runtimes: <b>observe → inventory → generate</b></div>
+  <div class="sub"><span class="en">PQC migration of legacy crypto runtimes: <b>observe → inventory → generate</b></span><span class="ko">레거시 암호 런타임의 PQC 이관: <b>관측 → 인벤토리 → 전환물 생성</b></span></div>
   <div class="meta">
     <span class="date" id="when"></span>
     <span>·</span>
@@ -42,6 +45,9 @@
   </div>
 </div>
 <script>
+  // ?lang=ko — 보이는 언어를 고른다(자동 캡처용). 기본은 영어.
+  { const l = new URLSearchParams(location.search).get('lang');
+    if (l) { document.documentElement.dataset.lang = l; document.documentElement.lang = l; } }
   // ?date=Oct 2026&ver=v0.10.1 — 화면의 버전·관측은 시간이 지나면 달라지므로 언제의 것인지를 카드에 적는다.
   const q = new URLSearchParams(location.search);
   document.getElementById('when').textContent = [q.get('date'), q.get('ver')].filter(Boolean).join(' · ');

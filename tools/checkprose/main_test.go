@@ -239,8 +239,10 @@ func TestListedScreenFilesExist(t *testing.T) {
 		if _, err := os.Stat(filepath.Join("..", "..", rel)); err != nil {
 			t.Errorf("목록에 있는데 없는 파일이다: %s (%v)", rel, err)
 		}
-		if !strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, ".html") {
-			t.Errorf("Go·HTML 만 적을 수 있다: %s", rel)
+		switch filepath.Ext(rel) {
+		case ".go", ".html", ".json", ".sh":
+		default:
+			t.Errorf("Go·HTML·JSON·셸(.sh) 만 적을 수 있다: %s", rel)
 		}
 	}
 }
@@ -481,5 +483,19 @@ func TestRerunHintNamesArgumentsOnly(t *testing.T) {
 		if strings.Contains(rerun(dir, "-list"), "checkprose -") || strings.Contains(rerun(dir, "-list"), "go run") {
 			t.Errorf("rerun(%q) names a command: %q", dir, rerun(dir, "-list"))
 		}
+	}
+}
+
+func TestShellCommentsAreNotCountedButMessageValuesAre(t *testing.T) {
+	src := "# 주석에 말합니다 가 있어도 안 센다\nM_a='사람이 말합니다'\n"
+	masked := string(maskShell([]byte(src)))
+	if strings.Contains(masked, "주석") {
+		t.Fatalf("comment line was not masked: %q", masked)
+	}
+	if !strings.Contains(masked, "사람이 말합니다") {
+		t.Fatalf("message value was masked: %q", masked)
+	}
+	if len(masked) != len(src) {
+		t.Fatalf("masking changed the length: %d vs %d", len(masked), len(src))
 	}
 }

@@ -31,6 +31,9 @@
   .card{display:none;gap:3.4vh;justify-items:start}
   .card[data-n="2"]{justify-items:center;text-align:center}
   h1.thanks{font-size:7.2vh;line-height:1.35;font-weight:700}
+  /* 언어 — ?lang=ko 이면 .ko만, 아니면 .en만 보인다(영어가 기준) */
+  :root[data-lang="ko"] .en{display:none}
+  :root:not([data-lang="ko"]) .ko{display:none}
 </style>
 <div class="stage">
   <section class="card" data-n="1">
@@ -38,22 +41,25 @@
     <div class="line"></div>
     <div class="cmd">./demo/scripts/up.sh &amp;&amp; DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh</div>
     <div class="meta">
-      <span>Docker + the five repositories side by side, checked out at one release tag (this video: <b id="ver"></b>)</span>
+      <span><span class="en">Docker + the five repositories side by side, checked out at one release tag (this video: <b id="ver"></b>)</span><span class="ko">Docker와 다섯 리포를 나란히 두고 하나의 릴리스 태그로 체크아웃합니다 (이 영상: <b id="ver"></b>)</span></span>
     </div>
     <div class="meta">
-      <span>The ML-KEM change needs the real-provider stage (<b>DEMO_REAL_PROVIDER=1</b>) · see docs/build.md</span>
+      <span><span class="en">The ML-KEM change needs the real-provider stage (<b>DEMO_REAL_PROVIDER=1</b>) · see docs/build.md</span><span class="ko">ML-KEM 변화를 보려면 실물 provider 단계(<b>DEMO_REAL_PROVIDER=1</b>)가 필요합니다 · docs/build.md 참고</span></span>
       <span><b>Apache-2.0</b></span>
     </div>
     <div class="meta"><span class="url">github.com/randyinthedev-hash/pqcota</span></div>
   </section>
 
   <section class="card" data-n="2">
-    <h1 class="thanks">Thank you for<br>watching the demo</h1>
+    <h1 class="thanks"><span class="en">Thank you for<br>watching the demo</span><span class="ko">데모 영상을 시청해 주셔서<br>감사합니다</span></h1>
     <div class="line"></div>
     <div class="meta"><span class="url">github.com/randyinthedev-hash/pqcota</span></div>
   </section>
 </div>
 <script>
+  // ?lang=ko — 보이는 언어를 고른다(자동 캡처용). 기본은 영어.
+  { const l = new URLSearchParams(location.search).get('lang');
+    if (l) { document.documentElement.dataset.lang = l; document.documentElement.lang = l; } }
   // ?s=2 로 마지막 인사 화면을 연다(자동 캡처용). 기본은 명령 카드.
   const n = parseInt(new URLSearchParams(location.search).get('s') || '1', 10);
   document.querySelectorAll('.card').forEach(c => {

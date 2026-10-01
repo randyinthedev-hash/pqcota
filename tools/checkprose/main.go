@@ -299,8 +299,22 @@ func scan(root string, extra []string, rules []rule) ([]hit, error) {
 				return nil, err
 			}
 			add(rel, b, maskHTML(b))
+		case strings.HasSuffix(rel, ".json"):
+			// 언어 파일(자막 표 등). 키는 영어라 한국어가 든 줄만 재게 되고, 값은 전부 화면에 나온다.
+			b, err := os.ReadFile(filepath.Join(root, rel))
+			if err != nil {
+				return nil, err
+			}
+			add(rel, b, b)
+		case strings.HasSuffix(rel, ".sh"):
+			// 문구 파일(M_이름='문구'). 주석 줄은 코드 주석과 같은 자리라 보지 않는다.
+			b, err := os.ReadFile(filepath.Join(root, rel))
+			if err != nil {
+				return nil, err
+			}
+			add(rel, b, maskShell(b))
 		default:
-			return nil, fmt.Errorf("%s: only .go and .html can be listed in %s", rel, filesName)
+			return nil, fmt.Errorf("%s: only .go, .html, .json and .sh can be listed in %s", rel, filesName)
 		}
 	}
 
@@ -436,6 +450,17 @@ func maskHTML(b []byte) []byte {
 	// 프로젝트 관례를 따르고, 화면에 보이지 않는다.
 	s := htmlBlock.ReplaceAllStringFunc(string(b), fillKeepNewlines)
 	return []byte(htmlComment.ReplaceAllStringFunc(s, fillKeepNewlines))
+}
+
+// maskShell — `#`로 시작하는 줄(주석)을 공백으로 덮는다. 문구 파일의 한국어는 변수 값 안에 있다.
+func maskShell(b []byte) []byte {
+	lines := strings.Split(string(b), "\n")
+	for i, l := range lines {
+		if strings.HasPrefix(strings.TrimSpace(l), "#") {
+			lines[i] = blank(l)
+		}
+	}
+	return []byte(strings.Join(lines, "\n"))
 }
 
 func fillKeepNewlines(s string) string {

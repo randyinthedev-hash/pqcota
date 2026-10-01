@@ -27,39 +27,49 @@
   .sub b{color:var(--ink);font-weight:600}
   .line{height:1px;background:var(--line);width:22%}
   .what{font-family:var(--mono);font-size:2.4vh;color:var(--ok)}
+  /* 언어 — ?lang=ko 이면 .ko만, 아니면 .en만 보인다(영어가 기준) */
+  :root[data-lang="ko"] .en{display:none}
+  :root:not([data-lang="ko"]) .ko{display:none}
 </style>
 <div class="stage">
 
   <section class="card" data-n="1">
     <div class="num">STEP 01</div>
-    <h1>Observe — see what is running</h1>
+    <h1><span class="en">Observe: see what is running</span><span class="ko">관측: 실행 중인 것을 본다</span></h1>
     <div class="line"></div>
-    <div class="sub">A provider missing from the config file is <b>in the running JVM's chain.</b><br>
-      Same node, same moment — we ask two ways.</div>
+    <div class="sub"><span class="en">A provider missing from the config file is <b>in the running JVM's chain.</b><br>
+      Same node, two sources: the config file, and what the collector found by attaching to the JVM.</span><span class="ko">설정 파일에는 없는 provider가 <b>실행 중인 JVM 체인에는 있다.</b><br>
+      같은 노드를 두 근거로 본다: 설정 파일, 그리고 JVM에 attach해 수집한 결과.</span></div>
     <div class="what">java.security  vs  attach → getProviders()</div>
   </section>
 
   <section class="card" data-n="2">
     <div class="num">STEP 02</div>
-    <h1>Generate — from a plan to deliverables</h1>
+    <h1><span class="en">Generate: from a plan to deliverables</span><span class="ko">전환물 생성: 계획에서 배포물로</span></h1>
     <div class="line"></div>
-    <div class="sub">A person prepares two things — <b>the plan JSON</b> and <b>the provider module file</b>.<br>
+    <div class="sub"><span class="en">A person prepares two things: <b>the plan JSON</b> and <b>the provider module file</b>.<br>
       The tool writes the config fragments and the apply and rollback playbooks,<br>
-      then we check that <b>the real algorithms follow</b>.</div>
+      then we count what OpenSSL lists, to see <b>whether the change took effect</b>.</span><span class="ko">사람이 준비하는 것은 둘이다: <b>계획 JSON</b>과 <b>provider 모듈 파일</b>.<br>
+      도구가 설정 조각과 적용용·되돌림용 플레이북을 만들고,<br>
+      OpenSSL이 나열하는 항목을 세어 <b>실제로 반영됐는지</b> 본다.</span></div>
     <div class="what">plan.json + oqsprovider.so  →  pqcota-provision  →  provision.yml  →  ML-KEM 0 → 14 → 0</div>
   </section>
 
   <section class="card" data-n="3">
     <div class="num">STEP 03</div>
-    <h1>Honesty — what was not observed</h1>
+    <h1><span class="en">Honesty: what was not observed</span><span class="ko">정직성: 관측하지 못한 것</span></h1>
     <div class="line"></div>
-    <div class="sub">A layer <b>not observed</b> for lack of permission is <b>never recorded as "none".</b><br>
-      Mixed in, it would be misread as "this node has none".</div>
-    <div class="what">layersMissing = [NETWORK]   ·   collection ends normally, not as a failure</div>
+    <div class="sub"><span class="en">A layer <b>not observed</b> for lack of permission is <b>never recorded as "none".</b><br>
+      Mixed in, it would be misread as "this node has none".</span><span class="ko">권한이 없어 <b>관측하지 못한</b> 계층을 <b>「없음」으로 적지 않는다.</b><br>
+      섞어 적으면 「이 노드에는 없다」로 잘못 읽히기 때문이다.</span></div>
+    <div class="what"><span class="en">layersMissing = [NETWORK]   ·   collection ends normally, not as a failure</span><span class="ko">layersMissing = [NETWORK]   ·   수집은 실패가 아니라 정상 종료</span></div>
   </section>
 
 </div>
 <script>
+  // ?lang=ko — 보이는 언어를 고른다(자동 캡처용). 기본은 영어.
+  { const l = new URLSearchParams(location.search).get('lang');
+    if (l) { document.documentElement.dataset.lang = l; document.documentElement.lang = l; } }
   const n = parseInt(new URLSearchParams(location.search).get('s') || '1', 10);
   const cards = [...document.querySelectorAll('.card')];
   cards.forEach(c => c.classList.toggle('on', +c.dataset.n === n));

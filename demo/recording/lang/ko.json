@@ -1,0 +1,203 @@
+{
+  "stills": {
+    "title": 4.0,
+    "card1": 3.5,
+    "topo": 8.0,
+    "card2": 4.5,
+    "card3": 3.5
+  },
+  "holds": {
+    "hold-0": 2.5,
+    "hold-chain": 5.0,
+    "hold-edges": 6.0,
+    "hold-14": 6.0,
+    "hold-final": 7.0,
+    "hold-gap": 6.0
+  },
+  "max_cps": 9,
+  "font": "Noto Sans CJK KR",
+  "captions": [
+    [
+      "obs-static",
+      2.0,
+      "obs-static",
+      9.3,
+      "정적으로 보기: java.security에 등록된 provider 목록"
+    ],
+    [
+      "obs-static",
+      9.5,
+      "hold-0",
+      2.4,
+      "이 파일에서 BouncyCastle은 0건"
+    ],
+    [
+      "obs-chain",
+      2.0,
+      "hold-chain",
+      4.9,
+      "앞서 JVM에서 수집한 결과: 체인 끝의 BC는 앱이 실행 중에 등록한 것"
+    ],
+    [
+      "hold-edges",
+      0.3,
+      "hold-edges",
+      5.8,
+      "앞서 관측한 연결, 핸드셰이크 협상 결과로 등급을 매긴 것"
+    ],
+    [
+      "pv-before",
+      2.2,
+      "pv-before",
+      5.0,
+      "조치 전: ML-KEM 관련 항목은 몇 개?"
+    ],
+    [
+      "pv-before",
+      5.2,
+      "pv-before",
+      7.3,
+      "조치 전에는 0개"
+    ],
+    [
+      "@provision.before",
+      2.2,
+      "@provision.plan",
+      1.9,
+      "사람이 쓰는 계획: 노드마다 provider"
+    ],
+    [
+      "@provision.plan",
+      2.0,
+      "@provision.approve",
+      -0.3,
+      "계획은 확정되었고 승인 서명이 붙어 있다"
+    ],
+    [
+      "@provision.approve",
+      2.0,
+      "@provision.module",
+      -0.2,
+      "provider 모듈은 직접 빌드하거나 공급자에게서 받는다"
+    ],
+    [
+      "@provision.module",
+      2.0,
+      "@provision.generate",
+      1.9,
+      "계획에서 적용용과 되돌림용 플레이북을 만든다"
+    ],
+    [
+      "@provision.generate",
+      2.2,
+      "@provision.output",
+      -0.1,
+      "설정 조각과 모듈 해시 확인"
+    ],
+    [
+      "@provision.output",
+      2.0,
+      "@provision.apply",
+      -4.8,
+      "사용자의 Ansible이 만들어진 플레이북을 적용한다. 모듈 해시를 넘긴다"
+    ],
+    [
+      "@provision.apply",
+      -4.4,
+      "@provision.apply",
+      -0.2,
+      "이어서 L3 활성화 플레이북"
+    ],
+    [
+      "@provision.apply",
+      2.0,
+      "@provision.landed",
+      1.8,
+      "놓인 것: 모듈, 설정 조각, 활성화 지점"
+    ],
+    [
+      "@provision.landed",
+      1.9,
+      "@provision.activation",
+      -0.05,
+      "파일만으로는 바뀌지 않는다"
+    ],
+    [
+      "@provision.activation",
+      2.2,
+      "@provision.activation",
+      6.0,
+      "같은 노드에 같은 질문, 이번에는 새 설정으로"
+    ],
+    [
+      "@provision.activation",
+      6.4,
+      "@provision.activation",
+      12.4,
+      "OpenSSL이 oqs provider를 나열한다. ML-KEM 관련 항목을 다시 센다"
+    ],
+    [
+      "@provision.after",
+      -1.9,
+      "hold-14",
+      5.9,
+      "0 → 14개. 연결이 양자내성암호로 협상됐다는 증거는 아니다"
+    ],
+    [
+      "@provision.after",
+      2.2,
+      "@provision.after",
+      8.0,
+      "되돌림: L3 플레이북이 활성화를 해제하고 서비스를 재시작한다"
+    ],
+    [
+      "@provision.after",
+      8.5,
+      "@provision.deactivated",
+      -0.2,
+      "이어서 놓았던 파일을 지운다. 원래 있던 것은 덮어쓴 적이 없다"
+    ],
+    [
+      "@provision.deactivated",
+      0.3,
+      "@provision.rollback",
+      -2.2,
+      "기본 설정으로 같은 질문을 다시 한다"
+    ],
+    [
+      "@provision.rollback",
+      -2.0,
+      "hold-final",
+      6.9,
+      "다시 0개. 같은 계획에서 적용용과 되돌림용이 함께 나왔다"
+    ],
+    [
+      "gap",
+      1.9,
+      "gap",
+      5.3,
+      "CAP_NET_RAW 없이는 관측할 수 없다"
+    ],
+    [
+      "gap",
+      5.5,
+      "gap",
+      9.0,
+      "종료 코드 0. stderr는 관측하지 못했다고 알린다"
+    ],
+    [
+      "gap",
+      9.4,
+      "hold-gap",
+      2.6,
+      "결과에는 NETWORK 계층을 관측하지 못했다고 남는다"
+    ],
+    [
+      "hold-gap",
+      2.8,
+      "hold-gap",
+      5.9,
+      "관측하지 못한 것은 없는 것이 아니다"
+    ]
+  ]
+}

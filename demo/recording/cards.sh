@@ -2,7 +2,7 @@
 # 카드(정지 화면)를 캡처하고 도입·마무리 클립을 만든다 — 헤드리스 Chrome과 ffmpeg가 있는 곳에서 돌린다.
 #
 # 쓰는 법:  VIDEO_VER=v0.10.1 [VIDEO_DATE="Oct 2026"] demo/recording/cards.sh [out-dir]
-# 환경변수: VIDEO_LANG(기본 en — 지금은 en만 있다) · CHROME(기본: macOS Chrome 또는 google-chrome)
+# 환경변수: VIDEO_LANG(en 또는 ko, 기본 en) · CHROME(기본: macOS Chrome 또는 google-chrome)
 #           TOPOLOGY_SVG(기본: demo/.generated/topology.svg) · SITE_URL(마무리에 넣을 사이트 화면, 없으면 건너뛴다)
 # 만드는 것: <out>/cards/<lang>/{title,s0..s8,c1..c3,topo,end1,end2}.png, intro.mp4, outro.mp4
 set -euo pipefail
@@ -11,7 +11,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 OUT=${1:-$HERE/out}
 VIDEO_LANG=${VIDEO_LANG:-en}
-[ "$VIDEO_LANG" = en ] || { echo "only VIDEO_LANG=en exists so far" >&2; exit 2; }
+[ -f "$HERE/lang/$VIDEO_LANG.json" ] || { echo "no language file lang/$VIDEO_LANG.json" >&2; exit 2; }
 VER=${VIDEO_VER:?set VIDEO_VER to the release tag the video was recorded from (e.g. v0.10.1)}
 DATE=${VIDEO_DATE:-$(date '+%b %Y')}
 SVG=${TOPOLOGY_SVG:-$ROOT/demo/.generated/topology.svg}
@@ -31,16 +31,16 @@ cap() { # cap <png> <url> [WxH]
 	"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size="${3:-1920,1080}" \
 		--screenshot="$1" --virtual-time-budget=4000 "$2" >/dev/null 2>&1
 }
-R="file://$HERE"
+R="file://$HERE"; Q="lang=$VIDEO_LANG"
 
-cap "$D/title.png" "$R/title-card.html?ver=$(urlenc "$VER")&date=$(urlenc "$DATE")"
-for s in 0 1 2 3 4 5 6 7 8; do cap "$D/s$s.png" "$R/intro-slides.html?s=$s"; done
-for s in 1 2 3; do cap "$D/c$s.png" "$R/section-cards.html?s=$s"; done
-cap "$D/end1.png" "$R/outro-card.html?s=1&ver=$(urlenc "$VER")"
-cap "$D/end2.png" "$R/outro-card.html?s=2"
+cap "$D/title.png" "$R/title-card.html?$Q&ver=$(urlenc "$VER")&date=$(urlenc "$DATE")"
+for s in 0 1 2 3 4 5 6 7 8; do cap "$D/s$s.png" "$R/intro-slides.html?$Q&s=$s"; done
+for s in 1 2 3; do cap "$D/c$s.png" "$R/section-cards.html?$Q&s=$s"; done
+cap "$D/end1.png" "$R/outro-card.html?$Q&s=1&ver=$(urlenc "$VER")"
+cap "$D/end2.png" "$R/outro-card.html?$Q&s=2"
 # 토폴로지 프레임은 SVG를 같은 폴더에서 읽는다(file:// 에서 상대 경로)
 cp "$HERE/topology-frame.html" "$OUT/cards/.work/"
-cap "$D/topo.png" "file://$OUT/cards/.work/topology-frame.html?f=topology.svg"
+cap "$D/topo.png" "file://$OUT/cards/.work/topology-frame.html?$Q&f=topology.svg"
 
 # 도입: 상태 9장을 xfade로 잇는다(각 상태를 몇 초 보일지는 아래 표 — 1.6·2.4·2.4·1.2·3.4·2.2·3.2·3.6·3.4초, 0.4초 페이드).
 ffmpeg -nostdin -v error -y \
