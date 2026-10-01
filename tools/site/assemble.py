@@ -46,6 +46,7 @@ def discover(root, with_release_notes=False):
         files = subprocess.check_output(["git", "-C", os.path.join(root, repo), "ls-files", "*.md"], text=True).split("\n")
         for f in files:
             if not f or (f == "RELEASE_NOTES.md" and not with_release_notes): continue
+            if f.endswith(".ko.md"): continue      # 사이트는 영문만 낸다. 한국어 번역(X.ko.md)은 GitHub에서 읽는다
             text = open(os.path.join(root, repo, f), encoding="utf-8").read()
             m = re.search(r"^#\s+(.+?)\s*$", text, re.M)
             title = re.sub(r"[`*]", "", m.group(1)) if m else os.path.basename(f)
