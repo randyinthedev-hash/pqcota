@@ -47,8 +47,15 @@
       "pv-before",
       2.2,
       "pv-before",
-      7.2,
-      "Before: this node's OpenSSL lists 0 ML-KEM-related entries."
+      5.0,
+      "Before: ML-KEM-related entries on this node?"
+    ],
+    [
+      "pv-before",
+      5.2,
+      "pv-before",
+      7.3,
+      "0 ML-KEM-related entries before."
     ],
     [
       "@provision.before",
