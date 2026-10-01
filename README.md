@@ -9,7 +9,7 @@ pqcota is open-source software (Apache-2.0) for the people who run a post-quantu
 
 > **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
 
-**[Watch the demo](https://www.youtube.com/watch?v=2KMcxjZ_7kQ)** (2 min 55 s) · **[Read the online documentation](https://randyinthedev-hash.github.io/pqcota/)** (each page shows the release it matches; the pages are also in this repository's [`docs/`](docs/)) · **[Run it yourself](#try-it)**
+**[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Read the online documentation](https://randyinthedev-hash.github.io/pqcota/)** (each page shows the release it matches; the pages are also in this repository's [`docs/`](docs/)) · **[Run it yourself](#try-it)**
 
 ---
 
@@ -115,7 +115,7 @@ A security or operations team will have more questions than this page answers. S
 
 ## Try it
 
-- **Watch (2 min 55 s):** the [demo video](https://www.youtube.com/watch?v=2KMcxjZ_7kQ) goes from observation to applying and removing a generated change on test systems.
+- **Watch (3 min 38 s):** the [demo video](https://www.youtube.com/watch?v=4E26AJ6WCWw) ([Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) goes from observation to applying and removing a generated change on test systems. It is silent, with captions, and recorded from release v0.10.1.
 - **Run it:** with Docker, [demo/](demo/README.md) runs the whole flow on containers. An optional stage (`DEMO_REAL_PROVIDER=1`) builds a real post-quantum provider, applies the generated files to a test node running OpenSSL 3.0.13 and undoes them. In a run on 2026-09-30 the number of ML-KEM entries in that node's `openssl list -kem-algorithms` went from 0 to 14 after applying and back to 0 after the undo. **That shows the algorithms became available on that node. It does not show that any connection used them:** the demo's own output notes that re-observing left the inventory unchanged, because pqcota does not yet observe OpenSSL's provider layer and a connection needs both ends to support the algorithm.
 - **Your own systems:** ask your engineers to start from the [build guide](docs/build.md). Observation needs no resident software on the systems being observed, but some paths need a privilege or a JDK; see [Data and operations](#data-and-operations).
 
