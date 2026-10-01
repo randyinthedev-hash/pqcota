@@ -14,7 +14,7 @@ You need **Go 1.26.4+** (below the `go` directive in `go.mod` the toolchain refu
 Once the repo builds, the [examples](examples/README.md) just run (only the JVM and OpenSSL integration
 examples need **Docker** as well).
 
-pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` until they are tagged, and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [build guide](docs/build.md).
+pqcota is **five repositories** (see [Repositories](#repositories) below). Clone them side by side: `go.mod` reads the four modules from `../` through `replace` directives (the `require` lines point at the release tag), and the gates of this repository measure all five together. This document covers **contributing to the repos**. If you only use it, building and running are covered by the [build guide](docs/build.md).
 
 ### Which OS can you build on
 
@@ -48,7 +48,7 @@ make breaking                  # against the last release tag — does it break 
 make breaking AGAINST=main     # compare the branch you are working on against main
 ```
 
-While there is no release tag there is no baseline, so the first one skips and says so in the log.
+The baseline is the latest release tag (currently `v0.10.0` in `pqcota-common`). With no release tag there would be no baseline, and the check would skip and say so in the log.
 
 Also read [the ripple checklist for contract changes](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md) (signature coverage, change detection). The change-detection function `history.ContentHash` lives in `pqcota-inventory`, so a contract change that adds a content field is a change in two repositories.
 
