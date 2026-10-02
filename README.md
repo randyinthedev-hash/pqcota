@@ -5,8 +5,9 @@ English · [한국어](README.ko.md)
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-### 🏠 [Homepage](https://randyinthedev-hash.github.io/pqcota/)
-### 📖 [Online documentation](https://randyinthedev-hash.github.io/pqcota/overview/)
+**🏠 [Homepage](https://randyinthedev-hash.github.io/pqcota/)**
+
+**📖 [Online documentation](https://randyinthedev-hash.github.io/pqcota/overview/)**
 
 Each documentation page shows the release it matches; the same pages are in this repository's [`docs/`](docs/).
 

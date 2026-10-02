@@ -5,8 +5,9 @@
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-### 🏠 [홈페이지](https://randyinthedev-hash.github.io/pqcota/)
-### 📖 [온라인 문서](https://randyinthedev-hash.github.io/pqcota/overview/)
+**🏠 [홈페이지](https://randyinthedev-hash.github.io/pqcota/)**
+
+**📖 [온라인 문서](https://randyinthedev-hash.github.io/pqcota/overview/)**
 
 각 문서 쪽에 해당 릴리스가 표시됩니다. 같은 문서가 이 리포의 [`docs/`](docs/)에도 있습니다.
 
