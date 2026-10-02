@@ -15,7 +15,7 @@ Copies the selected Markdown files into <out-dir>/docs (or <out-dir>/content wit
 that a link between two copied pages becomes a relative link inside the new tree, and a link to anything else
 becomes a GitHub URL at --ref. Writes <out-dir>/link-report.json. Nothing here touches the repositories.
 """
-import json, os, re, subprocess, sys, shutil, collections
+import re, json, os, re, subprocess, sys, shutil, collections
 
 ORG = "randyinthedev-hash"
 STAGE = {"pqcota-common": "common", "pqcota-inventory": "inventory", "pqcota-discovery": "discovery",
@@ -226,6 +226,8 @@ def main():
     for n, (repo, src, dest, title) in enumerate(PAGES):
         text = open(os.path.join(root, repo, src), encoding="utf-8").read()
         text = rewrite(text, repo, src, ref, root, stats, detail)
+        if src in ("README.md", "README.ko.md"):   # 사이트 안에서는 홈페이지·온라인 문서 링크 줄이 필요 없다
+            text = re.sub(r"(?m)^(\*\*(?:🏠|📖) .*|Each documentation page shows .*|각 문서 쪽에 해당 .*)\n\n?", "", text)
         d = dest
         if hugo:
             d = dest[:-len("index.md")] + "_index.md" if dest.endswith("index.md") else dest
