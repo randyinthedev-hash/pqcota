@@ -1,5 +1,13 @@
 English · [한국어](README.ko.md)
 
+<div align="center" markdown>
+
+![PqCOTA](docs/images/logo.svg)
+
+*Observe what is there. Preserve what changes. Prepare the next step.*
+
+</div>
+
 # pqcota
 
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
@@ -16,10 +24,6 @@ Each documentation page shows the release it matches; the same pages are in this
 pqcota is open-source software (Apache-2.0) for the people who run a post-quantum cryptography (PQC) migration inside an organization, and for the people who receive their reports. You do not need to be a developer or a cryptographer to follow what it does and what it hands you.
 
 > **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
-
-![PqCOTA: a faint network of connected points; one part is drawn clearly with earlier outlines of it behind, and at one point a small path goes out and comes back](docs/images/at-a-glance.svg)
-
-*Observe what is there. Preserve what changes. Prepare the next step.*
 
 **[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Run it yourself](#try-it)**
 

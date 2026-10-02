@@ -1,5 +1,13 @@
 [English](README.md) · 한국어
 
+<div align="center" markdown>
+
+![PqCOTA](docs/images/logo.svg)
+
+*시스템을 관측하고, 변화를 기록하며, 다음 전환을 준비합니다.*
+
+</div>
+
 # pqcota
 
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
@@ -16,10 +24,6 @@
 pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람과 그 보고를 받는 사람을 위한 오픈소스 소프트웨어입니다(Apache-2.0). 개발자나 암호 전문가가 아니어도 이 도구가 무엇을 하고 어떤 결과를 제공하는지 이해할 수 있습니다. 이 문서는 [영문 README](README.md)의 한국어판입니다. 입문서, FAQ, 보고 안내, 데모, 개발자 문서, 기여·보안·행동 강령 안내와 각 단계 리포의 상세 문서는 한국어판이 있습니다. 릴리스 노트와 제3자 고지는 영문입니다.
 
 > **한마디로:** pqcota는 접근할 수 있는 시스템의 암호 자산과 연결 결과를 관측하고, 그것이 어떻게 바뀌는지 이력으로 남깁니다. *사용자가* 무엇을 바꿀지 정하고 나면 그 변경을 수행하고 다시 되돌리는, 검토할 수 있는 파일을 생성합니다.
-
-![PqCOTA: 서로 이어진 희미한 점과 선 가운데 한 부분만 선명하고, 그 뒤에 같은 부분의 지난 윤곽이 겹쳐 있으며, 한 점에서 작은 길이 나갔다가 돌아온다](docs/images/at-a-glance.svg)
-
-*시스템을 관측하고, 변화를 기록하며, 다음 전환을 준비합니다.*
 
 **[시연영상 보기](https://www.youtube.com/watch?v=R0QD7Fv0KgE)**(3분 37초, [영문판](https://www.youtube.com/watch?v=4E26AJ6WCWw)) · **[직접 해 보기](#직접-해-보기)**
 
