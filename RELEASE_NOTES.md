@@ -79,7 +79,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 **Goal** — take the known vulnerabilities of the Go standard library and of gRPC out of the published programs. **No program code and no contract changed.** The commands, the `.proto` files and the generated code are the same as in v0.10.3; the one Go file edited is the documentation check `tools/checkdocs`, which is not shipped. What changed is the toolchain the programs are built with and the version of one library; the documents state the new release number.
 
-**If you run a published program, replace it.** The programs of v0.10.0 to v0.10.3 were built with Go 1.26.4 and gRPC 1.82.1, and they are not rebuilt; neither are those of earlier releases. Download the v0.10.4 files, check them against `SHA256SUMS`, and put them where the old ones were. `collector.jar` is Java and is not affected.
+**If you run a published program, replace it.** The programs of v0.10.0 to v0.10.3 were built with Go 1.26.4 and gRPC 1.82.1, and they are not rebuilt; neither are those of earlier releases. Download the v0.10.4 files, check them against `SHA256SUMS`, and put them where the old ones were. `collector.jar` is Java code and is not a target of this Go and gRPC fix.
 
 **One release is five tags**, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning` and `pqcota` all carry `v0.10.4`.
 
