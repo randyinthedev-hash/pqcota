@@ -15,7 +15,7 @@ Copies the selected Markdown files into <out-dir>/docs (or <out-dir>/content wit
 that a link between two copied pages becomes a relative link inside the new tree, and a link to anything else
 becomes a GitHub URL at --ref. Writes <out-dir>/link-report.json. Nothing here touches the repositories.
 """
-import re, json, os, re, subprocess, sys, shutil, collections
+import json, os, re, subprocess, sys, shutil, collections
 
 ORG = "randyinthedev-hash"
 STAGE = {"pqcota-common": "common", "pqcota-inventory": "inventory", "pqcota-discovery": "discovery",
