@@ -5,13 +5,18 @@ English · [한국어](README.ko.md)
 [![ci](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml/badge.svg)](https://github.com/randyinthedev-hash/pqcota/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
+### 🏠 [Homepage](https://randyinthedev-hash.github.io/pqcota/)
+### 📖 [Online documentation](https://randyinthedev-hash.github.io/pqcota/overview/)
+
+Each documentation page shows the release it matches; the same pages are in this repository's [`docs/`](docs/).
+
 **See which cryptography your systems use, and prepare the move to post-quantum cryptography with changes you can review, apply and remove.**
 
 pqcota is open-source software (Apache-2.0) for the people who run a post-quantum cryptography (PQC) migration inside an organization, and for the people who receive their reports. You do not need to be a developer or a cryptographer to follow what it does and what it hands you.
 
 > **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
 
-**[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Read the online documentation](https://randyinthedev-hash.github.io/pqcota/overview/)** (each page shows the release it matches; the pages are also in this repository's [`docs/`](docs/)) · **[Homepage](https://randyinthedev-hash.github.io/pqcota/)** · **[Run it yourself](#try-it)**
+**[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Run it yourself](#try-it)**
 
 ---
 
