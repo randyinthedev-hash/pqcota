@@ -45,7 +45,7 @@ make breaking                  # against the last release tag — does it break 
 make breaking AGAINST=main     # compare the branch you are working on against main
 ```
 
-기준선은 가장 최근 릴리스 태그입니다(`pqcota-common`에서 현재 `v0.10.2`). 릴리스 태그가 없으면 기준선도 없으므로, 점검은 건너뛰고 그 사실을 로그에 남깁니다.
+기준선은 가장 최근 릴리스 태그입니다(`pqcota-common`에서 현재 `v0.10.3`). 릴리스 태그가 없으면 기준선도 없으므로, 점검은 건너뛰고 그 사실을 로그에 남깁니다.
 
 [계약 변경의 파급 점검 목록](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.ko.md)(서명 범위, 변경 감지)도 읽으세요. 변경 감지 함수 `history.ContentHash`는 `pqcota-inventory`에 있으므로, 내용 필드를 추가하는 계약 변경은 두 리포지터리를 바꾸는 변경입니다.
 

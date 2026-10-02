@@ -124,7 +124,7 @@ Observation shows what is in use at the moment it looks, so repeating it over ti
 It does not scan source code. If your build pipeline produces a cryptographic bill of materials (CycloneDX), pqcota can receive it and put it in the same inventory, marked with the lower evidence strength described above. pqcota has no container-image scanning feature.
 
 **How mature is it?**
-Pre-1.0 (current release v0.10.2). Contract changes are kept additive; see the [compatibility policy](compatibility.md). Security fixes land on `main` and the latest release only; see [SECURITY](../SECURITY.md).
+Pre-1.0 (current release v0.10.3). Contract changes are kept additive; see the [compatibility policy](compatibility.md). Security fixes land on `main` and the latest release only; see [SECURITY](../SECURITY.md).
 
 **What does it cost, and under what license?**
 It is open source under Apache-2.0; see [LICENSE](../LICENSE) and the [license notes](licensing.md).

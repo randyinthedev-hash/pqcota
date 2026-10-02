@@ -3,10 +3,10 @@ module github.com/randyinthedev-hash/pqcota
 go 1.26.4
 
 require (
-	github.com/randyinthedev-hash/pqcota-common v0.10.2
-	github.com/randyinthedev-hash/pqcota-discovery v0.10.2
-	github.com/randyinthedev-hash/pqcota-inventory v0.10.2
-	github.com/randyinthedev-hash/pqcota-provisioning v0.10.2
+	github.com/randyinthedev-hash/pqcota-common v0.10.3
+	github.com/randyinthedev-hash/pqcota-discovery v0.10.3
+	github.com/randyinthedev-hash/pqcota-inventory v0.10.3
+	github.com/randyinthedev-hash/pqcota-provisioning v0.10.3
 )
 
 require gopkg.in/yaml.v3 v3.0.1

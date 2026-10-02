@@ -61,9 +61,9 @@ cd pqcota
 | `pqcota-discovery` | 수집기, 그 명령, 참조 Ansible 플레이북 |
 | `pqcota-provisioning` | 계획 승인, 산출물 생성, 실행 기록 |
 
-릴리스는 다섯 리포지터리 모두에 붙는 같은 태그입니다(예: `v0.10.2`). 그냥 클론하면 각 리포지터리의 `main`을 받는데, 이는 개발 중인 상태입니다. 릴리스를 빌드하려면 **다섯 리포지터리 모두**에서 그 태그를 체크아웃합니다. 예를 들어 `pqcota` 디렉터리(위의 `cd pqcota`)에서 `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.2; done`을 실행합니다. 체크아웃하면 각 리포지터리는 그 태그의 detached HEAD 상태가 됩니다. `go.mod`의 `require` 줄은 형제 리포지터리를 고정하지 않습니다. 로컬 `replace` 지시자가 바로 옆의 작업 트리를 읽기 때문입니다.
+릴리스는 다섯 리포지터리 모두에 붙는 같은 태그입니다(예: `v0.10.3`). 그냥 클론하면 각 리포지터리의 `main`을 받는데, 이는 개발 중인 상태입니다. 릴리스를 빌드하려면 **다섯 리포지터리 모두**에서 그 태그를 체크아웃합니다. 예를 들어 `pqcota` 디렉터리(위의 `cd pqcota`)에서 `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.3; done`을 실행합니다. 체크아웃하면 각 리포지터리는 그 태그의 detached HEAD 상태가 됩니다. `go.mod`의 `require` 줄은 형제 리포지터리를 고정하지 않습니다. 로컬 `replace` 지시자가 바로 옆의 작업 트리를 읽기 때문입니다.
 
-**태그가 이 작업 공간 밖의 사용자에게 주는 것.** 태그의 패키지를 라이브러리로 임포트하는 것은 됩니다. Go는 의존 대상의 `replace` 줄을 무시하고 `require` 줄을 태그로 해석합니다. 태그에서 바로 명령을 실행하는 것은 되지 않습니다. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.2`와 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.2`는 `go.mod`에 `replace` 지시자가 있는 동안 Go가 거부합니다. 명령을 실행하려면 위의 다섯 리포지터리 체크아웃에서 빌드하거나 릴리스 묶음을 받으세요. 2026-10-02 현재 v0.10.0과 v0.10.1도 마찬가지입니다.
+**태그가 이 작업 공간 밖의 사용자에게 주는 것.** 태그의 패키지를 라이브러리로 임포트하는 것은 됩니다. Go는 의존 대상의 `replace` 줄을 무시하고 `require` 줄을 태그로 해석합니다. 태그에서 바로 명령을 실행하는 것은 되지 않습니다. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.3`와 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.3`는 `go.mod`에 `replace` 지시자가 있는 동안 Go가 거부합니다. 명령을 실행하려면 위의 다섯 리포지터리 체크아웃에서 빌드하거나 릴리스 묶음을 받으세요. 2026-10-02 현재 v0.10.0, v0.10.1, v0.10.2도 마찬가지입니다.
 
 `go run …/tools/checkprose@v0.9.1`은 그 태그가 분리보다 앞서므로 지금도 동작합니다. 이 태그를 고정하면 v0.9.1의 검사기를 계속 쓰는 것이며, 더 새로운 검사기를 받는 방법이 아닙니다. 검사기는 그 뒤로 바뀌었습니다.
 

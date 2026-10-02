@@ -75,6 +75,35 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.3 — The Korean documents are complete, and four statements are corrected (2026-10-02)
+
+**Goal** — give the Korean reader the whole documentation, and correct four statements that said more than the code does. **No code and no contract changed.** The commands, the `.proto` files and the generated code are the same as in v0.10.2; the stage repositories differ only in their documents and in the release number those documents state.
+
+**One release is five tags**, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning` and `pqcota` all carry `v0.10.3`.
+
+### Built
+
+- **Korean documents for everything but the release notes and the third-party notices.** Added to the five of v0.10.2: the developer home page, the build guide, the environment-variable reference, the guide to changing a contract, the checks and gates, the compatibility policy and the licensing guide; the README, command reference and examples of each stage repository (and the contract overview and data model of `pqcota-common`); `CONTRIBUTING`, the code of conduct and the security policy; and the guides under `demo/`. That is 38 translated documents, served as 40 pages of the Korean site (`/pqcota/ko/`) with a language switch on all 38 pairs. The third-party notices stay in English because they are legal notices.
+- **The Korean site and the English site now show the same set of pages.** The English addresses that already existed are unchanged.
+- **The landing page** has the source link at the top and the five repositories as cards; with Korean selected, its links go to the Korean pages.
+
+### Fixed
+
+These are statements in the documents, not behavior. Nothing the programs do changed.
+
+- **The clean-up of the discovery playbook was described as total.** The documents said the playbook leaves nothing on the node. It removes only its staging directory (`/tmp/pqcota-collector`), and only when the run completes without failure; after a failure the directory stays. On the Java attach path the observed JVM also writes `/tmp/pqcota-providers-<pid>.txt` in its own `/tmp`, which nothing removes. *Which version it entered in:* not traced to a release. *What came out wrong:* a reader could believe a node was clean when it was not.
+- **The security policy named the wrong thing as signed.** It said the history records carry the ed25519 signature. The signatures are on a collection result (the collector signs it, and `pqcota-ingest` checks it when a verification key is configured) and on a plan approval (`pqcota-approve` signs it, and `pqcota-provision` checks it). History records are not signed. *Which version it entered in:* not traced to a release. *What came out wrong:* a reader could believe stored history carries a signature it does not carry.
+- **The licensing guide named a CI license scanner that does not exist.** It said such a scanner blocks a cross dependency. No license scan runs in CI; the separation is kept by review.
+- **The provisioning examples gave the wrong rollback order.** They said rollback is the exact reverse of apply. The code and its test run `pre`, deactivate, remove, `restart`. The demo guide also said six steps and an L2 playbook; the demo has seven steps (`0/6` to `6/6`) and generates L2 and L3 playbooks, and the recording guide had the wrong path of the provenance file (`out/clips/<lang>/PROVENANCE.txt`).
+
+### Known limitations (unchanged)
+
+- Search in Korean is by prefix, so a word with a particle attached matches fewer pages. The check that a Korean page marks its links to English pages works per block, not per link.
+- `go install` and `go run` with `@v0.10.3` still fail because of the `replace` lines in `go.mod`; importing a package as a library works. See the [build guide](docs/build.md).
+- The limitations of v0.10.1 about `PQCOTA_AUTO_DDL=0` and a non-positive observation window are unchanged.
+
+---
+
 ## v0.10.2 — The documentation site goes live, in English and Korean (2026-10-02)
 
 **Goal** — publish the documents of v0.10.1 as an online site, and give the people who read Korean the
