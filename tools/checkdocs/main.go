@@ -515,7 +515,10 @@ func skeleton(path string) ([]section, error) {
 // checkGoVersion — 문서가 적은 Go 버전이 `go.mod`와 같은가.
 //
 // 툴체인을 올리면 지금은 문서 아홉 곳(루트 README·CONTRIBUTING·여정·데모와 각 영문 짝)을 손으로
-// 맞춰야 한다. SSOT는 `go.mod`의 `go` 지시자다.
+// 맞춰야 한다. SSOT는 `go.mod`의 `go` 지시자다. `toolchain` 지시자가 있으면 그 값도 맞다.
+// 둘은 뜻이 다르다. `go`는 이 모듈을 가져다 쓰는 쪽에 요구하는 최소 판이고, `toolchain`은 이 리포를
+// 빌드할 때 쓰는 판이다(CI·릴리스의 setup-go가 이것을 먼저 읽는다). 문서는 둘 중 어느 것을 적어도
+// 되지만, 둘 다 아닌 값을 적으면 막는다.
 //
 // **릴리스 노트는 보지 않는다.** 지난 릴리스가 어떤 툴체인으로 나갔는지는 그때의 사실이라 지금
 // 값과 달라도 맞다. 과거를 지금에 맞추라고 막으면 역사를 고치게 된다.
@@ -532,6 +535,11 @@ func checkGoVersion() []string {
 		return nil
 	}
 	want := m[1]
+	ok := map[string]bool{want: true}
+	if t := goToolchain.FindStringSubmatch(string(b)); t != nil {
+		ok[t[1]] = true
+		want += " (toolchain " + t[1] + ")"
+	}
 
 	var miss []string
 	for _, d := range tracked("*.md") {
@@ -544,7 +552,7 @@ func checkGoVersion() []string {
 		}
 		for n, line := range ls {
 			for _, g := range goVersion.FindAllStringSubmatch(line, -1) {
-				if g[1] != want {
+				if !ok[g[1]] {
 					miss = append(miss, fmt.Sprintf("%s:%d: says Go %s, but `go.mod` says %s", d, n+1, g[1], want))
 				}
 			}
@@ -555,5 +563,6 @@ func checkGoVersion() []string {
 
 var (
 	goDirective = regexp.MustCompile(`(?m)^go (\d+\.\d+\.\d+)\s*$`)
+	goToolchain = regexp.MustCompile(`(?m)^toolchain go(\d+\.\d+\.\d+)\s*$`)
 	goVersion   = regexp.MustCompile(`(?i)\bgo ?(\d+\.\d+\.\d+)`)
 )
