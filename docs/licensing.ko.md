@@ -36,13 +36,13 @@ GPL 계열 도구(CBOMkit 등)는 **링크하지도 실행하지도 않습니다
 | `github.com/jackc/pgpassfile` | v1.0.0 | MIT | pgx 간접 의존 |
 | `github.com/jackc/pgservicefile` | v0.0.0-20240606120523-5a60cdf6a761 | MIT | pgx 간접 의존 |
 | `github.com/jackc/puddle/v2` | v2.2.2 | MIT | pgx 연결 풀 |
-| `google.golang.org/grpc` | v1.82.1 | **Apache-2.0** | 수신 계약 전송 |
+| `google.golang.org/grpc` | v1.83.2 | **Apache-2.0** | 수신 계약 전송 |
 | `google.golang.org/protobuf` | v1.36.11 | **BSD-3-Clause** | 계약 직렬화(protojson 포함) |
-| `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260414002931-afd174a4e478 | Apache-2.0 | grpc 간접 의존 |
-| `golang.org/x/sys` | v0.46.0 | **BSD-3-Clause** | AF_PACKET(네트워크 수집기) |
-| `golang.org/x/net` | v0.56.0 | BSD-3-Clause | grpc 간접 의존 |
-| `golang.org/x/sync` | v0.21.0 | BSD-3-Clause | 간접 의존 |
-| `golang.org/x/text` | v0.39.0 | BSD-3-Clause | 간접 의존 |
+| `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260526163538-3dc84a4a5aaa | Apache-2.0 | grpc 간접 의존 |
+| `golang.org/x/sys` | v0.47.0 | **BSD-3-Clause** | AF_PACKET(네트워크 수집기) |
+| `golang.org/x/net` | v0.58.0 | BSD-3-Clause | grpc 간접 의존 |
+| `golang.org/x/sync` | v0.22.0 | BSD-3-Clause | 간접 의존 |
+| `golang.org/x/text` | v0.41.0 | BSD-3-Clause | 간접 의존 |
 
 `gopkg.in/yaml.v3`(MIT)는 위 목록에 없습니다. 데모 토폴로지 생성기와 테스트에서만 쓰이므로 수집기나 CLI에는 링크되지 않습니다.
 
