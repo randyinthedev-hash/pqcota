@@ -92,8 +92,8 @@
 <div class="buttons">
   <a class="btn primary en" href="https://www.youtube.com/watch?v=4E26AJ6WCWw">▶ Watch the demo</a>
   <a class="btn primary ko" href="https://www.youtube.com/watch?v=R0QD7Fv0KgE">▶ 시연영상 보기</a>
-  <a class="btn" href="demo/"><span class="en">Try the demo</span><span class="ko">데모 실행하기</span></a>
-  <a class="btn" href="overview/"><span class="en">Read the documentation</span><span class="ko">문서 읽기</span></a>
+  <a class="btn" href="demo/" data-ko="ko/demo/"><span class="en">Try the demo</span><span class="ko">데모 실행하기</span></a>
+  <a class="btn" href="overview/" data-ko="ko/overview/"><span class="en">Read the documentation</span><span class="ko">문서 읽기</span></a>
 </div>
 <p class="cap">
   <span class="en">An open-source (Apache-2.0) tool for the legacy cryptography runtimes OpenSSL and Java JCA. The documentation is in English.</span>
@@ -142,19 +142,19 @@ generated   apply playbook · rollback playbook · configuration fragment</pre>
 
 <h2><span class="en">Where to start</span><span class="ko">시작 안내</span></h2>
 <div class="cards">
-  <a class="card" href="users/first-migration/">
+  <a class="card" href="users/first-migration/" data-ko="ko/users/first-migration/">
     <b><span class="en">New to PQC</span><span class="ko">PQC가 처음이라면</span></b>
     <span class="en">A first PQC migration, step by step.</span>
     <span class="ko">PQC 이관을 처음부터 차근차근 따라갑니다.</span>
     <span class="go"><span class="en">Read the primer →</span><span class="ko">입문서 읽기 →</span></span>
   </a>
-  <a class="card" href="demo/">
+  <a class="card" href="demo/" data-ko="ko/demo/">
     <b><span class="en">Running the migration</span><span class="ko">이관을 운영한다면</span></b>
     <span class="en">Run the demo, then build it yourself; the FAQ answers the operations questions.</span>
     <span class="ko">데모를 돌려 보고 직접 빌드합니다. 운영 관련 질문은 FAQ에서 확인하세요.</span>
     <span class="go"><span class="en">Run the demo →</span><span class="ko">데모 실행하기 →</span></span>
   </a>
-  <a class="card" href="users/reporting-guide/">
+  <a class="card" href="users/reporting-guide/" data-ko="ko/users/reporting-guide/">
     <b><span class="en">Reading or writing a report</span><span class="ko">보고서를 받거나 쓴다면</span></b>
     <span class="en">What the results mean, and what they do not prove.</span>
     <span class="ko">결과가 무엇을 뜻하고 무엇을 증명하지 않는지 설명합니다.</span>
@@ -164,7 +164,7 @@ generated   apply playbook · rollback playbook · configuration fragment</pre>
     <b><span class="en">Developers</span><span class="ko">개발자라면</span></b>
     <span class="en">How the five repositories fit, how to build, change a contract and run the checks.</span>
     <span class="ko">다섯 리포의 관계, 빌드, 계약 변경, 검사를 안내합니다.</span>
-    <span class="go"><span class="en">Developer documentation →</span><span class="ko">개발자 문서 →</span></span>
+    <span class="go"><span class="en">Developer documentation →</span><span class="ko">개발자 문서(영문) →</span></span>
   </a>
 </div>
 
@@ -176,8 +176,8 @@ generated   apply playbook · rollback playbook · configuration fragment</pre>
       <span class="ko"><b>하지 않는 일</b>: 무엇을 이관할지 정하기, 점수를 매기거나 판정하기, 대신 적용하기, 소스 코드 스캔, 규정 준수 인증.</span></li>
   <li><span class="en"><b>Not observed is not the same as not there.</b> A layer that could not be collected is recorded as a gap, with the strength of the evidence beside it.</span>
       <span class="ko"><b>관측하지 못한 것은 「없음」이 아닙니다.</b> 수집하지 못한 계층은 증거의 강도와 함께 갭으로 남깁니다.</span></li>
-  <li><span class="en">pre-1.0 software, shown on test systems. The <a href="users/faq/">FAQ</a> covers data, privileges and operations.</span>
-      <span class="ko">1.0 이전 소프트웨어이며 시험 시스템에서 시연했습니다. 데이터 취급, 필요한 권한, 운영 방법은 <a href="users/faq/">FAQ</a>를 참고하세요.</span></li>
+  <li><span class="en">pre-1.0 software, shown on test systems. The <a href="users/faq/" data-ko="ko/users/faq/">FAQ</a> covers data, privileges and operations.</span>
+      <span class="ko">1.0 이전 소프트웨어이며 시험 시스템에서 시연했습니다. 데이터 취급, 필요한 권한, 운영 방법은 <a href="users/faq/" data-ko="ko/users/faq/">FAQ</a>를 참고하세요.</span></li>
 </ul>
 
 <h2><span class="en">Repositories</span><span class="ko">리포지토리</span></h2>
@@ -229,11 +229,19 @@ generated   apply playbook · rollback playbook · configuration fragment</pre>
 </main>
 <script>
   const root = document.documentElement;
+  // 한국어판이 있는 쪽은 한국어를 고르면 /ko/ 쪽으로 연결한다(없는 쪽은 영문 그대로)
+  function setLinks(lang) {
+    document.querySelectorAll('a[data-ko]').forEach(a => {
+      if (!a.dataset.en) a.dataset.en = a.getAttribute('href');
+      a.setAttribute('href', lang === 'ko' ? a.dataset.ko : a.dataset.en);
+    });
+  }
   document.querySelectorAll('.switch button').forEach(b => {
     b.addEventListener('click', () => {
       const lang = b.dataset.set;
       root.dataset.lang = lang;
       root.lang = lang;
+      setLinks(lang);
       document.querySelectorAll('.switch button')
         .forEach(x => x.setAttribute('aria-pressed', String(x.dataset.set === lang)));
     });

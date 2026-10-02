@@ -75,6 +75,51 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.2 — The documentation site goes live, in English and Korean (2026-10-02)
+
+**Goal** — publish the documents of v0.10.1 as an online site, and give the people who read Korean the
+five documents they most need in Korean. **No code and no contract changed.** The commands, the `.proto`
+files and the generated code are the same as in v0.10.1; the stage repositories differ only in the
+release number their documents state.
+
+**One release is five tags**, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`,
+`pqcota-provisioning` and `pqcota` all carry `v0.10.2`.
+
+### Built
+
+- **An online documentation site**, <https://randyinthedev-hash.github.io/pqcota/>, built from the
+  Markdown of the five repositories at one release tag, with the tools pinned to a commit. Each page shows
+  the release it was built from. The addresses that already existed (`/pqcota/`, the structure diagram and
+  the raw `.md` files) are unchanged. The site is built and published by hand from the `site` workflow;
+  a push does not publish anything.
+- **Korean documents**: the root README (`README.ko.md`), the primer on PQC migration, the FAQ, the
+  reporting guide and the demo guide. They are served under `/pqcota/ko/`, with a language switch on the
+  pages that have a counterpart. English stays the original; a Korean page that points to a document not yet
+  translated points to the English page and says so.
+- **A new landing page** with a Korean toggle, the five repositories as cards, and a link to the source at
+  the top.
+- **A demo video in English and in Korean**, and the pipeline that makes both from one script
+  (`demo/recording`). The generated files are not kept in the repository.
+- **A prose gate that also reads `.json` and `.sh`**, so the video captions and recording scripts follow
+  the same rules as the documents.
+
+### Known limitations
+
+- **Search in Korean is by prefix.** A word with a particle attached (a postposition) matches fewer pages
+  than the bare word.
+- **The check that a Korean page marks its links to English pages works per block, not per link**, and it
+  ignores external links.
+- **In the Korean video the terminal output is English**, because the programs print English.
+- **`go install` and `go run` with `@v0.10.2` still fail** because of the `replace` lines in `go.mod`;
+  importing a package as a library works. See the [build guide](docs/build.md).
+- Both limitations of v0.10.1 about `PQCOTA_AUTO_DDL=0` and a non-positive observation window are unchanged.
+
+### Not done
+
+- The developer documents and the per-stage references are not translated.
+
+---
+
 ## v0.10.1 — Two commands ignored the organization, and the documents were rewritten (2026-10-01)
 
 **Goal** — fix two commands that wrote to the wrong organization, and replace the documents written for
