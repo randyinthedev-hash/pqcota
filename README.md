@@ -11,7 +11,7 @@ pqcota is open-source software (Apache-2.0) for the people who run a post-quantu
 
 > **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
 
-**[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Read the online documentation](https://randyinthedev-hash.github.io/pqcota/)** (each page shows the release it matches; the pages are also in this repository's [`docs/`](docs/)) · **[Run it yourself](#try-it)**
+**[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Read the online documentation](https://randyinthedev-hash.github.io/pqcota/overview/)** (each page shows the release it matches; the pages are also in this repository's [`docs/`](docs/)) · **[Homepage](https://randyinthedev-hash.github.io/pqcota/)** · **[Run it yourself](#try-it)**
 
 ---
 

@@ -11,7 +11,7 @@ pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람
 
 > **한마디로:** pqcota는 접근할 수 있는 시스템의 암호 자산과 연결 결과를 관측하고, 그것이 어떻게 바뀌는지 이력으로 남깁니다. *사용자가* 무엇을 바꿀지 정하고 나면 그 변경을 수행하고 다시 되돌리는, 검토할 수 있는 파일을 생성합니다.
 
-**[시연영상 보기](https://www.youtube.com/watch?v=R0QD7Fv0KgE)**(3분 37초, [영문판](https://www.youtube.com/watch?v=4E26AJ6WCWw)) · **[온라인 문서 읽기](https://randyinthedev-hash.github.io/pqcota/)**(각 쪽에 해당 릴리스가 표시됩니다. 같은 문서가 이 리포의 [`docs/`](docs/)에도 있습니다) · **[직접 해 보기](#직접-해-보기)**
+**[시연영상 보기](https://www.youtube.com/watch?v=R0QD7Fv0KgE)**(3분 37초, [영문판](https://www.youtube.com/watch?v=4E26AJ6WCWw)) · **[온라인 문서 읽기](https://randyinthedev-hash.github.io/pqcota/overview/)**(각 쪽에 해당 릴리스가 표시됩니다. 같은 문서가 이 리포의 [`docs/`](docs/)에도 있습니다) · **[홈페이지](https://randyinthedev-hash.github.io/pqcota/)** · **[직접 해 보기](#직접-해-보기)**
 
 ---
 
