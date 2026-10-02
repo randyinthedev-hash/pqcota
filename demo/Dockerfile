@@ -15,7 +15,7 @@ ARG OPENSSL_BASE=ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c0
 #   pqc-echo — 관측 **대상** 워크로드(현실에선 고객의 앱). 노드 이미지에 미리 들어 있어야 한다.
 #   topogen  — topology.yaml → compose 생성기. 컨테이너가 서기 전에 필요하다.
 # 둘 다 contracts에 의존하지 않아 buf 없이 빌드된다.
-FROM golang:1.26@sha256:b900de91b15b2e2953d930ece1d0ecff0a1590ab2006088d20dcf0f56f1e979f AS builder
+FROM golang:1.26.6@sha256:0d1d3a794be25f809dd2cb3160d8c73276c4056a9f8242a138e908ddeee7b6b6 AS builder
 WORKDIR /src
 COPY pqcota-common /src/pqcota-common
 COPY pqcota-inventory /src/pqcota-inventory
@@ -91,7 +91,7 @@ ENTRYPOINT ["/usr/local/bin/node-entrypoint.sh"]
 # (이미지에 결과를 굽지 않는다 — 사용자가 자기 머신에서 하는 일과 같은 순서로 보이게).
 FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90 AS ctl
 ARG TARGETARCH
-ARG GO_VERSION=1.26.4
+ARG GO_VERSION=1.26.6
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ansible openssh-client ca-certificates iproute2 iputils-ping graphviz \
       curl git make openjdk-21-jdk-headless \

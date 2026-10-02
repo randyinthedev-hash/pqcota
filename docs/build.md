@@ -24,7 +24,7 @@ Privileges and environment variables for running the collectors on a system are 
 
 **To build**
 
-- Go 1.26.4 or newer.
+- Go 1.26.4 or newer. Builds run on Go 1.26.6, the `toolchain` line in `go.mod`; an older Go downloads it automatically unless `GOTOOLCHAIN=local` is set.
 - Git, `make` and a POSIX shell (the commands below are written for one).
 - `buf`, `protoc-gen-go` and `protoc-gen-go-grpc`, **only when you change a protobuf contract** (in `pqcota-common`). The generated Go code is committed, so a plain build does not need them. `buf` is installed separately (<https://buf.build/docs/installation>); `make tools` installs only the two plugins.
 - A JDK 11 or newer, **optional**, only to build the Java attach sidecar. Without it that step is skipped.

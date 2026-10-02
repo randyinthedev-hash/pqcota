@@ -24,7 +24,7 @@ pqcota를 소스에서 빌드하거나 pqcota 자체를 개발하는 엔지니�
 
 **빌드하려면**
 
-- Go 1.26.4 이상.
+- Go 1.26.4 이상. 빌드는 `go.mod`의 `toolchain` 줄에 적힌 Go 1.26.6으로 돕니다. 그보다 낮은 Go는 `GOTOOLCHAIN=local`로 막지 않는 한 1.26.6을 자동으로 받습니다.
 - Git, `make`, POSIX 셸(아래 명령은 POSIX 셸 기준으로 적었습니다).
 - `buf`, `protoc-gen-go`, `protoc-gen-go-grpc`: **protobuf 계약을 바꿀 때만** 필요합니다(`pqcota-common`에서). 생성된 Go 코드는 커밋되어 있으므로 일반 빌드에는 필요 없습니다. `buf`는 따로 설치하고(<https://buf.build/docs/installation>), `make tools`는 두 플러그인만 설치합니다.
 - JDK 11 이상, **선택 사항**이며 Java attach 사이드카를 빌드할 때만 필요합니다. 없으면 그 단계는 건너뜁니다.

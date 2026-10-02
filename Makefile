@@ -1,5 +1,5 @@
 # pqcota (통합 리포) — 빌드·테스트·게이트
-# 전제: go(go.mod의 toolchain 이상 — 지금은 1.26.4). 형제 리포 넷(pqcota-common·-inventory·-discovery·-provisioning)을
+# 전제: go(go.mod의 go 줄 이상 — 지금은 1.26.4. 빌드는 toolchain 줄의 1.26.6으로 돈다). 형제 리포 넷(pqcota-common·-inventory·-discovery·-provisioning)을
 # 이 리포와 **나란히** 클론해 둔다. go.mod가 replace로 ../ 를 읽고, 게이트가 그 넷을 함께 잰다.
 #
 # 이 리포에는 코드가 거의 없다(tools·데모 소품·리포 사이 통합 테스트). 계약과 생성 코드는 pqcota-common에 있고,
