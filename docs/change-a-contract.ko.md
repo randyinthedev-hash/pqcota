@@ -8,7 +8,7 @@ pqcota의 protobuf 계약에 메시지, 필드, 열거형 값을 추가하거나
 
 **proto를 바꿔야 하는 일인가요?** 자산에 관한 도구별 세부 정보는 proto를 건드리지 않고 `pqcota:` 네임스페이스의 CycloneDX `properties`에 실어 보낼 수 있습니다. [키 규약](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md#cyclonedx-properties-extension-key-convention)(영문)에 기존 키가 나열되어 있습니다. 새 키도 코어가 읽도록 만들어야 하지만, 생성 코드와 서명 범위는 바뀌지 않습니다.
 
-**추가만 하는 변경인가요?** `v1` 안에서 계약 변경은 추가만 허용합니다. 필드와 열거형 값은 더할 수 있지만, 이미 공개된 것의 번호를 다시 매기거나, 타입을 바꾸거나, 지우거나, 이름을 바꾸지 마세요([호환성 정책, 계약](compatibility.ko.md#1-계약-추가만-한다)). 추가만 하는 변경이 아니면 `v1`을 고치는 것이 아니라 새 `v2` 패키지입니다. 필드를 없애는 패키지(예를 들어 새 메이저 버전)에서는 그 번호를 `reserved`로 표시해 다시 쓰이지 않게 하세요. 새 열거형 값은 맨 끝에 붙입니다.
+**추가만 하는 변경인가요?** `v1` 안에서 계약 변경은 추가만 허용합니다. 필드와 열거형 값은 더할 수 있지만, 이미 공개된 것의 번호를 다시 매기거나, 타입을 바꾸거나, 지우거나, 이름을 바꾸지 마세요([호환성 정책, 계약](compatibility.ko.md#1-계약-더하기만-한다)). 추가만 하는 변경이 아니면 `v1`을 고치는 것이 아니라 새 `v2` 패키지입니다. 필드를 없애는 패키지(예를 들어 새 메이저 버전)에서는 그 번호를 `reserved`로 표시해 다시 쓰이지 않게 하세요. 새 열거형 값은 맨 끝에 붙입니다.
 
 **서명에 닿는 변경인가요?** `CollectionResult`, `Envelope`, `MachineIdentity`, `Completeness`, `ObservedEdge`에 필드를 더하면 서명 범위를 넓혀야 하고, **범위를 넓히면 기존 서명이 모두 무효가 됩니다.** 서명 이전(migration)을 받아들인 릴리스에서만 허용되는 일입니다([호환성 정책, 서명](compatibility.ko.md#2-서명-범위를-바꾸면-과거가-무효가-된다)). 멈추고 그것부터 결정하세요.
 
@@ -16,7 +16,7 @@ pqcota의 protobuf 계약에 메시지, 필드, 열거형 값을 추가하거나
 
 | 위치 | 움직이는 것 | 빠뜨리면 알아채는 방법 |
 |---|---|---|
-| `pqcota-common` | `.proto` 파일, `gen/`에 커밋된 생성 코드, [데이터 모델](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/data-model.md)(손으로 쓴 문서), 서명되는 필드라면 `sign.Canonical` | 생성 코드와 proto가 어긋나면 CI가 실패합니다. 서명 범위는 테스트가 실패합니다. 데이터 모델은 아무것도 실패하지 않습니다 |
+| `pqcota-common` | `.proto` 파일, `gen/`에 커밋된 생성 코드, [데이터 모델](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/data-model.md)(영문, 손으로 쓴 문서), 서명되는 필드라면 `sign.Canonical` | 생성 코드와 proto가 어긋나면 CI가 실패합니다. 서명 범위는 테스트가 실패합니다. 데이터 모델은 아무것도 실패하지 않습니다 |
 | `pqcota-inventory` | 그 필드를 읽는 정규화, 필드가 실질 내용이라면 `history`의 스냅샷 지문, 파생 규칙을 바꿨다면 `ruleset_version` | 지문은 **아무것도 실패하지 않으며, 그 필드의 변경이 이력에서 사라질 수 있습니다.** 아래를 보세요 |
 | `pqcota-discovery` | 이제 그 필드를 내보내야 하는 수집기 | 필드가 빈 채로 남습니다 |
 | `pqcota-provisioning` | `plan.proto`와 `rollback.proto`에 대한 생성기와 계획 점검. 계획도 서명됩니다. `pqcota-common`의 `sign.CanonicalPlan`입니다 | `pqcota-common`의 테스트가 실패합니다(아래 참조) |
