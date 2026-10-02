@@ -35,12 +35,12 @@ Consumers inside the workspace see your change immediately, because each module 
    ```
 
    Changing only a comment changes `gen/` too, so commit them together. See [Build guide, Change a contract](build.md#change-a-contract) for the `PATH` caveat with `make tools`.
-3. **Lint and compare.** `make lint` runs `buf lint`. `make breaking` compares against the latest release tag (currently `v0.10.3`); to compare your branch against `main`, run `make breaking AGAINST=main`. Both need `buf`, which is installed separately.
+3. **Lint and compare.** `make lint` runs `buf lint`. `make breaking` compares against the latest release tag (currently `v0.10.4`); to compare your branch against `main`, run `make breaking AGAINST=main`. Both need `buf`, which is installed separately.
 4. **Run the ripple check** below. This is where the build can pass while behavior breaks, because only the signature coverage is guarded by tests.
 5. **Update the data model document** for the messages you changed.
 6. **Update the consumers**, in the order of the dependency direction: inventory, then discovery and provisioning, then the integration repository. Each repository reads the new generated code directly through `replace`.
 7. **Run the checks** from `pqcota`: `make all` runs every sibling's own checks and then the cross-stage ones. See [Check your work](build.md#check-your-work).
-8. **Release.** Releases are currently coordinated: the same tag on all five repositories. For a contract change that means publishing `pqcota-common` first, raising each stage's `require` to that tag, and checking the combination before tagging the integration repository. This is how v0.10.0 to v0.10.3 were released and how [the build guide](build.md#get-the-source) describes tags; it is the current practice, not a rule that is enforced, and the release commands are not repeated here.
+8. **Release.** Releases are currently coordinated: the same tag on all five repositories. For a contract change that means publishing `pqcota-common` first, raising each stage's `require` to that tag, and checking the combination before tagging the integration repository. This is how v0.10.0 to v0.10.4 were released and how [the build guide](build.md#get-the-source) describes tags; it is the current practice, not a rule that is enforced, and the release commands are not repeated here.
 
 ## The ripple check
 

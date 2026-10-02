@@ -24,7 +24,7 @@ pqcota를 소스에서 빌드하거나 pqcota 자체를 개발하는 엔지니�
 
 **빌드하려면**
 
-- Go 1.26.4 이상. 빌드는 `go.mod`의 `toolchain` 줄에 적힌 Go 1.26.6으로 돕니다. 그보다 낮은 Go는 `GOTOOLCHAIN=local`로 막지 않는 한 1.26.6을 자동으로 받습니다.
+- Go 1.26.4 이상. 공식 CI와 릴리스는 Go 1.26.6(`go.mod`의 `toolchain` 줄)으로 빌드합니다. 내 컴퓨터에서 어느 Go를 쓰는지는 `GOTOOLCHAIN` 설정에 따릅니다. 기본값에서는 1.26.6보다 낮은 Go가 1.26.6을 받고, `GOTOOLCHAIN=local`이면 설치된 Go를 그대로 씁니다.
 - Git, `make`, POSIX 셸(아래 명령은 POSIX 셸 기준으로 적었습니다).
 - `buf`, `protoc-gen-go`, `protoc-gen-go-grpc`: **protobuf 계약을 바꿀 때만** 필요합니다(`pqcota-common`에서). 생성된 Go 코드는 커밋되어 있으므로 일반 빌드에는 필요 없습니다. `buf`는 따로 설치하고(<https://buf.build/docs/installation>), `make tools`는 두 플러그인만 설치합니다.
 - JDK 11 이상, **선택 사항**이며 Java attach 사이드카를 빌드할 때만 필요합니다. 없으면 그 단계는 건너뜁니다.
@@ -61,9 +61,9 @@ cd pqcota
 | `pqcota-discovery` | 수집기, 그 명령, 참조 Ansible 플레이북 |
 | `pqcota-provisioning` | 계획 승인, 산출물 생성, 실행 기록 |
 
-릴리스는 다섯 리포지터리 모두에 붙는 같은 태그입니다(예: `v0.10.3`). 그냥 클론하면 각 리포지터리의 `main`을 받는데, 이는 개발 중인 상태입니다. 릴리스를 빌드하려면 **다섯 리포지터리 모두**에서 그 태그를 체크아웃합니다. 예를 들어 `pqcota` 디렉터리(위의 `cd pqcota`)에서 `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.3; done`을 실행합니다. 체크아웃하면 각 리포지터리는 그 태그의 detached HEAD 상태가 됩니다. `go.mod`의 `require` 줄은 형제 리포지터리를 고정하지 않습니다. 로컬 `replace` 지시자가 바로 옆의 작업 트리를 읽기 때문입니다.
+릴리스는 다섯 리포지터리 모두에 붙는 같은 태그입니다(예: `v0.10.4`). 그냥 클론하면 각 리포지터리의 `main`을 받는데, 이는 개발 중인 상태입니다. 릴리스를 빌드하려면 **다섯 리포지터리 모두**에서 그 태그를 체크아웃합니다. 예를 들어 `pqcota` 디렉터리(위의 `cd pqcota`)에서 `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.4; done`을 실행합니다. 체크아웃하면 각 리포지터리는 그 태그의 detached HEAD 상태가 됩니다. `go.mod`의 `require` 줄은 형제 리포지터리를 고정하지 않습니다. 로컬 `replace` 지시자가 바로 옆의 작업 트리를 읽기 때문입니다.
 
-**태그가 이 작업 공간 밖의 사용자에게 주는 것.** 태그의 패키지를 라이브러리로 임포트하는 것은 됩니다. Go는 의존 대상의 `replace` 줄을 무시하고 `require` 줄을 태그로 해석합니다. 태그에서 바로 명령을 실행하는 것은 되지 않습니다. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.3`와 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.3`는 `go.mod`에 `replace` 지시자가 있는 동안 Go가 거부합니다. 명령을 실행하려면 위의 다섯 리포지터리 체크아웃에서 빌드하거나 릴리스 묶음을 받으세요. 2026-10-02 현재 v0.10.0, v0.10.1, v0.10.2도 마찬가지입니다.
+**태그가 이 작업 공간 밖의 사용자에게 주는 것.** 태그의 패키지를 라이브러리로 임포트하는 것은 됩니다. Go는 의존 대상의 `replace` 줄을 무시하고 `require` 줄을 태그로 해석합니다. 태그에서 바로 명령을 실행하는 것은 되지 않습니다. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.4`와 `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.4`는 `go.mod`에 `replace` 지시자가 있는 동안 Go가 거부합니다. 명령을 실행하려면 위의 다섯 리포지터리 체크아웃에서 빌드하거나 릴리스 묶음을 받으세요. 2026-10-02 현재 v0.10.0, v0.10.1, v0.10.2도 마찬가지입니다.
 
 `go run …/tools/checkprose@v0.9.1`은 그 태그가 분리보다 앞서므로 지금도 동작합니다. 이 태그를 고정하면 v0.9.1의 검사기를 계속 쓰는 것이며, 더 새로운 검사기를 받는 방법이 아닙니다. 검사기는 그 뒤로 바뀌었습니다.
 

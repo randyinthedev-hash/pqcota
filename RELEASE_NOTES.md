@@ -75,6 +75,37 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.4 — The published programs are rebuilt with Go 1.26.6 and gRPC 1.83.2 (2026-10-02)
+
+**Goal** — take the known vulnerabilities of the Go standard library and of gRPC out of the published programs. **No program code and no contract changed.** The commands, the `.proto` files and the generated code are the same as in v0.10.3; the one Go file edited is the documentation check `tools/checkdocs`, which is not shipped. What changed is the toolchain the programs are built with and the version of one library; the documents state the new release number.
+
+**If you run a published program, replace it.** The programs of v0.10.0 to v0.10.3 were built with Go 1.26.4 and gRPC 1.82.1, and they are not rebuilt; neither are those of earlier releases. Download the v0.10.4 files, check them against `SHA256SUMS`, and put them where the old ones were. `collector.jar` is Java and is not affected.
+
+**One release is five tags**, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning` and `pqcota` all carry `v0.10.4`.
+
+### Fixed
+
+- **The published programs contained known vulnerabilities of the Go standard library.** Built with Go 1.26.4, they carried the code of ten advisories in `crypto/tls`, `encoding/asn1`, `encoding/xml`, `net`, `net/http`, `net/url`, `html/template` and `os`. Go 1.26.5 fixes two of them and Go 1.26.6 fixes the other eight; a standard-library fix reaches a program only when the program is rebuilt, so updating a module does not remove it. *Which version it entered in:* every release built with a Go older than the fixing version. v0.10.0 to v0.10.3 were all built with Go 1.26.4; earlier releases come from before the repository was split and were not examined here. *What came out wrong:* scanning the 23 executables of v0.10.3 for the symbols of known vulnerabilities finds 13 in each of them, ten in the standard library and three in gRPC. A finding of that kind says the vulnerable code is in the file. It does not say that a path to it exists, and it does not say that anyone can attack the program. A scan of the source did find call paths into `crypto/tls` and `encoding/asn1` in all five repositories, and into `encoding/xml` in three of them. We did not assess whether any of them can be reached with what a program is given to read, and the fix does not depend on that.
+- **gRPC 1.82.1 has three published advisories:** GHSA-2v4p-qf9q-27wj (a crash in xDS servers), GHSA-vp52-pcj8-j9qc (memory exhaustion through fragmented HTTP/2 data frames) and GHSA-qc2q-p7wx-3px3 (a bypass of the xDS RBAC filter). gRPC is now 1.83.2, the lowest release that closes all three; the first advisory still affects 1.83.0 and 1.83.1. The programs start no gRPC server and use no xDS: `grpc.NewServer` and `grpc.NewClient` appear only in two tests, over in-process connections. This holds for the programs we publish. A consumer who imports these packages and builds a gRPC server of their own is not covered by it. `golang.org/x/net`, `x/sys`, `x/text`, `x/sync` and `genproto/googleapis/rpc` rise with gRPC.
+
+### Built
+
+- **`go.mod` of each repository now has `toolchain go1.26.6`.** The `go` line stays at 1.26.4, because it is the minimum a consumer of the module must have and raising it would force 1.26.6 on them. The official CI and the release build with Go 1.26.6. The `toolchain` line is a recommendation: which Go your own machine uses follows your `GOTOOLCHAIN` setting. See the [build guide](docs/build.md).
+- **The demo image builds with Go 1.26.6**, both the builder stage and the controller.
+- **`make check-docs` accepts either the `go` line or the `toolchain` line** as the Go version a document may state.
+
+### How to check a file
+
+`go version -m <file>` prints the Go version and the gRPC version a program was built with, and `govulncheck -mode=binary <file>` scans it for known vulnerabilities.
+
+### Known limitations (unchanged)
+
+- The files attached to earlier releases are not rebuilt. They stay as they were built.
+- `go install` and `go run` with `@v0.10.4` still fail because of the `replace` lines in `go.mod`; importing a package as a library works. See the [build guide](docs/build.md).
+- The limitations of v0.10.3 about Korean search and the limitations of v0.10.1 about `PQCOTA_AUTO_DDL=0` and a non-positive observation window are unchanged.
+
+---
+
 ## v0.10.3 — The Korean documents are complete, and four statements are corrected (2026-10-02)
 
 **Goal** — give the Korean reader the whole documentation, and correct four statements that said more than the code does. **No code and no contract changed.** The commands, the `.proto` files and the generated code are the same as in v0.10.2; the stage repositories differ only in their documents and in the release number those documents state.

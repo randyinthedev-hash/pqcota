@@ -24,7 +24,7 @@ Privileges and environment variables for running the collectors on a system are 
 
 **To build**
 
-- Go 1.26.4 or newer. Builds run on Go 1.26.6, the `toolchain` line in `go.mod`; an older Go downloads it automatically unless `GOTOOLCHAIN=local` is set.
+- Go 1.26.4 or newer. The official CI and releases build with Go 1.26.6 (the `toolchain` line in `go.mod`). Which Go your own machine uses follows your `GOTOOLCHAIN` setting: by default a Go older than 1.26.6 downloads 1.26.6, and `GOTOOLCHAIN=local` keeps the one installed.
 - Git, `make` and a POSIX shell (the commands below are written for one).
 - `buf`, `protoc-gen-go` and `protoc-gen-go-grpc`, **only when you change a protobuf contract** (in `pqcota-common`). The generated Go code is committed, so a plain build does not need them. `buf` is installed separately (<https://buf.build/docs/installation>); `make tools` installs only the two plugins.
 - A JDK 11 or newer, **optional**, only to build the Java attach sidecar. Without it that step is skipped.
@@ -61,9 +61,9 @@ cd pqcota
 | `pqcota-discovery` | The collectors, their commands, the reference Ansible playbook |
 | `pqcota-provisioning` | Plan approval, artifact generation, execution records |
 
-Each release is the same tag (for example `v0.10.3`) on all five. A plain clone gives you `main` of each, which is development state. To build a release, check out that tag in **all five** repositories, for example, from the `pqcota` directory (the `cd pqcota` above), `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.3; done`. The checkout leaves each repository on a detached HEAD at the tag. The `require` lines in `go.mod` do not pin the siblings, because the local `replace` directives read the working trees next to it.
+Each release is the same tag (for example `v0.10.4`) on all five. A plain clone gives you `main` of each, which is development state. To build a release, check out that tag in **all five** repositories, for example, from the `pqcota` directory (the `cd pqcota` above), `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.10.4; done`. The checkout leaves each repository on a detached HEAD at the tag. The `require` lines in `go.mod` do not pin the siblings, because the local `replace` directives read the working trees next to it.
 
-**What a tag gives a consumer outside this workspace.** Importing a package from the tag as a library works: Go ignores the `replace` lines of a dependency and resolves the `require` lines to the tags. Running a command straight from the tag does not. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.3`, and `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.3`, are refused by Go while a `go.mod` carries `replace` directives. To run a command, build it from the five-repository checkout above, or take the release bundle. As of 2026-10-02 the same holds for v0.10.0, v0.10.1 and v0.10.2.
+**What a tag gives a consumer outside this workspace.** Importing a package from the tag as a library works: Go ignores the `replace` lines of a dependency and resolves the `require` lines to the tags. Running a command straight from the tag does not. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.10.4`, and `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.10.4`, are refused by Go while a `go.mod` carries `replace` directives. To run a command, build it from the five-repository checkout above, or take the release bundle. As of 2026-10-02 the same holds for v0.10.0, v0.10.1 and v0.10.2.
 
 `go run …/tools/checkprose@v0.9.1` still works, because that tag predates the split. Pinning it keeps using the v0.9.1 checker; it is not a way to receive a newer one, and the checker has changed since.
 
