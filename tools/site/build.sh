@@ -53,6 +53,9 @@ test ! -e "$OUT/architectures" || { echo "생성된 사이트가 architectures/�
 LAND=${LANDING_ROOT:-$WS/pqcota}
 cp "$LAND/docs/index.html" "$OUT/index.html"
 mkdir -p "$OUT/architectures" && cp "$LAND/docs/architectures/platform-structure.html" "$OUT/architectures/"
+# 랜딩의 그림(docs/images/)도 손으로 쓴 쪽이 맡는다. README가 같은 그림을 쓰지만 그쪽은 assets/ 아래로 따로 복사된다.
+test ! -e "$OUT/images" || { echo "생성된 사이트가 images/를 만들었다. 충돌"; exit 1; }
+cp -R "$LAND/docs/images" "$OUT/images"
 # 게시 소스가 main:/docs였던 때의 원문 주소(/pqcota/<이름>.md)를 같은 경로로 보존한다. 생성물과 겹치면 멈춘다.
 N=0
 for f in "$WS"/pqcota/docs/*.md; do

@@ -17,6 +17,10 @@ pqcota is open-source software (Apache-2.0) for the people who run a post-quantu
 
 > **In short:** pqcota observes the cryptographic assets and connection results of the systems it can reach, keeps a history of how they change, and, once *you* have decided what to change, generates reviewable files that carry out that change and remove it again.
 
+![PqCOTA: a faint network of connected points; one part is drawn clearly with earlier outlines of it behind, and at one point a small path goes out and comes back](docs/images/at-a-glance.svg)
+
+*Observe what is there. Preserve what changes. Prepare the next step.*
+
 **[Watch the demo](https://www.youtube.com/watch?v=4E26AJ6WCWw)** (3 min 38 s; [Korean version](https://www.youtube.com/watch?v=R0QD7Fv0KgE)) · **[Run it yourself](#try-it)**
 
 ---
@@ -153,4 +157,4 @@ A security or operations team will have more questions than this page answers. S
 
 ## License and more
 
-Apache-2.0, see [LICENSE](LICENSE); dependency licensing in [License notes](docs/licensing.md) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). [Release notes](RELEASE_NOTES.md) · [Developer documentation](docs/developers.md) · [First migration, step by step](docs/pqc-migration-primer.md) · [FAQ](docs/faq.md) · [Reporting guide](docs/reporting-guide.md) · [Build guide](docs/build.md) · [Contributing](CONTRIBUTING.md) · [Compatibility policy](docs/compatibility.md) · [Platform structure diagram](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html). pqcota is one of five repositories, listed in CONTRIBUTING. The name is *PQC* plus *orchestra*: pqcota plays one part; you are the conductor.
+Apache-2.0, see [LICENSE](LICENSE); dependency licensing in [License notes](docs/licensing.md) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). [Release notes](RELEASE_NOTES.md) · [Developer documentation](docs/developers.md) · [First migration, step by step](docs/pqc-migration-primer.md) · [FAQ](docs/faq.md) · [Reporting guide](docs/reporting-guide.md) · [Build guide](docs/build.md) · [Contributing](CONTRIBUTING.md) · [Compatibility policy](docs/compatibility.md) · [Structure and flow](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html). pqcota is one of five repositories, listed in CONTRIBUTING. The name is *PQC* plus *orchestra*: pqcota plays one part; you are the conductor.
