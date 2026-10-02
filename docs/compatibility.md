@@ -1,3 +1,5 @@
+English · [한국어](compatibility.ko.md)
+
 # Compatibility policy: what we do not break
 
 This repo publishes a contract, and other people consume it. So we write down **what we have promised not to break**.

@@ -10,7 +10,7 @@
 
 ## 요구 사항
 - Docker(Compose v2), 인터넷(처음 이미지를 빌드할 때), `docker` 그룹에 속한 사용자(root나 KVM은 필요 없음)
-- 다섯 리포를 **나란히** 클론해 둘 것(이 리포의 디렉터리 이름은 `pqcota`이고, 그 옆에 `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning`을 둡니다). 데모 이미지가 모두 빌드합니다. [빌드 안내](../docs/build.md#get-the-source)(영문)를 보세요.
+- 다섯 리포를 **나란히** 클론해 둘 것(이 리포의 디렉터리 이름은 `pqcota`이고, 그 옆에 `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning`을 둡니다). 데모 이미지가 모두 빌드합니다. [빌드 안내](../docs/build.ko.md#소스-받기)를 보세요.
 
 리포는 `pqcota-ctl` 컨테이너 안에서 빌드합니다.
 빌드되는 것은 **지금 체크아웃한 소스 그대로**이며 커밋하지 않은 변경도 포함합니다.
@@ -99,7 +99,7 @@ docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # the inventory 
 | # | 준비할 것 | 필수? | 무엇인가 |
 |---|---|---|---|
 | 1 | **`hosts.csv`** | 원격 다중 노드에서 필수 | node_id, ip, port, 계정, 키 → `pqcota-hosts`가 Ansible 인벤토리(`targets.ini`, 0600, 저장하지 않음)를 생성합니다. `--dsn`을 주면 엔드포인트도 upsert합니다(비밀은 제외). 호스트 하나를 그 자리에서 스캔한다면 **필요 없습니다** |
-| 2 | **노드별 수집기 바이너리** | 필수 | ctl에서 `pqcota-nodescan`, `pqcota-jvmscan`, `pqcota-netcap`을 빌드합니다. **데모의 플레이북은 이를 대신 배포합니다**(`discover.yml`이 배포하고, 실행하고, 가져오고, 정리합니다). 빌드 명령은 [빌드 안내](../docs/build.md#build)(영문)에 있습니다(아키텍처별 미리 빌드된 바이너리가 이미 릴리스에 있고 `SHA256SUMS`로 무결성을 확인합니다. 이 리포에서 나왔음을 증명하는 서명만 아직 [로드맵](../RELEASE_NOTES.md)(영문)에 있습니다) |
+| 2 | **노드별 수집기 바이너리** | 필수 | ctl에서 `pqcota-nodescan`, `pqcota-jvmscan`, `pqcota-netcap`을 빌드합니다. **데모의 플레이북은 이를 대신 배포합니다**(`discover.yml`이 배포하고, 실행하고, 가져오고, 정리합니다). 빌드 명령은 [빌드 안내](../docs/build.ko.md#빌드)에 있습니다(아키텍처별 미리 빌드된 바이너리가 이미 릴리스에 있고 `SHA256SUMS`로 무결성을 확인합니다. 이 리포에서 나왔음을 증명하는 서명만 아직 [로드맵](../RELEASE_NOTES.md)(영문)에 있습니다) |
 | 3 | **실행하는 방법** | 필수 | Ansible이나 직접, 노드마다 수집기를 실행하고 결과 JSON을 가져옵니다. 데모의 [`discover.yml`](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/ansible/discover.yml)이 **참조 구현**입니다 |
 
 그 뒤는 데모와 같습니다. 수집한 결과를 `pqcota-ingest`에 넘기면 정규화해 저장하고, `pqcota-inventory`로 봅니다.

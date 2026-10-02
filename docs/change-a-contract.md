@@ -1,3 +1,5 @@
+English · [한국어](change-a-contract.ko.md)
+
 # Change a contract
 
 For an engineer who needs to add or change a message, field or enum in pqcota's protobuf contracts. The contracts are the one place the stages agree on, so a change there reaches every stage. This page gives the order of work, what else has to move with the contract, and what the local checks do and do not catch. For the rules about what may change at all, read the [compatibility policy](compatibility.md); for the contracts themselves, the [contracts overview](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md) and the [data model](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/data-model.md). For the overall layout, see the [developer documentation](developers.md).

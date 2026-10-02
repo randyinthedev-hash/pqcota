@@ -1,3 +1,5 @@
+English · [한국어](licensing.ko.md)
+
 # License notes (third-party & project licensing)
 
 
@@ -102,7 +104,7 @@ What enforces those principles is the table below.
 |---|---|
 | Separate process | the intake contract in `contracts/.../collector.proto` — a GPL collector stands behind gRPC/CLI |
 | Standard data only | that contract carries nothing but CycloneDX + Envelope. Core internal types never cross it |
-| Distribution separation | the GPL adapter is a **separate repo** and is not in `go.mod`. The CI license scanner blocks a cross dependency |
+| Distribution separation | the GPL adapter is a **separate repo** and is not in `go.mod`. No automated license scan runs in CI today, so this is kept by review |
 
 Ansible (GPL-3) and Temurin (GPLv2+CE) in `demo/` likewise run as separate processes outside the same boundary.
 

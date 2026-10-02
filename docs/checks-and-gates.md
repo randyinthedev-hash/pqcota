@@ -1,3 +1,5 @@
+English · [한국어](checks-and-gates.ko.md)
+
 # Checks and gates
 
 What the checks in pqcota's five repositories guard, who owns each, where each one runs, and what a green result does **not** tell you. Read it with [Check your work](build.md#check-your-work) in the build guide, which says how to run them, and with [Change a contract](change-a-contract.md), which covers the contract-specific ones. The [developer documentation](developers.md) is the table of contents.

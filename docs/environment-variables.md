@@ -1,3 +1,5 @@
+English · [한국어](environment-variables.ko.md)
+
 # Environment variable reference
 
 Every environment variable that pqcota's programs read, in one place. Names, accepted values and defaults come from the code. How to use each command is in the command reference of its stage; this page links there instead of repeating it. For the overview of the documents, see the [developer documentation](developers.md).

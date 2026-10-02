@@ -13,7 +13,7 @@
 
 **시스템이 어떤 암호 알고리즘을 쓰는지 확인하고, 검토하고 적용하고 되돌릴 수 있는 변경으로 양자내성암호 이관을 준비합니다.**
 
-pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람과 그 보고를 받는 사람을 위한 오픈소스 소프트웨어입니다(Apache-2.0). 개발자나 암호 전문가가 아니어도 이 도구가 무엇을 하고 어떤 결과를 제공하는지 이해할 수 있습니다. 이 문서는 [영문 README](README.md)의 한국어판입니다. 입문서, FAQ, 보고 안내, 데모는 한국어판이 있고, 나머지 상세 문서는 아직 영문입니다.
+pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람과 그 보고를 받는 사람을 위한 오픈소스 소프트웨어입니다(Apache-2.0). 개발자나 암호 전문가가 아니어도 이 도구가 무엇을 하고 어떤 결과를 제공하는지 이해할 수 있습니다. 이 문서는 [영문 README](README.md)의 한국어판입니다. 입문서, FAQ, 보고 안내, 데모와 개발자 문서(빌드·환경변수·계약 변경·검사·호환성·라이선스)는 한국어판이 있고, 각 단계 리포의 상세 문서는 아직 영문입니다.
 
 > **한마디로:** pqcota는 접근할 수 있는 시스템의 암호 자산과 연결 결과를 관측하고, 그것이 어떻게 바뀌는지 이력으로 남깁니다. *사용자가* 무엇을 바꿀지 정하고 나면 그 변경을 수행하고 다시 되돌리는, 검토할 수 있는 파일을 생성합니다.
 
@@ -28,7 +28,7 @@ pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람
 | **이관 보고를 받는 관리자나 사업 책임자** | [제공하는 결과](#제공하는-결과), [결과 읽는 법](#결과-읽는-법), [pqcota가 하지 않는 일](#pqcota가-하지-않는-일), 그리고 [보고 안내](docs/reporting-guide.ko.md) |
 | **이관을 진행하는 사람** | [세 단계](#세-단계), [지원 범위](#지원-범위), [데이터와 운영](#데이터와-운영), [직접 해 보기](#직접-해-보기), 그리고 [보고 안내](docs/reporting-guide.ko.md) |
 | **PQC가 처음인 사람** | [배경](#배경), 단계별 [첫 이관](docs/pqc-migration-primer.ko.md), 그다음 [용어](#용어) |
-| **엔지니어나 보안 설계자** | [개발자 문서](docs/developers.md), [빌드 안내](docs/build.md), [CONTRIBUTING](CONTRIBUTING.md)(모두 영문) |
+| **엔지니어나 보안 설계자** | [개발자 문서](docs/developers.ko.md), [빌드 안내](docs/build.ko.md), [CONTRIBUTING](CONTRIBUTING.md)(모두 영문) |
 
 ## 제공하는 결과
 
@@ -125,7 +125,7 @@ pqcota는 **1.0 이전**입니다(현재 릴리스: v0.10.2). 관측과 생성�
 
 - **시청(3분 37초):** [시연영상](https://www.youtube.com/watch?v=R0QD7Fv0KgE)([영문판](https://www.youtube.com/watch?v=4E26AJ6WCWw))은 관측부터 생성한 변경을 시험 시스템에 적용하고 되돌리기까지 보여 줍니다. 소리가 없고 자막이 있으며 릴리스 v0.10.2로 촬영했습니다.
 - **실행:** Docker가 있으면 [demo/](demo/README.ko.md)가 컨테이너에서 전체 흐름을 돌립니다. 선택 단계(`DEMO_REAL_PROVIDER=1`)는 실물 양자내성 provider를 빌드하고, 생성한 파일을 OpenSSL 3.0.13이 도는 시험 노드에 적용했다가 되돌립니다. 2026년 9월 30일 실행에서 그 노드의 `openssl list -kem-algorithms`에 나오는 ML-KEM 항목 수가 적용 후 0에서 14로, 되돌린 뒤 다시 0으로 바뀌었습니다. **이것은 그 노드에서 알고리즘을 쓸 수 있게 됐다는 것을 보일 뿐, 어떤 연결이 그것을 썼다는 것을 보이지는 않습니다.** pqcota가 아직 OpenSSL의 provider 계층을 관측하지 않고, 연결에는 양쪽의 지원이 모두 필요하므로, 다시 관측해도 인벤토리가 바뀌지 않았다고 데모의 출력도 알립니다.
-- **사용자의 시스템에서:** 엔지니어에게 [빌드 안내](docs/build.md)(영문)에서 시작하도록 요청하세요. 관측에는 관측 대상 시스템에 상주하는 소프트웨어가 필요 없지만, 일부 경로에는 권한이나 JDK가 필요합니다. [데이터와 운영](#데이터와-운영)을 보세요.
+- **사용자의 시스템에서:** 엔지니어에게 [빌드 안내](docs/build.ko.md)에서 시작하도록 요청하세요. 관측에는 관측 대상 시스템에 상주하는 소프트웨어가 필요 없지만, 일부 경로에는 권한이나 JDK가 필요합니다. [데이터와 운영](#데이터와-운영)을 보세요.
 
 ## 배경
 
@@ -153,4 +153,4 @@ pqcota는 **1.0 이전**입니다(현재 릴리스: v0.10.2). 관측과 생성�
 
 ## 라이선스와 더 보기
 
-Apache-2.0, [LICENSE](LICENSE)를 보세요. 의존성 라이선스는 [라이선스 안내](docs/licensing.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.md) · [기여](CONTRIBUTING.md) · [호환성 정책](docs/compatibility.md) · [플랫폼 구조도](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트, 개발자 문서, 빌드 안내 등은 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.
+Apache-2.0, [LICENSE](LICENSE)를 보세요. 의존성 라이선스는 [라이선스 안내](docs/licensing.ko.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.ko.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.ko.md) · [기여](CONTRIBUTING.md) · [호환성 정책](docs/compatibility.ko.md) · [플랫폼 구조도](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트, 기여 안내, 제3자 고지는 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.

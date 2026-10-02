@@ -3,3 +3,10 @@ pqcota	docs/pqc-migration-primer.ko.md	users/first-migration.md
 pqcota	docs/faq.ko.md	users/faq.md
 pqcota	docs/reporting-guide.ko.md	users/reporting-guide.md
 pqcota	demo/README.ko.md	demo/index.md
+pqcota	docs/developers.ko.md	developers/index.md
+pqcota	docs/build.ko.md	developers/build.md
+pqcota	docs/environment-variables.ko.md	developers/environment-variables.md
+pqcota	docs/change-a-contract.ko.md	developers/change-a-contract.md
+pqcota	docs/checks-and-gates.ko.md	developers/checks-and-gates.md
+pqcota	docs/compatibility.ko.md	developers/compatibility.md
+pqcota	docs/licensing.ko.md	developers/licensing.md
