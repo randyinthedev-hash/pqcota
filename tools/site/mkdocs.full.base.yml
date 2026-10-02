@@ -2,6 +2,10 @@ site_name: pqcota
 docs_dir: docs
 theme:
   name: material
+  logo: assets/brand/mark-header.svg     # 머리의 앰블럼. 머리가 늘 밝으므로 다크 모드 판이 없는 것을 쓴다
+  favicon: assets/brand/favicon.svg
+  palette:
+    primary: white                       # 앰블럼 색(청록·강조색)이 머리 바탕에 묻히지 않게
   font: false
   features:
     - navigation.sections

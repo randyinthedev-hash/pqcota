@@ -14,7 +14,11 @@ PAGES=${PAGES:-$S/pages.txt}
 # 어느 릴리스 기준인지 사이트에 적는다. 태그(v로 시작)가 아니면 릴리스가 아닌 빌드로 적는다.
 if [[ "$REF" =~ ^v[0-9] ]]; then LABEL="pqcota $REF"; NOTE="This documentation matches release $REF. The development version is on GitHub (main)."
 else LABEL="pqcota (unreleased: $REF)"; NOTE="This documentation was built from $REF, not from a release."; fi
+LAND=${LANDING_ROOT:-$WS/pqcota}
+# 문서 사이트 머리의 앰블럼과 파비콘(mkdocs 설정의 theme.logo·favicon). 문서 트리 안에 있어야 테마가 찾는다.
+brand() { mkdir -p "$1/docs/assets/brand" && cp "$LAND/docs/images/mark-header.svg" "$LAND/docs/images/favicon.svg" "$1/docs/assets/brand/"; }
 python "$S/assemble.py" "$WS" "$W" --home overview.md --pages "$PAGES" --ref "$REF" --site-prefix /pqcota > "$W/assemble.txt"
+brand "$W"
 ( cd "$W"
   cat "$S/mkdocs.full.base.yml" nav.yml > mkdocs.yml
   sed -i "s#^site_name:.*#site_name: \"$LABEL\"\nsite_url: https://$ORG.github.io/pqcota/\ncopyright: \"$NOTE\"#" mkdocs.yml
@@ -32,6 +36,7 @@ if [ -n "$KO_FILES" ]; then
   else KLABEL="pqcota (unreleased: $REF)"; KNOTE="이 문서는 릴리스가 아니라 $REF에서 만들었습니다. 번역하지 않은 문서는 영문입니다."; fi
   WK=$(mktemp -d)
   python "$S/assemble.py" "$WS" "$WK" --lang ko --home overview.md --pages "$PAGES_KO" --ref "$REF" --site-prefix /pqcota > "$WK/assemble.txt"
+  brand "$WK"
   ( cd "$WK"
     cat "$S/mkdocs.ko.base.yml" nav.yml > mkdocs.yml
     sed -i "s#^site_name:.*#site_name: \"$KLABEL\"\nsite_url: https://$ORG.github.io/pqcota/ko/\ncopyright: \"$KNOTE\"#" mkdocs.yml
@@ -50,7 +55,6 @@ fi
 # 루트 index.html과 구조도는 손으로 쓴 쪽이 맡는다. 생성물과 겹치면 멈춘다.
 test ! -e "$OUT/index.html" || { echo "생성된 사이트가 루트 index.html을 만들었다. 충돌"; exit 1; }
 test ! -e "$OUT/architectures" || { echo "생성된 사이트가 architectures/를 만들었다. 충돌"; exit 1; }
-LAND=${LANDING_ROOT:-$WS/pqcota}
 cp "$LAND/docs/index.html" "$OUT/index.html"
 mkdir -p "$OUT/architectures" && cp "$LAND/docs/architectures/platform-structure.html" "$OUT/architectures/"
 # 랜딩의 그림(docs/images/)도 손으로 쓴 쪽이 맡는다. README가 같은 그림을 쓰지만 그쪽은 assets/ 아래로 따로 복사된다.
