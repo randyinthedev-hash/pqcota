@@ -1,3 +1,5 @@
+English · [한국어](README.ko.md)
+
 # scripts/ansible/: discovery orchestration
 
 The Ansible configuration that `demo.sh` drives. The controller (pqcota-ctl) **connects to each target node over SSH → runs the collector → retrieves the result JSON**. It is copied to `/work/ansible` in the controller image at build time.

@@ -1,3 +1,5 @@
+English · [한국어](README.ko.md)
+
 # workloads/: the demo's crypto workloads (what gets scanned and observed)
 
 These are the crypto workloads that are actually **deployed and run** on the nodes. The assets and grades discovery shows **come from here**. To change what the demo shows, edit this folder.

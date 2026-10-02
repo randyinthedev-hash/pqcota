@@ -13,7 +13,7 @@
 
 **시스템이 어떤 암호 알고리즘을 쓰는지 확인하고, 검토하고 적용하고 되돌릴 수 있는 변경으로 양자내성암호 이관을 준비합니다.**
 
-pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람과 그 보고를 받는 사람을 위한 오픈소스 소프트웨어입니다(Apache-2.0). 개발자나 암호 전문가가 아니어도 이 도구가 무엇을 하고 어떤 결과를 제공하는지 이해할 수 있습니다. 이 문서는 [영문 README](README.md)의 한국어판입니다. 입문서, FAQ, 보고 안내, 데모와 개발자 문서(빌드·환경변수·계약 변경·점검·호환성·라이선스)는 한국어판이 있으며 이 리포의 [`docs/`](docs/)에서 읽을 수 있습니다(**온라인 사이트에는 아직 반영되지 않았고** 다음 릴리스에서 반영됩니다), 각 단계 리포의 상세 문서는 아직 영문입니다.
+pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람과 그 보고를 받는 사람을 위한 오픈소스 소프트웨어입니다(Apache-2.0). 개발자나 암호 전문가가 아니어도 이 도구가 무엇을 하고 어떤 결과를 제공하는지 이해할 수 있습니다. 이 문서는 [영문 README](README.md)의 한국어판입니다. 입문서, FAQ, 보고 안내, 데모, 개발자 문서, 기여·보안·행동 강령 안내와 각 단계 리포의 상세 문서는 한국어판이 있습니다. 릴리스 노트와 제3자 고지는 영문입니다. 개발자 문서와 단계 리포 문서의 한국어판은 GitHub에서 읽을 수 있으며, **온라인 사이트에는 아직 반영되지 않았고** 다음 릴리스에서 반영됩니다.
 
 > **한마디로:** pqcota는 접근할 수 있는 시스템의 암호 자산과 연결 결과를 관측하고, 그것이 어떻게 바뀌는지 이력으로 남깁니다. *사용자가* 무엇을 바꿀지 정하고 나면 그 변경을 수행하고 다시 되돌리는, 검토할 수 있는 파일을 생성합니다.
 
@@ -28,7 +28,7 @@ pqcota는 조직 안에서 양자내성암호(PQC) 이관을 진행하는 사람
 | **이관 보고를 받는 관리자나 사업 책임자** | [제공하는 결과](#제공하는-결과), [결과 읽는 법](#결과-읽는-법), [pqcota가 하지 않는 일](#pqcota가-하지-않는-일), 그리고 [보고 안내](docs/reporting-guide.ko.md) |
 | **이관을 진행하는 사람** | [세 단계](#세-단계), [지원 범위](#지원-범위), [데이터와 운영](#데이터와-운영), [직접 해 보기](#직접-해-보기), 그리고 [보고 안내](docs/reporting-guide.ko.md) |
 | **PQC가 처음인 사람** | [배경](#배경), 단계별 [첫 이관](docs/pqc-migration-primer.ko.md), 그다음 [용어](#용어) |
-| **엔지니어나 보안 설계자** | [개발자 문서](docs/developers.ko.md), [빌드 안내](docs/build.ko.md), [CONTRIBUTING](CONTRIBUTING.md)(모두 영문) |
+| **엔지니어나 보안 설계자** | [개발자 문서](docs/developers.ko.md), [빌드 안내](docs/build.ko.md), [CONTRIBUTING](CONTRIBUTING.ko.md) |
 
 ## 제공하는 결과
 
@@ -153,4 +153,4 @@ pqcota는 **1.0 이전**입니다(현재 릴리스: v0.10.2). 관측과 생성�
 
 ## 라이선스와 더 보기
 
-Apache-2.0, [LICENSE](LICENSE)를 보세요. 의존성 라이선스는 [라이선스 안내](docs/licensing.ko.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.ko.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.ko.md) · [기여](CONTRIBUTING.md) · [호환성 정책](docs/compatibility.ko.md) · [플랫폼 구조도](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트, 기여 안내, 제3자 고지는 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.
+Apache-2.0, [LICENSE](LICENSE)를 보세요. 의존성 라이선스는 [라이선스 안내](docs/licensing.ko.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.ko.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.ko.md) · [기여](CONTRIBUTING.ko.md) · [호환성 정책](docs/compatibility.ko.md) · [플랫폼 구조도](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트와 제3자 고지는 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.

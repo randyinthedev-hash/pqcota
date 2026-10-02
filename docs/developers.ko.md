@@ -7,7 +7,7 @@ pqcota를 빌드하고 확장하고 검토하는 엔지니어를 위한 문서�
 ## 여기서 시작하세요
 
 1. **[빌드 안내](build.ko.md)**가 첫 작업입니다. 새로 클론한 상태에서 동작하는 빌드와 통과하는 점검 실행까지 안내합니다.
-2. **무엇이든 실행해 보세요.** [데모](../demo/README.ko.md)는 컨테이너에서 전체 흐름을 실행합니다(Docker가 필요합니다). [예제](../examples/README.md)(영문)는 Go만으로 명령을 하나씩 실행합니다.
+2. **무엇이든 실행해 보세요.** [데모](../demo/README.ko.md)는 컨테이너에서 전체 흐름을 실행합니다(Docker가 필요합니다). [예제](../examples/README.ko.md)는 Go만으로 명령을 하나씩 실행합니다.
 3. 아래 [단계별 안내](#단계별-안내)에서 **관심 있는 단계를 고르세요.**
 
 ## 리포지터리 다섯 개가 맞물리는 방식
@@ -44,7 +44,7 @@ flowchart LR
 | 리포지터리 | 들어 있는 것 |
 |---|---|
 | [`pqcota`](https://github.com/randyinthedev-hash/pqcota) | `demo/`, `examples/`(안내판), `tools/`(게이트), `test/crossstage/`, 릴리스 워크플로, 이 문서들 |
-| [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | protobuf 계약과 커밋된 생성 Go 코드(`gen/`), `pkg/kernel`(레지스트리, 상태, 범위, 기계 식별자, 서명, 완전성), `pkg/org`, `cmd/pqcota-keygen` |
+| [`pqcota-common`](https://github.com/randyinthedev-hash/pqcota-common) | protobuf 계약과 커밋된 생성 Go 코드(`gen/`), `pkg/kernel`(레지스트리, 상태, 범위, 머신 식별자, 서명, 완전성), `pkg/org`, `cmd/pqcota-keygen` |
 | [`pqcota-inventory`](https://github.com/randyinthedev-hash/pqcota-inventory) | `pkg/inventory`(이력, 정규화, 적재, 결과 읽기, 선언)와 인벤토리 명령 |
 | [`pqcota-discovery`](https://github.com/randyinthedev-hash/pqcota-discovery) | `collectors/`(OpenSSL, JVM, 네트워크, CNG), 관측 명령, 참조용 Ansible 플레이북, `pkg/discovery/procs` |
 | [`pqcota-provisioning`](https://github.com/randyinthedev-hash/pqcota-provisioning) | `pkg/provisioning`(계획 점검, 산출물 생성, 기록)과 전환물 생성 명령 |
@@ -67,7 +67,7 @@ flowchart LR
 - 인벤토리는 결과를 적재하고 정규화해서 이력에 추가합니다.
 - 전환물 생성은 사람이 쓰고 승인한 계획을 읽어 파일을 생성합니다. 데이터베이스(`--dsn`)를 받으면 인벤토리 이력도 조회해 변경 전 상태를 기록합니다. 계획을 만들지 않고, 아무것도 적용하지 않습니다.
 
-관측 대상이 현재의 어휘에 들어맞는다면, 추가 수집기는 코어를 바꾸지 않고 기존 `CollectionResult` 이음매를 쓸 수 있습니다. 새로운 암호 런타임은 계약과 정규화도 바꿔야 할 수 있습니다. [CONTRIBUTING](../CONTRIBUTING.md)(영문)의 "Extending with a new crypto runtime"을 보세요. 계약 변경은 그 메시지를 읽는 모든 단계와 `gen/`의 생성 코드에 영향을 주므로 가장 신중하게 다뤄야 합니다.
+관측 대상이 현재의 어휘에 들어맞는다면, 추가 수집기는 코어를 바꾸지 않고 기존 `CollectionResult` 이음매를 쓸 수 있습니다. 새로운 암호 런타임은 계약과 정규화도 바꿔야 할 수 있습니다. [CONTRIBUTING](../CONTRIBUTING.ko.md)의 "Extending with a new crypto runtime"을 보세요. 계약 변경은 그 메시지를 읽는 모든 단계와 `gen/`의 생성 코드에 영향을 주므로 가장 신중하게 다뤄야 합니다.
 
 ## 단계별 안내
 
@@ -96,9 +96,9 @@ flowchart LR
 ## 점검과 기여
 
 - **작업 점검:** [빌드 안내](build.ko.md#작업-확인)에서 점검을 실행하는 방법을 설명하고, [점검과 게이트](checks-and-gates.ko.md)에서 각 점검이 무엇을 지키는지, 어디서 실행되는지, 통과해도 무엇을 보여 주지 못하는지 설명합니다.
-- **[CONTRIBUTING](../CONTRIBUTING.md)(영문):** 개발 순환, 코딩 지침, 테스트, 변경을 제안하는 방법입니다.
+- **[CONTRIBUTING](../CONTRIBUTING.ko.md):** 개발 순환, 코딩 지침, 테스트, 변경을 제안하는 방법입니다.
 - **리포지터리 공통 관례:** 문서는 영문이고, 코드 주석은 한국어이며, 코드가 내보내는 모든 것(출력, 오류, 계약에 실리는 문자열)은 영문입니다. `gen/`의 생성 코드는 커밋되며 계약에서 다시 생성해야만 바뀝니다.
-- **[보안 정책](../SECURITY.md)(영문)**과 **[행동 강령](../CODE_OF_CONDUCT.md)(영문)**.
+- **[보안 정책](../SECURITY.ko.md)**과 **[행동 강령](../CODE_OF_CONDUCT.ko.md)**.
 - **[릴리스 노트](../RELEASE_NOTES.md)(영문)**와 **[라이선스 안내](licensing.ko.md)**, 그리고 [제3자 고지](../THIRD-PARTY-NOTICES.md)(영문).
 
 ## 사용자용 문서

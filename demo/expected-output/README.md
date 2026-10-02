@@ -1,7 +1,9 @@
+English · [한국어](README.ko.md)
+
 # Expected output (sample)
 
 This is the **representative result** you get when you run the demo (`../scripts/up.sh` → `demo.sh`). Check what you will see
-before you run it. (Captured from a fully observed warm run.) The demo has six steps: **access prep → SSH check → discovery → view → topology → inventory → provisioning**.
+before you run it. (Captured from a fully observed warm run.) The demo has seven steps (`0/6` to `6/6`): **access prep → SSH check → discovery → view → topology → inventory → provisioning**.
 The sample below is the capture of the **discovery view** (`3/6`).
 
 | File | Contents |
@@ -32,7 +34,7 @@ What you additionally see in later steps:
   with the reason printed alongside: `socket closed between capture and lookup — short-lived connections are missed(3)`. That happens because all the demo traffic
   is short-lived connections. If you assign one of them with `pqcota-declare-attribution`, it becomes
   `@batch-runner.service(declared)`, and **a cell the observation already caught stays as it was.**
-- **Provisioning (6)**: finalized plan → L2 playbook + rollback record: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
+- **Provisioning (6)**: finalized plan → L2/L3 playbooks + rollback record: `affected apps: /opt/apps/api-gw, /opt/apps/payment-gw` · `before : libssl.so.1.1@1.1.1f`.
 
 ## What can differ when you actually run it (and why)
 

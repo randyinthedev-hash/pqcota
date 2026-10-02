@@ -52,7 +52,7 @@ pqcota 프로그램이 읽는 모든 환경변수를 한곳에 모았습니다. 
 | `PQCOTA_JVM_AGENT` | `pqcota-jvmscan` | `collector.jar` 경로 | 설정하지 않으면 attach하지 않습니다. 설정했고 JVM이 하나 이상 발견되면 각각에 attach합니다. 설정하지 않았을 때는 아래 참고를 보세요 |
 | `JAVA_BIN` | `pqcota-jvmscan` | Java 런처 경로 | 탐침 경로에서만 씁니다. 설정하지 않으면 발견된 JVM의 런처를, 없으면 `PATH`의 `java`를 씁니다 |
 | `JVMSCAN_CP` | `pqcota-jvmscan` | 클래스 경로 | 탐침 경로의 Java 런처에 `--class-path`로 전달합니다. 설정하지 않으면 없음 |
-| `PQCOTA_CLOUD_INSTANCE_ID` | `pqcota-nodescan`, `pqcota-cngscan`(기계 식별자 지문을 통해) | 운영자가 제공하는 클라우드 인스턴스 식별자 | 설정하지 않으면 클라우드 인스턴스 식별자가 지문에 들어가지 않습니다. 앞뒤 공백은 잘라 냅니다. 설정하면 노드가 스스로 정하는 식별자를 도출할 때 가장 먼저 쓰는 입력이며, 기계 id, 하드웨어 UUID, 호스트 이름보다 앞섭니다 |
+| `PQCOTA_CLOUD_INSTANCE_ID` | `pqcota-nodescan`, `pqcota-cngscan`(머신 식별자 지문을 통해) | 운영자가 제공하는 클라우드 인스턴스 식별자 | 설정하지 않으면 클라우드 인스턴스 식별자가 지문에 들어가지 않습니다. 앞뒤 공백은 잘라 냅니다. 설정하면 노드가 스스로 정하는 식별자를 도출할 때 가장 먼저 쓰는 입력이며, 기계 id, 하드웨어 UUID, 호스트 이름보다 앞섭니다 |
 
 **탐침 경로.** `PQCOTA_JVM_AGENT`도 `--pid`도 없으면 `pqcota-jvmscan`은 기본 provider 체인을 읽으려고 자체 Java 런처를 시작하고, JVM이 실행 중이어도 결과를 관측 범위가 제한된 대체 결과(degraded)로 표시합니다. `--pid`만 있고 에이전트가 없으면 그 JVM의 정적 설정을 읽습니다. 권한과 다른 수집기에 대해서는 [자주 묻는 질문](faq.ko.md#실행-중인-시스템에-미치는-영향)과 [관측 명령 참조](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)(영문)를 보세요.
 

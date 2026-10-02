@@ -9,7 +9,16 @@ pqcota	docs/change-a-contract.ko.md	developers/change-a-contract.md
 pqcota	docs/checks-and-gates.ko.md	developers/checks-and-gates.md
 pqcota	docs/compatibility.ko.md	developers/compatibility.md
 pqcota	docs/licensing.ko.md	developers/licensing.md
+pqcota	CODE_OF_CONDUCT.ko.md	project/code_of_conduct.md
+pqcota	CONTRIBUTING.ko.md	project/contributing.md
+pqcota	SECURITY.ko.md	project/security.md
 pqcota	demo/README.ko.md	demo/index.md
+pqcota	demo/expected-output/README.ko.md	demo/expected-output/index.md
+pqcota	demo/recording/README.ko.md	demo/recording/index.md
+pqcota	demo/scripts/ansible/README.ko.md	demo/scripts/ansible/index.md
+pqcota	demo/topology/README.ko.md	demo/topology/index.md
+pqcota	demo/workloads/README.ko.md	demo/workloads/index.md
+pqcota	examples/README.ko.md	examples/index.md
 pqcota-common	README.ko.md	stages/common/index.md
 pqcota-common	cmd/README.ko.md	stages/common/commands.md
 pqcota-common	contracts/README.ko.md	stages/common/contracts.md

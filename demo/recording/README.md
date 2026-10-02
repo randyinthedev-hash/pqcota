@@ -1,3 +1,5 @@
+English · [한국어](README.ko.md)
+
 # Making the demo video
 
 This folder is the source of truth for the demo video. It holds the tools and the text, not the video: everything that is generated goes to `out/`, which git ignores.
@@ -46,7 +48,7 @@ demo/recording/build.py --lang en             # → out/pqcota-demo.en.mp4 and f
 
 ## The record of how it was made
 
-`record.sh` writes `out/clips/PROVENANCE.txt`: the commit of each of the five repositories (and whether it is a release tag and whether the tree was clean), the tool versions, and the recording options. `build.py` adds the caption file's hash, the marker times and the scene times into `pqcota-demo.<lang>.provenance.txt`. The closing card shows the release tag the video was recorded from (`VIDEO_VER`); when the recorded commits are not that tag exactly, the provenance file shows how they differ.
+`record.sh` writes `out/clips/<lang>/PROVENANCE.txt`: the commit of each of the five repositories (and whether it is a release tag and whether the tree was clean), the tool versions, and the recording options. `build.py` adds the caption file's hash, the marker times and the scene times into `pqcota-demo.<lang>.provenance.txt`. The closing card shows the release tag the video was recorded from (`VIDEO_VER`); when the recorded commits are not that tag exactly, the provenance file shows how they differ.
 
 ## Checking a rebuild
 

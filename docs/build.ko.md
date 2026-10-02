@@ -130,4 +130,4 @@ make tools && make generate     # contracts/proto → gen/
 
 ## 다음에 볼 곳
 
-리포지터리 다섯 개가 어떻게 맞물리고 무엇을 읽어야 하는지는 [개발자 문서](developers.ko.md) · 테스트, 게이트, 변경 제안 방법은 [CONTRIBUTING](../CONTRIBUTING.md)(영문) · 컨테이너에서 전체 흐름을 보려면 [데모](../demo/README.ko.md) · 명령 하나씩 Go만으로 해 보려면 [예제](../examples/README.md)(영문).
+리포지터리 다섯 개가 어떻게 맞물리고 무엇을 읽어야 하는지는 [개발자 문서](developers.ko.md) · 테스트, 게이트, 변경 제안 방법은 [CONTRIBUTING](../CONTRIBUTING.ko.md) · 컨테이너에서 전체 흐름을 보려면 [데모](../demo/README.ko.md) · 명령 하나씩 Go만으로 해 보려면 [예제](../examples/README.ko.md).
