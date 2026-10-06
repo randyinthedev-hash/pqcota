@@ -57,7 +57,7 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
   because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). 
 
-- **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c`.
+- **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
 
 ### Not on the roadmap — deliberately
 

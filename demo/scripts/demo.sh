@@ -4,6 +4,10 @@
 set -euo pipefail
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DSN="postgres://postgres:pqcota@pqcota-demo-pg:5432/pqcota"
+# 데모가 쓰고 읽는 조직. 명령들은 PQCOTA_ORG 없이 돌아 기본 조직(default)에 쓰므로, 아래에서 DB를
+# 직접 읽는 SQL도 이 조직으로 좁힌다. 좁히지 않으면 같은 DB에 다른 조직의 행이 있을 때 그쪽
+# 스냅샷 id를 골라 `pqcota-inventory -snapshot`이 「no such snapshot」으로 멈춘다(실제로 그랬다).
+ORG=default
 
 # 조정 지점은 전부 환경변수다. 여기 적어 두는 건 **문서를 읽어야만 있는 줄 아는** 것을 없애기
 # 위해서다 — 특히 선택 단계는 켜지 않으면 존재 자체가 출력에 안 나온다.
@@ -53,8 +57,8 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc \
 echo "   ── generated targets.ini: carries the access key (runtime-only, not persisted) ──"
 docker exec pqcota-ctl bash -lc 'grep -m1 ansible_ssh_private_key_file /work/ansible/targets.ini' | sed 's/^/   /'
 echo "   ── inventory (Postgres) endpoints: no secrets (node_id, name, ip, port only) ──"
-pg -tAc "select '   '||node_id||'  '||(endpoint->>'name')||'  '||(endpoint->>'ip')||':'||(endpoint->>'port') from pqcota_endpoint order by node_id"
-secret_ct=$(pg -tAc "select count(*) from pqcota_endpoint where endpoint::text ~* 'ssh|key|root|id_demo'")
+pg -tAc "select '   '||node_id||'  '||(endpoint->>'name')||'  '||(endpoint->>'ip')||':'||(endpoint->>'port') from pqcota_endpoint where org='$ORG' order by node_id"
+secret_ct=$(pg -tAc "select count(*) from pqcota_endpoint where org='$ORG' and endpoint::text ~* 'ssh|key|root|id_demo'")
 echo "   → traces of access secrets in the endpoints: ${secret_ct} (0 is correct)"
 # CMDB 프로필 선언 임포트(pqcota-profile — CMDB/리뷰어 레인, 관측 아님). 인벤토리 뷰 시각 구분.
 # 프로필·그룹은 토폴로지에서 생성된 것을 쓴다(노드가 가변이므로).
@@ -105,12 +109,12 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
 # 스냅샷은 늘지 않고 관측 기록만 쌓인다 — 저장은 변화 횟수만큼만 자라되 "봤다"는 사실은 남는다.
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' >/dev/null
 # 엣지를 실제로 관측한 노드로 보인다(-snapshot의 핵심이 엣지라, 엣지 0건 노드면 볼 게 없다).
-HNODE=$(pg -tAc "select node_id from pqcota_snapshots
+HNODE=$(pg -tAc "select node_id from pqcota_snapshots where org='$ORG'
   order by jsonb_array_length(coalesce(edges,'[]'::jsonb)) desc, node_id limit 1" | tr -d '[:space:]')
-[ -z "$HNODE" ] && HNODE=$(pg -tAc "select node_id from pqcota_endpoint order by node_id limit 1" | tr -d '[:space:]')
+[ -z "$HNODE" ] && HNODE=$(pg -tAc "select node_id from pqcota_endpoint where org='$ORG' order by node_id limit 1" | tr -d '[:space:]')
 echo "   ── history (pqcota-inventory -history $HNODE): a snapshot only on change; obs counts re-confirmations ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -history '$HNODE'" | sed 's/^/   /'
-PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
+PRE_SNAP=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
 echo "   ── snapshot detail (-snapshot): assets + that snapshot's observed edges (the cumulative view shows totals only) ──"
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot '$PRE_SNAP'" | sed 's/^/   /'
 
@@ -120,7 +124,7 @@ docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -snapshot
 # dst는 **엣지에 찍힌 그대로** 적는다(이 데모에서는 "ip:port" 모양이다) — 화면에서 보이는 값을
 # 그대로 옮기면 되므로, 읽는 사람이 형식을 따로 배울 필요가 없다.
 UNATTR_DST=$(pg -tAc "select e->>'dstAddr' from pqcota_snapshots s, jsonb_array_elements(s.edges) e
-  where s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
+  where s.org='$ORG' and s.id='$PRE_SNAP' and coalesce(e->>'appKey','')='' limit 1" | tr -d '[:space:]')
 if [ -n "$UNATTR_DST" ]; then
   echo "   ── app declaration (pqcota-declare-attribution): a person names the app for edges observation missed ──"
   echo "      target $UNATTR_DST — a short-lived connection; the socket was already closed during the window"
@@ -153,7 +157,7 @@ echo "   ── inventory after exclusion: only what the apps actually use (excl
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-inventory' \
   | grep -E '▸|openssl|jca|excluded by asset scope|totals' | sed 's/^/   /'
 
-POST_SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
+POST_SNAP=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$HNODE' order by seq desc limit 1" | tr -d '[:space:]')
 echo "   ── changes (-diff): before and after the scope. 'removed' means dropped from management, not gone ──"
 if [ -n "$PRE_SNAP" ] && [ -n "$POST_SNAP" ] && [ "$PRE_SNAP" != "$POST_SNAP" ]; then
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -diff '$PRE_SNAP','$POST_SNAP'" \
@@ -170,13 +174,13 @@ echo "▶ 6/6 provisioning — finalized plan → generate L2/L3 playbooks → a
 # 프로비저닝 대상 노드(PNODE) — openssl finding이 있는 노드를 인벤토리에서 고른다(공유 .so로 다중
 # 앱이 붙은 쪽 우선 = 영향 반경이 가장 또렷한 케이스). 없으면 이 단계는 정직히 생략한다(§2.5).
 PNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
-  where f ? 'openssl' order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, s.node_id limit 1" | tr -d '[:space:]')
+  where s.org='$ORG' and f ? 'openssl' order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, s.node_id limit 1" | tr -d '[:space:]')
 if [ -z "$PNODE" ]; then
   echo "   (no node has an openssl finding, so the provisioning walk-through is skipped — add an openssl server to the topology to see it)"
 else
 # 인벤토리에서 실제 finding을 골라 확정 계획을 만든다. 공유 libssl(여러 앱에 걸침) 우선, 없으면 아무 finding.
 pick() { pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
-  where s.seq=(select max(seq) from pqcota_snapshots where node_id='$PNODE') and ($1)
+  where s.org='$ORG' and s.seq=(select max(seq) from pqcota_snapshots where org='$ORG' and node_id='$PNODE') and ($1)
   order by jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb)) desc, f->>'id' limit 1" | tr -d '[:space:]'; }
 FID=$(pick "f->'openssl'->>'lib'='libssl.so.3' and jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
 [ -z "$FID" ] && FID=$(pick "jsonb_array_length(coalesce(f->'appKeys','[]'::jsonb))>=2")
@@ -201,8 +205,8 @@ approve() {
 # 실제로 찾아 레코드에 남긴다 — 아래 pqcota-records 출력에 그것이 보인다.
 # 확정 시각은 적지 않는다 — 판정을 끝낸 계획은 IN_REVIEW로 넘기고, 승인(pqcota-approve)이
 # FINALIZED로 올리며 그때 시각을 찍는다.
-SNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
-RULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
+SNAP=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where org='$ORG' and node_id='$PNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan.json" <<JSON
 {"id":"plan-demo","status":"PLAN_STATUS_IN_REVIEW","scope":"ring-0",
  "rulesetVersion":"$RULESET",
@@ -294,13 +298,13 @@ if [ "${DEMO_REAL_PROVIDER:-0}" = "1" ]; then
 echo
 echo "▶ (optional) real provider check — remediate → re-observe → inventory change (DEMO_REAL_PROVIDER=1)"
 RNODE=$(pg -tAc "select s.node_id from pqcota_snapshots s, jsonb_array_elements(s.findings) f
-  where $BAND order by s.seq desc limit 1" | tr -d '[:space:]')
+  where s.org='$ORG' and $BAND order by s.seq desc limit 1" | tr -d '[:space:]')
 if [ -z "$RNODE" ]; then
   echo "   (no node observed with OpenSSL 3.0-3.4, so this is skipped — that band is where provider injection belongs)"
 else
 RFID=$(pg -tAc "select f->>'id' from pqcota_snapshots s, jsonb_array_elements(s.findings) f
-  where s.node_id='$RNODE' and $BAND order by s.seq desc, f->>'id' limit 1" | tr -d '[:space:]')
-RVER=$(pg -tAc "select distinct (f->'openssl'->>'lib')||' '||(f->'openssl'->>'version') from pqcota_snapshots s, jsonb_array_elements(s.findings) f where f->>'id'='$RFID'" | head -1 | sed 's/^ *//;s/ *$//')
+  where s.org='$ORG' and s.node_id='$RNODE' and $BAND order by s.seq desc, f->>'id' limit 1" | tr -d '[:space:]')
+RVER=$(pg -tAc "select distinct (f->'openssl'->>'lib')||' '||(f->'openssl'->>'version') from pqcota_snapshots s, jsonb_array_elements(s.findings) f where s.org='$ORG' and f->>'id'='$RFID'" | head -1 | sed 's/^ *//;s/ *$//')
 echo "   target: $RNODE ($RVER) · finding $RFID"
 # 기본 토폴로지에서 이 finding은 5단계 스코프가 잡음으로 뺀 것이다(sshd·python이 로드한 libcrypto).
 # 여기서 보려는 것은 "관리할 자산인가"가 아니라 "3.0 런타임에서 도구가 낸 조각이 먹는가"라서 그대로 쓴다.
@@ -318,8 +322,8 @@ docker exec pqcota-ctl bash -lc 'mkdir -p /work/ansible/files'
 docker cp "$GEN/oqsprovider.so" pqcota-ctl:/work/ansible/files/oqsprovider.so >/dev/null
 RSHA=$(docker exec pqcota-ctl bash -lc 'sha256sum /work/ansible/files/oqsprovider.so | cut -d" " -f1' | tr -d '[:space:]')
 
-RSNAP=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
-RRULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RSNAP=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RRULESET=$(pg -tAc "select ruleset_ver from pqcota_snapshots where org='$ORG' and node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec -i pqcota-ctl bash -lc "cat > /work/plan-real.json" <<JSON
 {"id":"plan-demo-real","status":"PLAN_STATUS_IN_REVIEW","scope":"ring-0",
  "rulesetVersion":"$RRULESET",
@@ -358,10 +362,10 @@ else
 fi
 
 echo "   ── after re-observing (discovery again → ingest), does the inventory see this change ──"
-RPRE=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RPRE=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 docker exec pqcota-ctl bash -lc "$ANS-playbook $INV discover.yml" >/dev/null
 docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc 'pqcota-ingest /work/results' | sed 's/^/   /'
-RPOST=$(pg -tAc "select id from pqcota_snapshots where node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
+RPOST=$(pg -tAc "select id from pqcota_snapshots where org='$ORG' and node_id='$RNODE' order by seq desc limit 1" | tr -d '[:space:]')
 if [ -n "$RPRE" ] && [ -n "$RPOST" ] && [ "$RPRE" != "$RPOST" ]; then
   docker exec -e PQCOTA_DSN="$DSN" pqcota-ctl bash -lc "pqcota-inventory -diff '$RPRE','$RPOST'" | sed 's/^/   /'
 else
