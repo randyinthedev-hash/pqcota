@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # 터미널 장면을 녹화한다 — ubuntu-dev(docker·asciinema·agg·ffmpeg가 있는 곳)에서 돌린다.
 #

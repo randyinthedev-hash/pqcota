@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # usage: build.sh <workspace-with-five-repos> <out-site-dir> <ref>
 # 환경변수: PAGES = 고정 쪽 목록 파일(기본은 이 스크립트 옆 pages.txt. 도구와 문서를 다른 커밋에서 받을 때 문서 쪽 것을 준다)

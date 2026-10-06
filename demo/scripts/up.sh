@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # pqcota 디스커버리 데모 — 설치(up): 토폴로지 생성 → 이미지 빌드 → 컨테이너 → SSH 키 → 노드 IP 맵.
 #

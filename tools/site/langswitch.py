@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 """언어 전환 링크를 만든 사이트에 얹는다.
 

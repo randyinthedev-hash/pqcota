@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # pqcota 검증 데모 — 제거(down): 컨테이너·네트워크 정리. --rmi로 이미지까지 삭제.
 set -euo pipefail

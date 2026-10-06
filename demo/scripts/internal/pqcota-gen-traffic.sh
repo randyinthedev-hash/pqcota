@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # 관측 구간을 채울 핸드셰이크를 생성한다. 인자: 대상 목록(타입:host:port).
 #   pqc:node-app:8443   → Go TLS X25519MLKEM768 (🟢)

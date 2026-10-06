@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # pqcota (통합 리포) — 빌드·테스트·게이트
 # 전제: go(go.mod의 go 줄 이상 — 지금은 1.26.4. 빌드는 toolchain 줄의 1.26.6으로 돈다). 형제 리포 넷(pqcota-common·-inventory·-discovery·-provisioning)을

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # 실물 oqsprovider.so를 만들어 표준출력 경로로 놓는다 — 데모의 선택 단계(DEMO_REAL_PROVIDER=1)용.
 #

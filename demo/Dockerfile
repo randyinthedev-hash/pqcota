@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # pqcota 디스커버리 데모 — OSS, Docker만 있으면 된다.
 # ★ 빌드 컨텍스트는 **리포의 부모 디렉터리**다. pqcota와 pqcota-common·-inventory·-discovery·-provisioning을

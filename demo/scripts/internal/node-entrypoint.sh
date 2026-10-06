@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 # 데모 노드 엔트리포인트: sshd + 역할별 서비스(암호 워크로드)를 띄우고 컨테이너를 유지한다.
 # 역할은 환경변수로 지정: PQC_SERVER / SSL_SERVER / JAVA_APP (compose에서 설정).
