@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // 데모용 Java 크립토 워크로드 — 지정된 JCA provider를 등록하고 주기적으로 서명한다.
 // "배포된 Java 앱"을 실제 실행 상태로 두어, pqcota-jvmscan이 JCA provider 체인을 관측하게 한다.
 //

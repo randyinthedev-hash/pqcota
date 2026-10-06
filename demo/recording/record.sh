@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 터미널 장면을 녹화한다 — ubuntu-dev(docker·asciinema·agg·ffmpeg가 있는 곳)에서 돌린다.
 #
 # 전제: ./demo/scripts/up.sh 와 DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh 가 한 번 돌아 있어야 한다

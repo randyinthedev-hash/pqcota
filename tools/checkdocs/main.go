@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command checkdocs — 문서 게이트. md가 아무도 모르는 사이에 낡는 것을 막는다(`make check-docs`, `make` 전체에 포함).
 //
 // 검사하는 것:

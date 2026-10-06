@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command checkgates — **규칙은 있는데 제품이 부르지 않는 게이트**를 막는다.
 //
 // 이 리포는 보장을 함수로 적어 둔다. `provisioning.Executable`은 확정 계획이 실행 근거인지 보고,

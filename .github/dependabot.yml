@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # Dependabot 버전 업데이트.
 #
 # **GitHub Actions만 켠다.** 워크플로가 쓰는 액션(`actions/checkout` 등)은 `go.mod`을 건드리지

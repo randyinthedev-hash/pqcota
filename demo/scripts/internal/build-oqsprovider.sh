@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 실물 oqsprovider.so를 만들어 표준출력 경로로 놓는다 — 데모의 선택 단계(DEMO_REAL_PROVIDER=1)용.
 #
 # 기본 데모는 **빈 파일**을 배치한다. 배포 경로(스테이징·sha256 게이트·롤백)를 보이는 데는

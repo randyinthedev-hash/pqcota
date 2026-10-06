@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 노드에서 네트워크 관측(netcap)과 핸드셰이크 생성을 co-locate 한다 — 순서를 보장해
 # "캡처 시작 ↔ 트래픽" 경쟁을 없앤다. netcap 결과(JSON)를 stdout으로 낸다.
 # usage: pqcota-observe.sh <node> <window-sec> [traffic-target...]

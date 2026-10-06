@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command checkprose — 문서와 도구 출력의 **한국어 문체**를 본다.
 //
 // 규칙은 하나다: **한 번 걷어낸 말이 다시 들어오지 않는다.**

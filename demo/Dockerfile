@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # pqcota 디스커버리 데모 — OSS, Docker만 있으면 된다.
 # ★ 빌드 컨텍스트는 **리포의 부모 디렉터리**다. pqcota와 pqcota-common·-inventory·-discovery·-provisioning을
 #   나란히 클론해 두면(go.mod의 replace가 ../ 를 읽는 배치와 같다) 그 다섯을 컨트롤러 이미지에 담는다.

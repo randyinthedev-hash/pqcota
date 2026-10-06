@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # pqcota (통합 리포) — 빌드·테스트·게이트
 # 전제: go(go.mod의 go 줄 이상 — 지금은 1.26.4. 빌드는 toolchain 줄의 1.26.6으로 돈다). 형제 리포 넷(pqcota-common·-inventory·-discovery·-provisioning)을
 # 이 리포와 **나란히** 클론해 둔다. go.mod가 replace로 ../ 를 읽고, 게이트가 그 넷을 함께 잰다.

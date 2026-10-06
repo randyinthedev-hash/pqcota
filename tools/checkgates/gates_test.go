@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 // 검사기 자신을 고정한다. 「실제 호출을 임시로 지워 본다」는 도입 검증이지 회귀 방지가 아니다.

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command checkdeps — **단계 사이의 import 방향**을 막는다.
 //
 // 이 리포는 인벤토리를 허브로 둔다. 디스커버리와 프로비저닝이 인벤토리를 참조하고, 인벤토리는 두

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command checkcollectors — **노드에 올릴 collector 목록이 두 곳에서 어긋나지 않게** 막는다.
 //
 // 같은 목록이 릴리스 워크플로와 참조 플레이북 양쪽에 있다:

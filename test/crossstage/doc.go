@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package crossstage — 여러 단계의 패키지를 함께 import하는 통합 테스트만 두는 자리.
 //
 // 어느 한 단계의 소유가 아닌 테스트(예: collector와 선언 임포터가 낸 결과의 계약 불변식, 저장소 구현체

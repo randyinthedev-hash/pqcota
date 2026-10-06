@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # record-take.sh의 화면 설명 문구(영어, 기준). %s는 printf 인자 자리다. 언어를 더하려면 이 파일을 복사해 번역한다.
 
 M_obs_static_say='statically — the provider list registered in java.security'

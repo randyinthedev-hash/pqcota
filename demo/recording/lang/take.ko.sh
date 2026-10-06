@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # record-take.sh의 화면 설명 문구(한국어). 영어 파일 take.en.sh가 기준이고 이 파일은 그 번역이다.
 # %s는 printf 인자 자리이므로 영어 파일과 같은 수만큼 있어야 한다.
 

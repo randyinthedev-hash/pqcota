@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # pqcota 데모 — 접근 준비(hosts→Ansible·엔드포인트) → 디스커버리 → 중앙 인벤토리(엔드포인트·
 # 프로필·앱 표시) → 프로비저닝 생성(플레이북 + before/롤백 레코드). 전부 이 리포 범위.
 set -euo pipefail

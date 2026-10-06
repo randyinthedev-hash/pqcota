@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 이 노드의 고전 TLS 서비스(s_server) 기동·정지 — **환경이 가진 운영 지식**을 한 곳에 둔다.
 # 엔트리포인트도, 프로비저닝 계획의 activation 훅도 같은 이 스크립트를 호출한다: 도구는 재시작
 # 방법을 추측하지 않고(§2.5), 계획의 activation.restart가 이 스크립트를 가리킨다.

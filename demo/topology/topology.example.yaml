@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 데모 토폴로지 — 이 파일이 데모가 세우는 레거시 환경 전부를 정의한다.
 #
 # up.sh가 이 샘플을 topology.yaml로 복사해 돌린다(복사본은 git이 무시). **편집 없이 그대로 동작**하고,

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 package sign
 
 // GATE: 보류 — 환경변수 형식이 바뀌어야 한다(검토 중인 설계 §8)

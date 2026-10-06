@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 """영상 조립 — 장면 표(SCENES)와 언어별 파일(lang/<lang>.json)에서 영상과 자막을 함께 만든다.
 
 장면 이름과 순서, 배속, 정지 프레임을 찍을 자리는 여기(공통)에 있다. 정지 화면과 정지 시간, 자막 문구와 자리는

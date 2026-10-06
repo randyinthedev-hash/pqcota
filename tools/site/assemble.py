@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 """Spike: assemble one documentation tree from the five pqcota repositories.
 
 usage: assemble.py <workspace-root> <out-dir> [--ref main] [--hugo] [--home index.md] [--pages FILE | --write-pages FILE]

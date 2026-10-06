@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 package fixture
 
 // 검사기 fixture. 실제 적재 명령이 그랬듯 자기 문자열을 넘긴다.

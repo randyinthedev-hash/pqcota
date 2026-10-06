@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command topogen — demo/topology/topology.yaml → 데모 산출물 생성기.
 //
 // 한 명세로 네 산출물을 낸다(데모가 네 곳에 하드코딩하던 것):

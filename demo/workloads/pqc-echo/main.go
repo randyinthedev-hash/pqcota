@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command pqc-echo — 데모용 PQC TLS 트래픽 생성기(🟢 엣지).
 // Go의 crypto/tls는 X25519MLKEM768 하이브리드를 협상하므로, 이 서버↔클라이언트 핸드셰이크를
 // network-collector가 관측하면 실제 PQC 등급 엣지가 토폴로지에 뜬다.

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # 카드(정지 화면)를 캡처하고 도입·마무리 클립을 만든다 — 헤드리스 Chrome과 ffmpeg가 있는 곳에서 돌린다.
 #
 # 쓰는 법:  VIDEO_VER=v0.10.1 [VIDEO_DATE="Oct 2026"] demo/recording/cards.sh [out-dir]

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 name: release
 
 # 태그를 밀면 노드에 올릴 정적 바이너리를 만들어 릴리스에 붙인다.

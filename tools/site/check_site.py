@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 """Spike: check a built static site without trusting the generator's own warnings.
 usage: check_site.py <site-dir>
 For every <a href> in every page: external links are counted; internal links must resolve to an existing page,
