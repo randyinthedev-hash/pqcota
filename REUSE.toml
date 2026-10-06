@@ -11,7 +11,8 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 randyinthedev"
 SPDX-License-Identifier = "Apache-2.0"
 
-# 이미지 자산: 작성자의 진술에 따르면 AI로 생성했다(2026-10-06). 라이선스는 리포와 같다.
+# 이미지 자산: 작성자의 진술(2026-10-06)에 따르면 Claude(Anthropic)로 생성했고, 외부 원본 이미지는 쓰지 않았다.
+# 라이선스는 리포와 같다.
 [[annotations]]
 path = ["docs/images/**", "demo/expected-output/topology.svg"]
 precedence = "closest"
