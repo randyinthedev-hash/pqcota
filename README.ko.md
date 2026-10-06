@@ -161,4 +161,6 @@ pqcota는 **1.0 이전**입니다(현재 릴리스: v0.10.3). 관측과 생성�
 
 ## 라이선스와 더 보기
 
-Apache-2.0, [LICENSE](LICENSE)를 보세요. 의존성 라이선스는 [라이선스 안내](docs/licensing.ko.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.ko.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.ko.md) · [기여](CONTRIBUTING.ko.md) · [호환성 정책](docs/compatibility.ko.md) · [구조와 흐름](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트와 제3자 고지는 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.
+Copyright 2026 Great Honor <randyinthedev@gmail.com>. 라이선스는 [Apache License 2.0](LICENSE)(영문)이며, 저자 이름은 [AUTHORS](AUTHORS)에 설명되어 있습니다.
+
+의존성 라이선스는 [라이선스 안내](docs/licensing.ko.md)와 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md)에 있습니다. [릴리스 노트](RELEASE_NOTES.md) · [개발자 문서](docs/developers.ko.md) · [단계별 첫 이관](docs/pqc-migration-primer.ko.md) · [FAQ](docs/faq.ko.md) · [보고 안내](docs/reporting-guide.ko.md) · [빌드 안내](docs/build.ko.md) · [기여](CONTRIBUTING.ko.md) · [호환성 정책](docs/compatibility.ko.md) · [구조와 흐름](https://randyinthedev-hash.github.io/pqcota/architectures/platform-structure.html)(릴리스 노트와 제3자 고지는 영문입니다). pqcota는 다섯 리포 중 하나이며 목록은 CONTRIBUTING에 있습니다. 이름은 *PQC*와 *오케스트라*를 합친 것입니다. pqcota는 한 파트를 연주하고, 지휘자는 사용자입니다.
