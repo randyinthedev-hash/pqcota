@@ -54,7 +54,7 @@ jobs:
           git clone -q "https://github.com/$ORG/pqcota.git" tools-src
           git -C tools-src checkout -q --detach "$TOOLS"
           git -C tools-src rev-parse HEAD
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - name: 도구 설치 (고정 목록과 같아야 한다)
         run: |
