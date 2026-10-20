@@ -39,10 +39,10 @@ Dependencies **compiled and linked** into the static Go binaries built from this
 | `google.golang.org/grpc` | v1.83.2 | **Apache-2.0** | intake contract transport |
 | `google.golang.org/protobuf` | v1.36.11 | **BSD-3-Clause** | contract serialization (protojson included) |
 | `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260526163538-3dc84a4a5aaa | Apache-2.0 | grpc indirect |
-| `golang.org/x/sys` | v0.47.0 | **BSD-3-Clause** | AF_PACKET (network collector) |
-| `golang.org/x/net` | v0.58.0 | BSD-3-Clause | grpc indirect |
-| `golang.org/x/sync` | v0.22.0 | BSD-3-Clause | indirect |
-| `golang.org/x/text` | v0.41.0 | BSD-3-Clause | indirect |
+| `golang.org/x/sys` | v0.48.0 | **BSD-3-Clause** | AF_PACKET (network collector) |
+| `golang.org/x/net` | v0.60.0 | BSD-3-Clause | grpc indirect |
+| `golang.org/x/sync` | v0.23.0 | BSD-3-Clause | indirect |
+| `golang.org/x/text` | v0.42.0 | BSD-3-Clause | indirect |
 
 `gopkg.in/yaml.v3` (MIT) is not in the list above — it is used only by the demo topology generator and by tests, so it is not linked into the collectors or CLIs.
 
