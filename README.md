@@ -125,7 +125,7 @@ A security or operations team will have more questions than this page answers. S
 
 **Undoing a change.** For each generated change there is a matching removal file. Changes add files instead of overwriting existing ones, so removal deletes what pqcota added; where a plan defines activation steps (a restart, for example) the removal runs the plan's deactivation steps first. This is not a restore of a previous deployment: if the same paths were deployed to twice, removal deletes the files and does not bring back the earlier version. A change that cannot be delivered through configuration is marked as a manual step, and so is its undoing.
 
-**Approval.** Generation stops unless the plan is finalized and approved. By default it verifies the approval signatures against the approvers' registered public keys and refuses when it cannot. A command-line option exists to continue without verifying; using it prints a warning that it was your choice.
+**Approval.** Generation stops unless the plan is finalized and approved. By default it verifies the approval signatures against the approvers' registered public keys and refuses when it cannot. When no approver keys are registered, a command-line option lets generation continue unverified and prints a warning that it was your choice. With keys registered, a signature that does not check is refused either way.
 
 **History.** The inventory records changes by adding new records, and its normal commands never edit an old one. One command, `pqcota-prune`, cuts old history you no longer want to keep, and it records that it did. This describes the tool's behavior. It is not tamper-proofing against someone with administrator access to the database.
 

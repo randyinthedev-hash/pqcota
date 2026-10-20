@@ -68,7 +68,7 @@ This is the part of a report that most often gets left out, and the part a caref
 A change is generated only from a plan that is finalized and carries an approval signature. What you can report:
 
 - **The plan was finalized and approved, and the approval was verified.** By default the generator checks the signatures against the approvers' registered public keys and refuses when it cannot. State which approvers' keys were registered.
-- **Say if verification or completeness was waived.** Two command-line options let generation continue: `--allow-unverified-approvals` (continue without verifying signatures) and `--allow-incomplete` (accept output that has blanks). Each prints a warning on standard error saying it was a choice. If either was used, the report should say so.
+- **Say if verification or completeness was waived.** Two command-line options let generation continue: `--allow-unverified-approvals` (continue when there is no registered key to verify with) and `--allow-incomplete` (accept output that has blanks). Each prints a warning on standard error saying it was a choice. If either was used, the report should say so.
 - **An exit code is not a certificate.** Exit 0 means the command did not fail. With `--allow-incomplete` it also means blanks were passed over, and the only trace is a warning on standard error. Exit 3 means the output has blanks. Exit 1 means the command stopped: the plan was refused (not finalized, no approval, an approval that cannot be verified), or a database connection, lookup or record write failed, and in that case the playbook may already have been written to standard output. Exit 2 means a usage or input error. Keep the standard error text, the options that were used, the generated files and whether the record was saved, and report from those, not from the exit code alone.
 - **What pqcota does not manage.** Who reviews a plan, in what order, and who holds the approver keys belong to your organization's process. A signature shows that a holder of a registered key approved this plan; it does not show that your process was followed.
 
@@ -78,7 +78,7 @@ A change is generated only from a plan that is finalized and carries an approval
 
 - **`STAGED` means the generator recorded the change. It does not mean anything was placed on a node.** The generator does not connect to nodes. Keep two lines in a report: *generated and recorded* (from pqcota) and *applied* (date and result, from your deployment tool's log only).
 - **Records exist only if the generator was given a database** (`--dsn`). Without one, the before state is not captured and nothing is saved.
-- **The recorded "before" is the state the inventory had observed**, such as module and version. It is not a backup, and it does not hold the full configuration or the provider chain of the system.
+- **The recorded "before" is the state the inventory had observed.** The record stores the observed modules and, for Java, the observed provider chain; `pqcota-records` prints the modules only. It is not a backup, and it does not hold the system's configuration.
 - Each generated change has a matching removal file. Removal deletes what the plan staged. It is not a restore of an earlier deployment, and a change that cannot be delivered through configuration is marked as a manual step, so its undoing is manual too.
 
 ## 7. Confirming a change, and its limits

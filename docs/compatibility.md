@@ -15,7 +15,7 @@ Compatibility is not one thing but **five faces**. Without splitting them, "comp
 | ② Signature | the signature on an old result becomes invalid | `TestCanonicalCoversAllFields` |
 | ③ Go API | consumer code no longer compiles | the §3 rules below |
 | ④ DB schema | new code fails on an old DB | idempotent DDL + §4 |
-| ⑤ Mixed versions | an old **binary** writes wrongly into a new DB | §5: **writes without an organization are refused** |
+| ⑤ Mixed versions | an old **binary** writes wrongly into a new DB | §5: **after the optional DROP DEFAULT, writes without an organization fail** |
 
 ---
 
@@ -85,11 +85,11 @@ When new code meets an old DB, it catches up on the spot.
 a `DO $$ ... $$` block that looks in `pg_index` at **how many columns the PK has now** and runs conditionally.
 Running it twice must give the same result. Add it only after running it twice against a real Postgres.
 
-**Automatic schema creation is on by default. `PQCOTA_AUTO_DDL=0` turns it off, and with it off a missing schema stops with an error.** A constructor that
+**Automatic schema creation is on by default. `PQCOTA_AUTO_DDL=0` turns it off for the history schema, and with it off a missing history schema stops with an error.** A constructor that
 runs `CREATE TABLE` without telling anyone is convenient, but when it points at the wrong place, **a new empty table is created and written to.** The data then looks
-as if it vanished. So there is a way to turn it off, and with it off the code checks instead of creating.
+as if it vanished. So there is a way to turn it off, and with it off the code checks instead of creating. The metadata and provisioning-record tables are still created.
 
-## 5. Mixed versions: refuse writes from an old binary that does not know the organization
+## 5. Mixed versions: once the default is dropped, writes from an old binary that does not know the organization fail
 
 This is the face that is easiest to miss. If the schema was migrated well, **an old binary can keep writing into the new DB**,
 because `DEFAULT` fills the new column. That looks convenient, and it is the trap: an old binary does not know about

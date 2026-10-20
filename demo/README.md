@@ -64,7 +64,7 @@ The target is not pay-db but a node observed in the inventory as OpenSSL 3.0–3
 | | What you see |
 |---|---|
 | **Capability** | the ML-KEM family in `openssl list -kem-algorithms` goes from **0 to 14**, and `list -providers` shows `oqsprovider … active` |
-| **Re-observation** | discovery is run and ingested again, and `pqcota-inventory -diff` shows that node's change |
+| **Re-observation** | discovery is run and ingested again; `pqcota-inventory -diff` shows no change for that node, because the provider layer is not observed (below) |
 | **Rollback** | undoing in L3→L2 order takes it back to **0** — reversibility measured by the same ruler |
 
 **On re-observation the inventory is unchanged.** That is not an error: OpenSSL has no path yet for observing the provider layer, and the demo prints the reason alongside.
@@ -78,7 +78,7 @@ The target is not pay-db but a node observed in the inventory as OpenSSL 3.0–3
 | **The repo**, `demo/.generated/` | **everything** that lands in the repo — `topology.svg` and `topology.dot` (the observed topology drawing) plus the `docker-compose.yml`, `groups.ini`, `profiles.csv`, and `manifest.env` generated from the topology | `down.sh` deletes the folder (gitignored) |
 | **The controller**, `pqcota-ctl:/work/` | build output `dist/linux-<arch>/` (the three collectors) and `dist/collector.jar` · retrieved observations `results/*.json` · connection `hosts.csv`→`ansible/targets.ini` (0600, secret) · `nodes.json` · `profiles.csv` · the finalized plan `plan.json` · the generated `ansible/playbook{,-l3}.yml` and `rollback{,-l3}.yml` · the module `ansible/files/oqsprovider.so` (an empty file) | disappears with the container |
 | **Postgres**, `pqcota-demo-pg` | the central inventory — snapshots, observation records, endpoints, profiles, provisioning records | `down.sh` deletes the volume too (`-v`) |
-| **The target nodes** | at the apply step, `/opt/pqcota/oqsprovider.so` and `/etc/pqcota/openssl-pqc.cnf`, plus the L3 activation point `/etc/pqcota/service.env` — **removed at the rollback step**, back to the original state | the demo rolls itself back |
+| **The target nodes** | at the apply step, `/opt/pqcota/oqsprovider.so` and `/etc/pqcota/openssl-pqc.cnf`, plus the L3 activation point `/etc/pqcota/service.env` — the files are **removed at the rollback step** (the `/opt/pqcota` and `/etc/pqcota` directories stay) | the demo rolls itself back |
 
 To look inside (before you tear the demo down):
 
@@ -110,9 +110,8 @@ After that it is the same as the demo — hand the collected results to `pqcota-
 > add-on goes **only to nodes that have a JVM**, via `-recon`. Porting it to a real environment is just pointing
 > `collector_bin_dir` at your own build output (per arch).
 >
-> **Two things exist only in the demo** — do not carry them over:
+> **Demo-only, not to carry over to a real environment:**
 > - **Traffic generation** (`traffic=` in `groups.ini`, `pqcota-gen-traffic.sh`): the demo has no handshakes to observe, so it **manufactures them on purpose.** A real environment has real traffic, so you only need to **observe** with `pqcota-netcap <node> <iface> <window>`.
-> - **Group membership** (`[java]` in `groups.ini`): that is just the demo's way of picking which nodes get `pqcota-jvmscan`; use whatever your own inventory does.
 
 **Optional**: the node registration gate (`pqcota-ingest <dir> <scope-file>`) · asset scope (`-scope-assets`) · CMDB profiles (`pqcota-profile`) · Postgres persistence (`PQCOTA_DSN`) · signature verification (`PQCOTA_VERIFY_KEY`). What is required and what is optional: [pqcota-discovery cmd README](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
 

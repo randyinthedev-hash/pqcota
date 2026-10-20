@@ -52,7 +52,7 @@ make breaking AGAINST=main     # compare the branch you are working on against m
 
 The baseline is the latest release tag (currently `v0.10.4` in `pqcota-common`). With no release tag there would be no baseline, and the check would skip and say so in the log.
 
-Also read [the ripple checklist for contract changes](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md) (signature coverage, change detection). The change-detection function `history.ContentHash` lives in `pqcota-inventory`, so a contract change that adds a content field is a change in two repositories.
+Also read [the ripple checklist for contract changes](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md) (signature coverage, change detection). The change-detection fingerprint `history.ContentHashV1` lives in `pqcota-inventory`, so a contract change that adds a content field is a change in two repositories.
 
 ## Repositories
 

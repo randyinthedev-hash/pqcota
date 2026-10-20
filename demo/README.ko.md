@@ -63,7 +63,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | | 보이는 것 |
 |---|---|
 | **능력** | `openssl list -kem-algorithms`의 ML-KEM 계열이 **0에서 14**가 되고, `list -providers`에 `oqsprovider … active`가 보입니다 |
-| **다시 관측** | 관측을 다시 돌려 적재하고, `pqcota-inventory -diff`가 그 노드의 변경을 보여 줍니다 |
+| **다시 관측** | 관측을 다시 돌려 적재합니다. provider 계층은 관측하지 않으므로 `pqcota-inventory -diff`에 그 노드의 변경이 나오지 않습니다(아래) |
 | **되돌림** | L3→L2 순서로 취소하면 **0**으로 돌아갑니다. 같은 잣대로 잰 되돌릴 수 있음입니다 |
 
 **다시 관측해도 인벤토리는 바뀌지 않습니다.** 오류가 아닙니다. OpenSSL에는 아직 provider 계층을 관측할 경로가 없고, 데모가 그 까닭을 함께 출력합니다.
@@ -77,7 +77,7 @@ DEMO_REAL_PROVIDER=1 ./demo/scripts/demo.sh
 | **리포**, `demo/.generated/` | 리포에 놓이는 **모든 것**: `topology.svg`와 `topology.dot`(관측한 토폴로지 그림), 그리고 토폴로지에서 생성한 `docker-compose.yml`, `groups.ini`, `profiles.csv`, `manifest.env` | `down.sh`가 폴더를 지웁니다(git은 무시) |
 | **컨트롤러**, `pqcota-ctl:/work/` | 빌드 산출물 `dist/linux-<arch>/`(수집기 셋)와 `dist/collector.jar`, 가져온 관측 `results/*.json`, 접속 정보 `hosts.csv`→`ansible/targets.ini`(0600, 비밀), `nodes.json`, `profiles.csv`, 확정된 계획 `plan.json`, 생성한 `ansible/playbook{,-l3}.yml`과 `rollback{,-l3}.yml`, 모듈 `ansible/files/oqsprovider.so`(빈 파일) | 컨테이너와 함께 사라집니다 |
 | **Postgres**, `pqcota-demo-pg` | 중앙 인벤토리: 스냅샷, 관측 기록, 엔드포인트, 프로파일, 전환물 생성 기록 | `down.sh`가 볼륨도 지웁니다(`-v`) |
-| **대상 노드** | 적용 단계에서 `/opt/pqcota/oqsprovider.so`와 `/etc/pqcota/openssl-pqc.cnf`, 그리고 L3 활성화 지점 `/etc/pqcota/service.env`. **되돌림 단계에서 제거되어** 원래 상태로 돌아갑니다 | 데모가 스스로 되돌립니다 |
+| **대상 노드** | 적용 단계에서 `/opt/pqcota/oqsprovider.so`와 `/etc/pqcota/openssl-pqc.cnf`, 그리고 L3 활성화 지점 `/etc/pqcota/service.env`. **되돌림 단계에서** 그 파일들을 지웁니다(`/opt/pqcota`·`/etc/pqcota` 디렉터리는 남습니다) | 데모가 스스로 되돌립니다 |
 
 안을 들여다보려면(데모를 내리기 전에):
 
@@ -109,9 +109,8 @@ docker exec pqcota-demo-pg psql -U postgres -d pqcota -c '\dt'  # the inventory 
 > 추가 구성요소는 `-recon`으로 **JVM이 있는 노드에만** 갑니다. 실제 환경으로 옮기려면 `collector_bin_dir`이
 > 사용자의 빌드 산출물(아키텍처별)을 가리키게 하기만 하면 됩니다.
 >
-> **데모에만 있는 것이 둘 있으니** 가져가지 마세요.
+> **실환경으로 가져가지 않을 데모 전용 요소:**
 > - **트래픽 생성**(`groups.ini`의 `traffic=`, `pqcota-gen-traffic.sh`): 데모에는 관측할 핸드셰이크가 없어서 **일부러 만들어 냅니다.** 실제 환경에는 실제 트래픽이 있으므로 `pqcota-netcap <node> <iface> <window>`로 **관측**하기만 하면 됩니다.
-> - **그룹 소속**(`groups.ini`의 `[java]`): 어느 노드에 `pqcota-jvmscan`을 보낼지 고르는 데모의 방식일 뿐입니다. 사용자의 인벤토리가 하는 방식을 쓰세요.
 
 **선택**: 노드 등록 관문(`pqcota-ingest <dir> <scope-file>`), 자산 범위(`-scope-assets`), CMDB 프로파일(`pqcota-profile`), Postgres 저장(`PQCOTA_DSN`), 서명 검증(`PQCOTA_VERIFY_KEY`). 무엇이 필수이고 무엇이 선택인지는 [pqcota-discovery cmd README](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)(영문)를 보세요.
 

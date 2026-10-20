@@ -106,7 +106,7 @@ You record the decisions in a **plan**, a file that people write. pqcota does no
 
 **Decide (a person):**
 - Who approves, and who holds the approval keys. pqcota checks a signature; your organization's review process is outside it.
-- Whether to use the options that relax checks. `--allow-unverified-approvals` skips signature verification; `--allow-incomplete` lets output with blanks end with exit code 0. If either is used, the report should say so.
+- Whether to use the options that relax checks. `--allow-unverified-approvals` continues without verification when no approver keys are registered; `--allow-incomplete` lets output with blanks end with exit code 0. If either is used, the report should say so.
 - When and where to apply the files. **pqcota does not apply them.** You run them with your own tools, and your tool's log is the record of what was applied and when.
 
 **Keep these straight:**

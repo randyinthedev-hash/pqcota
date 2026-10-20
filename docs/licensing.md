@@ -24,7 +24,7 @@ Copyleft (GPL and friends) exists **only in tools that run as separate processes
 
 **This repo (`pqcota`) is Apache-2.0.** Every third party linked or bundled into the distributed outputs (Go binaries, the Java sidecar) is permissively licensed (the §2 table).
 
-GPL-family tools (CBOMkit and friends) are **neither linked nor executed** — we only receive the CycloneDX files they produce (`pqcota-cbom-ingest`). That is a file exchange, so there is no contagion path → delegated CBOM intake design.
+`pqcota-cbom-ingest` does not run CBOMkit or other GPL-family generators; it only reads the CycloneDX files they produce (delegated CBOM intake design). What that means under those tools' licenses is a separate review (below).
 
 ## 2. Runtime dependencies linked into the build output (Go)
 
@@ -102,9 +102,9 @@ What enforces those principles is the table below.
 
 | Principle | What enforces it |
 |---|---|
-| Separate process | the intake contract in `contracts/.../collector.proto` — a GPL collector stands behind gRPC/CLI |
+| Separate process | the intake contract in `contracts/.../collector.proto` — a GPL collector, if one is added, would stand behind gRPC/CLI |
 | Standard data only | that contract carries nothing but CycloneDX + Envelope. Core internal types never cross it |
-| Distribution separation | the GPL adapter is a **separate repo** and is not in `go.mod`. No automated license scan runs in CI today, so this is kept by review |
+| Distribution separation | GPL code, if ever used, goes in a **separate repo** and not in `go.mod` (no such repo exists today). No automated license scan runs in CI today, so this is kept by review |
 
 Ansible (GPL-3) and Temurin (GPLv2+CE) in `demo/` likewise run as separate processes outside the same boundary.
 
@@ -113,10 +113,9 @@ Ansible (GPL-3) and Temurin (GPLv2+CE) in `demo/` likewise run as separate proce
 | Category | License | What it contains |
 |---|---|---|
 | **This repo** | **Apache-2.0** | contracts, normalization, inventory, provisioning generation + reference collectors |
-| **GPL adapter** (optional) | GPL-3.0, a separate repo | CipherIQ/CBOMkit subprocess wrappers |
 | **PQC provider libraries** | varies per asset | BouncyCastle (permissive) · BC-FJA (FIPS, separate agreement) — procured by the user |
 
-**The implications are shown at the point of choice.** The collector selection UI uses `CollectorCapabilities.license` to state whether a backend means *"a GPL component installed separately"* or *"the reference = Apache-2.0, included"*.
+**Where the license is stated.** Each collector states its license in `CollectorCapabilities.license` (and `Envelope.collector_license`), so a caller can show whether a backend means *"a GPL component installed separately"* or *"the reference = Apache-2.0, included"*.
 
 ---
 

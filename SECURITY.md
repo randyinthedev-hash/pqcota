@@ -36,7 +36,7 @@ The following in particular are treated as security issues:
 
 - **Access-secret leakage** — connection keys/accounts live only in a runtime-only file, and only endpoints are ingested into the inventory (Postgres); secrets are not persisted. If a secret leaks into a persistent store, logs, or artifacts, that is a vulnerability.
 - **Signing·integrity** — bypassing the ed25519 signature on a collection result (the collector signs it, and `pqcota-ingest` checks it when a verification key is configured) or on a plan approval (`pqcota-approve` signs it, and `pqcota-provision` checks it), or accepting forgery/tampering.
-- **Collector privilege misuse** — actions beyond the packet-observation (`CAP_NET_RAW`) and process-scan privileges, or collecting the observed target's plaintext payloads (we only observe handshakes, without decryption).
+- **Collector privilege misuse** — actions beyond the packet-observation (`CAP_NET_RAW`) and process-scan privileges, or collecting the observed target's plaintext payloads (the capture receives frames into memory and extracts only handshake fields; it does not decrypt or write packets).
 - **Artifact injection** — paths where observed or contract inputs flow malicious content into the generated Ansible playbooks/config.
 
 What is out of scope is discussed together at report time (e.g., operational problems in the environment where the user runs the playbook themselves are the execution side's responsibility, not this tool's).
