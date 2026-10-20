@@ -16,7 +16,7 @@ English · [한국어](licensing.ko.md)
 ## 0. The conclusion in one line
 
 **Every third party linked or bundled into a pqcota product binary is permissively licensed (Apache-2.0 / MIT / BSD-3).**
-Copyleft (GPL and friends) exists **only in tools that run as separate processes** (Ansible, the JDK in the demo environment), and the process boundary blocks contagion (§5). So **this repo's Apache-2.0 distribution carries no copyleft contamination.**
+Copyleft (GPL and friends) exists **only in tools that run as separate processes** (Ansible, the JDK in the demo environment); none of it is linked into or bundled with a pqcota binary (§5). What that means under each tool's license is a separate review, not something this document settles.
 
 ---
 
@@ -46,8 +46,8 @@ Dependencies **compiled and linked** into the static Go binaries built from this
 
 `gopkg.in/yaml.v3` (MIT) is not in the list above — it is used only by the demo topology generator and by tests, so it is not linked into the collectors or CLIs.
 
-**Summary**: **no** copyleft is linked. Apache-2.0, MIT, and BSD-3 are mutually compatible and pose no problem for an Apache-2.0 distribution.
-(BSD-3 and MIT only require preserving the copyright notice → shipping `THIRD-PARTY-NOTICES` with the distribution is recommended.)
+**Summary**: **no** copyleft is linked. Apache-2.0, MIT and BSD-3 are generally treated as compatible with an Apache-2.0 distribution, provided their notices are kept (below).
+(A distribution has to keep the notices and conditions each license requires: for MIT, its copyright and permission notice; for BSD-3-Clause, its copyright notice, conditions and disclaimer, and it limits using contributors' names to endorse a product. This repo collects them in `THIRD-PARTY-NOTICES`; that file name is not itself a requirement.)
 
 ---
 
@@ -68,12 +68,12 @@ Used only for code generation and compilation; **not linked into the resulting b
 
 > The components below run in the discovery demo (`demo/`) over SSH, as subprocesses, or in containers, and are not linked into any pqcota binary.
 
-`demo/` operates through containers and separate executables. Nothing there is **statically or dynamically linked** into a pqcota binary; it all runs beyond an SSH, subprocess, or container process boundary → **even where GPL/copyleft is present, there is no contagion** (the same principle as above).
+`demo/` operates through containers and separate executables. Nothing there is **statically or dynamically linked** into a pqcota binary; it all runs beyond an SSH, subprocess, or container process boundary → GPL/copyleft tools there stay separate programs; what their licenses require is reviewed separately (§5).
 
 | Component | Version | License | Consumption form |
 |---|---|---|---|
-| BouncyCastle `bcprov-jdk18on` | 1.85 | **Bouncy Castle Licence** (MIT X11 family, permissive) | pay-app's JCA provider (a separate JVM). Being permissive, bundling would also be allowed |
-| Eclipse Temurin (OpenJDK) | 21 | **GPLv2 + Classpath Exception** | pay-app's runtime (separate container and process). With the CPE, Java apps are not infected by GPL |
+| BouncyCastle `bcprov-jdk18on` | 1.85 | **Bouncy Castle Licence** (MIT X11 family, permissive) | pay-app's JCA provider (a separate JVM). Permissive; bundling it would mean keeping its notice |
+| Eclipse Temurin (OpenJDK) | 21 | **GPLv2 + Classpath Exception** | pay-app's runtime (separate container and process). GPLv2 with the Classpath Exception applies; how far the exception covers a given use is reviewed separately |
 | OpenSSL | 3.x (Ubuntu) | **Apache-2.0** | TLS for web-gw/pay-db (separate processes) |
 | OpenSSH (server/client) | 9.x | **BSD family** (+ some public domain) | sshd and ssh (Ansible transport, and the subject of SSH edge observation) |
 | Ansible | (distro) | **GPL-3.0-or-later** | a **standalone executable** run on the controller. Not linked with pqcota (an orchestration tool) |
@@ -82,15 +82,15 @@ Used only for code generation and compilation; **not linked into the resulting b
 | `golang:1.26` base image | — | an aggregate (Go = BSD-3 + a Debian base) | builder stage |
 
 > **How the GPL tools (Ansible, Temurin) are treated**: these are separate programs pqcota **invokes**, not link targets.
-> Ansible is the orchestrator that runs playbooks; Temurin is just the runtime on the target node. GPL propagates through
-> "derivation from and linking against a work", so it does not apply to a relationship that is only a process call.
-> When the demo is distributed or redistributed, these tools are **installed by the user** (downloaded at image build), so pqcota does not redistribute them.
+> Ansible is the orchestrator that runs playbooks; Temurin is just the runtime on the target node. Whether a use of them
+> creates obligations under the GPL depends on more than how the programs communicate, so that is left to a separate review.
+> With the build procedure provided today, the user downloads these tools when building the image; pqcota does not ship them. If a built container image is distributed, the redistribution terms of what it contains are checked separately.
 
 ---
 
-## 5. Copyleft isolation — what enforces it
+## 5. Keeping GPL code separate — what enforces it
 
-**GPL copyleft contagion is blocked structurally.** Three principles:
+**GPL code is kept apart from pqcota's code and distributions by structure.** Three principles (technical measures, not a legal conclusion):
 
 1. **Process separation** — a GPL component is invoked as an independent binary, never linked as a library.
 2. **A standard data boundary** — inter-process exchange happens only through CycloneDX CBOM (a standard). Core internal APIs never cross it.
@@ -121,8 +121,8 @@ Ansible (GPL-3) and Temurin (GPLv2+CE) in `demo/` likewise run as separate proce
 
 ## Appendix: consumption forms at a glance
 
-| Consumption form | Copyleft present? | Contagion risk | Examples |
+| Consumption form | Copyleft present? | How it is kept separate | Examples |
 |---|---|---|---|
-| Linked into the build output (§2) | ❌ none | none | pgx (MIT), grpc (Apache), protobuf (BSD) |
-| Build time (§3) | ❌ none | none | buf, protoc-gen-* |
-| Separate processes in the demo (§4) | ✅ yes (Ansible, Temurin) | **blocked by isolation** | Ansible (GPL-3), Temurin (GPLv2+CE) |
+| Linked into the build output (§2) | ❌ none | not applicable | pgx (MIT), grpc (Apache), protobuf (BSD) |
+| Build time (§3) | ❌ none | not applicable | buf, protoc-gen-* |
+| Separate processes in the demo (§4) | ✅ yes (Ansible, Temurin) | separate processes (license terms reviewed separately) | Ansible (GPL-3), Temurin (GPLv2+CE) |
