@@ -25,7 +25,7 @@ pqcota는 **리포지터리 다섯 개**입니다(아래 [리포지터리](#리�
 | **macOS**(amd64·arm64) | ✅ | ✅ | ✅ 크로스 컴파일 |
 | **Windows**(amd64·arm64) | ✅ | POSIX 셸이 필요하므로 **WSL** | ✅ 크로스 컴파일 |
 
-Linux 전용 코드(`/proc`, AF_PACKET, attach)는 `//go:build linux` 뒤에 있고, 다른 플랫폼에는 실행을 거부하는 스텁이 있습니다. 그래서 macOS와 Windows에서는 그 코드가 컴파일에서 빠지므로, 그 코드를 깨뜨려도 호스트 빌드는 통과합니다. `make build`가 **linux/amd64와 windows/amd64**도 크로스 컴파일하는 이유입니다. CNG 수집기를 Windows에서 빌드하고 검증하므로 Windows도 포함합니다.
+Linux 전용 코드(`/proc`, AF_PACKET, attach)는 `//go:build linux` 뒤에 있고, 다른 플랫폼에는 실행을 거부하는 스텁이 있습니다. 그래서 macOS와 Windows에서는 그 코드가 컴파일에서 빠지므로, 그 코드를 깨뜨려도 호스트 빌드는 통과합니다. `make build`가 **linux/amd64와 windows/amd64**도 크로스 컴파일하는 이유입니다. CNG 수집기가 Windows 전용 코드라 Windows도 포함합니다. 교차 컴파일은 빌드가 깨지는 것을 잡고, 실제 실행은 CI가 아니라 Windows 기기에서 손으로 확인했습니다.
 
 ## 개발 순환
 
@@ -71,7 +71,7 @@ make breaking AGAINST=main     # compare the branch you are working on against m
 
 ## 수집기 확장: 이음매는 계약
 
-참조 수집기(openssl·jvm·network)는 관측 방법의 예시 세 가지일 뿐입니다. **관측할 것이 더 있으면 수집기를 추가하세요.** 코어는 건드리지 않습니다. 이음매는 `CollectionResult` 계약 하나입니다(표준 CycloneDX와 `pqcota:` 속성).
+참조 수집기(openssl·jvm·network)는 관측 방법의 예시 세 가지일 뿐입니다. **관측할 것이 더 있으면 수집기를 추가하세요.** 관측 대상이 지금 계약의 어휘에 맞으면 코어는 바뀌지 않습니다. 이음매는 `CollectionResult` 계약 하나입니다(표준 CycloneDX와 `pqcota:` 속성).
 
 - 수집기의 일은 **관측해서 `CollectionResult`를 내는 것**으로 끝납니다. `evidence_strength`·`pqc_readiness` 같은 도출 값은 채우지 **않습니다**. 코어가 계약 입력에서 도출합니다(결과를 다시 계산할 수 있도록 규칙을 한곳에 둡니다).
 - 계약만 맞추면 언어는 자유입니다(참조 수집기부터 Go와 Java를 섞어 씁니다). 도구 고유의 보강 정보는 표준 `properties` 확장 키에 싣습니다([contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.ko.md)).
@@ -96,7 +96,7 @@ make breaking AGAINST=main     # compare the branch you are working on against m
 **정직성을 코드로 강제합니다.** 문서에서만이 아니라 실행 중에도 지켜져야 합니다.
 - **알 수 없음은 1급 값입니다.** 판정할 수 없는 값은 빈칸이 아니라 `*_UNSPECIFIED` 또는 명시적인 "알 수 없음"입니다. 통제 어휘 enum의 `0`은 항상 알 수 없음입니다.
 - **갭은 없음이 아닙니다.** 보지 못한 것과 정책이 제외한 것을 아무 표시 없이 버리지 않습니다. **세고, 돌려주고, 보고합니다**(제외 개수, 완전성 지도, `-diff`의 역순 경고 등).
-- **추측도 판단도 하지 않습니다.** 관측하지 않은 것을 지어내지 않습니다. diff가 "변경 없음"이면 그것이 답입니다.
+- **추측도 판단도 하지 않습니다.** 관측하지 않은 것을 지어내지 않습니다. diff가 변경을 찾지 못하면 "변경 없음"으로 냅니다. 추측한 변경으로 채우지 않습니다.
 
 **도출 값은 원본에서 다시 계산할 수 있어야 합니다.** `evidence_strength` 같은 도출은 수집기가 아니라 코어가 원본(`detection_method`)에서 만들며, 규칙은 재현되도록 한곳(`pkg/inventory/normalize`)에 있습니다. **서명과 정규화 경로에는 벽시계도 난수도 쓰지 않습니다**(같은 입력이면 같은 바이트). 내용 지문은 변동 필드(관측 횟수, `last_seen`)를 제외합니다.
 

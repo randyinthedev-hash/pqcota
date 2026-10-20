@@ -28,7 +28,7 @@ pqcota is **five repositories** (see [Repositories](#repositories) below). Clone
 
 Linux-only code (`/proc`, AF_PACKET, attach) sits behind `//go:build linux`, with a refusing stub on
 other platforms. So on macOS and Windows that code is excluded from compilation and breaking it would
-still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**. Windows is included because the CNG collector is built and verified there.
+still pass a host build — which is why `make build` also cross-compiles **linux/amd64 and windows/amd64**. Windows is included because the CNG collector is Windows-only code; the cross-compile catches build breaks, and running it was checked by hand on a Windows machine, not by CI.
 
 ## Development loop
 
@@ -76,7 +76,7 @@ To **actually run the commands, use the examples** ([signpost](examples/README.m
 
 ## Collector extension — the contract is the seam
 
-The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector** — without touching the core. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
+The reference collectors (openssl·jvm·network) are just three examples of ways to observe. **When there's more to observe, add a collector**; if what it observes fits the current contract vocabulary, the core does not change. The single seam is the `CollectionResult` contract (canonical CycloneDX + `pqcota:` properties).
 
 - A collector's job ends at **observe → emit `CollectionResult`**. It does **not** fill derived values like `evidence_strength`·`pqc_readiness` — the core derives those from the contract input (the rules live in one place so results can be recomputed).
 - Match the contract and the language is free (the references themselves are Go·Java polyglot). Tool-specific enrichment rides on the standard `properties` extension keys ([contracts/README](https://github.com/randyinthedev-hash/pqcota-common/blob/main/contracts/README.md)).
@@ -101,7 +101,7 @@ These repos enforce **honesty and determinism in the code itself**. Below are th
 **Enforce honesty in code** — it must hold at runtime, not just in docs:
 - **unknown is first-class** — an undeterminable value is not a blank but `*_UNSPECIFIED` / an explicit "unknown". A controlled-vocabulary enum's `0` is always unknown.
 - **gap ≠ absence** — never silently drop what wasn't seen or what a policy excluded. **Count it, return it, and report it** (excluded counts, the completeness map, the `-diff` reverse-order warning, etc.).
-- **no guessing or judgment** — don't fabricate what wasn't observed. If a diff is "no change", that *is* the answer.
+- **no guessing or judgment** — don't fabricate what wasn't observed. If a diff finds no change, emit "no change"; do not fill it with a guessed one.
 
 **Derived values must be recomputable from the source.** Derivations like `evidence_strength` are produced by the core from the source (`detection_method`), not by the collector — the rule lives in one place (`pkg/inventory/normalize`) so it reproduces. **No wall-clock or randomness in signing/canonicalization paths** (same input → same bytes). Content fingerprints exclude volatile fields (observation count, `last_seen`).
 

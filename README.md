@@ -49,7 +49,7 @@ pqcota is open-source software (Apache-2.0) for the people who run a post-quantu
 | "What will you change, and how do we undo it?" | For each planned change that can be delivered through configuration: the files that make it, the files that remove it, and, when you give the generator the inventory database (`--dsn`), a record of the system's state before. Changes that cannot be delivered that way are listed as manual steps |
 | "Who approved this?" | Generation requires a plan that carries an approval signature. By default the signature is checked against the approver's registered public key |
 
-The figures describe the systems pqcota was able to observe, in the environments it supports, at the moment it looked. They are evidence for your migration report, not a certification.
+The figures describe the systems pqcota was able to observe, in the environments it supports, at the moment it looked. They are evidence for your migration report; they do not certify compliance or quantum safety.
 
 ## The three stages
 
@@ -97,7 +97,7 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
 - **It does not judge risk or compliance, and it does not score.** There is no risk rating and no pass or fail.
 - **It does not apply changes.** It generates standard Ansible files that you run with your own tools. There is no remote-execution engine.
 - **It does not scan source code.** If your build already produces a cryptographic bill of materials (CBOM, CycloneDX), pqcota can receive it into the same inventory.
-- **It is not a compliance product.** It supplies evidence and certifies nothing.
+- **It is not a compliance product.** It supplies evidence; it does not certify compliance or quantum safety.
 - **It does not manage your review process.** It checks a cryptographic approval signature on the plan. Who reviews, in what order, and who holds the approver keys is your organization's process. Reconciling a declared list of systems (a CMDB) against what was observed is not part of this software either.
 
 ## Supported systems

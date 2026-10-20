@@ -95,8 +95,8 @@ The natural last line of a report is "and we confirmed it worked". Be careful wi
 | Do not write | Because | Write instead |
 |---|---|---|
 | "X% of our systems are quantum-safe" | pqcota grades observed connections, not systems, and does not score | "N of M observed connections negotiated a post-quantum or hybrid algorithm" |
-| "No quantum-vulnerable cryptography remains" | pqcota shows what it observed; gaps and unregistered systems exist | "None was observed on the N systems covered; these systems were not observed: …" |
-| "We are compliant" | pqcota is not a compliance product and certifies nothing | "Evidence attached: …" |
+| "No quantum-vulnerable cryptography remains" | pqcota shows what it observed; gaps and unregistered systems exist | "No classical key exchange was observed on the N connections watched on the M systems covered; these systems were not observed: …" |
+| "We are compliant" | pqcota is not a compliance product and does not certify compliance | "Evidence attached: …" |
 | "All systems were covered" | Registration and exclusion rules shape coverage | State registered, excluded and not-observed counts |
 | "The change was verified" (from a re-observation alone) | The observation may not see the layer that changed | Say what was observed and what could not be |
 | "Nobody can alter the history" | The tool's normal commands do not edit old records, but that is not tamper-proofing against someone with database administrator access. `pqcota-prune` can also cut old history, and it records that it did | "The tool records changes as new entries; access to the database is controlled by …" |
