@@ -75,6 +75,46 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.5 — The published programs are rebuilt with Go 1.26.10 and golang.org/x/net v0.60.0, and `pqcota-provision --dsn` keeps its records in the organization (2026-10-22)
+
+**Goal** — take the vulnerabilities of the Go standard library and of `golang.org/x/net` announced since v0.10.4 out of the published programs, and fix the defects found while preparing the functional test. **No contract changed:** the `.proto` files and the generated code differ from v0.10.4 only in the license header comment. Two programs changed: `pqcota-provision`, in how `--dsn` opens the record store, and `pqcota-netcap`, in the note it prints under `--strict`. Two scripts changed: `examples/provisioning/files/verify-registration.sh` and `demo/scripts/demo.sh`.
+
+**If you run a published program, replace it.** The programs of v0.10.4 were built with Go 1.26.6 and `golang.org/x/net` v0.58.0, and they are not rebuilt. Download the v0.10.5 files, check them against `SHA256SUMS`, and put them where the old ones were. `collector.jar` is Java code and is not a target of this Go fix.
+
+**One release is five tags**, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning` and `pqcota` all carry `v0.10.5`.
+
+### Fixed
+
+- **The published programs contained known vulnerabilities of the Go standard library and of `golang.org/x/net`.** Go 1.26.9 and `golang.org/x/net` v0.60.0 fix them; the advisories were published on 2026-10-08. *Which version it entered in:* not traced. We confirmed it in the files of v0.10.4; the files of earlier releases were not scanned. *What came out wrong:* scanning the 44 executables of v0.10.4 (both Linux architectures and Windows) for the symbols of known vulnerabilities finds 12 advisories in each Linux file and 13 in each Windows file, in `net/http`, `crypto/tls`, `net/textproto`, `html/template` and `os`, some of them also through `golang.org/x/net/http2`. A finding of that kind says the vulnerable code is in the file. It does not say that a path to it exists, and it does not say that anyone can attack the program. A scan of the source finds call paths into seven of them in all five repositories: GO-2026-6603, -6607, -6608, -6611, -6612, -6613 and -6617, in `net/http`, `crypto/tls` and `net/textproto`. We did not assess whether any of them can be reached with what a program is given to read, and the fix does not depend on that.
+- **The build moves to Go 1.26.10, the latest patch release.** Go 1.26.10 (2026-10-19) adds a security fix to `crypto/x509`. The Go vulnerability database had no entry for it when we scanned (database of 2026-10-20 00:20 UTC), so no scan above reports it, and we do not say whether the programs use the affected code.
+- **`pqcota-provision --dsn` opened the record store without the organization.** It opened the history in `PQCOTA_ORG` but the record store in no organization. *Which version it entered in:* v0.2.0, the release that added organizations. *What came out wrong:* in a deployment that uses organizations, the rollback evidence went to the `default` organization and `pqcota-records` did not find it; with `PQCOTA_REQUIRE_ORG=1` this path did not open. It is the same kind of defect as the one fixed in `pqcota-hosts` and `pqcota-profile` in v0.10.1.
+- **`verify-registration.sh` run without arguments failed with no message.** It passed the example plan, which is waiting for approval, to `pqcota-provision` without approving it, and it threw away the error. *Which version it entered in:* v0.8.0, the release in which the example plans became plans that wait for approval. *What came out wrong:* the script ended with exit code 1 and printed nothing. It now creates a key, approves the plan with it and checks the approval with the same key, as `run.sh` does, and it stops with the reason when approval or generation fails.
+- **`pqcota-netcap --strict` said it would exit successfully while exiting 1.** When the capture socket could not be opened, the note on stderr was the same with and without `--strict`, so a `--strict` run ended with exit code 1 while saying "that is why this exits successfully … use --strict to fail instead". *Which version it entered in:* v0.1.0 (then in Korean). *What came out wrong:* two runs with the same output and different exit codes could not be told apart from the screen. The gap record on stdout and the exit codes were right. With `--strict` the last line now reads "--strict: exiting 1".
+- **The example README called the OpenSSL 3.5 config-only output "one line".** It is a configuration snippet wrapped in the `openssl_init` and `ssl_conf` sections. *Which version it entered in:* not traced.
+- **`demo.sh` read the database without the organization.** When the same database held a snapshot of another organization, the demo could pick that snapshot and stop at step 5/6 with "no such snapshot". *Which version it entered in:* v0.2.0, the release that added organizations; the SQL itself dates from v0.1.0.
+- **`sha256sum -c SHA256SUMS` in the release body and the roadmap lacked `--ignore-missing`.** For someone who downloaded one file, it reported every other file as missing and failed. *Which version it entered in:* v0.1.0. The bodies of releases already published are not edited.
+- **Documents corrected.** Sentences that did not match the code and wording that could be read as denying what the program does were rewritten in the five repositories: 35 review items, addressed in the English and Korean documents. *Which version it entered in:* differs per item, not traced.
+- **The license guide stated legal conclusions.** Sentences such as "GPL copyleft contagion is blocked structurally" now state the technical separation, and what needs a separate legal review is listed apart from it, in `pqcota` and `pqcota-common`, English and Korean. *Which version it entered in:* not traced.
+
+### Built
+
+- **Copyright and license notices.** Source files carry an SPDX header, and each repository has `AUTHORS`, `REUSE.toml`, `LICENSES/Apache-2.0.txt` and a copyright line in its README. The repositories follow REUSE 3.3.
+- **Tests.** The approval signature is checked against a registered key; a plan with a valid and an invalid signature is rejected; `PQCOTA_REQUIRE_APPROVAL` does not change the exit code, stdout or stderr; the `--dsn` path runs when `PQCOTA_TEST_DSN` is set.
+- **`go.mod` of each repository now has `toolchain go1.26.10`**, and `golang.org/x/net` is v0.60.0; `x/sys`, `x/sync` and `x/text` rise with it. The `go` line stays at 1.26.4. gRPC stays at 1.83.2 and protobuf at 1.36.11; no advisory is published for them.
+- **The demo image builds with Go 1.26.10**, both the builder stage and the controller.
+
+### How to check a file
+
+`go version -m <file>` prints the Go version and the module versions a program was built with, and `govulncheck -mode=binary <file>` scans it for known vulnerabilities.
+
+### Known limitations (unchanged)
+
+- The files attached to earlier releases are not rebuilt. They stay as they were built.
+- `go install` and `go run` with `@v0.10.5` still fail because of the `replace` lines in `go.mod`; importing a package as a library works. See the [build guide](docs/build.md).
+- The limitations of v0.10.3 about Korean search and the limitations of v0.10.1 about `PQCOTA_AUTO_DDL=0` and a non-positive observation window are unchanged.
+
+---
+
 ## v0.10.4 — The published programs are rebuilt with Go 1.26.6 and gRPC 1.83.2 (2026-10-02)
 
 **Goal** — take the known vulnerabilities of the Go standard library and of gRPC out of the published programs. **No program code and no contract changed.** The commands, the `.proto` files and the generated code are the same as in v0.10.3; the one Go file edited is the documentation check `tools/checkdocs`, which is not shipped. What changed is the toolchain the programs are built with and the version of one library; the documents state the new release number.
