@@ -75,6 +75,51 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.6 — Two installations on one machine stay two assets, and the JCA readiness counts what the providers register (2026-11-??)
+
+**Goal** — fix three defects in how observations are identified and graded, all present since v0.1.0. **The contract changed by one additive field:** `OpensslAxes.path`. **The ruleset is now `pqcota-enrich/v3`**, and some finding ids change with it; read "What changes for a consumer" before upgrading. Programs that changed: `pqcota-jvmscan`, `pqcota-netcap`, `collector.jar`, and every program that normalizes or reads snapshots (`pqcota-ingest`, `pqcota-inventory` and the others built from `pqcota-inventory`).
+
+**Upgrade the five repositories together, and replace the collectors on the nodes.** One release is five tags, as before: `pqcota-common`, `pqcota-inventory`, `pqcota-discovery`, `pqcota-provisioning` and `pqcota` all carry `v0.10.6`. **Back up the database before upgrading** (see below).
+
+### Fixed
+
+- **`pqcota-jvmscan` and `pqcota-netcap` run without a node id attributed the machine to another node.** They used `host://local` instead of the self-id derived from the machine fingerprint, as `pqcota-nodescan` and `pqcota-cngscan` do, and they did not attach the fingerprint to the result. *Which version it entered in:* v0.1.0. *What came out wrong:* on a machine observed this way, the JVM and network results landed under `host://local` while the OpenSSL results landed under the machine's own id, and the ingest's node-id duplicate and collision check skipped those results because they carried no fingerprint. Runs that pass a node id, which the Ansible playbook and the demo do, were not affected. The rule now lives in one place for both collectors.
+- **Two OpenSSL libraries with the same file name on one node became one asset.** The finding id was built from the node, the name, the runtime and the fork, not the path, so a system `libssl.so.3` and a `libssl.so.3` bundled with an application got the same id and normalization kept one of them. *Which version it entered in:* v0.1.0. *What came out wrong:* the inventory showed one installation where there were two, and the completeness note gave the cause as "the collectors disagree". The id now includes the library path when the input has one. When one collector reports two different contents for one id, the note now says so without naming a cause.
+- **The JCA readiness counted JDK providers by name.** The registry matched `SunJCE` and `SunEC` by name and credited both with ML-KEM and ML-DSA. `SunEC` serves neither in any version; ML-KEM is served by `SunJCE` and ML-DSA by `SUN`, and only in JDK builds that register them. *Which version it entered in:* v0.1.0. *What came out wrong:* a JVM that registers no ML-KEM service, for example Eclipse Temurin 21.0.11, was graded `provider-augmented (SLH-DSA gap)`. `provider-augmented (all standard algorithms)` did not check ML-DSA.
+
+### What changes for a consumer
+
+- **The ruleset is `pqcota-enrich/v3`, and the id of an OpenSSL finding that has a path changes.** Comparing a v2 snapshot with a v3 snapshot can therefore show **removed** and **added** entries that come from the change of identity rule. Do not read them alone as an installation removed or added; a real installation change may have happened in the same period too. Comparing new snapshots one after another, the effect shows once, at the point where the ruleset changed. Comparing against an old v2 baseline, it keeps showing. `pqcota-inventory -diff` warns when the rulesets differ, but that warning does not replace this note.
+- The id of a finding without a path (an external CBOM, a re-normalization of old raw results) does not change.
+- The first ingest after the ruleset changes creates a new snapshot even if nothing changed on the node. It is a trace of the migration, not a change.
+- **An older reader refuses a snapshot that holds the new field.** pqcota stores findings as ProtoJSON, which rejects unknown fields: a v0.10.5 reader fails with `proto: unknown field "path"` on a finding that has a path. A finding without a path still reads.
+  - **Upgrading:** upgrade the five repositories together. If one stays on the old version, its reader refuses the newly ingested snapshots.
+  - **Downgrading:** a database that has stored findings with `path` can fail in a v0.10.5 reader. To downgrade, restore the backup taken before the upgrade. Restoring loses what was recorded after the backup, so keep that separately.
+  - **Downstream:** anything that reads the finding JSON pqcota writes must move to the v0.10.6 contract first.
+  - `DiscardUnknown` is not turned on to avoid this. It would drop unknown fields without a mark, and "read" would no longer mean "read all of it".
+- **Downstream consumers rebuild their joined identifiers**, as on every ruleset change.
+- **The JCA `pqc_readiness` counts the standard PQC services each provider registers.** A JVM whose services were observed and include no standard PQC algorithm is now `none (no standard PQC service observed)`. One that registers ML-KEM and ML-DSA, such as Temurin 21.0.13 (backported) or 24 and later, stays `provider-augmented (SLH-DSA gap)`. Some but not all of the three gives `partial (only … observed)`. `provider-augmented (all standard algorithms)` now needs all three. What is observed is the list of registered services, not that an operation succeeds or that the algorithm is used on the wire. The finding id does not change, only the value, so a comparison with a v2 snapshot shows the JCA finding as **changed** when nothing on the node changed. The snapshot fingerprints (`ContentHash`, `ContentHashV1`) include the readiness and change with it.
+- **Upgrade the collectors with the core.** The service list arrives in a new CBOM property, `pqcota:jca.pqc_services`. Results of the jvm collector and `collector.jar` before v0.10.6, and of the static fallback, do not have it; for them the JDK's built-in providers are not counted, so without Bouncy Castle the readiness is `unknown`. The same holds when re-normalizing old raw results. Replace the `collector.jar` deployed on the nodes as well.
+- **Observation is judged per provider.** If only some providers in a chain were observed and none could be counted, the readiness is `unknown`, not `none`.
+- **Bouncy Castle**, when observed, is counted by the services it registers. When it was not observed, it is counted by the registry as before, without checking its version. The readiness string does not say which of the two it came from.
+- **A consumer that filters on the readiness string** must handle the new values `none (…)` and `partial (…)`, and the fact that a JVM with only the JDK's providers now grades differently by build.
+- Data made with ruleset v3 from `main` before this release may differ in the JCA readiness; v3 appears in a release for the first time here.
+
+### Built
+
+- **Contract:** `OpensslAxes.path`, the absolute path of the library file. Empty means the input did not know the path; it is not filled in by guess.
+- **The jvm collector and `collector.jar`** print, per provider, the registered service names that contain ML-KEM, ML-DSA or SLH-DSA, and the parser carries them as `pqcota:jca.pqc_services`. A provider observed with none is written `SunEC=`; a provider not observed has no key.
+- **Tests.** Node-id rule; two OpenSSL installations with one file name; overlap within one collector; findings with and without a path on one node; readiness for observed, partly observed and unobserved chains. The new tests were confirmed to fail on the code before the fix. The JCA change was also run against real JVMs (Eclipse Temurin 21.0.11, 21.0.12, 21.0.13 and 25.0.5; probe, attach, and attach with Bouncy Castle 1.79 registered at run time).
+
+### Known limitations
+
+- **Two JVMs with the same name still become one asset**: the same JAR started from different directories or with different settings, or the same main class. The note now names the identity rule as the cause. JCA identity is designed in a later release.
+- The readiness was checked on Eclipse Temurin only. Other distributions may have backported at different points and were not checked. Not checked either: Windows, and an end-to-end run through ingest, diff and history.
+- `JcaAxes.jdk_version` is still empty.
+- `go install` and `go run` with `@v0.10.6` still fail because of the `replace` lines in `go.mod`; importing a package as a library works. See the [build guide](docs/build.md).
+
+---
+
 ## v0.10.5 — The published programs are rebuilt with Go 1.26.10 and golang.org/x/net v0.60.0, and `pqcota-provision --dsn` keeps its records in the organization (2026-10-22)
 
 **Goal** — take the vulnerabilities of the Go standard library and of `golang.org/x/net` announced since v0.10.4 out of the published programs, and fix the defects found while preparing the functional test. **No contract changed:** the `.proto` files and the generated code differ from v0.10.4 only in the license header comment. Two programs changed: `pqcota-provision`, in how `--dsn` opens the record store, and `pqcota-netcap`, in the note it prints under `--strict`. Two scripts changed: `examples/provisioning/files/verify-registration.sh` and `demo/scripts/demo.sh`.
