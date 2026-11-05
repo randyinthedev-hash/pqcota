@@ -75,7 +75,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.10.6 — Two installations on one machine stay two assets, and the JCA readiness counts what the providers register (2026-11-??)
+## v0.10.6 — Two installations on one machine stay two assets, and the JCA readiness counts what the providers register (2026-11-05)
 
 **Goal** — fix three defects in how observations are identified and graded, all present since v0.1.0. **The contract changed by one additive field:** `OpensslAxes.path`. **The ruleset is now `pqcota-enrich/v3`**, and some finding ids change with it; read "What changes for a consumer" before upgrading. Programs that changed: `pqcota-jvmscan`, `pqcota-netcap`, `collector.jar`, and every program that normalizes or reads snapshots (`pqcota-ingest`, `pqcota-inventory` and the others built from `pqcota-inventory`).
 
