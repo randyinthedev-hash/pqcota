@@ -109,11 +109,12 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 - **Contract:** `OpensslAxes.path`, the absolute path of the library file. Empty means the input did not know the path; it is not filled in by guess.
 - **The jvm collector and `collector.jar`** print, per provider, the registered service names that contain ML-KEM, ML-DSA or SLH-DSA, and the parser carries them as `pqcota:jca.pqc_services`. A provider observed with none is written `SunEC=`; a provider not observed has no key.
+- **Dependencies: `golang.org/x/net` v0.60.0 → v0.62.0**, and `x/sys` v0.49.0, `x/text` v0.43.0 and `x/sync` v0.24.0 rise with it, in all five repositories. This is a dependency update, not a fix of a vulnerability the programs reach. v0.62.0 fixes two advisories in `golang.org/x/net/html`, GO-2026-6866 and GO-2026-6860. No pqcota program imports that package, and a source scan finds them only at the level of the required module, not in any imported package. The update is made so that the required version no longer carries a known advisory. The Go toolchain stays at 1.26.10, still the latest 1.26 patch; the `go` line stays at 1.26.4.
 - **Tests.** Node-id rule; two OpenSSL installations with one file name; overlap within one collector; findings with and without a path on one node; readiness for observed, partly observed and unobserved chains. The new tests were confirmed to fail on the code before the fix. The JCA change was also run against real JVMs (Eclipse Temurin 21.0.11, 21.0.12, 21.0.13 and 25.0.5; probe, attach, and attach with Bouncy Castle 1.79 registered at run time).
 
 ### Known limitations
 
-- **Two JVMs with the same name still become one asset**: the same JAR started from different directories or with different settings, or the same main class. The note now names the identity rule as the cause. JCA identity is designed in a later release.
+- **Two JVMs with the same name still become one asset**: the same JAR started from different directories or with different settings, or the same main class. When their contents differ, the completeness note says that one collector reported different content for one identity and that the most recent was kept; it does not name a cause. JCA identity is designed in a later release.
 - The readiness was checked on Eclipse Temurin only. Other distributions may have backported at different points and were not checked. Not checked either: Windows, and an end-to-end run through ingest, diff and history.
 - `JcaAxes.jdk_version` is still empty.
 - `go install` and `go run` with `@v0.10.6` still fail because of the `replace` lines in `go.mod`; importing a package as a library works. See the [build guide](docs/build.md).
