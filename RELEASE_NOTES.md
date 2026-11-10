@@ -75,6 +75,33 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.10.7 — A security fix for plan approvals, and nodes with several JVMs can be ingested (2026-11-10)
+
+**Goal** — fix three defects. One is a security defect in plan approvals. **No contract changed** and the ruleset stays `pqcota-enrich/v3`. Programs that changed: `pqcota-approve` and `pqcota-provision` (approval signing and checking), `pqcota-records` (how it prints an empty before state), and `pqcota-jvmscan` (its output format). `collector.jar` did not change.
+
+**Upgrade all five repositories together, as before.** One release is five tags. Replace `pqcota-jvmscan` on the nodes as well.
+
+### Security
+
+- **An approval signature could pass on a different plan.** The canonical form that approvals sign separated fields with a NUL byte and no length, and no field was checked for NUL. So two different plans could have the same canonical form, for example `provider_choice="BC\u0000X"` with `config_artifact="Y"`, and `provider_choice="BC"` with `config_artifact="X\u0000Y"`. *Which version it entered in:* v0.7.0, the release that added approval signatures. *What came out wrong:* reproduced on v0.10.6, an approval made with `pqcota-approve` for one plan was accepted by `pqcota-provision` on the other, and the two plans generated different playbooks. The playbooks were not applied to a node. Now a plan with a NUL character in any string is refused when it is signed, when its approvals are checked, and when it is judged as grounds for provisioning, also with `--allow-unverified-approvals`. When the check fails, no approval on that plan counts as verified.
+- **Plans without a NUL character are not affected.** Their canonical form is byte for byte the same, and their existing approvals stay valid. A plan that contains a NUL character must be corrected and approved again.
+
+### Fixed
+
+- **`pqcota-jvmscan` wrote several results over many lines.** On the attach path it meant to write one result per line, but the JSON encoder turns on multi-line output whenever an indent is set. *Which version it entered in:* v0.1.0. *What came out wrong:* on a node with two or more running JVMs, `pqcota-ingest` could not read the file line by line and refused **the whole ingest request, every node in it** (`refusing to ingest a partial set`); the inventory kept showing the state from before. With one JVM the whole file read as one object, so it did not show. It was not a silent loss: the ingest ended in failure. The ingester's input format did not change.
+- **`pqcota-provision --dsn` recorded the before state of the whole node, not of the action's finding.** *Which version it entered in:* v0.1.0. *What came out wrong:* with several JVMs on a node, the record's `before.provider_chain` was the chains of every JVM joined into one list (reproduced: 25 entries where the action's finding had 13), and `before.modules` held every module on the node. The rollback path in this repository does not use these values; what was wrong is the accuracy of the record. Whether a consumer outside this repository reads them was not checked. Now the before state comes from the action's finding only, looked up in the target node's latest snapshot. If the finding is not there, the before state is left empty and nothing else is put in its place: a warning is printed, the record's note says so, the summary line counts it (`before not captured N`), and `pqcota-records` prints the empty before state as nothing captured. An empty before state is not evidence that the app has no crypto configuration.
+
+### Built
+
+- **Tests.** A plan without NUL keeps the canonical form and the approval that v0.10.6 produced (fixed values); a NUL in each of the 23 string positions of the current contract is refused both when signing and when checking; the reproduced pair is refused, with and without `--allow-unverified-approvals`, and produces no output; the collector's output with several results is read by the ingester, and a damaged line still refuses the whole request; the record captures only the action's finding, and says so when it cannot. The string check walks every string field of the plan, so a new string field is covered; if the canonical form ever takes a value that is not a string, or changes its layout, the check and its tests have to be revisited with it.
+
+### Known limitations
+
+- **Two JVMs with the same name still become one finding.** With the output fixed, nodes with several JVMs now ingest, and the identity defect that the refusal used to hide becomes visible: two JARs with the same file name in different directories, or the same source file started with different settings, become one finding that keeps the most recent result. Reproduced: four JVMs became two findings, and a JVM without Bouncy Castle was not in the inventory. The completeness note says that one collector reported different content for one identity; it does not say which JVM was dropped. JCA identity is designed separately.
+- The other limitations of v0.10.6 are unchanged.
+
+---
+
 ## v0.10.6 — Two installations on one machine stay two assets, and the JCA readiness counts what the providers register (2026-11-05)
 
 **Goal** — fix three defects in how observations are identified and graded, all present since v0.1.0. **The contract changed by one additive field:** `OpensslAxes.path`. **The ruleset is now `pqcota-enrich/v3`**, and some finding ids change with it; read "What changes for a consumer" before upgrading. Programs that changed: `pqcota-jvmscan`, `pqcota-netcap`, `collector.jar`, and every program that normalizes or reads snapshots (`pqcota-ingest`, `pqcota-inventory` and the others built from `pqcota-inventory`).
