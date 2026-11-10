@@ -57,6 +57,8 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
   because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). 
 
+- **Linking approved migration guides to plans (under review · version TBD)** — for a remediation that configuration cannot do (`APP_RECONFIG` and the like), the generated output today says only that the code has to change. The plan is to let an approved plan name a guide by ID, revision and body hash, with the reason it was chosen, and to print that guide with the output; the hash is covered by the approval signature, so a guide changed after approval is noticed. pqcota does not choose the guide: runtime observation does not see what the code uses a key for, so the plan's author does. The first guide is in [`docs/guides/`](docs/guides/jca-doc-key-transport-mlkem/README.md) and can be used on its own today. Pointing at the source lines to change, from an ingested source-analysis CBOM, comes after that.
+
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
 
 ### Not on the roadmap — deliberately
