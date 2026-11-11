@@ -139,6 +139,10 @@ The tools compare the catalog with the hashes in the plan, so a wrong or changed
 - Before this release, `main` changed how a conversion's id is computed. A database that stored source evidence with the ingest CLI from
   before that change keeps those results under the old ids; receiving the same input again adds a result under the new id.
 
+### Built
+
+- **The published programs are built with Go 1.26.11** (the `toolchain` line in `go.mod`). Go 1.26.11 fixes GO-2026-6859 in `net/http`, where an HTTP/1 server could crash on a header race in `MaxBytesReader`. With Go 1.26.10, `govulncheck` reported it in all five repositories.
+
 ### Known limitations
 
 - The guide catalog has one guide, in English. Choosing a guide is the plan author's decision; pqcota does not suggest one.
