@@ -5,10 +5,10 @@ go 1.26.4
 toolchain go1.26.10
 
 require (
-	github.com/randyinthedev-hash/pqcota-common v0.10.7
-	github.com/randyinthedev-hash/pqcota-discovery v0.10.7
-	github.com/randyinthedev-hash/pqcota-inventory v0.10.7
-	github.com/randyinthedev-hash/pqcota-provisioning v0.10.7
+	github.com/randyinthedev-hash/pqcota-common v0.11.0
+	github.com/randyinthedev-hash/pqcota-discovery v0.11.0
+	github.com/randyinthedev-hash/pqcota-inventory v0.11.0
+	github.com/randyinthedev-hash/pqcota-provisioning v0.11.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1

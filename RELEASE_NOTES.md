@@ -27,7 +27,7 @@ the same.
 
 Directional, not fixed. Each version is promoted to a proper section per the rule above once started/completed. The **Windows CNG runtime is introduced in stages** , not all at once.
 
-- **v0.11.0 (planned)** — **CNG provisioning** (moved back three slots because v0.8.0 went to the approval handoff, v0.9.0 to evidence traceability and v0.10.0 to the repository split): **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided.
+- **CNG provisioning (planned · version TBD)** — **substrate generalization first** (moving past the POSIX-file assumption — Windows uses the registry/GPO, which doesn't fit `/opt/pqcota` file staging or file-removal rollback) → `renderCNG`. The generalization is done together with that implementation (no speculative abstraction). Where to draw the seam is still undecided.
 
 - **Observing OpenSSL on Windows (planned · version TBD)** — `pqcota-nodescan` has a single
   implementation today and it reads `/proc`. Run it on Windows and it emits a gap rather than an empty
@@ -57,8 +57,6 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
   because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). 
 
-- **Linking approved migration guides to plans (under review · version TBD)** — for a remediation that configuration cannot do (`APP_RECONFIG` and the like), the generated output today says only that the code has to change. The plan is to let an approved plan name a guide by ID, revision and body hash, with the reason it was chosen, and to print that guide with the output; the hash is covered by the approval signature, so a guide changed after approval is noticed. pqcota does not choose the guide: runtime observation does not see what the code uses a key for, so the plan's author does. The first guide is in [`docs/guides/`](docs/guides/jca-doc-key-transport-mlkem/README.md) and can be used on its own today. Pointing at the source lines to change, from an ingested source-analysis CBOM, comes after that.
-
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
 
 ### Not on the roadmap — deliberately
@@ -74,6 +72,77 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.11.0 — CBOM source evidence and approved migration guides (2026-11-11)
+
+An external CycloneDX CBOM can now be kept as **source evidence**: the crypto items it reports and the source locations it gives, for
+review, without turning it into a runtime snapshot. A plan's action can point at that evidence and at the migration guide its author chose,
+and **the approval signature covers both the source evidence and the chosen guide**: changing either, or moving it to another action,
+invalidates the approval. The generated playbook shows the reported locations and the approved guide.
+
+**Upgrade all five repositories together, as before.** One release is five tags.
+
+### Source evidence
+- `pqcota-cbom-ingest <cbom> [node] --source-evidence [--preset <id>] [--source-map <file>] [--dry-run] [--json]` stores the CBOM as
+  received, the mapping files used, the conversion and a receipt, in one transaction for the organization. No snapshot is created, so the
+  runtime view, the history and the provisioning before-capture do not change. Read it back with the new command `pqcota-source-evidence`
+  (list, detail, `--input`/`--map` export, `--presets`).
+- The standard `evidence.occurrences` are always read. For tools that put locations in `properties`, a mapping file
+  (`pqcota-source-map/v1`) says where to read them; two presets come built in (`cdxgen-dotnet-sourcelocation@1`,
+  `dosai-cyclonedx-location@1`), each checked only against the tool version it names.
+- A location is shown as a **reported location for review**. Its kind (call, declaration, comment) is not supplied, and numbers are
+  turned into 1-based values only when the counting base is known.
+- Limits: the CBOM at most 32 MiB (exit 1 over it), a mapping file at most 256 KiB (exit 2). A mapping you name must convert without
+  errors, or nothing is stored.
+
+### Plans: source evidence and an approved guide on an action
+- `RemediationAction.source_evidence` points at stored evidence (conversion, item, optionally one location, the CBOM's hash). An action
+  based only on source evidence is accepted for `APP_RECONFIG` and `REBUILD` only, and all of its references must resolve before it is
+  approved and again before anything is generated.
+- `RemediationAction.guide` names the guide the author chose, by id, revision and the sha256 of its manifest and body, with the purpose and
+  conditions the author confirmed and which evidence it was chosen for. Guides are compared by hash with a local, versioned catalog
+  (`--guide-dir`; the pqcota catalog is `docs/guides/catalog/`). Nothing is fetched from a URL and another revision is never used instead.
+- `pqcota-approve --review` prints what would be approved, including **the full text of each verified guide body**, without signing.
+  A plan with a guide is signed only when every guide matches the catalog and the evidence it was chosen for resolves.
+- `pqcota-provision` writes the reported locations and the guide into the playbook as comments. **It says `approved guide` only when the
+  run verified the approval signatures**; with `--allow-unverified-approvals` the same guide is shown as named in the plan, not approved.
+
+### Getting the guide catalog
+The controller bundle holds the CLIs only. Take the catalog from the `v0.11.0` source and point `--guide-dir` at it:
+
+```bash
+curl -L https://github.com/randyinthedev-hash/pqcota/archive/refs/tags/v0.11.0.tar.gz | tar -xz pqcota-0.11.0/docs/guides/catalog
+pqcota-approve --review --guide-dir pqcota-0.11.0/docs/guides/catalog plan.json
+```
+
+The tools compare the catalog with the hashes in the plan, so a wrong or changed copy is refused rather than used.
+
+### Compatibility
+- **Plans without the new fields** keep the same canonical form; existing approvals stay valid (frozen by tests).
+- **Plans with the new fields** are refused by the v0.10.7 `pqcota-approve` and `pqcota-provision` at parse time (`unknown field`), before
+  any signature check. A consumer that drops unknown fields fails the signature check instead — but only if it actually verifies the
+  approval signatures.
+- **Records**: `ProvisioningRecord` gains `source_evidence_resolutions` and `guide_resolution`. The v0.10.7 `pqcota-records` fails
+  when the records it lists include a row with `sourceEvidenceResolutions` or `guideResolution`; rows without them still read.
+  **Upgrade the tools that read records from the same database before v0.11.0 writes new records.**
+- **Action ids must be non-empty and unique in the whole plan.** A plan that breaks this is refused at approval and at generation.
+  Before, two actions sharing an id silently dropped the second action's config from the playbook while the run reported success. To fix
+  such a plan: give every action a unique id, check the activation hooks that refer to the config paths built from those ids
+  (`openssl-pqc.<id>.cnf` and the like), and approve the plan again — changing an id changes the canonical form, so the old approval no
+  longer holds.
+- `pqcota-cbom-ingest`: any option now routes to the source evidence path, and an unknown option exits with 2 instead of falling back to
+  writing a snapshot. A file name that starts with `-` needs a path, such as `./-name.json`.
+- `pqcota-approve` now prints a summary of what it signs on stderr.
+- CBOM ingest records the `specVersion` the document declares (1.6 or 1.7); it used to record 1.6 for both.
+- Before this release, `main` changed how a conversion's id is computed. A database that stored source evidence with the ingest CLI from
+  before that change keeps those results under the old ids; receiving the same input again adds a result under the new id.
+
+### Known limitations
+
+- The guide catalog has one guide, in English. Choosing a guide is the plan author's decision; pqcota does not suggest one.
+- The limitations of v0.10.7 are unchanged.
 
 ---
 

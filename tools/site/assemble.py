@@ -39,6 +39,8 @@ def destination(repo, path):
         if path == "README.md": return HOME
         if path in USERS: return USERS[path]
         if path == "docs/developers.md": return "developers/index.md"
+        if path.startswith("docs/guides/") and path.endswith("/README.md"):   # 가이드 본문 하나가 쪽 하나다
+            return "users/guides/" + os.path.basename(os.path.dirname(path)) + ".md"
         if path.startswith("docs/"): return "developers/" + os.path.basename(path)
         if "/" not in path: return "project/" + path.lower()          # CONTRIBUTING, SECURITY, ...
         if path.endswith("/README.md"): return path[:-len("README.md")] + "index.md"   # demo/..., examples/...
@@ -57,6 +59,8 @@ def discover(root, with_release_notes=False, lang="en"):
         files = subprocess.check_output(["git", "-C", os.path.join(root, repo), "ls-files", "*.md"], text=True).split("\n")
         for f in files:
             if not f or (f == "RELEASE_NOTES.md" and not with_release_notes): continue
+            # 판별 카탈로그는 싣지 않는다. 도구가 매니페스트·본문·예제의 원본 바이트를 해시로 대조하므로, 받는 곳은 태그의 소스다
+            if repo == "pqcota" and f.startswith("docs/guides/catalog/"): continue
             if f.endswith(".ko.md") != (lang == "ko"): continue      # 영어 트리는 *.md만, 한국어 트리는 *.ko.md만
             text = open(os.path.join(root, repo, f), encoding="utf-8").read()
             m = re.search(r"^#\s+(.+?)\s*$", text, re.M)
@@ -194,6 +198,7 @@ def order_key(dest):
         if dest == g or dest.startswith(g):
             if g == "developers/" and dest in DEV_ORDER: return (gi, DEV_ORDER.index(dest), dest)
             if g == "users/" and dest in USER_ORDER: return (gi, USER_ORDER.index(dest), dest)
+            if g == "users/" and dest.startswith("users/guides/"): return (gi, len(USER_ORDER), dest)   # 가이드는 사용자 문서 뒤
             return (gi, 0 if dest.endswith("index.md") and dest.count("/") == g.count("/") else 1, dest)
     return (len(GROUPS), 1, dest)
 

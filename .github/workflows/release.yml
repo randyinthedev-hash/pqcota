@@ -147,6 +147,12 @@ jobs:
             echo "정적 링크라 배포판·libc를 가리지 않는다. **커널 3.2 이상**이면 된다. 노드 번들과 컨트롤러"
             echo "번들을 나눈 것은 가는 곳이 다르기 때문이다 — 앞은 관측할 호스트로 반입하고, 뒤는 중앙 한 대에 둔다."
             echo
+            echo "승인 가이드 카탈로그(\`--guide-dir\`)는 컨트롤러 번들에 들어 있지 않다. 이 태그의 소스에서 받는다."
+            echo
+            echo '```bash'
+            echo "curl -L $REPO_URL/archive/refs/tags/$TAG.tar.gz | tar -xz ${GITHUB_REPOSITORY#*/}-${TAG#v}/docs/guides/catalog"
+            echo '```'
+            echo
             echo "### 먼저 돌려보려면"
             echo
             echo "Docker만 있으면 전 범위가 한 번에 돈다 — 관측부터 전환물 생성·적용·되돌림까지."

@@ -2,6 +2,7 @@ pqcota	README.md	overview.md
 pqcota	docs/pqc-migration-primer.md	users/first-migration.md
 pqcota	docs/faq.md	users/faq.md
 pqcota	docs/reporting-guide.md	users/reporting-guide.md
+pqcota	docs/guides/jca-doc-key-transport-mlkem/README.md	users/guides/jca-doc-key-transport-mlkem.md
 pqcota	docs/developers.md	developers/index.md
 pqcota	docs/build.md	developers/build.md
 pqcota	docs/environment-variables.md	developers/environment-variables.md
