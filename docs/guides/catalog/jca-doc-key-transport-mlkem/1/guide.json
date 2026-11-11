@@ -1,0 +1,14 @@
+{
+  "id": "pqcota-guide/jca-doc-key-transport-mlkem",
+  "revision": "1",
+  "title": "Moving document-key transport from RSA-OAEP to ML-KEM (JCA + Bouncy Castle)",
+  "purposes": ["document-key-transport"],
+  "observationLimits": [
+    "Runtime observation sees Bouncy Castle registered and its ML-KEM service. It does not see that document keys travel wrapped under RSA.",
+    "Calls to the Bouncy Castle lightweight API that do not go through JCA are not observed."
+  ],
+  "body": "README.md",
+  "examples": [
+    {"path": "DocKeyExample.java", "sha256": "28ad0e87a6c78865c7b1cf783f71c933c80f5b896a840ee4869ff3a3bbb1123f"}
+  ]
+}
