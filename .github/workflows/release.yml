@@ -16,10 +16,16 @@ on:
 
 permissions:
   contents: write
+  id-token: write      # 출처 증명(아티팩트 증명)의 서명에 쓰는 워크플로 신원
+  attestations: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      # 태그의 모듈로 빌드한다(아래 「replace 빼기」). go.sum은 이 실행 안에서만 채운다(체크섬 DB 대조는 Go 기본 동작).
+      GOFLAGS: -mod=mod
     steps:
       - uses: actions/checkout@v7
         with:
@@ -51,6 +57,22 @@ jobs:
           go-version-file: pqcota/go.mod
           cache: true
           cache-dependency-path: pqcota/go.sum
+
+      # 형제 모듈을 옆 폴더(replace)가 아니라 **같은 태그의 모듈**로 받아 빌드한다. 그래야 실행 파일의 빌드 정보에
+      # replace 줄((devel)) 대신 모듈마다 태그 판과 내용 해시(h1:)가 남는다. 리포의 go.mod는 그대로다(로컬·데모는
+      # 지금처럼 옆 폴더로 빌드한다). 체크아웃 커밋과 모듈 출처의 커밋이 같은지는 manifest 단계가 확인한다.
+      - name: 태그의 모듈로 빌드하도록 replace 빼기
+        working-directory: pqcota
+        run: |
+          set -eu
+          B=github.com/randyinthedev-hash
+          for m in pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do
+            go mod edit -dropreplace="$B/$m" -require="$B/$m@$TAG"
+          done
+          go mod download
+          if go list -m -f '{{if .Replace}}{{.Path}} => {{.Replace.Path}}{{end}}' all | grep .; then
+            echo "✗ replace가 남았다"; exit 1
+          fi
 
       # JVM attach 사이드카 — 레거시 JVM에 붙어야 해서 --release 8로 빌드된다.
       - uses: actions/setup-java@v6
@@ -108,26 +130,56 @@ jobs:
             github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-jvmscan
           (cd dist && zip -qr "pqcota-windows-amd64.zip" "pqcota-windows-amd64")
 
+      # JAR manifest에 판·커밋을 싣는다(Implementation-Version, X-Pqcota-Commit, X-Pqcota-Dirty).
       - name: JVM 사이드카
         working-directory: pqcota
         run: |
-          make build-jar
+          JAR_VERSION="$TAG" JAR_COMMIT="$(git -C ../pqcota-discovery rev-parse HEAD)" JAR_DIRTY=false make build-jar
           [ -f build/collector.jar ] && cp build/collector.jar dist/ || echo "collector.jar 없음 — attach 경로는 이 릴리스에 없다"
 
-      # 받은 사람이 무결성을 확인할 수 있어야 한다. 서명은 아직 없다(로드맵).
+      # 릴리스 manifest — 묶음 안 실행 파일마다 판·모듈 해시·SHA-256, 리포마다 태그 커밋(모듈 출처와 체크아웃이 같을 때만).
+      # 커밋을 확인하지 못하거나 빌드 정보에 replace가 남았으면 여기서 멈춘다. 만든 뒤 같은 도구로 다시 대조한다.
+      # manifest는 자기 자신과 SHA256SUMS의 해시를 담지 않는다 — 순서는 manifest → SHA256SUMS.
+      - name: 릴리스 manifest
+        working-directory: pqcota
+        run: |
+          set -eu
+          go build -o /tmp/releasemanifest ./tools/releasemanifest
+          A="$(ls dist/*.tar.gz dist/*.zip) $([ -f dist/collector.jar ] && echo dist/collector.jar)"
+          /tmp/releasemanifest generate -tag "$TAG" -checkouts .. -o dist/pqcota-release-manifest.json $A
+          /tmp/releasemanifest verify -manifest dist/pqcota-release-manifest.json -tag "$TAG" $A
+
+      # 받은 사람이 무결성을 확인할 수 있어야 한다. manifest까지 덮는다.
       # collector.jar가 없을 수 있다(javac 없는 환경) — 그때 sha256sum이 실패해
       # 릴리스 전체가 멈추면 안 된다. 있는 것만 센다.
       - name: SHA256SUMS
         working-directory: pqcota
         run: |
           cd dist
-          sha256sum *.tar.gz *.zip $([ -f collector.jar ] && echo collector.jar) | tee SHA256SUMS
+          sha256sum *.tar.gz *.zip $([ -f collector.jar ] && echo collector.jar) pqcota-release-manifest.json | tee SHA256SUMS
+
+      # 출처 증명 — 이 리포의 이 워크플로가 이 태그에서 만들었다는 서명(Sigstore, 키 없음). 자산 8개와 묶음 안의
+      # 실행 파일 46개 각각이 대상이다. 확인: gh attestation verify <파일> --repo <리포> --signer-workflow
+      # <리포>/.github/workflows/release.yml --source-ref refs/tags/<태그>
+      - name: 출처 증명
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            pqcota/dist/*.tar.gz
+            pqcota/dist/*.zip
+            pqcota/dist/collector.jar
+            pqcota/dist/pqcota-release-manifest.json
+            pqcota/dist/SHA256SUMS
+            pqcota/dist/pqcota-linux-amd64/*
+            pqcota/dist/pqcota-linux-arm64/*
+            pqcota/dist/pqcota-ctl-linux-amd64/*
+            pqcota/dist/pqcota-ctl-linux-arm64/*
+            pqcota/dist/pqcota-windows-amd64/*
 
       - name: 릴리스 발행
         working-directory: pqcota
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           REPO_URL="https://github.com/$GITHUB_REPOSITORY"
           {
@@ -142,7 +194,10 @@ jobs:
             echo "| \`pqcota-windows-amd64.zip\` | **Windows 노드에 올리는 collector 2종** — \`pqcota-cngscan\` · \`pqcota-jvmscan\` |"
             echo "| \`pqcota-ctl-linux-amd64.tar.gz\` · \`pqcota-ctl-linux-arm64.tar.gz\` | **컨트롤러에 두는 CLI 전부** — 적재(\`pqcota-ingest\`) · 조회(\`pqcota-inventory\`) · 승인(\`pqcota-approve\`) · 생성(\`pqcota-provision\`) 등 |"
             echo "| \`collector.jar\` | JVM attach 경로를 쓸 때만. 실행 중 JVM의 provider 체인을 조회하는 사이드카 |"
-            echo "| \`SHA256SUMS\` | 무결성 확인용 — 받은 파일과 같은 폴더에서 \`sha256sum -c --ignore-missing SHA256SUMS\`(받지 않은 파일은 건너뛴다) |"
+            echo "| \`pqcota-release-manifest.json\` | 묶음 안 실행 파일마다 판·모듈 해시·SHA-256, 리포마다 태그 커밋 |"
+            echo "| \`SHA256SUMS\` | 무결성 확인용(manifest 포함) — 받은 파일과 같은 폴더에서 \`sha256sum -c --ignore-missing SHA256SUMS\`(받지 않은 파일은 건너뛴다) |"
+            echo
+            echo "출처 확인(자산과 묶음 안의 실행 파일 각각): \`gh attestation verify <파일> --repo $GITHUB_REPOSITORY --signer-workflow $GITHUB_REPOSITORY/.github/workflows/release.yml --source-ref refs/tags/$TAG\`"
             echo
             echo "정적 링크라 배포판·libc를 가리지 않는다. **커널 3.2 이상**이면 된다. 노드 번들과 컨트롤러"
             echo "번들을 나눈 것은 가는 곳이 다르기 때문이다 — 앞은 관측할 호스트로 반입하고, 뒤는 중앙 한 대에 둔다."
@@ -179,4 +234,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "$TAG" \
             --notes-file /tmp/relnotes.md \
-            dist/*.tar.gz dist/*.zip dist/SHA256SUMS $([ -f dist/collector.jar ] && echo dist/collector.jar)
+            dist/*.tar.gz dist/*.zip dist/pqcota-release-manifest.json dist/SHA256SUMS $([ -f dist/collector.jar ] && echo dist/collector.jar)
