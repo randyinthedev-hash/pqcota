@@ -112,6 +112,13 @@ programs you can check.
   or another commit was rejected.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
   found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing): the checksums of all seven files in `SHA256SUMS` match; the manifest
+  matched the downloaded assets; all 46 programs are built with Go 1.26.11, show the pqcota modules at v0.14.0 with `h1:`
+  hashes and no `replace`, and `govulncheck -mode=binary` found no vulnerabilities in any of them; the commits in the
+  manifest equal the `v0.14.0` tag commits of the five repositories; rebuilding the tag gave the same SHA-256 for all 46
+  programs. All 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.14.0`
+  and the tag's commit taken from the tag, and a copy changed by one byte, the pre-release tag or another commit was
+  rejected.
 
 ### Known limitations
 
