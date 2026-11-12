@@ -77,7 +77,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.13.1 — The latest snapshot of a node is the last state loaded (unreleased)
+## v0.13.1 — The latest snapshot of a node is the last state loaded (2026-11-12)
 
 **Goal** — fix which snapshot counts as a node's latest. A state seen before reuses its earlier snapshot, so the snapshot
 with the highest sequence number is not always the state that was loaded last. **The contract, the ruleset and the
@@ -85,7 +85,10 @@ database schema are unchanged.** The change is in the history of `pqcota-invento
 latest snapshot changes with it: `pqcota-ingest` (its summary), `pqcota-inventory`, `pqcota-prune` and `pqcota-provision`.
 The collectors are unchanged.
 
-**Upgrade all five repositories together, as before.** The collectors on the nodes can stay at v0.13.0.
+**Upgrade all five repositories together, as before.** **Upgrade every controller tool that loads into or prunes the same
+PostgreSQL history at the same time** (`pqcota-ingest`, `pqcota-cbom-ingest` and `pqcota-prune`): the per-node lock only
+works when both the loader and the prune tool take it, so an older loader or prune tool on the same history can still race
+with the new ones. The collectors on the nodes can stay at v0.13.0.
 
 ### Fixed
 
@@ -122,10 +125,14 @@ The collectors are unchanged.
 - **Postgres only:** the three cases of history without observation records above; twenty rounds of two loads and a prune
   of one node at the same time, after which the newest observation record always points at a stored snapshot; and readers
   calling the latest snapshot about 50,000 times per run while a writer loads a new state and prunes 150 times, with no empty
-  result.
+  result. A two-statement read (choose, then read), tried during development and never published, showed no empty result in
+  this test either; it failed only when a 1 ms delay was put between the two statements. So the read race was reproduced
+  only under that condition.
 - **Across the stages.** After A → B → A, a provisioning record takes its before state and app keys from A.
 - **The reproduction above** on v0.13.0 and on this version: v0.13.0 shows B in the load summary, the view and the
   provisioning record, and pruning deletes A; this version shows A everywhere and pruning keeps A and B.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
+  found no vulnerabilities in the five repositories.
 
 ### Known limitations
 
