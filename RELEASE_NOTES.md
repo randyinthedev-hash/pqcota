@@ -59,8 +59,6 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
 
-- **One app key across runtimes (planned · version TBD)** — the app key of OpenSSL findings and network edges still takes the first `.service` or `.scope` in a process's cgroup path. On a desktop session that is the user manager, `user@<uid>.service`, so the processes of different applications can share one key. v0.12.0 chose the Java deployment key with a narrower rule (the last `.service`, the user manager and `.scope` excluded, a user service named with its UID). Applying that rule to OpenSSL and the edges changes their ids, so it comes in its own release.
-
 - **Observing and provisioning other Unix systems (planned · version TBD)** — observation and generation work end to end on Linux only. The collectors read `/proc` and ELF files and capture packets with `AF_PACKET`, all Linux mechanisms; on other systems they report a gap rather than an empty result. The matching that decides what was found (fork detection, the ruleset, plans and approvals) does not depend on the OS, so the work is swapping the pieces that read the system, as for Windows: finding the loaded libraries, reading the binary format, attaching to a JVM, and capturing packets. The generated playbooks stage files under `/opt/pqcota` and `/etc/pqcota` and run with privilege escalation; on each new system those paths, the privilege model and the restart hooks have to be checked too. The first system is not decided. Observation on a system counts as done when results collected there are matched correctly, and provisioning when the generated playbooks are applied there and rolled back; only what was confirmed that way is listed. When a system is chosen, this item is split per system.
 
 ### Not on the roadmap — deliberately
@@ -76,6 +74,96 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.13.0 — One app key rule for every runtime, and edges attributed per connection (unreleased)
+
+**Goal** — make an app key mean the same thing for every runtime, and give each observed connection to the application
+that opened it. OpenSSL findings and network edges now choose the app key with the rule Java deployments have used since
+v0.12.0. Network edges are attributed **per connection**, not per destination, and `observed_count` now counts
+**connections**. **The contract fields are unchanged**; only their descriptions changed. **The ruleset is still
+`pqcota-enrich/v4`.** Programs that changed: `pqcota-nodescan` (the OpenSSL app keys), `pqcota-netcap` (how edges are
+attributed and counted) and `pqcota-inventory` (the diff now lists edges).
+
+**Upgrade all five repositories together, as before,** and replace `pqcota-nodescan` and `pqcota-netcap` on the nodes.
+
+### Fixed
+
+- **The user services of one account shared one app key.** The app key of OpenSSL findings and network edges took the
+  first `.service` or `.scope` in the process's cgroup path. For a user service that is the user manager,
+  `user@<uid>.service`, so every user service of that account had the same key, and PID 1 had `init.scope`.
+  *Which version it entered in:* v0.1.0. *What came out wrong:* reproduced on v0.12.0 with two user services of one
+  account, `libssl.so.3` listed `user@1001.service` once instead of the two services. Now the key is the last `.service`
+  in the path, a user service is named `user@<uid>.service/<unit>` (`app_key_kind: systemd-user-unit`), and a `.scope` is
+  never used; a process without a service falls back to its executable path.
+- **Services that talked to the same destination became one edge.** An edge's application was looked up by the
+  destination address and port only, so the sockets of every application connected there were gathered. When they all had
+  the same key the edge took it; when the keys differed the edge was left without an application. *Which version it
+  entered in:* v0.3.0. *What came out wrong:* in the same reproduction, the connections of both services were one edge
+  under `user@1001.service`. Now each connection is matched to its own socket by both endpoints (local and remote address
+  and port), and the edges are grouped by the application found. The source port is used only for that lookup; it is not
+  part of the edge, so a service that reconnects stays one edge.
+
+### Edge attribution: what the diff shows
+
+- **When attribution changes an edge's app key, the edge has a new id.** The diff lists the old edge under
+  `edges removed` and the new ones under `edges added`. In the reproduction, the one v0.12.0 edge was replaced by three:
+  `svc-a`, `svc-b`, and an edge whose application was not identified.
+- **A connection whose application cannot be identified is still kept.** If its socket was already closed when it was
+  looked up, or the socket is held by processes of different applications, the connection is counted on an edge with an
+  empty app key. The completeness note gives the reason, and the diff writes it as `(app not identified)`. It is never
+  given to another service talking to the same destination.
+- The ruleset did not change, so **the diff shows no ruleset warning** for this. A diff across the upgrade of the
+  collectors can mix in the effect of the attribution change: removed and added edges there are not, by themselves,
+  applications that stopped or started talking.
+
+### `observed_count`: what it counts
+
+- **`observed_count` is now the number of connections the capture saw** in its window for that edge. Up to v0.12.0 it
+  counted handshake messages, so one connection added several. *Which version it entered in:* v0.1.0.
+- **This shows in the diff differently from the attribution change.** An edge whose id stays the same can show a different
+  count, under `edges changed` (`×N → ×M`). In the reproduction, eight connections were counted as `×23` by v0.12.0
+  (handshake messages) and as `2 + 5 + 1` by this version (connections in the window).
+- **So the counts before and after the upgrade cannot be compared.** A lower count after the upgrade does not mean that
+  traffic went down.
+
+### Source evidence: checked with real tool output
+
+- The standard source location fields (`evidence.occurrences`) were checked against the real output of CBOMkit
+  `cbomkit-action` v2.3.0 for a Java 21 example and a Python 3.13 example (`pyca/cryptography`), and of CryptoScan 1.5.0
+  for a C example (OpenSSL 3 EVP). All were read without a preset, and the location chosen in a plan stayed the same
+  reference through approval and into the generation record. The versions, what each tool did not report in these runs,
+  and the C++ case (not checked) are in the
+  [inventory command reference](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md).
+
+### Compatibility
+
+- **The first snapshot after you replace `pqcota-nodescan` and `pqcota-netcap`** shows OpenSSL findings as `changed` (same
+  ids, new app keys) and edges as removed and added, as described above. OpenSSL finding ids do not include the app key,
+  so the number of findings and their ids stay the same.
+- **Anything that refers to a user service by the app key `user@<uid>.service`** (a rule or a report kept outside
+  pqcota) no longer matches it. The key is now `user@<uid>.service/<unit>`.
+- Results from older collectors are read as before; nothing in the core changed how they are normalized.
+
+### Built
+
+- **A reproduction with fixed connection counts**, in one container, v0.12.0 first and then this version: three user
+  services of one account connect to the same destination, one holding 2 connections, one 5, and one opening a single
+  connection and closing it at once. This version reported `×2`, `×5` and one connection whose application was not
+  identified, both in the collector output and in the stored result. For the third service the run confirmed that its
+  handshake was captured (the collector named its source port) and that its socket had closed before the lookup.
+- **Unit tests** for the cases the reproduction does not produce: a socket held by processes of two different services is
+  left unattributed, a socket inherited by a child process keeps the parent's key, IPv4 connections on dual-stack sockets
+  are found, and a socket opened after the process scan was cached is found by scanning again.
+
+### Known limitations
+
+- **A socket held by processes of different applications** is left unattributed. This case was checked only in unit
+  tests, not on a real system.
+- **Short connections are still often unidentified.** The application is looked up after the observation window ends,
+  so a connection that closed before then is counted without an application.
+- The other limitations of v0.12.0 are unchanged.
 
 ---
 
