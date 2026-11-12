@@ -57,7 +57,7 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
   knows nothing about the OS, so only the piece that obtains frames has to be swapped. Npcap is not taken
   because its driver stays on the node; the built-in `SIO_RCVALL` is (mostly IPv4, no loopback). 
 
-- **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
+- **Release signing (partly delivered in v0.14.0 · rest version TBD)** — from v0.14.0 every release carries a **per-file SHA-256 manifest** (`pqcota-release-manifest.json`: every file inside every bundle with its SHA-256, version and module hashes, and each repository's tag commit) and **GitHub build provenance attestations** for every asset and every program inside the bundles, signed by the release workflow. They are checked with `sha256sum`, the manifest, and `gh attestation verify` against the expected repository, workflow, tag and commit ([build guide](docs/build.md#check-what-you-downloaded)). What is still planned is a signature that can be checked **without GitHub and without network access**: the ed25519 signature and `pqcota-verify-bundle` settled in the collector deployment design.
 
 - **Observing and provisioning other Unix systems (planned · version TBD)** — observation and generation work end to end on Linux only. The collectors read `/proc` and ELF files and capture packets with `AF_PACKET`, all Linux mechanisms; on other systems they report a gap rather than an empty result. The matching that decides what was found (fork detection, the ruleset, plans and approvals) does not depend on the OS, so the work is swapping the pieces that read the system, as for Windows: finding the loaded libraries, reading the binary format, attaching to a JVM, and capturing packets. The generated playbooks stage files under `/opt/pqcota` and `/etc/pqcota` and run with privilege escalation; on each new system those paths, the privilege model and the restart hooks have to be checked too. The first system is not decided. Observation on a system counts as done when results collected there are matched correctly, and provisioning when the generated playbooks are applied there and rolled back; only what was confirmed that way is listed. When a system is chosen, this item is split per system.
 
@@ -74,6 +74,55 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.14.0 — Releases say which version and commit they were built from, and can be checked file by file (2026-11-12)
+
+**Goal** — make a released program show what it was built from, and let anyone check a single file against the release and
+its origin. Until now every program's build information showed the pqcota modules as `(devel)` pointing at a local folder,
+`collector.jar` carried no version, and `SHA256SUMS` covered only the archives, with nothing to show who built them. **The
+contract, the ruleset and the database schema are unchanged, and so is what the programs do.** What changed is how the
+release is built and what it publishes: the release workflow, `collector.jar`'s manifest, and a new release asset.
+
+**Upgrade all five repositories together, as before.** The programs behave as in v0.13.1; replace them when you want
+programs you can check.
+
+### Built
+
+- **Programs carry their module versions.** The release builds the five modules from their tags instead of from folders side
+  by side, so `go version -m` on a released program shows each pqcota module at the release version with its content hash
+  (`h1:`), for example `dep github.com/randyinthedev-hash/pqcota-common v0.14.0 h1:…`, and no `=> ../… (devel)` line. A
+  program does not carry its source commit; the release manifest lists each repository's tag commit. Programs you build
+  yourself from the five repositories side by side still show `(devel)`.
+- **`collector.jar` carries its version and commit** in its manifest: `Implementation-Version`, `X-Pqcota-Commit` (the
+  pqcota-discovery commit) and `X-Pqcota-Dirty`.
+- **A per-file SHA-256 manifest**, `pqcota-release-manifest.json`, is a new release asset. It lists every file inside every
+  bundle with its SHA-256 and the versions and hashes from its build information, `collector.jar` with the values of its
+  manifest, and the tag commit of each repository. The commits come from the module origin of each tag and must equal the
+  commits the workflow checked out; when they cannot be confirmed, the release stops. `SHA256SUMS` now also covers the
+  manifest.
+- **GitHub build provenance attestations** for every asset and every program inside the bundles, signed by the release
+  workflow. `gh attestation verify` checks a file against the repository, the release workflow, the tag and the tag's commit.
+  The [build guide](docs/build.md#check-what-you-downloaded) gives the three checks (asset checksums, files inside the
+  bundles, origin) and how to read a program's version.
+- **Tried first as a pre-release** (`v0.14.0-rc.1`, marked as a pre-release): the downloaded assets matched their checksums
+  and the manifest; rebuilding the tag gave the same SHA-256 for all 46 programs; all 54 files (8 assets and 46 programs)
+  passed attestation verification against the pre-release tag and its commit, and a copy changed by one byte, another tag
+  or another commit was rejected.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
+  found no vulnerabilities in the five repositories.
+
+### Known limitations
+
+- **The attestations are checked through GitHub.** Checking them needs `gh` (or another Sigstore client) and network
+  access; a system without network access is checked from a machine that has it. A signature that can be checked offline
+  is on the roadmap.
+- **`collector.jar` is not byte-for-byte reproducible** across Java versions; its version and commit are in its manifest,
+  and its SHA-256 is in the release manifest and `SHA256SUMS`.
+- Installing a command with `go install …@v0.14.0` still does not work, because the repositories' `go.mod` files keep
+  `replace` lines for the local build. Use the release assets, or build from the five repositories side by side.
+- The other limitations of v0.13.1 are unchanged.
 
 ---
 
