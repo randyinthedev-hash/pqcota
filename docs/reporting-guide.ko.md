@@ -118,7 +118,7 @@ PQC 이관을 보고하는 사람과 그 보고서를 읽는 사람을 위한 �
 | 달라진 것 | `pqcota-inventory -diff <older>,<newer>` | `removed 1`, `added N`, `changed N`. 순서가 뒤집혔을 때와 규칙 버전이 다를 때의 경고 | 발견 항목 | 자산 규칙 뒤의 `removed`는 관리에서 빠졌다는 뜻이지 사라졌다는 뜻이 아님 |
 | 승인 검증됨 | `pqcota-provision` | `approvals verified: reviewer-1` | 승인자 | 또는 검증하지 않았다는 경고 |
 | 완전성 면제 | `pqcota-provision` | `N incomplete spot(s) — passed over because --allow-incomplete was given` | 빈칸 | 표준 오류. 종료 코드는 0 그대로 |
-| 기록 저장됨 | `pqcota-provision --dsn` | `persisted 1 records (before capture · STAGED · rollback basis) · snapshot references resolved 1, unresolved 0 · before not captured 0` | 기록 | `STAGED`는 적용이 아님. `before not captured`는 노드의 최신 스냅샷에 조치의 발견 항목이 없던 조치의 수. 그 기록의 before가 비었다고 앱에 암호 설정이 없다는 뜻은 아님 |
+| 기록 저장됨 | `pqcota-provision --dsn` | `persisted 1 records (before capture · STAGED · rollback basis) · snapshot references resolved 1, unresolved 0 · before not captured 0` | 기록 | `STAGED`는 적용이 아님. `before not captured`는 노드의 최신 스냅샷에 조치의 발견 항목이 없던 조치와, Java 배포본을 provider 체인 하나로 기록할 수 없던 조치(JVM끼리 체인이 다름, 일부를 보지 못함, `--pid`로 스캔함)의 수. 어느 쪽인지는 기록의 note에 있음. before가 비었다고 앱에 암호 설정이 없다는 뜻은 아님 |
 | 기록된 것 | `pqcota-records` | `• plan-demo:a1 [STAGED] node=… affected apps: … before : libssl.so.1.1@1.1.1f snapshot: …` | 기록 | 모듈만이고 전체 설정은 아님 |
 
 표의 모든 줄은 그 데모 실행에서 출력된 것입니다. 단 `-diff` 행의 두 경고는 예외입니다. 그 경고는 코드의 조건(두 스냅샷을 시간 역순으로 준 경우, 두 스냅샷이 서로 다른 규칙 버전으로 도출된 경우)에서 출력되며, 여기에 인용한 실행에서는 일어나지 않았습니다.
