@@ -133,6 +133,12 @@ with the new ones. The collectors on the nodes can stay at v0.13.0.
   provisioning record, and pruning deletes A; this version shows A everywhere and pruning keeps A and B.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
   found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing): the checksums of the five bundles and `collector.jar` match `SHA256SUMS`;
+  all 46 programs are built with Go 1.26.11, and `govulncheck -mode=binary` found no vulnerabilities in any of them. Their
+  build information declares the pqcota modules at v0.13.1, but each of those modules points through `replace` to a local
+  source directory (`(devel)`), and none of the 46 programs carries VCS information, so the build information alone does
+  not show which commit was built. With the published controller tools, the A → B → A reproduction showed A in the load
+  summary, the view and the provisioning record, and `keep-last 1` kept A and B.
 
 ### Known limitations
 
