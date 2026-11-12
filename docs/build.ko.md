@@ -14,9 +14,61 @@ pqcota를 소스에서 빌드하거나 pqcota 자체를 개발하는 엔지니�
 | `pqcota-windows-amd64.zip` | 관측할 Windows 시스템: `pqcota-cngscan`, `pqcota-jvmscan` |
 | `pqcota-ctl-linux-amd64.tar.gz`, `pqcota-ctl-linux-arm64.tar.gz` | 중앙 기계 한 대: 적재, 조회, 승인, 생성 명령 |
 | `collector.jar` | Java attach 경로를 쓸 때만 |
-| `SHA256SUMS` | 릴리스의 모든 자산에 대한 체크섬 목록 |
+| `pqcota-release-manifest.json` | v0.14.0부터. 묶음 안 파일마다 SHA-256, 판, 모듈 해시. 다섯 리포마다 태그 커밋 |
+| `SHA256SUMS` | 릴리스의 모든 자산에 대한 체크섬 목록(manifest 포함) |
 
-내려받은 파일을 확인하려면 파일들을 `SHA256SUMS` 옆에 두고 `sha256sum -c --ignore-missing SHA256SUMS`를 실행합니다(GNU coreutils 기준입니다. `--ignore-missing`이 없으면 내려받지 않은 자산마다 오류를 냅니다). **출력을 읽으세요.** 실제로 확인한 파일이 하나하나 출력에 나옵니다. 내려받은 파일은 OK로 나와야 하고, 출력에 파일이 하나도 없으면 아무것도 검증하지 않은 것입니다. 체크섬이 일치하면 전송 중에 파일이 손상되지 않았다는 것까지만 확인됩니다. 누가 배포했는지는 확인되지 않습니다. 서명된 릴리스는 [로드맵](../RELEASE_NOTES.md)(영문)에 있습니다.
+### 내려받은 파일 확인
+
+확인은 세 가지이고, 저마다 답하는 질문이 다릅니다.
+
+**1. 자산이 전송 중에 손상되지 않았는가.** 파일들을 `SHA256SUMS` 옆에 두고 `sha256sum -c --ignore-missing SHA256SUMS`를 실행합니다(GNU coreutils 기준입니다. `--ignore-missing`이 없으면 내려받지 않은 자산마다 오류를 냅니다). **출력을 읽으세요.** 실제로 확인한 파일이 하나하나 출력에 나옵니다. 내려받은 파일은 OK로 나와야 하고, 출력에 파일이 하나도 없으면 아무것도 검증하지 않은 것입니다. `SHA256SUMS`는 게시된 자산, 곧 압축 파일, `collector.jar`, manifest를 덮습니다.
+
+**2. 묶음에서 꺼낸 파일이 릴리스된 그 파일인가.** 묶음을 풀어 프로그램 하나를 시스템에 옮기면 `SHA256SUMS`로는 확인할 수 없습니다. 릴리스 manifest에는 묶음마다 안에 든 파일 전부가 SHA-256과 함께 있습니다(v0.14.0부터).
+
+```bash
+tar -xzf pqcota-linux-amd64.tar.gz
+sha256sum pqcota-linux-amd64/pqcota-nodescan
+grep -A1 '"path": "pqcota-linux-amd64/pqcota-nodescan"' pqcota-release-manifest.json
+```
+
+두 SHA-256이 같아야 합니다. Go가 있고 이 리포의 태그를 체크아웃했다면 `go run ./tools/releasemanifest verify -manifest pqcota-release-manifest.json <자산…>`이 모든 묶음의 모든 파일을 한 번에 견줍니다.
+
+**3. 이 프로젝트의 릴리스 워크플로가 이 태그에서 만들었는가.** 1과 2는 같은 릴리스 페이지에서 받은 파일끼리 견주므로 누가 배포했는지는 확인하지 못합니다. v0.14.0부터는 자산마다, 그리고 묶음 안의 프로그램마다 릴리스 워크플로가 서명한 출처 증명이 붙습니다. 증명은 내려받은 파일이 말하는 값이 아니라 **예상하는 값**으로 확인합니다. 저장소, 릴리스 워크플로, 태그, 그 태그의 커밋입니다. 커밋은 확인하려는 manifest에서 가져오지 말고 태그에서 직접 얻습니다.
+
+```bash
+TAG=v0.14.0
+COMMIT=$(git ls-remote https://github.com/randyinthedev-hash/pqcota "refs/tags/$TAG^{}" | cut -f1)
+gh attestation verify pqcota-linux-amd64/pqcota-nodescan \
+  --repo randyinthedev-hash/pqcota \
+  --signer-workflow randyinthedev-hash/pqcota/.github/workflows/release.yml \
+  --source-ref "refs/tags/$TAG" --source-digest "$COMMIT"
+```
+
+압축 파일, `collector.jar`, manifest, `SHA256SUMS`도 같은 명령으로 확인합니다. 한 바이트라도 다른 파일, 다른 태그나 다른 커밋에서 만든 파일은 실패합니다. manifest가 이 확인을 통과하면, manifest에 적힌 다른 네 리포의 커밋도 같은 방법으로 각 태그와 견줄 수 있습니다(`git ls-remote https://github.com/randyinthedev-hash/<리포> "refs/tags/$TAG^{}"`). 네트워크가 없는 시스템이라면 네트워크가 되는 기계에서 확인한 뒤 옮깁니다.
+
+### 프로그램의 판과 커밋 읽기
+
+- **릴리스의 Go 프로그램**(`go version -m`에는 Go가 필요합니다. 파일을 읽기만 하고 실행하지 않습니다):
+
+  ```bash
+  go version -m pqcota-linux-amd64/pqcota-nodescan
+  ```
+
+  pqcota 모듈의 `mod`·`dep` 줄에 릴리스 판과 내용 해시(`h1:`)가 나옵니다. 예를 들면 `dep github.com/randyinthedev-hash/pqcota-common v0.14.0 h1:…`입니다. 프로그램에는 소스 커밋이 들어 있지 않습니다. 리포마다의 태그 커밋은 릴리스 manifest에 있습니다. v0.14.0 전의 릴리스에는 그 자리에 `=> ../pqcota-… (devel)`이 나옵니다.
+- **`collector.jar`**는 판, 커밋, 소스를 고쳤는지를 자기 manifest에 담습니다.
+
+  ```bash
+  unzip -p collector.jar META-INF/MANIFEST.MF
+  ```
+
+  ```
+  Implementation-Title: pqcota-discovery collector
+  Implementation-Version: v0.14.0
+  X-Pqcota-Commit: <pqcota-discovery의 커밋>
+  X-Pqcota-Dirty: false
+  ```
+
+- **다섯 리포를 나란히 두고 직접 빌드한 프로그램**은 pqcota 모듈이 `=> ../pqcota-…`와 함께 `(devel)`로 나옵니다. 로컬 빌드는 옆 폴더를 읽기 때문입니다. 직접 빌드한 `collector.jar`에는 그 체크아웃의 `git describe` 값이 들어갑니다(git이 없으면 `devel`과 `unknown`).
 
 시스템에서 수집기를 실행할 때 필요한 권한과 환경변수는 [명령 레퍼런스](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)(영문)에 있습니다.
 

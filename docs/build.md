@@ -14,9 +14,61 @@ Every release attaches ready-made static binaries and a checksum file to the [re
 | `pqcota-windows-amd64.zip` | Windows systems you observe: `pqcota-cngscan`, `pqcota-jvmscan` |
 | `pqcota-ctl-linux-amd64.tar.gz`, `pqcota-ctl-linux-arm64.tar.gz` | The one central machine: ingest, query, approval and generation commands |
 | `collector.jar` | Only if you use the Java attach path |
-| `SHA256SUMS` | Lists a checksum for every asset of the release |
+| `pqcota-release-manifest.json` | From v0.14.0. For every file inside the bundles: its SHA-256, version and module hashes; for each of the five repositories: the tag commit |
+| `SHA256SUMS` | Lists a checksum for every asset of the release, the manifest included |
 
-To check what you downloaded, put the files next to `SHA256SUMS` and run `sha256sum -c --ignore-missing SHA256SUMS` (GNU coreutils; without `--ignore-missing` it reports an error for every asset you did not download). **Read the output:** it names each file it actually checked. A file you downloaded must appear there as OK; if the output names none, nothing was verified. A matching checksum shows the file was not damaged in transfer. It does not show who published it: signed releases are on the [roadmap](../RELEASE_NOTES.md).
+### Check what you downloaded
+
+There are three checks, and each answers a different question.
+
+**1. Was an asset damaged in transfer?** Put the files next to `SHA256SUMS` and run `sha256sum -c --ignore-missing SHA256SUMS` (GNU coreutils; without `--ignore-missing` it reports an error for every asset you did not download). **Read the output:** it names each file it actually checked. A file you downloaded must appear there as OK; if the output names none, nothing was verified. `SHA256SUMS` covers the assets as published: the archives, `collector.jar` and the manifest.
+
+**2. Is a file taken out of a bundle the one that was released?** Once you unpack a bundle and copy one program to a system, `SHA256SUMS` no longer covers it. The release manifest lists every file inside every bundle with its SHA-256 (from v0.14.0):
+
+```bash
+tar -xzf pqcota-linux-amd64.tar.gz
+sha256sum pqcota-linux-amd64/pqcota-nodescan
+grep -A1 '"path": "pqcota-linux-amd64/pqcota-nodescan"' pqcota-release-manifest.json
+```
+
+The two SHA-256 values must be the same. With Go installed and the tag of this repository checked out, `go run ./tools/releasemanifest verify -manifest pqcota-release-manifest.json <assets…>` compares every file of every bundle at once.
+
+**3. Was it built by this project's release workflow, from this tag?** Checks 1 and 2 compare against files from the same releases page, so they do not show who published them. From v0.14.0 every asset and every program inside the bundles carries a provenance attestation signed by the release workflow. Check it against **what you expect**, not against what the downloaded files say: the repository, the release workflow, the tag, and the tag's commit. Take the commit from the tag itself, not from the manifest you are checking:
+
+```bash
+TAG=v0.14.0
+COMMIT=$(git ls-remote https://github.com/randyinthedev-hash/pqcota "refs/tags/$TAG^{}" | cut -f1)
+gh attestation verify pqcota-linux-amd64/pqcota-nodescan \
+  --repo randyinthedev-hash/pqcota \
+  --signer-workflow randyinthedev-hash/pqcota/.github/workflows/release.yml \
+  --source-ref "refs/tags/$TAG" --source-digest "$COMMIT"
+```
+
+The same command works for an archive, `collector.jar`, the manifest and `SHA256SUMS`. It fails for a file that differs by one byte, and for a file built from another tag or commit. Once the manifest itself passes this check, the commits it lists for the other four repositories can be compared with their tags the same way (`git ls-remote https://github.com/randyinthedev-hash/<repository> "refs/tags/$TAG^{}"`). A system without network access can be checked on a machine that has it, before the files are carried over.
+
+### Read the version and commit of a program
+
+- **A Go program from a release** (`go version -m` needs Go installed; it only reads the file and does not run it):
+
+  ```bash
+  go version -m pqcota-linux-amd64/pqcota-nodescan
+  ```
+
+  The `mod` and `dep` lines of the pqcota modules show the release version and a content hash (`h1:`), for example `dep github.com/randyinthedev-hash/pqcota-common v0.14.0 h1:…`. The program does not carry its source commit; the release manifest lists the commit of each repository's tag. Releases before v0.14.0 show `=> ../pqcota-… (devel)` instead.
+- **`collector.jar`** carries its version, commit and whether the source was modified in its own manifest:
+
+  ```bash
+  unzip -p collector.jar META-INF/MANIFEST.MF
+  ```
+
+  ```
+  Implementation-Title: pqcota-discovery collector
+  Implementation-Version: v0.14.0
+  X-Pqcota-Commit: <commit of pqcota-discovery>
+  X-Pqcota-Dirty: false
+  ```
+
+- **A program you built yourself** from the five repositories side by side shows the pqcota modules as `(devel)` with `=> ../pqcota-…`, because the local build reads the sibling folders. A `collector.jar` you built yourself shows `git describe` of your checkout (or `devel` and `unknown` without git).
 
 Privileges and environment variables for running the collectors on a system are in the [command reference](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md).
 
