@@ -77,7 +77,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.13.0 — One app key rule for every runtime, and edges attributed per connection (unreleased)
+## v0.13.0 — One app key rule for every runtime, and edges attributed per connection (2026-11-12)
 
 **Goal** — make an app key mean the same thing for every runtime, and give each observed connection to the application
 that opened it. OpenSSL findings and network edges now choose the app key with the rule Java deployments have used since
@@ -158,6 +158,8 @@ attributed and counted) and `pqcota-inventory` (the diff now lists edges).
 - **Unit tests** for the cases the reproduction does not produce: a socket held by processes of two different services is
   left unattributed, a socket inherited by a child process keeps the parent's key, IPv4 connections on dual-stack sockets
   are found, and a socket opened after the process scan was cached is found by scanning again.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
+  found no vulnerabilities in the five repositories.
 
 ### Known limitations
 
