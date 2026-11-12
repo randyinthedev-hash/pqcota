@@ -161,8 +161,10 @@ attributed and counted) and `pqcota-inventory` (the diff now lists edges).
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
   found no vulnerabilities in the five repositories.
 - **Release assets** (checked after publishing): the checksums of the five bundles and `collector.jar` match `SHA256SUMS`;
-  all 46 programs are built with Go 1.26.11 from the v0.13.0 modules, and `govulncheck -mode=binary` found no
-  vulnerabilities in any of them. With the published `pqcota-nodescan`, `pqcota-netcap` and `pqcota-ingest`, the
+  all 46 programs are built with Go 1.26.11, and `govulncheck -mode=binary` found no vulnerabilities in any of them.
+  Their build information declares the pqcota modules at v0.13.0, but each of those modules points through `replace` to a
+  local source directory (`(devel)`), and none of the 46 programs carries VCS information. The build information alone
+  therefore does not show which commit was built. With the published `pqcota-nodescan`, `pqcota-netcap` and `pqcota-ingest`, the
   reproduction above reported `×2`, `×5` and one connection whose application was not identified, in the collector output
   and in the stored result, and `libssl.so.3` kept the two services as separate app keys.
 
