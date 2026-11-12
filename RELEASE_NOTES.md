@@ -59,6 +59,8 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Release signing (planned · version TBD)** — the **ed25519 signature and `pqcota-verify-bundle`**. The bundle layout, signing, and verification are settled in the collector deployment design. Until then, verify integrity with `sha256sum -c --ignore-missing SHA256SUMS` in the folder holding what you downloaded (without `--ignore-missing`, every asset you did not download is reported as missing).
 
+- **One app key across runtimes (planned · version TBD)** — the app key of OpenSSL findings and network edges still takes the first `.service` or `.scope` in a process's cgroup path. On a desktop session that is the user manager, `user@<uid>.service`, so the processes of different applications can share one key. v0.12.0 chose the Java deployment key with a narrower rule (the last `.service`, the user manager and `.scope` excluded, a user service named with its UID). Applying that rule to OpenSSL and the edges changes their ids, so it comes in its own release.
+
 ### Not on the roadmap — deliberately
 
 These are **boundaries**, not directions. Written down so no one waits for them.
@@ -72,6 +74,93 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.12.0 — JCA deployment identity and JVM configuration variants (2026-11-12)
+
+**Goal** — fix how Java runtimes are identified. Until now each JVM's asset was named after a short label of what it runs,
+so two JVMs that shared the label became one asset, and one of them was lost. Now the JVMs that run the same application
+form one **deployment**, which is one asset, and each JVM of it is kept inside that asset. **The contract changed by
+additive fields** (`JcaAxes.instances`, `app_key_kind`, `observation_scope`, and the new messages `JcaInstance` and
+`JcaModeCount`). **The ruleset is now `pqcota-enrich/v4`.** Programs that changed: `pqcota-jvmscan` (its output),
+`pqcota-ingest` and the other programs that normalize (the new identity), `pqcota-inventory` (it shows the variants), and
+`pqcota-provision` (when it records a before state).
+
+**Upgrade all five repositories together, as before,** and replace `pqcota-jvmscan` on the nodes.
+
+### Fixed
+
+- **Two JVMs with the same name became one finding, and one of them was lost.** The asset name kept only the file name of
+  `-jar`, so `/opt/a/app.jar` and `/opt/b/app.jar` were one asset, and two JVMs started from the same source with different
+  settings were one asset too. *Which version it entered in:* v0.1.0. *What came out wrong:* reproduced with four real JVMs on
+  v0.10.7, they became two findings, and a JVM without Bouncy Castle was not in the inventory. Now JARs with the same file name
+  run from different paths stay separate findings, and when one deployment is observed with different provider chains, each
+  chain is kept as its own variant. The same four JVMs are now three deployments, and the one that runs a source file with two
+  settings keeps both chains.
+- **Static fallback results are now reported as `static`.** When attach was not possible and the collector read `java.security`
+  instead, it wrote `registration_mode: dynamic`.
+
+### Deployments and variants
+
+- **The deployment key** is chosen in this order: the systemd service (a system service by its unit name, a user service as
+  `user@<uid>.service/<unit>`; a `.scope` is never used), the absolute path of `-jar`, the module of `-m`, the main class with
+  its class path, the source file, and `JAVA_HOME`. The finding says which one was used (`app_key_kind`). A relative `-jar`
+  whose working directory cannot be read keeps only the file name and is marked `jar-name`: JVMs with the same file name in
+  different directories then still fall into one deployment, but none of them is dropped.
+- **Variants.** JVMs of one deployment with the same `JAVA_HOME`, the same `-Djava.security.properties` setting and the same
+  observed provider chain form one variant. **A variant's `count` is the number of JVMs in that variant**, and the deployment's
+  JVMs are the sum of the counts. For example, a service with two JVMs, scanned with `--pid` so that only one was observed,
+  has two variants with `count` 1 each: the observed one and the one without a chain. Two JVMs observed with the same chain
+  are one variant with `count` 2. Each variant also counts how its JVMs were read (attach or static fallback).
+- **One value per finding is kept only when it is one fact.** When the variants differ, the finding's `provider_set` is empty
+  and its `pqc_readiness` and `fips_validation` read `varies (N variants)`; the values of each variant are in `instances`.
+  Nothing is folded into a single worst value. An empty `provider_set` therefore has two meanings: with `instances`, the JVMs
+  differ or some were not observed; without, the chain was not observed.
+- **`pqcota-jvmscan --pid`** observes only the selected JVM. Its result is marked `observation_scope: selected-pid`, and the
+  other JVMs found in the same deployment are kept as variants without a chain.
+- `pqcota-inventory` shows the variants in the detail and the diff, so a change in a variant's `count`, or in how its JVMs were
+  read, appears as `changed`.
+
+### Provisioning records
+
+- A deployment's provider chain is recorded as the before state **only when it stands for the whole deployment**: every JVM
+  observed, with one chain. When the JVMs differ, some were not observed, or the result came from `--pid`, the record keeps no
+  chain, its note says why (`before not captured: …`), and the summary counts it in `before not captured`. Generation goes on.
+
+### Compatibility
+
+- **Older inputs keep their ids.** Results from collectors before v0.12.0 are normalized with the old rule: their finding ids
+  and fingerprints are the same as in v0.11.0 (checked against v0.11.0 with a real collector output).
+- **The first snapshot after you replace `pqcota-jvmscan`** has new ids for Java assets. Its diff against the last v0.11.0
+  snapshot shows the old assets as removed and the deployments as added, with the ruleset warning. That is the identity change,
+  not applications removed or added.
+- **Upgrade the tools that read the same database before v0.12.0 writes new snapshots.** v0.11.0 `pqcota-inventory` cannot open
+  the history of a node once it holds a new snapshot (`unknown field "instances"`).
+- **v0.11.0 `pqcota-provision --dsn` can write the playbook to stdout and then fail with exit 1** on such a database, without
+  writing a record. In automation, apply a playbook only after checking that the exit status is 0.
+- `pqcota-records` from v0.11.0 reads the new records, including the new `before not captured` notes.
+
+### Built
+
+- **Tests across the stages.** The collector's output is carried through normalization and into a provisioning record on a
+  real Postgres.
+- **A full scan, a `--pid` scan and a full scan of the same deployment** keep one finding id, show two changes, and fill the
+  before state again at the end.
+- **Real JVMs.** The four-JVM reproduction above, and two users each running `foo.service` as a user service, which stay two
+  deployments with two finding ids.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck` found no vulnerabilities in the five repositories.
+
+### Known limitations
+
+- **A weak `jar-name` key can still group JVMs.** When the working directory of a relative `-jar` cannot be read, only the file
+  name is kept, and JVMs with that file name in different directories fall into one deployment. There, JVMs whose variant key
+  is also the same are added to one variant's `count`; only JVMs whose variant key differs show as separate variants.
+  An absolute `-jar` path, or a relative one whose working directory is readable, stays separate.
+- The app key of OpenSSL findings and network edges is unchanged: on a desktop session it can still group processes under
+  `user@<uid>.service`. See the roadmap.
+- On Windows the command line is not read, so the deployment key falls back to `JAVA_HOME` (a weak key), as before.
+- The other limitations of v0.11.0 are unchanged.
 
 ---
 
