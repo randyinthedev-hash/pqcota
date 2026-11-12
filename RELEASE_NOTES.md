@@ -77,6 +77,62 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.13.1 — The latest snapshot of a node is the last state loaded (unreleased)
+
+**Goal** — fix which snapshot counts as a node's latest. A state seen before reuses its earlier snapshot, so the snapshot
+with the highest sequence number is not always the state that was loaded last. **The contract, the ruleset and the
+database schema are unchanged.** The change is in the history of `pqcota-inventory`, so every program that reads a node's
+latest snapshot changes with it: `pqcota-ingest` (its summary), `pqcota-inventory`, `pqcota-prune` and `pqcota-provision`.
+The collectors are unchanged.
+
+**Upgrade all five repositories together, as before.** The collectors on the nodes can stay at v0.13.0.
+
+### Fixed
+
+- **A state that came back was not shown as the current one.** When a node's content went A → B → A, the third load
+  reused the earlier snapshot A, as intended, but the latest snapshot stayed B, the one with the highest sequence number.
+  *Which version it entered in:* v0.1.0. *What came out wrong:* reproduced on v0.13.0 with real collector output. After the
+  third load, the load summary and the inventory view showed B, and `pqcota-provision` wrote B's app keys into the
+  provisioning record. Now a node's latest snapshot is the one its most recent observation record points to, and
+  `pqcota-inventory -history` marks that row `← current (last ingested)`.
+- **The retention policy could delete the current state.** "The latest is untouchable" protected the snapshot with the
+  highest sequence number. *Which version it entered in:* v0.1.0. *What came out wrong:* in the same reproduction,
+  `pqcota-prune -keep-last 1 -apply` after A → B → A deleted A, the state just loaded, and kept B. Now the latest snapshot
+  and the newest change point are both kept.
+- **A load and a prune of the same node were not coordinated.** A prune that decided while a load was reusing an older
+  snapshot could delete that snapshot, so the newest observation record pointed at nothing. *Which version it entered in:*
+  v0.1.0. *What came out wrong:* not seen in a real run; a test that runs loads and prunes of one node at the same time
+  failed in every run without the change. Now a load and a prune of a node take the same lock in Postgres, and the latest
+  snapshot is chosen and read in one SQL statement, so a read during a load and a prune returns the state of one moment.
+
+### Compatibility
+
+- **History without observation records** keeps working as before: when a node has no observation record, when a snapshot
+  was written after its newest observation record, or when that record's snapshot is gone, the newest snapshot is the
+  latest.
+- **No migration.** Existing histories are read with the new rule as they are. A node whose content came back reads as its
+  last loaded state on the first run of the new version.
+- The in-memory store (tests and single runs) follows the same rules: it reuses a snapshot from anywhere in the history,
+  as the Postgres store always did.
+
+### Built
+
+- **The same tests on both stores.** A → B → A leaves two snapshots and three observation records, the latest is A, and
+  `keep-last 1` keeps A and B, on the in-memory store and on Postgres.
+- **Postgres only:** the three cases of history without observation records above; twenty rounds of two loads and a prune
+  of one node at the same time, after which the newest observation record always points at a stored snapshot; and readers
+  calling the latest snapshot about 50,000 times per run while a writer loads a new state and prunes 150 times, with no empty
+  result.
+- **Across the stages.** After A → B → A, a provisioning record takes its before state and app keys from A.
+- **The reproduction above** on v0.13.0 and on this version: v0.13.0 shows B in the load summary, the view and the
+  provisioning record, and pruning deletes A; this version shows A everywhere and pruning keeps A and B.
+
+### Known limitations
+
+- The limitations of v0.13.0 are unchanged.
+
+---
+
 ## v0.13.0 — One app key rule for every runtime, and edges attributed per connection (2026-11-12)
 
 **Goal** — make an app key mean the same thing for every runtime, and give each observed connection to the application
