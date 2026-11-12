@@ -160,6 +160,11 @@ attributed and counted) and `pqcota-inventory` (the diff now lists edges).
   are found, and a socket opened after the process scan was cached is found by scanning again.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
   found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing): the checksums of the five bundles and `collector.jar` match `SHA256SUMS`;
+  all 46 programs are built with Go 1.26.11 from the v0.13.0 modules, and `govulncheck -mode=binary` found no
+  vulnerabilities in any of them. With the published `pqcota-nodescan`, `pqcota-netcap` and `pqcota-ingest`, the
+  reproduction above reported `×2`, `×5` and one connection whose application was not identified, in the collector output
+  and in the stored result, and `libssl.so.3` kept the two services as separate app keys.
 
 ### Known limitations
 
