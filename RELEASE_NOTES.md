@@ -41,7 +41,7 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Observing server-role edges (planned · version TBD)** — today netcap emits **only the edges the observing node initiated**. So a **process serving on that node gets no edge at all**, and the comparison that ties "this app loaded that library" (found by nodescan) to "this is what it actually negotiated" through `app_key` is entirely empty on the server side. The contract can already carry this with `EdgeRole.SERVER`; what blocks it is the value conventions and deduplication.
 
-- **Separating the traffic-observation cadence (planned · version TBD)** — assets and communication edges are observed on different cadences. Today they are bound into one playbook, so seeing more edges means re-running the `/proc` sweep and the JVM attach along with it. `discover.yml` is left alone and a playbook that runs netcap in rounds is **added**. What has to be solved along with it is **merging repeated observations**: the core only drops duplicate edges today, so `observed_count` stays at 1, `first_seen` and `last_seen` are filled by nobody, and the merge key differs in three places.
+- **Separating the traffic-observation cadence (planned · version TBD)** — assets and communication edges are observed on different cadences. Today they are bound into one playbook, so seeing more edges means re-running the `/proc` sweep and the JVM attach along with it. `discover.yml` is left alone and a playbook that runs netcap in rounds is **added**. What has to be solved along with it is **merging repeated observations**: the count from one capture is recorded (`observed_count`), but counts across several capture rounds are not merged, `first_seen` and `last_seen` are filled by nobody, and the merge key differs in three places.
 
 - **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, the design says to send it to a **registration request** — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today.
 
@@ -82,7 +82,7 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 **Goal** — make an app key mean the same thing for every runtime, and give each observed connection to the application
 that opened it. OpenSSL findings and network edges now choose the app key with the rule Java deployments have used since
 v0.12.0. Network edges are attributed **per connection**, not per destination, and `observed_count` now counts
-**connections**. **The contract fields are unchanged**; only their descriptions changed. **The ruleset is still
+**distinct connection tuples**. **The contract fields are unchanged**; only their descriptions changed. **The ruleset is still
 `pqcota-enrich/v4`.** Programs that changed: `pqcota-nodescan` (the OpenSSL app keys), `pqcota-netcap` (how edges are
 attributed and counted) and `pqcota-inventory` (the diff now lists edges).
 
@@ -120,8 +120,10 @@ attributed and counted) and `pqcota-inventory` (the diff now lists edges).
 
 ### `observed_count`: what it counts
 
-- **`observed_count` is now the number of connections the capture saw** in its window for that edge. Up to v0.12.0 it
-  counted handshake messages, so one connection added several. *Which version it entered in:* v0.1.0.
+- **`observed_count` is now the number of distinct connection tuples whose handshake the capture observed** in its window
+  for that edge. A tuple is both addresses and ports and the protocol; the observations of one tuple are counted once, so a
+  tuple reused within the window is not counted as another connection. Up to v0.12.0 it counted handshake messages, so one
+  connection added several. *Which version it entered in:* v0.1.0.
 - **This shows in the diff differently from the attribution change.** An edge whose id stays the same can show a different
   count, under `edges changed` (`×N → ×M`). In the reproduction, eight connections were counted as `×23` by v0.12.0
   (handshake messages) and as `2 + 5 + 1` by this version (connections in the window).
