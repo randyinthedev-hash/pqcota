@@ -251,7 +251,7 @@ additive fields** (`JcaAxes.instances`, `app_key_kind`, `observation_scope`, and
 - **Real JVMs.** The four-JVM reproduction above, and two users each running `foo.service` as a user service, which stay two
   deployments with two finding ids.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck` found no vulnerabilities in the five repositories.
-- **Release assets** (checked after publishing): the checksums of all six files match `SHA256SUMS`; all 46 programs are built with Go 1.26.11 from the v0.12.0 modules, and `govulncheck -mode=binary` found no vulnerabilities in any of them. The published `pqcota-jvmscan` with `collector.jar` reported two JVMs of one `-jar` path as one deployment (one variant, `count` 2) and a JAR with the same file name in another directory as a separate deployment.
+- **Release assets** (checked after publishing): the checksums of all six files match `SHA256SUMS`; all 46 programs are built with Go 1.26.11, and `govulncheck -mode=binary` found no vulnerabilities in any of them. Their build information declares the pqcota modules at v0.12.0, but each of those modules points through `replace` to a local source directory (`(devel)`), and none of the 46 programs carries VCS information. The build information alone therefore does not show which commit was built (corrected after the v0.13.0 asset check). The published `pqcota-jvmscan` with `collector.jar` reported two JVMs of one `-jar` path as one deployment (one variant, `count` 2) and a JAR with the same file name in another directory as a separate deployment.
 
 ### Known limitations
 
