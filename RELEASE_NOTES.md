@@ -77,15 +77,18 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
-## v0.15.0 — A signature has to come from the collector it names (2026-11-13)
+## v0.15.0 — A signature has to use a key listed for the collector ID it names (2026-11-13)
 
-**Goal** — make the ingest check *which collector* signed a result, not only that someone did. Until now
+**Goal** — make the ingest check that a result was signed with a key registered for the collector ID written in the
+result, not only that someone signed it. What a signature confirms is a key allowed for that ID: one key can be
+registered for several IDs, and then those IDs are not told apart. Until now
 `PQCOTA_VERIFY_KEY` was a list of keys: a result signed with any listed key passed whatever collector ID it carried,
 so whoever held one key could load results under any collector's name. **The contract, the ruleset and the database
 schema are unchanged.** What changed is the form `PQCOTA_VERIFY_KEY` accepts, what the ingest does with it, and which
 tools sign.
 
-**Nothing changes until you change `PQCOTA_VERIFY_KEY`.** The old key list keeps working, with a warning. Move to the
+**With the old key list, the way the ingest verifies stays the same.** It now prints a warning. Collectors and the
+declaration tools sign whenever `PQCOTA_SIGN_KEY` is set, and stop with an error if they cannot sign with it. Move to the
 new form in the order below: central tools first, then the collectors, then the check, then the new value. Switching
 the ingest first cuts off every collector that does not sign yet.
 
@@ -122,6 +125,8 @@ the ingest first cuts off every collector that does not sign yet.
   before.
 - The steps for moving an existing deployment, rotation, and what the bound form does and does not cover are in
   [environment variables](docs/environment-variables.md#binding-keys-to-collector-ids).
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
+  found no vulnerabilities in the five repositories.
 - **Tests.** Unit tests cover:
   - with one key listed only for `openssl-collector`, a result signed with it as `openssl-collector` is stored, and the
     same key as `network-collector` is refused before any snapshot;
@@ -146,7 +151,7 @@ the ingest first cuts off every collector that does not sign yet.
 
 - No change to the contract, the ruleset version or the database schema. Snapshots and records written by v0.14.0 are
   read as before.
-- `PQCOTA_VERIFY_KEY` in the old form behaves as in v0.14.0, with a warning. `sign.VerifyFrom` is kept; it now calls
+- With `PQCOTA_VERIFY_KEY` in the old form the ingest verifies as in v0.14.0, and now prints a warning. `sign.VerifyFrom` is kept; it now calls
   `sign.VerifyBound`, which takes several keys per ID.
 - A collector that is set up with `PQCOTA_SIGN_KEY` and used to emit unsigned results because the key was broken now
   exits with an error. Fix the key.
