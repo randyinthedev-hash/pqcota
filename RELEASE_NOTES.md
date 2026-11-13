@@ -127,6 +127,15 @@ the ingest first cuts off every collector that does not sign yet.
   [environment variables](docs/environment-variables.md#binding-keys-to-collector-ids).
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`). `govulncheck`
   found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing): the checksums of all seven files in `SHA256SUMS` match; the manifest
+  matched the downloaded assets; all 46 programs are built with Go 1.26.11, show the pqcota modules at v0.15.0 with `h1:`
+  hashes and no `replace`, and `govulncheck -mode=binary` found no vulnerabilities in any of them; `collector.jar` carries
+  v0.15.0 and the pqcota-discovery tag commit; the commits in the manifest equal the `v0.15.0` tag commits of the five
+  repositories; rebuilding the tag gave the same SHA-256 for all 46 programs. All 54 files passed attestation verification
+  against the repository, the release workflow, `refs/tags/v0.15.0` and the tag's commit taken from the tag, and a copy
+  changed by one byte, another tag or another commit was rejected. The end-to-end run with the released programs passed
+  all ten checks, including a refused result that names an accepted node with another machine fingerprint: only the
+  accepted result was stored, the refused one left a single signature refusal and no node identity conflict.
 - **Tests.** Unit tests cover:
   - with one key listed only for `openssl-collector`, a result signed with it as `openssl-collector` is stored, and the
     same key as `network-collector` is refused before any snapshot;
