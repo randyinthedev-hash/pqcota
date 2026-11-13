@@ -45,11 +45,11 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, the design says to send it to a **registration request** — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today.
 
-- **Binding the signature to a collector (planned · version TBD)** — the ingest today confirms only that
-  **someone signed**. `PQCOTA_VERIFY_KEY` is a list of keys, so there is no way to check it against
-  `envelope.collector_id`, and whoever holds one key can arrive **wearing any collector's name**.
-  `sign.VerifyFrom`, which verifies against that binding, already exists and **nothing calls it**. What
-  blocks it is the environment-variable format, so it is not a one-line change.
+- **Binding the signature to a node (planned · version TBD)** — from v0.15.0 a key can be bound to a **collector ID**
+  (`PQCOTA_VERIFY_KEY` as `<collector-id>:<key>`), and a result signed with one collector's key is refused when it claims
+  another collector's ID. What is not bound yet is the **node**: a result signed with a key listed for its collector ID
+  passes whatever `target_node_id` it names. The registration list and the machine fingerprint check are separate gates.
+  Binding a key to the nodes it may speak for needs a key-to-node record that pqcota does not keep today.
 
 - **Observing communication on Windows (planned · version TBD)** — `pqcota-netcap` is Linux-only, so on
   Windows **no binary is produced at all**. That node's completeness map therefore never records "NETWORK
@@ -74,6 +74,92 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.15.0 — A signature has to come from the collector it names (2026-11-13)
+
+**Goal** — make the ingest check *which collector* signed a result, not only that someone did. Until now
+`PQCOTA_VERIFY_KEY` was a list of keys: a result signed with any listed key passed whatever collector ID it carried,
+so whoever held one key could load results under any collector's name. **The contract, the ruleset and the database
+schema are unchanged.** What changed is the form `PQCOTA_VERIFY_KEY` accepts, what the ingest does with it, and which
+tools sign.
+
+**Nothing changes until you change `PQCOTA_VERIFY_KEY`.** The old key list keeps working, with a warning. Move to the
+new form in the order below: central tools first, then the collectors, then the check, then the new value. Switching
+the ingest first cuts off every collector that does not sign yet.
+
+### Built
+
+- **Keys bound to collector IDs.** `PQCOTA_VERIFY_KEY` now also takes `<collector-id>:<public key>` entries,
+  comma-separated. In this bound form a result is checked only against the keys listed for the collector ID it carries.
+  A result whose ID has no listed key, a result signed with another collector's key, and a result with no signature are
+  refused before anything is stored, and the refusal is recorded with its reason, for example
+  `signature does not match the keys registered for network-collector; it matches a key registered for openssl-collector`.
+  The ingest does not try the other keys after a failure.
+- **In the bound form a signature is always required**, whatever `PQCOTA_REQUIRE_SIGNATURE` says: there is no
+  "loaded unchecked" in this form. App declarations (`pqcota-declare-attribution`) and asset declarations
+  (`pqcota-declare`) go through the same check; a declaration that fails it stores nothing.
+- **Only results that pass the signature check go into the node identity check** in the bound form, so a refused result
+  cannot record a node ID collision with the results that were accepted.
+- **The form of the value decides the mode.** All entries `<id>:<key>` is the bound form; bare keys are the legacy form,
+  which behaves as before (any listed key passes for any collector; app declarations are not checked) and prints a
+  warning. Mixing the two, an empty ID or key, a key that is not a 32-byte ed25519 public key, or the same key twice for
+  one ID stops `pqcota-ingest` with status 2 before it reads any result; the message names the entry and does not print
+  the key. An ID that this version's tools do not write only gives a warning.
+- **Rotation and shared keys.** Two keys under one ID is a rotation: either passes, and that ID is still told apart from
+  the others. One key under several IDs makes those IDs indistinguishable: a collector holding the key can sign as any
+  of them. To check each collector's identity on its own, give each ID its own key.
+- **Every collector and both declaration tools sign.** `pqcota-netcap` and `pqcota-jvmscan` (each result), and
+  `pqcota-declare` and `pqcota-declare-attribution`, now sign with `PQCOTA_SIGN_KEY`, as `pqcota-nodescan` and
+  `pqcota-cngscan` already did. What is signed is unchanged, so their signatures also verify against the legacy list.
+- **`pqcota-ingest -verify-keys <results-dir>`**, a check for the move. It stores nothing and does not apply the
+  registration list. For each result it prints the collector ID, whether it is signed, the fingerprint of the key that
+  matched, and the verdict; it exits 1 if any result would be refused. The fingerprint shows which key signed. Whether
+  that key was deployed for that collector ID is for your own deployment record to say, and a key is removed when the
+  record shows no collector holds it, not because it is missing from the table.
+- **`pqcota-keygen -collector <id>`** prints the verify line in the bound form. Without the flag the output is the same as
+  before.
+- The steps for moving an existing deployment, rotation, and what the bound form does and does not cover are in
+  [environment variables](docs/environment-variables.md#binding-keys-to-collector-ids).
+- **Tests.** Unit tests cover:
+  - with one key listed only for `openssl-collector`, a result signed with it as `openssl-collector` is stored, and the
+    same key as `network-collector` is refused before any snapshot;
+  - an unsigned result is refused with `PQCOTA_REQUIRE_SIGNATURE` unset, and declarations that fail store nothing;
+  - a refused result leaves no node identity conflict;
+  - the legacy and bound forms are compared on the same input;
+  - configuration errors stop the command before any result is read.
+
+  A cross-stage test builds netcap, jvmscan and both declaration tools, loads their signed output with a key per ID,
+  refuses a jvm result relabelled as `network-collector`, and shows that the same relabelling passes when one key is
+  listed under both IDs. An end-to-end run on Linux with the real collectors and Postgres passed all nine checks.
+
+### Fixed
+
+- **A collector given a key it could not sign with still emitted the result, unsigned.** `pqcota-nodescan` and
+  `pqcota-cngscan` printed a warning and went on; a private key of the wrong length (a public key pasted by mistake)
+  made them crash instead. This was so from v0.1.0 (cngscan from v0.6.0). An unsigned result was then refused or
+  counted as unchecked at the centre, without the cause being visible there. Now every tool that signs stops with an
+  error when `PQCOTA_SIGN_KEY` is set but cannot sign, and a key of the wrong length is an error, not a crash.
+
+### Compatibility
+
+- No change to the contract, the ruleset version or the database schema. Snapshots and records written by v0.14.0 are
+  read as before.
+- `PQCOTA_VERIFY_KEY` in the old form behaves as in v0.14.0, with a warning. `sign.VerifyFrom` is kept; it now calls
+  `sign.VerifyBound`, which takes several keys per ID.
+- A collector that is set up with `PQCOTA_SIGN_KEY` and used to emit unsigned results because the key was broken now
+  exits with an error. Fix the key.
+
+### Known limitations
+
+- **The node is not bound to the key yet.** A result signed with a key listed for its collector ID passes this check
+  whatever node it names; the registration list and the machine fingerprint check are separate.
+- **A key listed under several IDs does not tell those IDs apart** (above).
+- **`pqcota-cbom-ingest` does not check signatures.** It takes CycloneDX from your own CI, not collector results, and
+  `PQCOTA_VERIFY_KEY` does not apply to it.
+- The legacy key list is kept in this release, with a warning. Whether to remove it is decided later.
+- The other limitations of v0.14.0 are unchanged.
 
 ---
 
