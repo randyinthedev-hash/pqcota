@@ -4,7 +4,7 @@
 // Command checkgates — **규칙은 있는데 제품이 부르지 않는 게이트**를 막는다.
 //
 // 이 리포는 보장을 함수로 적어 둔다. `provisioning.Executable`은 확정 계획이 실행 근거인지 보고,
-// `sign.VerifyFrom`은 서명이 그 collector의 것인지 본다. 그런데 **그 함수를 제품 경로가 부르지
+// `sign.VerifyBound`는 서명이 그 collector의 것인지 본다. 그런데 **그 함수를 제품 경로가 부르지
 // 않으면 보장이 아니다.** 실제로 그랬다: `pqcota-provision`이 `Executable`을 부르지 않고 상태만
 // 인라인으로 비교하는 동안, 승인 서명이 빈 FINALIZED 계획이 플레이북을 받아 갔다. 규칙에는 테스트가
 // 있었고 문서는 그 규칙을 약속했으며 게이트는 전부 초록이었다.
@@ -108,7 +108,7 @@ func main() {
 // 빼지 않으면 가짜 표시가 진짜로 잡혀 게이트가 자기 fixture 때문에 깨진다.
 //
 // 루트가 여럿인 것은 리포가 나뉘었기 때문이다. 게이트 함수와 그것을 부르는 명령이 서로 다른 리포에
-// 있으므로(예: `sign.VerifyFrom`은 pqcota-common, 호출부는 다른 리포) 한 리포만 읽으면 배선이 없다고
+// 있으므로(예: `sign.VerifyBound`는 pqcota-common, 호출부는 다른 리포) 한 리포만 읽으면 배선이 없다고
 // 오판한다. 돌려주는 경로는 루트를 앞에 붙인 형태다.
 func goFiles(roots []string) ([]string, error) {
 	var keep []string

@@ -26,11 +26,48 @@ pqcota 프로그램이 읽는 모든 환경변수를 한곳에 모았습니다. 
 
 | 변수 | 읽는 프로그램 | 값 | 설정하지 않으면 |
 |---|---|---|---|
-| `PQCOTA_SIGN_KEY` | `pqcota-nodescan`, `pqcota-cngscan` | `pqcota-keygen`이 만든 base64 ed25519 **개인** 키 | 결과에 서명하지 않습니다. 서명이 실패하면 프로그램이 경고를 출력하고 서명하지 않은 결과를 그대로 냅니다 |
-| `PQCOTA_VERIFY_KEY` | `pqcota-ingest` | 쉼표로 구분한 base64 **공개** 키 하나 이상 | 서명을 검증하지 않으며, 적재 요약이 그 결과를 *unchecked*로 셉니다. 준 키와 맞지 않으면 거부합니다 |
-| `PQCOTA_REQUIRE_SIGNATURE` | `pqcota-ingest` | `1` | `1`이면 검증할 키가 없을 때 적재를 시작하지 않습니다. 다른 값이거나 설정하지 않으면 검증 없이 진행합니다 |
+| `PQCOTA_SIGN_KEY` | `pqcota-nodescan`, `pqcota-netcap`, `pqcota-jvmscan`, `pqcota-cngscan`, `pqcota-declare`, `pqcota-declare-attribution` | `pqcota-keygen`이 만든 base64 ed25519 **개인** 키 | 결과에 서명하지 않습니다. 키를 설정했는데 서명할 수 없으면(base64가 아니거나 공개 키를 잘못 넣은 경우) 서명 없는 결과를 내지 않고 오류로 멈춥니다 |
+| `PQCOTA_VERIFY_KEY` | `pqcota-ingest` | 쉼표로 구분한 `<collector-id>:<base64 공개 키>` 항목(**결합 형식**), 또는 쉼표로 구분한 base64 공개 키(**기존 형식**). 아래를 보세요 | 서명을 검증하지 않으며, 적재 요약이 그 결과를 *unchecked*로 셉니다 |
+| `PQCOTA_REQUIRE_SIGNATURE` | `pqcota-ingest` | `1` | `1`이면 검증할 키가 없을 때 적재를 시작하지 않습니다. 다른 값이거나 설정하지 않으면 검증 없이 진행합니다. 결합 형식에서는 이 값과 상관없이 서명이 언제나 필수입니다 |
 
-`PQCOTA_VERIFY_KEY`는 키의 목록입니다. 이 키 중 하나를 가진 사람이 그 결과에 서명했다는 것을 보여 줄 뿐, 어느 수집기가 서명했는지는 보여 주지 않습니다. 키를 수집기에 묶는 기능은 아직 연결되지 않았습니다. 키 쌍은 [`pqcota-keygen`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/cmd/README.md)(영문)이 만듭니다. 계획 승인도 같은 종류의 키를 쓰기 때문에 이 프로그램은 `pqcota-common`에 있습니다.
+키 쌍은 [`pqcota-keygen`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/cmd/README.md#pqcota-keygen)(영문)이 만듭니다. 계획 승인도 같은 종류의 키를 쓰기 때문에 이 프로그램은 `pqcota-common`에 있습니다. `pqcota-keygen -collector <id>`는 검증 줄을 결합 형식으로 출력합니다.
+
+### 키를 수집기 ID에 묶기
+
+결과마다 그것을 낸 수집기의 ID가 적혀 있습니다(`openssl-collector`, `network-collector`, `jvm-collector`, `cng-collector`, `declaration-importer`, `attribution-importer`). 그 키가 이 수집기의 것이어야 하는지는 `PQCOTA_VERIFY_KEY`의 형식이 정합니다.
+
+```
+PQCOTA_VERIFY_KEY="openssl-collector:<키 A>,network-collector:<키 B>,jvm-collector:<키 C>"
+```
+
+- **결합 형식**(모든 항목이 `<collector-id>:<키>`): 결과는 자기가 적은 수집기 ID에 등록된 키로만 검증합니다. 키가 등록되지 않은 ID를 적은 결과, 다른 수집기의 키로 서명한 결과, 서명이 없는 결과는 모두 저장하기 전에 거부하고, 사유와 함께 거부 기록을 남깁니다. 사람이 만든 선언(`pqcota-declare`, `pqcota-declare-attribution`)도 같은 검증을 거칩니다. 검증에 실패해도 `pqcota-ingest`는 다른 키로 다시 시도하지 않습니다.
+- **기존 형식**(콜론 없이 키만 나열): 등록된 키 가운데 아무것으로나 맞으면 어느 수집기 ID든 통과합니다. v0.15.0 이전과 같습니다. 앱 선언은 서명을 확인하지 않고 받습니다. `pqcota-ingest`가 경고를 출력합니다.
+- **두 형식을 섞으면 오류입니다.** ID나 키가 비어 있거나, 키가 32바이트 ed25519 공개 키가 아니거나, 한 ID에 같은 키를 두 번 적어도 오류입니다. `pqcota-ingest`는 결과를 하나도 읽기 전에 상태 2로 멈춥니다. 메시지는 몇 번째 항목이 틀렸는지 알려 주고 키 값은 출력하지 않습니다.
+- 이 판의 도구가 쓰지 않는 ID는 오타일 수 있으므로 경고만 합니다.
+
+**한 ID에 키 두 개는 키 교체입니다.** 같은 ID에 옛 키와 새 키를 함께 적으면 어느 쪽으로 서명한 결과도 통과합니다. 그 ID는 여전히 다른 ID와 구별됩니다.
+
+**한 키를 여러 ID에 적으면 그 ID들은 서로 구별되지 않습니다.** 그 키를 가진 수집기는 키가 적힌 어느 ID로든 서명할 수 있습니다. 노드 하나가 수집기 셋을 같은 키로 돌리고 그 키를 세 ID에 모두 적으면, 그중 하나가 다른 수집기라고 주장한 결과도 통과합니다. 그 키를 적지 않은 ID만 보호됩니다. 수집기마다 신원을 따로 확인하려면 ID마다 다른 키를 쓰세요.
+
+결과가 적은 노드는 아직 키에 묶이지 않습니다. 등록된 키로 서명한 결과는 어느 노드를 적었든 이 검증을 통과합니다. 등재 목록과 머신 지문 검사는 따로 있습니다.
+
+`pqcota-cbom-ingest`는 수집기 결과가 아니라 여러분의 CI가 낸 CycloneDX를 받고, 서명을 확인하지 않습니다. 이 설정은 그 명령에 적용되지 않습니다.
+
+### 기존 배포를 결합 형식으로 옮기기
+
+아래 순서대로 합니다. `pqcota-ingest`를 먼저 결합 형식으로 바꾸면, 아직 서명하지 않거나 그 ID에 등록하지 않은 키로 서명하는 수집기가 모두 끊깁니다.
+
+1. **중앙 도구를 올립니다**(v0.15.0 이상). `PQCOTA_VERIFY_KEY`는 그대로 둡니다. 경고와 함께 지금처럼 동작합니다.
+2. **노드의 수집기를 올립니다.** v0.15.0부터는 `PQCOTA_SIGN_KEY`를 설정하면 수집기 넷과 선언 도구 둘이 모두 서명합니다. 기존 키 목록으로도 검증됩니다.
+3. **어느 키가 무엇에 서명했는지 확인합니다.** 지금 설정 그대로 `pqcota-ingest -verify-keys <결과 폴더>`를 실행합니다. 아무것도 저장하지 않습니다. 결과마다 수집기 ID, 서명 여부, 맞은 키의 지문, 판정을 출력합니다. 이것을 **어느 노드·수집기에 어느 키를 배포했는지 적은 기록**과 대조합니다. 지문은 어느 키가 서명했는지만 알려 줍니다. 그 키를 정말 그 수집기 ID에 쓰려고 했는지는 배포 기록이 말해야 합니다. 둘이 다르면 다음 단계로 가기 전에 원인을 찾습니다.
+4. **결합 형식으로 적습니다.** 어느 ID에 어느 키를 적을지는 3단계 표가 아니라 **배포 기록으로** 정합니다. 표에 나오지 않았다는 이유만으로 키를 빼지 마세요. 점검하는 동안 실행되지 않은 수집기가 끊깁니다. 배포 기록상 그 키를 가진 수집기가 하나도 없을 때 키를 뺍니다.
+5. **확인합니다.** 새 값으로 `-verify-keys`를 다시 실행해 거부가 없는지 봅니다. 다음 실제 적재의 요약에 `signature check: bound to collector IDs (N IDs, M keys)`와 `signature-rejected 0`이 나옵니다. 배포 기록의 모든 수집기가 한 번 이상 적재되면 전환이 끝납니다.
+
+되돌리려면 기존 키 목록을 다시 넣습니다.
+
+나중에 키를 바꿀 때는, 같은 ID에 새 키를 더하고, 그 수집기의 `PQCOTA_SIGN_KEY`를 바꾸고 배포 기록을 고친 다음, 배포 기록상 옛 키를 가진 수집기가 남지 않았을 때 옛 키를 뺍니다.
+
+`-verify-keys`는 이 점검에만 씁니다. 적재를 대신하지 않고, 등재 목록도 적용하지 않습니다.
 
 ## 계획 승인
 
