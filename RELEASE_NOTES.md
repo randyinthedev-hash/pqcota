@@ -113,6 +113,8 @@ one, then check, then switch the ingest.
   for the same key so it can be added to the current setting first.
 - The key file, the steps for moving to it, and who may change the file are in
   [environment variables](docs/environment-variables.md#binding-keys-to-nodes).
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.16.0.
+  `govulncheck` found no vulnerabilities in the five repositories.
 - **Tests.** Unit and command tests cover:
   - a key listed for `web-01` passes for `web-01` and is refused for `web-02`, with both nodes in the reason;
   - unlisted nodes, unsigned results, `*` lines, rotation and a key shared by two nodes;
