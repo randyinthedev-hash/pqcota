@@ -28,9 +28,10 @@ pqcota 프로그램이 읽는 모든 환경변수를 한곳에 모았습니다. 
 |---|---|---|---|
 | `PQCOTA_SIGN_KEY` | `pqcota-nodescan`, `pqcota-netcap`, `pqcota-jvmscan`, `pqcota-cngscan`, `pqcota-declare`, `pqcota-declare-attribution` | `pqcota-keygen`이 만든 base64 ed25519 **개인** 키 | 결과에 서명하지 않습니다. 키를 설정했는데 서명할 수 없으면(base64가 아니거나 공개 키를 잘못 넣은 경우) 서명 없는 결과를 내지 않고 오류로 멈춥니다 |
 | `PQCOTA_VERIFY_KEY` | `pqcota-ingest` | 쉼표로 구분한 `<collector-id>:<base64 공개 키>` 항목(**결합 형식**), 또는 쉼표로 구분한 base64 공개 키(**기존 형식**). 아래를 보세요 | 서명을 검증하지 않으며, 적재 요약이 그 결과를 *unchecked*로 셉니다 |
+| `PQCOTA_VERIFY_KEY_FILE` | `pqcota-ingest` | 키마다 노드와 수집기 ID를 묶은 키 파일의 경로. [키를 노드에 묶기](#키를-노드에-묶기)를 보세요. `PQCOTA_VERIFY_KEY`와 함께 설정할 수 없습니다 | `PQCOTA_VERIFY_KEY`를 씁니다 |
 | `PQCOTA_REQUIRE_SIGNATURE` | `pqcota-ingest` | `1` | `1`이면 검증할 키가 없을 때 적재를 시작하지 않습니다. 다른 값이거나 설정하지 않으면 검증 없이 진행합니다. 결합 형식에서는 이 값과 상관없이 서명이 언제나 필수입니다 |
 
-키 쌍은 [`pqcota-keygen`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/cmd/README.md#pqcota-keygen)(영문)이 만듭니다. 계획 승인도 같은 종류의 키를 쓰기 때문에 이 프로그램은 `pqcota-common`에 있습니다. `pqcota-keygen -collector <id>`는 검증 줄을 결합 형식으로 출력합니다.
+키 쌍은 [`pqcota-keygen`](https://github.com/randyinthedev-hash/pqcota-common/blob/main/cmd/README.md#pqcota-keygen)(영문)이 만듭니다. 계획 승인도 같은 종류의 키를 쓰기 때문에 이 프로그램은 `pqcota-common`에 있습니다. `pqcota-keygen -collector <id>`는 검증 줄을 결합 형식으로 출력하고, `-node <노드 ID>`를 함께 주면 키 파일의 줄도 출력합니다.
 
 ### 키를 수집기 ID에 묶기
 
@@ -49,7 +50,7 @@ PQCOTA_VERIFY_KEY="openssl-collector:<키 A>,network-collector:<키 B>,jvm-colle
 
 **한 키를 여러 ID에 적으면 그 ID들은 서로 구별되지 않습니다.** 그 키를 가진 수집기는 키가 적힌 어느 ID로든 서명할 수 있습니다. 노드 하나가 수집기 셋을 같은 키로 돌리고 그 키를 세 ID에 모두 적으면, 그중 하나가 다른 수집기라고 주장한 결과도 통과합니다. 그 키를 적지 않은 ID만 보호됩니다. 수집기마다 신원을 따로 확인하려면 ID마다 다른 키를 쓰세요.
 
-결과가 적은 노드는 아직 키에 묶이지 않습니다. 등록된 키로 서명한 결과는 어느 노드를 적었든 이 검증을 통과합니다. 등재 목록과 머신 지문 검사는 따로 있습니다.
+`PQCOTA_VERIFY_KEY`로는 결과가 적은 노드가 키에 묶이지 않습니다. 등록된 키로 서명한 결과는 어느 노드를 적었든 이 검증을 통과합니다. 키를 노드에 묶으려면 [키 파일](#키를-노드에-묶기)을 씁니다.
 
 `pqcota-cbom-ingest`는 수집기 결과가 아니라 여러분의 CI가 낸 CycloneDX를 받고, 서명을 확인하지 않습니다. 이 설정은 그 명령에 적용되지 않습니다.
 
@@ -68,6 +69,46 @@ PQCOTA_VERIFY_KEY="openssl-collector:<키 A>,network-collector:<키 B>,jvm-colle
 나중에 키를 바꿀 때는, 같은 ID에 새 키를 더하고, 그 수집기의 `PQCOTA_SIGN_KEY`를 바꾸고 배포 기록을 고친 다음, 배포 기록상 옛 키를 가진 수집기가 남지 않았을 때 옛 키를 뺍니다.
 
 `-verify-keys`는 이 점검에만 씁니다. 적재를 대신하지 않고, 등재 목록도 적용하지 않습니다.
+
+### 키를 노드에 묶기
+
+`PQCOTA_VERIFY_KEY`는 키를 수집기 ID에 묶을 뿐 노드에는 묶지 않습니다. 키를 노드에 묶으려면 대신 `pqcota-ingest`에 **키 파일**을 줍니다: `PQCOTA_VERIFY_KEY_FILE=<경로>`. 그러면 결과는 **자기가 적은 노드(`target_node_id`)에서 그 수집기 ID에 등록된 키**로만 검증합니다. `web-01`에 준 키로는 `web-02`의 결과에 서명할 수 없습니다.
+
+```
+# 노드 ID      수집기 ID                                          공개 키
+web-01        openssl-collector,network-collector,jvm-collector  <web-01의 키>
+web-02        openssl-collector,network-collector,jvm-collector  <web-02의 키>
+*             declaration-importer,attribution-importer          <선언 도구의 키>
+```
+
+- 키 하나에 한 줄입니다. 노드 ID, 수집기 ID(쉼표로 구분), base64 공개 키를 공백으로 나눠 적습니다. `#` 뒤는 주석입니다. `pqcota-keygen -node <노드 ID> -collector <ID 목록>`이 이 줄을 출력합니다.
+- **서명은 언제나 필수이고**, 선언도 검증합니다. `PQCOTA_VERIFY_KEY`의 결합 형식과 같습니다. 노드와 수집기에 맞는 줄이 없거나, 그 줄의 키와 서명이 맞지 않으면 저장하기 전에 거부합니다. 사유에는 그 키가 실제로 어디에 등록돼 있는지가 나옵니다. 예: `signature does not match the keys registered for openssl-collector on web-02; it matches a key registered for openssl-collector on web-01`. `pqcota-ingest`는 다른 줄로 다시 시도하지 않습니다.
+- **결과가 기록하는 노드는 서명한 노드여야 합니다.** 결과의 연결 간선에는 출발 노드(`src_node_id`)가 적혀 있고, 앱 선언은 그 노드 아래에 저장됩니다. 간선의 출발 노드가 결과의 `target_node_id`와 다르면 결과 전체를 거부합니다: `edge source node "web-02" is outside the node this result was signed for ("web-01")`. 간선의 반대쪽(상대방)은 제한하지 않습니다. 이 판의 수집기와 선언 도구는 이미 이렇게 결과를 씁니다.
+- **노드 칸의 `*`는 모든 노드에 맞습니다.** 여러 노드의 선언을 한꺼번에 서명하는 선언 도구에 씁니다. 노드에서 도는 수집기를 `*` 줄에 적으면 그 수집기는 노드에 묶이지 않으므로 `pqcota-ingest`가 경고합니다.
+- **적는 노드 ID**: 운영자가 승인한 노드 ID입니다. 수집기에 준 노드 인자이거나, 인자 없이 돌린 수집기가 머신에서 정하는 자체 ID(`node:…`)입니다. 자체 ID는 먼저 그 머신에서 확인하고 배포 기록과 대조한 뒤 적습니다. `host://local`은 적을 수 없습니다. 수집기가 자기 노드를 몰랐다는 뜻이라 모든 머신이 그 이름을 쓸 수 있습니다.
+- **키 교체**: 같은 노드와 수집기에 줄 둘을 적으면 어느 쪽으로 서명한 결과도 통과합니다. **한 키를 여러 노드에 적으면** 그 노드들은 서로 구별되지 않으며, `pqcota-ingest`가 경고합니다.
+- **다음 오류는 결과를 하나도 읽기 전에 상태 2로 멈춥니다**: 파일이 없거나 읽을 수 없음, 칸이 셋이 아닌 줄, 빈 수집기 ID, 32바이트 ed25519 공개 키가 아닌 키, `host://local`, 한 노드·수집기에 같은 키를 다시 적음, 줄이 하나도 없는 파일, `PQCOTA_VERIFY_KEY`를 함께 설정함. 메시지는 줄 번호를 알려 주고 키 값은 출력하지 않습니다.
+- **파일은 한 번 읽습니다.** `pqcota-ingest`는 시작할 때 파일을 읽고, 실행이 끝날 때까지 그때 읽은 내용을 씁니다.
+- **등재 목록은 따로 있습니다.** 등재 목록도 함께 주면 한쪽에만 있는 노드를 경고합니다. 키 줄이 노드를 등재하지는 않습니다.
+
+**파일을 바꿀 수 있는 사람.** 키 파일은 어느 키를 믿을지 정하므로 운영자가 소유하고, `pqcota-ingest`를 실행하는 계정은 읽기만 합니다. 예를 들어 파일은 `root:pqcota-ingest`에 모드 `0640`으로 두고, 그 계정은 디렉터리에도 쓸 수 없게 합니다. 파일을 쓴다는 것만으로 적재 계정이 파일을 바꾸는 것까지 막히지는 않습니다. 그 계정이 파일이나 디렉터리에 쓸 수 있으면 믿을 키를 바꿀 수 있습니다. `pqcota-ingest`는 실행 중인 계정이 파일이나 디렉터리에 쓸 수 있거나, 그룹이나 다른 사용자가 파일에 쓸 수 있으면 경고합니다. 이 경고로 멈추지는 않습니다.
+
+### 수집기 결합에서 키 파일로 옮기기
+
+`PQCOTA_VERIFY_KEY`와 키 파일을 함께 설정하면 `pqcota-ingest`가 실행되지 않으므로, 적재기는 처음부터 끝까지 한 설정으로 돕니다. 수집기를 바꾸기 **전에** 새 공개 키를 지금 설정에 먼저 더해 둡니다. 그러면 수집기를 하나씩 바꾸는 동안 옛 키와 새 키가 모두 통과합니다.
+
+1. **노드 키를 만듭니다.** 노드마다 `pqcota-keygen -node <노드 ID> -collector openssl-collector,network-collector,jvm-collector`를 실행합니다. 출력의 키 파일 줄을 모아 키 파일을 만들고, 선언 도구의 키를 `*` 줄로 더합니다. 이 파일은 아직 적재기에 주지 않습니다.
+2. **새 공개 키를 `PQCOTA_VERIFY_KEY`에 더합니다.** 노드 키를 그 키로 서명할 수집기 ID마다 더합니다(`pqcota-keygen`이 이 형식도 출력합니다). 옛 키는 그대로 둡니다. 적재기를 다시 시작합니다. 이 단계에서 새 키는 옛 키처럼 수집기 ID에만 묶여 있습니다.
+3. **수집기를 하나씩 바꿉니다.** 각 노드의 `PQCOTA_SIGN_KEY`를 그 노드의 키로 바꿉니다. 옛 키와 새 키로 서명한 결과를 모두 받습니다.
+4. **키 파일로 점검합니다.** 모든 노드를 바꾼 뒤 새로 모은 결과에 대해, 그 명령 한 번에만 기존 변수를 지우고 실행합니다.
+   ```bash
+   env -u PQCOTA_VERIFY_KEY PQCOTA_VERIFY_KEY_FILE=/etc/pqcota/verify-keys pqcota-ingest -verify-keys /var/lib/pqcota/results
+   ```
+   아무것도 저장하지 않습니다. 모든 결과가 통과해야 하며, 키 칸에는 맞은 줄이 나옵니다. 옛 키로 서명한 결과가 남아 있으면 그 노드의 수집기를 아직 바꾸지 않은 것입니다.
+5. **적재기를 키 파일로 바꿉니다.** 설정에서 `PQCOTA_VERIFY_KEY`를 지우고 `PQCOTA_VERIFY_KEY_FILE`을 둡니다. 이제 키 파일에 없는 옛 키는 거부됩니다.
+6. **옛 키를 폐기합니다.** 배포 기록상 그 키를 가진 수집기가 남지 않았을 때 폐기합니다.
+
+되돌리려면 `PQCOTA_VERIFY_KEY`를 다시 넣고 `PQCOTA_VERIFY_KEY_FILE`을 지웁니다.
 
 ## 계획 승인
 
