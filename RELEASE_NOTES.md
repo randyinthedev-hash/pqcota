@@ -77,6 +77,83 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.16.0 — The database schema is created on purpose, and the query commands only read (2026-11-18)
+
+**Goal** — give the database an official way to be set up, and keep the query commands from changing it. Until now
+there was no setup step: whichever command opened the store first created the tables, query commands included, and the
+metadata and provisioning-record tables were created even with `PQCOTA_AUTO_DDL=0`. A query on an empty or wrong
+database therefore created tables, an account that could only read could not run `pqcota-inventory`, and a loading
+account had to own the tables. **The contract, the ruleset and the tables and columns are unchanged.** What changed is
+which commands create tables, what `PQCOTA_AUTO_DDL=0` covers, and how a missing schema is reported.
+
+**Set up a new database with `-init-schema`, and run it again after upgrading.** Existing databases keep working: their
+tables are already there. A query command on a database that was never initialized now stops instead of creating tables.
+
+### Built
+
+- **`pqcota-inventory -init-schema` and `pqcota-records -init-schema`.** The first creates the inventory tables (history,
+  machine metadata, source evidence), the second the provisioning-record table. Each runs in one transaction: if any
+  statement fails, nothing is changed and it exits with status 1. The last line, `schema ready: N created, M already
+  present`, is printed only after the transaction was committed and every table and column was checked again. If the
+  connection is lost while committing, it says it could not confirm whether the change was made, prints no success
+  line, and asks you to restore the connection and run it again. Running it again changes nothing that is already there
+  and adds what a newer version needs. It does not read `PQCOTA_AUTO_DDL`. Without `PQCOTA_DSN`, or together with
+  `-history`, `-snapshot`, `-diff` or an argument, it refuses with status 2 before connecting.
+- **The query commands no longer create tables.** `pqcota-inventory` and `pqcota-records` open the store without running
+  any schema statement, as `pqcota-source-evidence` and `pqcota-approve` already did, so they run with an account that
+  has only `SELECT`.
+- **`PQCOTA_AUTO_DDL=0` covers every pqcota table.** The machine metadata store (`pqcota-hosts`, `pqcota-profile`) and
+  the provisioning-record store (`pqcota-provision`) now follow it like the history store. With it, a loading account
+  needs only `SELECT`, `INSERT`, `UPDATE`, `DELETE` and `USAGE` on the sequences. This closes the limitation recorded
+  since v0.10.1. Unset, the writing commands create their tables as before.
+- **A missing schema is told apart from a missing privilege.** Opening without schema statements checks every table and
+  column that store uses. A missing table or column names it and points to `-init-schema`. A table the account cannot
+  read, or a schema it has no `USAGE` on, names the privilege and does not suggest initializing, because initializing
+  would not change it. Connection and authentication errors are reported as they are.
+- **Setting up and moving a database** are described in [setting up the database](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md#setting-up-the-database):
+  - Three roles: one that creates the schema and owns the tables, one that loads, one that reads.
+  - Two kinds of grant: `GRANT … ON ALL TABLES` for the tables that exist now, and `ALTER DEFAULT PRIVILEGES` for the
+    tables the schema role creates later. The second alone grants nothing on a database that already has tables.
+  - A database whose tables another role created: `-init-schema` run by a new role fails with `must be owner of table …`
+    and changes nothing. Either run it as the current owner, or move the ownership with
+    `ALTER TABLE … OWNER TO <schema role>` first.
+- **Tests.** Against Postgres:
+  - initializing an empty schema and running it again;
+  - a failure in a later step leaves no table from the earlier steps, and running again after the fix succeeds;
+  - a missing table and a missing column point to `-init-schema`; no `USAGE`, no `SELECT`, a wrong password and an
+    unreachable server do not;
+  - a loading account with only DML privileges opens the writing stores with `PQCOTA_AUTO_DDL=0`.
+
+  A test connection whose commit fails shows the "could not confirm" message and no success line, and the commands
+  refuse `-init-schema` with other options. An end-to-end run on Linux with PostgreSQL 16 passed fifteen checks. It used
+  the programs built from this release and a database first created by v0.15.0. Among the checks:
+  - the three roles with the documented grants;
+  - a table created later is usable through the default privileges;
+  - an existing database moved to a schema role both ways;
+  - an interrupted initialization run again.
+
+### Compatibility
+
+- No change to the contract, the ruleset version or the tables and columns. Data written by v0.15.0 is read as before.
+- **On a database that was never initialized, `pqcota-inventory` and `pqcota-records` stop with status 1** and point to
+  `-init-schema`. Before, they created the tables and printed an empty view.
+- **With `PQCOTA_AUTO_DDL=0`, the metadata and provisioning-record tables are no longer created.** A new installation
+  runs `-init-schema` first. An existing one already has them.
+- **The check on opening is wider.** Where the store is opened without schema statements (the query commands, and the
+  writing commands with `PQCOTA_AUTO_DDL=0`), every table and column of that store is checked. Before, the history
+  store checked one table when writing and three when reading. An installation with `PQCOTA_AUTO_DDL=0` that upgrades
+  without running `-init-schema` now stops when it opens the store, not at its first write.
+- An account that only reads needs `USAGE` on the schema and `SELECT` on the tables. Before, the query commands also
+  needed the right to run schema statements.
+
+### Known limitations
+
+- **Upgrading needs `-init-schema` when a release adds tables or columns**, and the release notes say so. Installations
+  that leave `PQCOTA_AUTO_DDL` unset get them automatically, through the owner of the tables, as before.
+- The limitations of v0.15.0 are unchanged.
+
+---
+
 ## v0.15.0 — A signature has to use a key listed for the collector ID it names (2026-11-13)
 
 **Goal** — make the ingest check that a result was signed with a key registered for the collector ID written in the
