@@ -115,6 +115,23 @@ one, then check, then switch the ingest.
   [environment variables](docs/environment-variables.md#binding-keys-to-nodes).
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.16.0.
   `govulncheck` found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing):
+  - the checksums of all seven files in `SHA256SUMS` match, and the manifest matched the downloaded assets;
+  - all 46 programs are built with Go 1.26.11 and show the pqcota modules at v0.17.0 with `h1:` hashes and no
+    `replace`; `govulncheck -mode=binary` found no vulnerabilities in any of them;
+  - `collector.jar` carries v0.17.0 and the pqcota-discovery tag commit;
+  - the commits in the manifest equal the `v0.17.0` tag commits of the five repositories, and rebuilding the tag gave
+    the same SHA-256 for all 46 programs;
+  - all 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.17.0` and
+    the commit taken from the tag; a copy with one byte changed, another tag and another commit were rejected.
+
+  The end-to-end run with the released programs passed all fourteen checks:
+  - a result re-signed for another node, and a declaration or observation whose edge source node differs from the signed
+    node, are refused and store nothing;
+  - `-verify-keys` and the real load give the same verdicts and reasons on the same input, and the refused results leave
+    no node identity conflict and no snapshot;
+  - the move to a key file in the documented order works: old and new keys both load, the check run with
+    `env -u PQCOTA_VERIFY_KEY` passes once every node has switched, and old keys are refused after the switch.
 - **Tests.** Unit and command tests cover:
   - a key listed for `web-01` passes for `web-01` and is refused for `web-02`, with both nodes in the reason;
   - unlisted nodes, unsigned results, `*` lines, rotation and a key shared by two nodes;
