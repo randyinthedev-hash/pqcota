@@ -45,12 +45,6 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, the design says to send it to a **registration request** — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today.
 
-- **Binding the signature to a node (planned · version TBD)** — from v0.15.0 a key can be bound to a **collector ID**
-  (`PQCOTA_VERIFY_KEY` as `<collector-id>:<key>`), and a result signed with one collector's key is refused when it claims
-  another collector's ID. What is not bound yet is the **node**: a result signed with a key listed for its collector ID
-  passes whatever `target_node_id` it names. The registration list and the machine fingerprint check are separate gates.
-  Binding a key to the nodes it may speak for needs a key-to-node record that pqcota does not keep today.
-
 - **Observing communication on Windows (planned · version TBD)** — `pqcota-netcap` is Linux-only, so on
   Windows **no binary is produced at all**. That node's completeness map therefore never records "NETWORK
   layer not observed", and on screen it looks like a node with no communication. The dissection layer
@@ -74,6 +68,84 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.17.0 — A signature has to use a key allowed for the collector ID and the node it names (2026-11-18)
+
+**Goal** — make the ingest check that a result was signed with a key allowed for both the collector ID and the node
+ID written in the result. Since v0.15.0 a key could be bound to a collector ID, but a result signed with it passed
+whatever node it named, so a key taken from one node could write results for every node. **The contract, the ruleset
+and the database schema are unchanged, and the collectors are unchanged**: the signature already covers the node.
+What is new is a key file that says which key belongs to which nodes and collectors, and what the ingest checks with it.
+
+**Existing settings keep working.** `PQCOTA_VERIFY_KEY` in either form behaves as in v0.16.0. Moving to the key file
+is done in the order below: add the new public keys to the current setting first, then switch the collectors one by
+one, then check, then switch the ingest.
+
+### Built
+
+- **A key file, `PQCOTA_VERIFY_KEY_FILE`.** One line per key: the node ID, the collector IDs (comma-separated) and the
+  public key. A result is checked only against the keys on the lines for its collector ID and its `target_node_id`. A
+  result for a node or collector with no line, a result signed with a key from another line, and a result with no
+  signature are refused before anything is stored, with the reason recorded, for example `signature does not match the
+  keys registered for openssl-collector on web-02; it matches a key registered for openssl-collector on web-01`. A
+  signature is always required, declarations are checked too, and the ingest does not try other lines.
+- **The node a result writes about must be the node it was signed for.** App declarations are stored under the source
+  node of their edges, and the views show an edge's source node as where the traffic left. With the key file, a result
+  whose edge source node (`src_node_id`) is not its `target_node_id` is refused as a whole. The other end of an edge is
+  not restricted. The collectors and declaration tools of this release already write results this way.
+- **`*` in the node column** matches every node. It is meant for the declaration tools, which sign declarations for many
+  nodes at once. Listing a collector that runs on a node under `*` gives a warning.
+- **Approved node IDs.** A line names a node ID the operator has approved: the node argument given to the collectors,
+  or a self-assigned `node:…` ID checked on the machine and compared with the deployment record. `host://local` cannot
+  be listed.
+- **The file is read once** when `pqcota-ingest` starts, and what was read is used for the whole run. A missing or
+  unreadable file, a malformed line, a wrong key, `host://local`, a repeated key for one node and collector, or
+  `PQCOTA_VERIFY_KEY` set at the same time stops it with status 2 before any result is read. The message gives the
+  line number and does not print the key.
+- **Warnings, apart from errors**: a key listed for several nodes, a node collector under `*`, nodes that are in the key
+  file and not in the scope list or the other way round, and **file permissions**: the account running the ingest can
+  write the key file or its directory, or the file is writable by its group or others. Warnings do not stop the ingest.
+- **`pqcota-ingest -verify-keys`** uses the same check as loading, signature and source node, and with a key file also
+  shows the line that matched. It stores nothing.
+- **`pqcota-keygen -node <node-id> -collector <ids>`** prints the key-file line, and the bound `PQCOTA_VERIFY_KEY` form
+  for the same key so it can be added to the current setting first.
+- The key file, the steps for moving to it, and who may change the file are in
+  [environment variables](docs/environment-variables.md#binding-keys-to-nodes).
+- **Tests.** Unit and command tests cover:
+  - a key listed for `web-01` passes for `web-01` and is refused for `web-02`, with both nodes in the reason;
+  - unlisted nodes, unsigned results, `*` lines, rotation and a key shared by two nodes;
+  - a declaration or an observation whose edge source node differs from the signed node is refused and stores nothing;
+  - only results that pass both checks go into the node identity check;
+  - configuration errors stop the command before any result is read, and permission warnings are separate.
+
+  A cross-stage test signs the output of netcap, jvmscan and both declaration tools with node keys and loads it with a
+  key file. An end-to-end run on Linux with the real collectors and Postgres passed all thirteen checks, including
+  the migration in the documented order.
+
+### Compatibility
+
+- No change to the contract, the ruleset version, the database schema or the collectors. Data written by v0.16.0 is read
+  as before.
+- `PQCOTA_VERIFY_KEY` in the legacy and the collector-bound form behaves as in v0.16.0. The source-node check applies only
+  with the key file.
+- `pqcota-keygen -collector` now takes several IDs, comma-separated, and prints one bound entry for each. With one ID the
+  output is as before.
+
+### Known limitations
+
+- **A key listed for several nodes does not tell those nodes apart.** A collector holding it can sign as any of them.
+  `pqcota-ingest` warns, and does not refuse.
+- **A `*` line is not bound to any node.** Whoever holds that key can sign, for the collector IDs on the line, results
+  that name any node. It is meant for the declaration tools.
+- **The machine fingerprint is not bound to the key.** The signature covers the fingerprint, but the key file binds a key
+  to node IDs only: a collector holding a node's key can write any fingerprint under that node. The node identity check
+  still shows a node ID seen with different fingerprints.
+- **The key file is trusted as it is.** If the account that runs the ingest can write the file or its directory, it can
+  change which keys are trusted; the warning says so but does not stop it.
+- **`pqcota-cbom-ingest` does not check signatures** (unchanged).
+- The other limitations of v0.16.0 are unchanged.
 
 ---
 
