@@ -117,6 +117,8 @@ tables are already there. A query command on a database that was never initializ
   - A database whose tables another role created: `-init-schema` run by a new role fails with `must be owner of table …`
     and changes nothing. Either run it as the current owner, or move the ownership with
     `ALTER TABLE … OWNER TO <schema role>` first.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.15.0.
+  `govulncheck` found no vulnerabilities in the five repositories.
 - **Tests.** Against Postgres:
   - initializing an empty schema and running it again;
   - a failure in a later step leaves no table from the earlier steps, and running again after the fix succeeds;
