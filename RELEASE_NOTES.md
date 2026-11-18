@@ -119,6 +119,20 @@ tables are already there. A query command on a database that was never initializ
     `ALTER TABLE … OWNER TO <schema role>` first.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.15.0.
   `govulncheck` found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing):
+  - the checksums of all seven files in `SHA256SUMS` match, and the manifest matched the downloaded assets;
+  - all 46 programs are built with Go 1.26.11 and show the pqcota modules at v0.16.0 with `h1:` hashes and no
+    `replace`; `govulncheck -mode=binary` found no vulnerabilities in any of them;
+  - `collector.jar` carries v0.16.0 and the pqcota-discovery tag commit;
+  - the commits in the manifest equal the `v0.16.0` tag commits of the five repositories, and rebuilding the tag gave
+    the same SHA-256 for all 46 programs;
+  - all 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.16.0` and
+    the commit taken from the tag; a copy with one byte changed, another tag and another commit were rejected.
+
+  The end-to-end run with the released controller tools passed all fifteen checks: both initialization commands create
+  the tables and change nothing when run again, a `SELECT`-only account queries, a DML-only account loads with
+  `PQCOTA_AUTO_DDL=0`, and a failed initialization prints no success line. A lost reply to the commit is covered only by
+  the test connection, not by the end-to-end run.
 - **Tests.** Against Postgres:
   - initializing an empty schema and running it again;
   - a failure in a later step leaves no table from the earlier steps, and running again after the fix succeeds;
