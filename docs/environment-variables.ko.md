@@ -16,9 +16,9 @@ pqcota 프로그램이 읽는 모든 환경변수를 한곳에 모았습니다. 
 | `PQCOTA_DSN` | `pqcota-ingest`, `pqcota-cbom-ingest`(선택); `pqcota-inventory`, `pqcota-prune`, `pqcota-records`(필수) | URL(`postgres://user:password@host:5432/db`) 또는 `key=value` 쌍으로 쓴 Postgres 연결 문자열. 관측 명령 참조(`pqcota-hosts`)의 [형식](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md)(영문)을 보세요 | 적재 명령 둘은 메모리 스토어를 쓰며, 요약을 출력하고 프로세스가 끝나면 아무것도 남기지 않습니다. 나머지 셋은 오류(상태 2)로 종료합니다. 그 보기에는 다른 프로세스가 써 둔 스토어가 필요하기 때문입니다 |
 | `PQCOTA_ORG` | 위에 나열한 여덟 명령 | 조직 이름: 소문자, 숫자, 하이픈으로 이루어진 2자 이상 64자 이하의 문자열이며 하이픈으로 시작하지 않습니다. 맞지 않는 값은 항상 오류이며 기본값으로 대체되지 않습니다 | 레코드가 조직 `default`에 속합니다 |
 | `PQCOTA_REQUIRE_ORG` | 스토어를 여는 모든 명령 | `1` | `1`이면 조직 없이 스토어를 여는 것도, `default`를 명시하는 것도(조직 없이 쓴 레코드를 가리키는 이름입니다) 오류이므로 실수로 `default`에 쓰이는 일이 없습니다. 다른 값이거나 설정하지 않으면 둘 다 허용합니다 |
-| `PQCOTA_AUTO_DDL` | 인벤토리 **이력** 스토어에만 | `0` | 값이 정확히 `0`이 아니면 그 스토어를 열 때 이력 스키마를 만듭니다. `0`이면 만들지 않으며 스키마가 없을 때 열기가 실패합니다. **다른 테이블에는 적용되지 않습니다.** 기계 메타데이터 스토어(`pqcota-hosts`, `pqcota-profile`)와 전환물 생성의 기록 스토어(`pqcota-provision`)는 이 변수와 관계없이 자기 테이블을 만듭니다 |
+| `PQCOTA_AUTO_DDL` | 스토어에 쓰는 모든 명령 | `0` | 값이 정확히 `0`이 아니면 쓰는 명령이 스토어를 열 때마다 자기가 쓰는 테이블을 만들거나 새 판에 맞춥니다. 이것은 테이블의 소유자만 할 수 있습니다. `0`이면 그러지 않고, 테이블이나 열이 없으면 멈춥니다. 이력, 기계 메타데이터, 소스 근거, 프로비저닝 기록 테이블 모두에 해당합니다. 조회 명령은 테이블을 만들지 않으며, `-init-schema`는 이 변수를 보지 않습니다. [데이터베이스 준비](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.ko.md#데이터베이스-준비)를 보세요 |
 
-이 변수들이 있는 이유: 여러 조직이 데이터베이스 하나를 공유할 때 잘못된 조직 아래에 쓰인 레코드는 나중에 가려낼 수 없고, 잘못된 연결 문자열을 향한 자동 `CREATE TABLE`은 빈 테이블을 만들어 거기에 아무 표시 없이 씁니다. `PQCOTA_REQUIRE_ORG=1`은 적용되는 자리에서 앞의 문제를 오류로 바꾸고, `PQCOTA_AUTO_DDL=0`은 이력 스키마에 한해 뒤의 문제를 오류로 바꿉니다. 자세한 내용은 [인벤토리 명령 참조](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md)(영문)에 있습니다.
+이 변수들이 있는 이유: 여러 조직이 데이터베이스 하나를 공유할 때 잘못된 조직 아래에 쓰인 레코드는 나중에 가려낼 수 없고, 잘못된 연결 문자열을 향한 자동 `CREATE TABLE`은 빈 테이블을 만들어 거기에 아무 표시 없이 씁니다. `PQCOTA_REQUIRE_ORG=1`은 적용되는 자리에서 앞의 문제를 오류로 바꾸고, `PQCOTA_AUTO_DDL=0`은 뒤의 문제를 오류로 바꿉니다. 그러면 테이블은 `-init-schema`로 따로 만듭니다. 자세한 내용은 [인벤토리 명령 참조](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md)(영문)에 있습니다.
 
 `pqcota-hosts`, `pqcota-profile`, `pqcota-provision`은 데이터베이스를 `PQCOTA_DSN`이 아니라 `--dsn` 플래그에서 받습니다.
 

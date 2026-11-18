@@ -85,9 +85,9 @@ When new code meets an old DB, it catches up on the spot.
 a `DO $$ ... $$` block that looks in `pg_index` at **how many columns the PK has now** and runs conditionally.
 Running it twice must give the same result. Add it only after running it twice against a real Postgres.
 
-**Automatic schema creation is on by default. `PQCOTA_AUTO_DDL=0` turns it off for the history schema, and with it off a missing history schema stops with an error.** A constructor that
+**Automatic schema creation is on by default. `PQCOTA_AUTO_DDL=0` turns it off for every pqcota table, and with it off a missing table or column stops with an error.** A constructor that
 runs `CREATE TABLE` without telling anyone is convenient, but when it points at the wrong place, **a new empty table is created and written to.** The data then looks
-as if it vanished. So there is a way to turn it off, and with it off the code checks instead of creating. The metadata and provisioning-record tables are still created.
+as if it vanished. So there is a way to turn it off, and with it off the code checks instead of creating. The schema is then created on purpose with `-init-schema`. Up to v0.15.0 the switch covered only the history schema, and the query commands created tables too.
 
 ## 5. Mixed versions: once the default is dropped, writes from an old binary that does not know the organization fail
 
