@@ -107,13 +107,17 @@ so it passes the v0.17.0 node check as before.
   - under the totals of `pqcota-inventory`, a `by role` line that counts client side, server side and role not
     confirmed separately, printed only when there are server-side or unconfirmed records. A record with no role is
     counted as not confirmed, whenever it was saved;
-  - in `pqcota-inventory -snapshot`, under each connection, the libraries found with the same app key in that snapshot:
+  - in `pqcota-inventory -snapshot`, under each connection, the libraries observed in the same snapshot with the same
+    app key as that edge:
     `same app key in this snapshot: libssl.so.3, libcrypto.so.3 3.5.8 (not evidence that this connection used it)`.
-    It means the process that handled the connection had those libraries loaded. It does not say which one the
-    connection used;
+    It is not evidence that the connection used those libraries. An app key such as an executable path or a systemd
+    unit can be shared by several processes, so it does not even show that the process that handled the connection
+    had them loaded;
   - an app declared by a person is shown only on client records, because a declaration names the server address;
   - the topology drawn by `pqcota-discover-view` points from the side that opened the connection to the side that
     accepted it, and draws an unconfirmed record as a dashed line without an arrow.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.17.0.
+  `govulncheck` found no vulnerabilities in the five repositories.
 - **Tests.**
   - An end-to-end run with TLS passed all nine checks: two containers (nginx and three `openssl s_client`
     connections), real collectors, signed with node keys and loaded with a key file into Postgres. It checked:
@@ -174,8 +178,9 @@ so it passes the v0.17.0 node check as before.
   `SO_REUSEPORT`) to the same address and port as a listener, with its SYN not seen, is taken for the server side.
 - **The two records of one connection are not paired.** Nothing in the records links the client record on one node to
   the server record on the other.
-- **The same-app-key line is not evidence of use.** A process can load several libraries, and the packets do not say
-  which one handled the connection. `libssl.so.3` is shown without a version because nodescan reads the version from
+- **The same-app-key line is not evidence of use.** It lists the libraries observed in the same snapshot with the same
+  app key as the edge. Several processes can share an app key (an executable path, a systemd unit), a process can
+  load several libraries, and the packets do not say which one handled the connection. `libssl.so.3` is shown without a version because nodescan reads the version from
   libcrypto only (unchanged).
 - **A server record gets its app only if the connection is still open when netcap looks up the socket**; for SSH that
   is at the end of the window. Inside a container netcap needs `CAP_SYS_PTRACE` to read another user's descriptors;
