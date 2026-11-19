@@ -118,6 +118,18 @@ so it passes the v0.17.0 node check as before.
     accepted it, and draws an unconfirmed record as a dashed line without an arrow.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.17.0.
   `govulncheck` found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing):
+  - the checksums of all seven files in `SHA256SUMS` match, and the manifest matched the downloaded assets;
+  - all 46 programs are built with Go 1.26.11 and show the pqcota modules at v0.18.0 with `h1:` hashes and no
+    `replace`; `govulncheck -mode=binary` found no vulnerabilities in any of them;
+  - `collector.jar` carries v0.18.0 and the pqcota-discovery tag commit;
+  - the commits in the manifest equal the `v0.18.0` tag commits of the five repositories, and rebuilding the tag gave
+    the same SHA-256 for all 46 programs;
+  - all 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.18.0` and
+    the commit taken from the tag; a copy with one byte changed, another tag and another commit were rejected.
+
+  The two end-to-end runs were repeated with the released programs, with the same scope as before: TLS through loading
+  and the views passed all nine checks, and SSH through the netcap results passed all nine checks.
 - **Tests.**
   - An end-to-end run with TLS passed all nine checks: two containers (nginx and three `openssl s_client`
     connections), real collectors, signed with node keys and loaded with a key file into Postgres. It checked:
