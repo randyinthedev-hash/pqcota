@@ -34,7 +34,7 @@ PQC 이관을 보고하는 사람과 그 보고서를 읽는 사람을 위한 �
 - **시스템에 있는 라이브러리나 provider.** 그 시스템이 쓸 수 있는 것을 보여 줍니다. 모든 연결이 그것을 쓴다는 것을 보여 주지는 않습니다. OpenSSL의 경우 pqcota는 라이브러리와 그 버전을 관측합니다. Java는 애플리케이션이 실행 중에 등록한 provider를 포함해 provider 체인을 읽을 수 있습니다.
 - **연결에서 협상된 알고리즘.** pqcota가 지켜보는 동안 양쪽이 합의한 것을 보여 줍니다. 그 구간에 일어나지 않은 연결은 결과에 없습니다.
 - **연결 하나에 쪽마다 기록 하나.** netcap은 노드가 연 연결과 받은 연결을 모두 기록합니다. 두 노드에서 다 관측한 연결은 노드마다 하나씩, 기록이 둘입니다. `web-01 → 10.0.0.9:443`는 `web-01`이 연 연결이고, `web-02 ← 10.0.0.1 (on :443)`는 `web-02`가 받은 연결입니다. 합계는 기록을 셉니다. 두 쪽을 더해 연결 수라고 쓰지 마세요. 합계 아래의 `by role` 줄이 두 쪽을 나눠 보여 줍니다.
-- **앱 키가 같은 라이브러리가 그 연결이 쓴 라이브러리는 아닙니다.** `pqcota-inventory -snapshot`에서 연결 아래의 `same app key in this snapshot: …` 줄은 그 연결을 처리한 프로세스에서 찾은 라이브러리를 보여 줍니다. 한 프로세스는 라이브러리를 여럿 올릴 수 있고, 연결이 어느 것을 거쳤는지는 패킷에 없습니다. 「이 연결들이 libssl.so.3을 썼다」가 아니라 「이 연결들을 받은 프로세스에 libssl.so.3이 올라 있었다」라고 쓰세요.
+- **앱 키가 같은 라이브러리가 그 연결이 쓴 라이브러리는 아닙니다.** `pqcota-inventory -snapshot`에서 연결 아래의 `same app key in this snapshot: …` 줄은 같은 스냅샷에서 그 엣지와 같은 앱 키로 관측된 라이브러리를 보여 줍니다. 앱 키(실행 파일 경로, systemd 유닛)는 여러 프로세스가 함께 가질 수 있고, 한 프로세스는 라이브러리를 여럿 올릴 수 있으며, 연결이 어느 것을 거쳤는지는 패킷에 없습니다. 「이 연결들이 libssl.so.3을 썼다」가 아니라 「같은 스냅샷에서 이 연결들과 같은 앱 키로 libssl.so.3이 관측됐다」라고 쓰세요.
 - **등급.** 🟢 양자내성 또는 하이브리드, 🔴 고전, ⚪ 등급 미정. 등급은 협상된 것을 기술합니다. **🔴는 취약하다거나 규정을 어겼다는 판정이 아닙니다.** 바꿀지, 언제 바꿀지는 보고서가 그것을 결정하는 사람의 몫으로 적어야 하는 결정입니다.
 
 발견 항목에 **증거 강도**를 함께 인용하세요. 증거 강도는 그 사실을 어떻게 수집했는지를 기록합니다. 실행 중인 시스템에서, 소스에서, 또는 추적으로 본 사실은 「confirmed」입니다. 제공받은 암호 자산 명세서에서 가져온 사실은 아무도 실행 중인 시스템을 관측하지 않았으므로 더 낮게 매깁니다.
@@ -121,14 +121,14 @@ PQC 이관을 보고하는 사람과 그 보고서를 읽는 사람을 위한 �
 | 사람이 선언한 애플리케이션 | `pqcota-inventory -snapshot <id>` | `(1 of them are not observations but apps declared by a person)` | 엣지 | |
 | 등급 합계 | `pqcota-inventory`, `pqcota-discover-view` | `totals: 2 assets · 4 observed edges (🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0)` | 자산, 엣지 | |
 | 역할별 기록 | `pqcota-inventory` | `by role: client side 1 (🟢 1 · 🔴 0 · ⚪ 0) · server side 1 (🟢 1 · 🔴 0 · ⚪ 0) · role not confirmed 0 …` | 엣지 | 서버 쪽 기록이나 역할 미확인 기록이 있을 때만 나옴. 두 노드에서 다 관측한 연결은 쪽마다 셈 |
-| 연결을 처리한 프로세스의 라이브러리 | `pqcota-inventory -snapshot <id>` | `same app key in this snapshot: libssl.so.3, libcrypto.so.3 3.5.8 (not evidence that this connection used it)` | 자산 | 연결이 어느 라이브러리를 거쳤는지의 근거가 아님 |
+| 연결과 앱 키가 같은 라이브러리 | `pqcota-inventory -snapshot <id>` | `same app key in this snapshot: libssl.so.3, libcrypto.so.3 3.5.8 (not evidence that this connection used it)` | 자산 | 연결이 어느 라이브러리를 거쳤는지의 근거가 아님 |
 | 달라진 것 | `pqcota-inventory -diff <older>,<newer>` | `removed 1`, `added N`, `changed N`. 순서가 뒤집혔을 때와 규칙 버전이 다를 때의 경고 | 발견 항목 | 자산 규칙 뒤의 `removed`는 관리에서 빠졌다는 뜻이지 사라졌다는 뜻이 아님 |
 | 승인 검증됨 | `pqcota-provision` | `approvals verified: reviewer-1` | 승인자 | 또는 검증하지 않았다는 경고 |
 | 완전성 면제 | `pqcota-provision` | `N incomplete spot(s) — passed over because --allow-incomplete was given` | 빈칸 | 표준 오류. 종료 코드는 0 그대로 |
 | 기록 저장됨 | `pqcota-provision --dsn` | `persisted 1 records (before capture · STAGED · rollback basis) · snapshot references resolved 1, unresolved 0 · before not captured 0` | 기록 | `STAGED`는 적용이 아님. `before not captured`는 노드의 최신 스냅샷에 조치의 발견 항목이 없던 조치와, Java 배포본을 provider 체인 하나로 기록할 수 없던 조치(JVM끼리 체인이 다름, 일부를 보지 못함, `--pid`로 스캔함)의 수. 어느 쪽인지는 기록의 note에 있음. before가 비었다고 앱에 암호 설정이 없다는 뜻은 아님 |
 | 기록된 것 | `pqcota-records` | `• plan-demo:a1 [STAGED] node=… affected apps: … before : libssl.so.1.1@1.1.1f snapshot: …` | 기록 | 모듈만이고 전체 설정은 아님 |
 
-「역할별 기록」과 「연결을 처리한 프로세스의 라이브러리」 행은 데모가 아니라 2026-11-18의 v0.18.0 시험 실행에서 가져왔습니다. 나머지 줄은 모두 그 데모 실행에서 출력된 것입니다. 단 `-diff` 행의 두 경고는 예외입니다. 그 경고는 코드의 조건(두 스냅샷을 시간 역순으로 준 경우, 두 스냅샷이 서로 다른 규칙 버전으로 도출된 경우)에서 출력되며, 여기에 인용한 실행에서는 일어나지 않았습니다.
+「역할별 기록」과 「연결과 앱 키가 같은 라이브러리」 행은 데모가 아니라 2026-11-18의 v0.18.0 시험 실행에서 가져왔습니다. 나머지 줄은 모두 그 데모 실행에서 출력된 것입니다. 단 `-diff` 행의 두 경고는 예외입니다. 그 경고는 코드의 조건(두 스냅샷을 시간 역순으로 준 경우, 두 스냅샷이 서로 다른 규칙 버전으로 도출된 경우)에서 출력되며, 여기에 인용한 실행에서는 일어나지 않았습니다.
 
 ## 보고서 뼈대
 
