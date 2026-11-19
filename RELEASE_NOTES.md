@@ -39,8 +39,6 @@ Directional, not fixed. Each version is promoted to a proper section per the rul
 
 - **Accepting the provider ecosystem (under review · version TBD)** — choosing which provider to use, and obtaining its file, is done by whoever writes the plan. What this repo does is **write the configuration file that activates that provider**. Today it only knows one shape, `activate`+`module` — and since each provider demands different settings, it cannot yet produce one for OpenSSL's own `fips` module (which has to pull in the file `fipsinstall` generates) or for pkcs11-provider (which needs additional entries such as the driver path). What each candidate would additionally require, along with provider observation and the HSM axis, is still being worked out.
 
-- **Observing server-role edges (planned · version TBD)** — today netcap emits **only the edges the observing node initiated**. So a **process serving on that node gets no edge at all**, and the comparison that ties "this app loaded that library" (found by nodescan) to "this is what it actually negotiated" through `app_key` is entirely empty on the server side. The contract can already carry this with `EdgeRole.SERVER`; what blocks it is the value conventions and deduplication.
-
 - **Separating the traffic-observation cadence (planned · version TBD)** — assets and communication edges are observed on different cadences. Today they are bound into one playbook, so seeing more edges means re-running the `/proc` sweep and the JVM attach along with it. `discover.yml` is left alone and a playbook that runs netcap in rounds is **added**. What has to be solved along with it is **merging repeated observations**: the count from one capture is recorded (`observed_count`), but counts across several capture rounds are not merged, `first_seen` and `last_seen` are filled by nobody, and the merge key differs in three places.
 
 - **Scope classification for the edge peer (planned · version TBD)** — when an observation meets a node that is not in the scope master, the design says to send it to a **registration request** — yet **the classifier (`ClassifyObserved`) exists and nothing calls it.** An unregistered peer stays as an address in `dst_addr`, visible on screen but never collected. This is the only automatic way to surface a node the operator failed to register, and it is not connected today.
@@ -68,6 +66,121 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 | **Verdicts and scoring** — "risky" grades | Only observed facts are emitted. What to change, and when, is yours to decide |
 | **An admin screen for entering values by hand** | These arrive as files (`hosts.csv`, `scope-assets.csv`, machine profiles, the finalized plan JSON, `pqcota-declare`). Build a screen and a review queue and an approve button follow, and both are explicitly excluded by the architecture. At that moment an observation tool becomes an adjudication tool |
 
+
+---
+
+## v0.18.0 — The node that accepts a connection records it too (2026-11-19)
+
+**Goal** — record the connections a node accepts, not only the ones it opens. Until v0.17.0 netcap emitted an edge
+only when the observing node was the client, so a service running on a node had no edge at all, and on the server
+side the `app_key` link between "this process loaded that library" (nodescan) and "this is what it negotiated"
+(netcap) was empty. **The contract fields, the ruleset version and the database schema are unchanged** (the contract
+gains comments only), **and so is the signature check**: a record is always written under the node that observed it,
+so it passes the v0.17.0 node check as before.
+
+### Built
+
+- **Server-side records.** When the observing node accepted the connection, netcap writes a record with
+  `role = SERVER`, `dst_addr` = the client's IP **without a port** and `port` = the port it accepted on. A client record
+  is as before (`dst_addr` = server IP and port). The client's source port changes on every connection, so it is not
+  put in the record, and reconnections from the same client to the same port are counted in one record. An IPv6 client
+  address is written without brackets.
+- **The role comes from what was seen on the wire, not from port numbers.**
+  - TLS: whoever sends the ClientHello is the client and whoever sends the ServerHello is the server, so with the
+    direction of the packet either message is enough.
+  - SSH: both sides send the same message, so the role comes from the SYN that opened the connection: sent by the
+    observing node means client, received means server. If the SYN was not seen, the node is the server only when a
+    listening socket accepts that local address and port: the same address, `0.0.0.0` for IPv4, `::` for IPv6, or an
+    IPv4-mapped `::ffff:` address. Otherwise the role is **not confirmed** (`UNSPECIFIED`): the record keeps the peer's
+    IP, port 0 and no negotiated group. A missing listener is not taken as proof of the client side, because an
+    accepted connection outlives a closed listener. A `::` listener is not used for an IPv4 connection, because
+    whether it is `IPV6_V6ONLY` cannot be read from `/proc`. If the socket table needed for the address family cannot
+    be read, the role is not confirmed either.
+  - Neither guesses from which port is lower.
+- **A server record is attributed to the process that accepted the connection** (for example the nginx worker or the
+  sshd process), found by the accepted socket's two endpoints.
+- **A connection observed on both nodes is two records**, one under each node, each with its own app. They are not
+  merged.
+- **What the views show:**
+  - an arrow for the role: `web-01 → 10.0.0.9:443` (opened), `web-02 ← 10.0.0.1 (on :443)` (accepted),
+    `↔ 10.0.0.7 (role not confirmed)`;
+  - under the totals of `pqcota-inventory`, a `by role` line that counts client side, server side and role not
+    confirmed separately, printed only when there are server-side or unconfirmed records. A record with no role is
+    counted as not confirmed, whenever it was saved;
+  - in `pqcota-inventory -snapshot`, under each connection, the libraries found with the same app key in that snapshot:
+    `same app key in this snapshot: libssl.so.3, libcrypto.so.3 3.5.8 (not evidence that this connection used it)`.
+    It means the process that handled the connection had those libraries loaded. It does not say which one the
+    connection used;
+  - an app declared by a person is shown only on client records, because a declaration names the server address;
+  - the topology drawn by `pqcota-discover-view` points from the side that opened the connection to the side that
+    accepted it, and draws an unconfirmed record as a dashed line without an arrow.
+- **Tests.**
+  - An end-to-end run with TLS passed all nine checks: two containers (nginx and three `openssl s_client`
+    connections), real collectors, signed with node keys and loaded with a key file into Postgres. It checked:
+    - the server record (`← 172.20.0.3 (on :443)`, `observedCount 3`, app `/usr/sbin/nginx`) passes the node check;
+    - the same snapshot lists `libssl.so.3` and `libcrypto.so.3 3.5.8` under the same app key, and the
+      `-snapshot` line shows them;
+    - the client record is `→ 172.20.0.2:443`, `observedCount 3`, app `/usr/bin/openssl`;
+    - both records negotiated `X25519MLKEM768`;
+    - the `by role` line counts one record on each side;
+    - after upgrading from the v0.17.0 netcap, `-diff` shows the server record as added.
+  - An end-to-end run with SSH (OpenSSH 9.6 server, OpenSSH 10.0 client) passed all nine checks. It did not load
+    into a database; it checked the netcap results only:
+    - a connection whose SYN was seen is `SERVER` with app `/usr/sbin/sshd` on the server, and `CLIENT` with app
+      `/usr/bin/ssh` on the client, with the same negotiated group;
+    - a connection whose SYN was not seen is `SERVER` on the server, from its `0.0.0.0:22` listener (its `:::22`
+      listener is not used), and not confirmed on the client;
+    - re-keying inside the window on a connection opened before it leaves no record on either side.
+  - Unit tests cover:
+    - the four TLS cases (client or server node, ClientHello or ServerHello only);
+    - SSH with and without the SYN, a client on a low port and a server on a high port;
+    - a listener on the same port but another local address, a `::` listener for IPv4, and an unreadable socket table;
+    - server records with IPv4 and IPv6 and the reconnection count;
+    - the arrows, the `by role` line with old records and the same-app-key line.
+
+### Fixed
+
+- **A client record could carry the server role.** The role was taken from the message seen: a client node that saw
+  the ServerHello and missed its own ClientHello wrote `role = SERVER` on its own client record. This was there from
+  v0.1.0. The `dst_addr` and `port` were right (the server's), only the role was wrong; such a record is now
+  `CLIENT`.
+- **Some unattributed connections had the wrong reason.** When netcap could list a process's descriptors but was
+  denied reading the links (another user's process without `CAP_SYS_PTRACE`, as for root inside a container), it
+  reported `socket closed between capture and lookup`. This was there from v0.3.0, when attribution was added. The
+  connection was still left unattributed; only the reason was wrong. It now counts as not visible, so the reason names
+  missing permission.
+
+### Compatibility
+
+- No change to the contract fields, the ruleset version, the database schema, the signature or the node check. Data
+  written by v0.17.0 is read as before.
+- **After upgrading netcap, a server node's next snapshot changes**: its accepted connections are new records, so
+  `-diff` lists them as added. Nothing about that node's assets changed.
+- **The totals count records, not connections.** Where both nodes are observed, a connection appears once on each side.
+  The `by role` line keeps the sides apart; do not add them up as a number of connections.
+- **Records saved before v0.18.0 keep the role they were written with.** A client record that carried the server role
+  (see Fixed) is counted on the server side and shown with `←` until that node is observed again.
+- A declared app is no longer shown on a record whose role is not `CLIENT`. Before v0.18.0 netcap wrote no
+  unconfirmed records, so this affects only client records that carried the server role (see Fixed).
+
+### Known limitations
+
+- **An SSH connection that was already open when the observation started can be missing.** Its first key exchange
+  happened before the window, and a later re-key is encrypted, so netcap cannot see it and writes no record.
+- **An SSH connection whose SYN was not seen has no confirmed role on the client side**, and on the server side only
+  when an IPv4 listener or an IPv4-mapped address shows it. An IPv4 connection accepted only by a `::` listener stays
+  not confirmed.
+- **The listener evidence can be wrong in one case**: a client socket bound on purpose (for example with
+  `SO_REUSEPORT`) to the same address and port as a listener, with its SYN not seen, is taken for the server side.
+- **The two records of one connection are not paired.** Nothing in the records links the client record on one node to
+  the server record on the other.
+- **The same-app-key line is not evidence of use.** A process can load several libraries, and the packets do not say
+  which one handled the connection. `libssl.so.3` is shown without a version because nodescan reads the version from
+  libcrypto only (unchanged).
+- **A server record gets its app only if the connection is still open when netcap looks up the socket**; for SSH that
+  is at the end of the window. Inside a container netcap needs `CAP_SYS_PTRACE` to read another user's descriptors;
+  without it the reason now says so.
+- The other limitations of v0.17.0 are unchanged.
 
 ---
 
