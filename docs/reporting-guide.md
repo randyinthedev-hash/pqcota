@@ -33,6 +33,8 @@ Report what was observed, and keep the three kinds of statement apart.
 
 - **A library or provider present on a system.** This shows what the system can use. It does not show that every connection uses it. For OpenSSL, pqcota observes the library and its version. For Java it can read the provider chain, including providers the application registered while running.
 - **A negotiated algorithm on a connection.** This shows what two ends agreed on while pqcota was watching. A connection that did not happen in that window is not in the result.
+- **One connection, a record on each side.** netcap records the connections a node accepts as well as the ones it opens. A connection observed on both nodes is two records, one under each node: `web-01 → 10.0.0.9:443` was opened by `web-01`, and `web-02 ← 10.0.0.1 (on :443)` was accepted by `web-02`. The totals count records. Do not add the two sides and call the result a number of connections; the `by role` line under the totals keeps them apart.
+- **A library with the same app key is not the library the connection used.** In `pqcota-inventory -snapshot`, the line under a connection, `same app key in this snapshot: …`, lists the libraries found in the process that handled it. A process can load several libraries, and the packets do not say which one handled the connection. Write "the process that accepted these connections had libssl.so.3 loaded", not "these connections used libssl.so.3".
 - **A grade.** 🟢 post-quantum or hybrid, 🔴 classical, ⚪ undetermined. Grades describe what was negotiated. **🔴 is not a finding of vulnerability or non-compliance.** Whether and when to change it is a decision the report should attribute to the people who make it.
 
 Quote the **evidence strength** with the finding. It records how a fact was collected: facts seen in a running system, in source, or by tracing are "confirmed"; facts taken from a supplied cryptographic bill of materials are graded lower, because nobody observed the running system.
@@ -53,6 +55,8 @@ This is the part of a report that most often gets left out, and the part a caref
 | Findings excluded by asset rule | The load summary and the view state how many were removed (a count of findings) | Quote the count and its unit |
 | Results from systems that are not registered | Counted in the load summary (a count of results). A refusal entry (system, collector, reason, content hash) goes to the database if one is configured, and to memory, lost when the process ends, if not. The reviewed commands do not list these entries, and the original result is not kept there | Quote the count; **keep the load output**, because it is the record you will have |
 | The same machine registered under several names | Flagged as a duplicate in the load output; pqcota does not merge or pick a name. Detection compares the results loaded together in that run. It does not search the whole history, and a machine without an identity fingerprint is not covered | Say that the systems count may be overstated until it is resolved, and that duplicates loaded in separate runs may go unflagged |
+| The role of a connection could not be confirmed (an SSH connection whose opening was not seen, on a node with no listener that shows it accepted it) | Recorded under the observing node as `↔ … (role not confirmed)`, with no port and no negotiated group, and counted under `role not confirmed` | Say how many records have no confirmed role. Do not count them as either side |
+| An SSH connection that was already open when the observation started | Its key exchange happened before the window, and a later re-key is encrypted, so **nothing is recorded** | "Connections open before the window, such as long SSH sessions, may be missing" |
 | A connection's application could not be identified (short-lived connections) | Shown as `@?`; a person can fill it in, and the filled-in value is marked as declared | Say how many are unattributed and how many were declared by a person |
 
 ## 4. Changes since last time
@@ -94,6 +98,7 @@ The natural last line of a report is "and we confirmed it worked". Be careful wi
 
 | Do not write | Because | Write instead |
 |---|---|---|
+| "We observed N connections" (client-side and server-side records added together) | A connection observed on both nodes is a record on each side | "N records from the client side and M from the server side; a connection observed on both nodes appears in each" |
 | "X% of our systems are quantum-safe" | pqcota grades observed connections, not systems, and does not score | "N of M observed connections negotiated a post-quantum or hybrid algorithm" |
 | "No quantum-vulnerable cryptography remains" | pqcota shows what it observed; gaps and unregistered systems exist | "No classical key exchange was observed on the N connections watched on the M systems covered; these systems were not observed: …" |
 | "We are compliant" | pqcota is not a compliance product and does not certify compliance | "Evidence attached: …" |
@@ -115,13 +120,15 @@ Lines quoted from a run of the demo on 2026-09-30, abbreviated. The wording can 
 | Why something could not be seen | `pqcota-inventory -snapshot <id>` | `gap (unobservable by design != absent): … 3 of 4 edges could not be attributed to an app` | edges | The reasons are in this line, not in `-history` |
 | Applications declared by a person | `pqcota-inventory -snapshot <id>` | `(1 of them are not observations but apps declared by a person)` | edges | |
 | Grade totals | `pqcota-inventory`, `pqcota-discover-view` | `totals: 2 assets · 4 observed edges (🟢 PQC 2 · 🔴 classical 2 · ⚪ unknown 0)` | assets, edges | |
+| Records by role | `pqcota-inventory` | `by role: client side 1 (🟢 1 · 🔴 0 · ⚪ 0) · server side 1 (🟢 1 · 🔴 0 · ⚪ 0) · role not confirmed 0 …` | edges | Printed only when there are server-side or unconfirmed records. A connection observed on both nodes is counted on each side |
+| Libraries in the process of a connection | `pqcota-inventory -snapshot <id>` | `same app key in this snapshot: libssl.so.3, libcrypto.so.3 3.5.8 (not evidence that this connection used it)` | assets | Not evidence of which library the connection used |
 | What changed | `pqcota-inventory -diff <older>,<newer>` | `removed 1`, `added N`, `changed N`; warnings for reversed order and different rule versions | findings | After an asset rule, `removed` means dropped from management, not gone |
 | Approval verified | `pqcota-provision` | `approvals verified: reviewer-1` | approvers | Or the warning that verification was not done |
 | Waived completeness | `pqcota-provision` | `N incomplete spot(s) — passed over because --allow-incomplete was given` | blanks | Standard error; the exit code stays 0 |
 | Record saved | `pqcota-provision --dsn` | `persisted 1 records (before capture · STAGED · rollback basis) · snapshot references resolved 1, unresolved 0 · before not captured 0` | records | `STAGED` is not application. `before not captured` counts actions whose finding was not in the node's latest snapshot, and actions whose Java deployment could not be recorded as one provider chain (its JVMs differ, some were not observed, or the scan used `--pid`); the record's note says which. An empty before state does not mean the app has no crypto configuration |
 | What was recorded | `pqcota-records` | `• plan-demo:a1 [STAGED] node=… affected apps: … before : libssl.so.1.1@1.1.1f snapshot: …` | records | Modules only, not the full configuration |
 
-Every line in the table was printed in that demo run except the two warnings in the `-diff` row. Those are printed under conditions in the code (the two snapshots given in reverse time order; the two snapshots derived with different rule versions) and did not occur in the run quoted here.
+The `Records by role` and `Libraries in the process of a connection` rows are from a v0.18.0 test run on 2026-11-18, not from the demo. Every other line in the table was printed in that demo run except the two warnings in the `-diff` row. Those are printed under conditions in the code (the two snapshots given in reverse time order; the two snapshots derived with different rule versions) and did not occur in the run quoted here.
 
 ## A report skeleton
 

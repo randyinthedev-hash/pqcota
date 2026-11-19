@@ -89,6 +89,7 @@ An abbreviated demo result (assets shortened; every connection of the demo is sh
 - **"confirmed"** is the strength of evidence, assigned by how the fact was collected. Facts seen in a running system, in source, or by tracing are "confirmed". Facts taken from a supplied bill of materials (CBOM) are graded lower ("inferred, high"), because nobody looked at the running system.
 - **Confirming a change by re-observing has limits.** For OpenSSL, pqcota observes the library and its version, not which providers are loaded, so adding a provider does not show up in the inventory by itself. Java provider chains can be observed directly. A connection changes grade only when both ends support the new algorithm.
 - Grades come from what was observed. A library that is loaded is not proof that it is used for every connection, and a connection is only seen if it happened while the observer was watching.
+- A connection is recorded by each node that observed it: the one that opened it and the one that accepted it. Where both are observed, it is counted once on each side.
 - The same data can be drawn as a map of systems and connections coloured by grade.
 
 ## What pqcota does not do
