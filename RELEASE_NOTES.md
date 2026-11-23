@@ -90,6 +90,8 @@ program, so the release build and the rebuild check work as before.
   inside one repository shows `devel`. The line never carries a commit; the release manifest lists the tag commits.
 - The version line and how to read it are in the [build guide](docs/build.md#read-the-version-and-commit-of-a-program)
   and in each repository's command reference.
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.18.0.
+  `govulncheck` found no vulnerabilities in the five repositories.
 - **Tests.**
   - Unit tests cover the release, local-folder and module replacements (the real replacement and its version are shown,
     not only the version in `go.mod`), a build inside one repository, missing build information, and choosing the module a
