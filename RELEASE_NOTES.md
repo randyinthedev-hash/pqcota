@@ -101,6 +101,19 @@ unchanged.** The new view reads what is already stored and decides nothing.
 - The rules are in the [inventory command reference](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md#pqcota-inventory).
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.19.0.
   `govulncheck` found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing):
+  - the checksums of all seven files in `SHA256SUMS` match, and the manifest matched the downloaded assets;
+  - all 46 programs are built with Go 1.26.11 and show the pqcota modules at v0.20.0 with `h1:` hashes and no
+    `replace`; `govulncheck -mode=binary` found no vulnerabilities in any of them;
+  - `collector.jar` carries v0.20.0 and the pqcota-discovery tag commit;
+  - the commits in the manifest equal the `v0.20.0` tag commits of the five repositories, and rebuilding the tag gave
+    the same SHA-256 for all 46 programs;
+  - all 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.20.0` and
+    the commit taken from the tag; a copy with one byte changed, another tag and another commit were rejected.
+
+  The end-to-end TLS run was repeated with the released programs and passed all ten checks, including the topology:
+  the client's and the server's records are two lines, each with its observing node, its role and `×3`, and the server's
+  nginx app carries `libssl.so.3` and `libcrypto.so.3 3.5.8` by dotted lines.
 - **Tests.**
   - Unit tests draw one inventory that holds every case: a connection observed on one side, the same connection
     observed on both sides (exactly two lines, each `×3`, no `×6`), unconfirmed roles in the current and the older form,
