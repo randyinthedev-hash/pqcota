@@ -69,6 +69,62 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.20.0 — The inventory draws the connections it holds (2026-11-23)
+
+**Goal** — draw, from the central inventory, which node connected to which and through which app, without going back to
+the result files. Until v0.19.0 only `pqcota-discover-view` drew a topology, from a folder of result files and with a
+separate IP map. **The contract, the ruleset version, the database schema, the collectors and the signature are
+unchanged.** The new view reads what is already stored and decides nothing.
+
+### Built
+
+- **`pqcota-inventory -topology <out.dot | ->`** writes Graphviz DOT from every node's current snapshot.
+  - **One line is one stored record.** A connection observed on both nodes is two lines: the client node's record from
+    its app to the peer, and the server node's record from the peer to its app. Each line names the observing node, the
+    role and that record's count; the two counts are not added up. Pairing the two records is left for later.
+  - A record whose role was not confirmed is a dashed line with no arrow, including role-less records written by
+    earlier versions.
+  - **The app at each end is the observing node's**, since a record only knows that side's app.
+  - **A peer is tied to a node only when its IP belongs to exactly one registered endpoint**; an unregistered address,
+    or one shared by several registered nodes, is a box that says which. The peer address is read by its form, so
+    older records (`10.0.1.99:22` without a role) and IPv6 client records written without brackets (`fd00::20:8443`)
+    still reach their node.
+  - **Libraries hang off an app by a dotted line** when they were observed in the same snapshot of the same node with
+    the same non-empty app key. The legend says that this is not evidence that the connection used them.
+  - **Each node shows the last time its current snapshot was loaded** (UTC), or, for older history without load
+    records, when the snapshot was created. The top of the picture says that load times differ per node.
+  - The output is deterministic: the same inventory gives the same bytes. With `-` the DOT goes to standard output and
+    a one-line summary to standard error. It creates no tables and takes no other query option.
+- The rules are in the [inventory command reference](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md#pqcota-inventory).
+- **Tests.**
+  - Unit tests draw one inventory that holds every case: a connection observed on one side, the same connection
+    observed on both sides (exactly two lines, each `×3`, no `×6`), unconfirmed roles in the current and the older form,
+    a shared and an unregistered IP, IPv6 and `::ffff:` peers, libraries with the same, another node's and an empty app
+    key, load times and older history. Shuffling the input gives the same output.
+  - Command tests cover standard output and a file, refusing other query options, and an empty database (no tables
+    are created). The both-sides case is also loaded into PostgreSQL and drawn by the command.
+  - The end-to-end TLS run of v0.18.0 (two containers, nginx and `openssl s_client`) gained a topology step: the
+    client's and the server's records are two lines, each `×3`, and the nginx app carries `libssl.so.3` and
+    `libcrypto.so.3 3.5.8` by dotted lines.
+
+### Compatibility
+
+- No change to the contract, the ruleset version, the database schema or the collectors. The other views of
+  `pqcota-inventory` are unchanged.
+
+### Known limitations
+
+- **A connection observed on both nodes is drawn twice.** Nothing in the records links them yet.
+- **A peer is found only by its registered IP**, the address SSH reaches. A node reached on another of its addresses is
+  drawn as an address.
+- **The picture shows observed connections**, those that happened while netcap was watching, not the whole network.
+- **A load time is not an observation time.** Loading the same result again updates it.
+- **A record written by an earlier version with the server role on a client's IPv6 `ip:port`** can be read as a
+  different IPv6 address, because without brackets the two forms cannot be told apart.
+- The other limitations of v0.19.0 are unchanged.
+
+---
+
 ## v0.19.0 — Every command tells its version (2026-11-23)
 
 **Goal** — let anyone read which release a program is without installing Go. Until v0.18.0 no command had a version
