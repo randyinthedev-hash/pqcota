@@ -48,7 +48,14 @@ The same command works for an archive, `collector.jar`, the manifest and `SHA256
 
 ### Read the version and commit of a program
 
-- **A Go program from a release** (`go version -m` needs Go installed; it only reads the file and does not run it):
+- **Any pqcota command, from v0.19.0** (runs the program with `--version` alone, needs nothing else):
+
+  ```bash
+  pqcota-linux-amd64/pqcota-nodescan --version
+  ```
+
+  It prints one line, for example `pqcota-nodescan v0.19.0 (go1.26.11 linux/amd64)`, and does nothing else: it reads no key and opens no database. A build that is not a release says `not a release build` and says what it was built from. The line carries no commit.
+- **A Go program from a release, with module hashes** (`go version -m` needs Go installed; it only reads the file and does not run it):
 
   ```bash
   go version -m pqcota-linux-amd64/pqcota-nodescan

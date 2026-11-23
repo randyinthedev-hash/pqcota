@@ -48,7 +48,14 @@ gh attestation verify pqcota-linux-amd64/pqcota-nodescan \
 
 ### 프로그램의 판과 커밋 읽기
 
-- **릴리스의 Go 프로그램**(`go version -m`에는 Go가 필요합니다. 파일을 읽기만 하고 실행하지 않습니다):
+- **pqcota 명령 모두, v0.19.0부터**(프로그램을 `--version` 하나만 주고 실행합니다. 따로 필요한 것은 없습니다):
+
+  ```bash
+  pqcota-linux-amd64/pqcota-nodescan --version
+  ```
+
+  한 줄을 냅니다. 예를 들면 `pqcota-nodescan v0.19.0 (go1.26.11 linux/amd64)`이고, 다른 일은 하지 않습니다. 키를 읽지 않고 데이터베이스에 붙지 않습니다. 릴리스가 아닌 빌드는 `not a release build`라고 적고, 무엇으로 빌드했는지 밝힙니다. 이 줄에는 커밋이 없습니다.
+- **릴리스의 Go 프로그램, 모듈 해시까지**(`go version -m`에는 Go가 필요합니다. 파일을 읽기만 하고 실행하지 않습니다):
 
   ```bash
   go version -m pqcota-linux-amd64/pqcota-nodescan
