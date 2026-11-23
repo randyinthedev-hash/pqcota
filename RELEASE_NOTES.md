@@ -84,9 +84,12 @@ unchanged.** The new view reads what is already stored and decides nothing.
     role and that record's count; the two counts are not added up. Pairing the two records is left for later.
   - A record whose role was not confirmed is a dashed line with no arrow, including role-less records written by
     earlier versions.
-  - **The app at each end is the observing node's**, since a record only knows that side's app.
+  - **The app at each end is the observing node's**, since a record only knows that side's app. An app's kind lists
+    every non-empty kind reported for that key. Apps and libraries stay within their own node even when a node ID or
+    an app key contains the same characters.
   - **A peer is tied to a node only when its IP belongs to exactly one registered endpoint**; an unregistered address,
-    or one shared by several registered nodes, is a box that says which. The peer address is read by its form, so
+    or one shared by several registered nodes, is a box that says which. A peer named only by its node ID and without a
+    snapshot is marked `registered` only when it is in the registered endpoints. The peer address is read by its form, so
     older records (`10.0.1.99:22` without a role) and IPv6 client records written without brackets (`fd00::20:8443`)
     still reach their node.
   - **Libraries hang off an app by a dotted line** when they were observed in the same snapshot of the same node with
@@ -100,7 +103,9 @@ unchanged.** The new view reads what is already stored and decides nothing.
   - Unit tests draw one inventory that holds every case: a connection observed on one side, the same connection
     observed on both sides (exactly two lines, each `×3`, no `×6`), unconfirmed roles in the current and the older form,
     a shared and an unregistered IP, IPv6 and `::ffff:` peers, libraries with the same, another node's and an empty app
-    key, load times and older history. Shuffling the input gives the same output.
+    key, load times and older history. Shuffling the input gives the same output. Three more cases keep two nodes'
+    apps apart when their IDs share characters, keep an app's kind independent of record order, and do not call an
+    unregistered peer node registered.
   - Command tests cover standard output and a file, refusing other query options, and an empty database (no tables
     are created). The both-sides case is also loaded into PostgreSQL and drawn by the command.
   - The end-to-end TLS run of v0.18.0 (two containers, nginx and `openssl s_client`) gained a topology step: the
