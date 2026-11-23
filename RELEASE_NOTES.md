@@ -69,6 +69,50 @@ These are **boundaries**, not directions. Written down so no one waits for them.
 
 ---
 
+## v0.19.0 — Every command tells its version (2026-11-23)
+
+**Goal** — let anyone read which release a program is without installing Go. Until v0.18.0 no command had a version
+option; the only way was `go version -m`, which needs Go. **The contract, the ruleset version, the database schema, the
+signature and the build flags are unchanged.** The version is read from the Go build information already inside every
+program, so the release build and the rebuild check work as before.
+
+### Built
+
+- **`--version` (or `-version`) on all 19 commands.** Given alone, it prints one line on standard output and exits 0:
+  `pqcota-nodescan v0.19.0 (go1.26.11 linux/amd64)`. It does nothing else: it reads no key, opens no database, writes
+  no file and captures nothing, and it is handled before any of that, so a wrong key setting or an unreachable
+  `PQCOTA_DSN` does not change it.
+- **Only a lone `--version` counts.** Given together with other arguments it is read like any other argument, because it
+  can be a file name or a value: `pqcota-cbom-ingest --version web-01` still reads a file named `--version`. The commands
+  that use flags answer `flag provided but not defined: -version` and exit 2, as before.
+- **A build that is not a release says so.** The version comes from the module the command belongs to. A build that
+  replaced that module shows what replaced it, with its version or local path, and `not a release build`; a build made
+  inside one repository shows `devel`. The line never carries a commit; the release manifest lists the tag commits.
+- The version line and how to read it are in the [build guide](docs/build.md#read-the-version-and-commit-of-a-program)
+  and in each repository's command reference.
+- **Tests.**
+  - Unit tests cover the release, local-folder and module replacements (the real replacement and its version are shown,
+    not only the version in `go.mod`), a build inside one repository, missing build information, and choosing the module a
+    command belongs to by whole path elements (`pqcota` is not taken for `pqcota-discovery`).
+  - A cross-stage test lists every command of the four stage repositories, builds them, and runs each with `--version`
+    and `-version` under broken key settings and an unreachable database: exit 0, one line starting with the command name,
+    nothing on standard error, nothing written. A new command without `--version` fails this test. Mixed calls keep their
+    old handling.
+  - On a real Windows 11 machine, `pqcota-cngscan.exe` and `pqcota-jvmscan.exe` gave the same result.
+
+### Compatibility
+
+- No change to the contract, the ruleset version, the database schema, the signature or the build flags. A mixed call
+  that contains `--version` behaves as in v0.18.0.
+
+### Known limitations
+
+- **The version line has no commit.** Use the release manifest, or `go version -m` for the module hashes.
+- **`collector.jar` has no `--version`.** Its version and commit are in its own manifest (unchanged).
+- The other limitations of v0.18.0 are unchanged.
+
+---
+
 ## v0.18.0 — The node that accepts a connection records it too (2026-11-19)
 
 **Goal** — record the connections a node accepts, not only the ones it opens. Until v0.17.0 netcap emitted an edge
