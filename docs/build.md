@@ -36,7 +36,7 @@ The two SHA-256 values must be the same. With Go installed and the tag of this r
 **3. Was it built by this project's release workflow, from this tag?** Checks 1 and 2 compare against files from the same releases page, so they do not show who published them. From v0.14.0 every asset and every program inside the bundles carries a provenance attestation signed by the release workflow. Check it against **what you expect**, not against what the downloaded files say: the repository, the release workflow, the tag, and the tag's commit. Take the commit from the tag itself, not from the manifest you are checking:
 
 ```bash
-TAG=v0.19.0
+TAG=v0.20.0
 COMMIT=$(git ls-remote https://github.com/randyinthedev-hash/pqcota "refs/tags/$TAG^{}" | cut -f1)
 gh attestation verify pqcota-linux-amd64/pqcota-nodescan \
   --repo randyinthedev-hash/pqcota \
@@ -54,14 +54,14 @@ The same command works for an archive, `collector.jar`, the manifest and `SHA256
   pqcota-linux-amd64/pqcota-nodescan --version
   ```
 
-  It prints one line, for example `pqcota-nodescan v0.19.0 (go1.26.11 linux/amd64)`, and does nothing else: it reads no key and opens no database. A build that is not a release says `not a release build` and says what it was built from. The line carries no commit.
+  It prints one line, for example `pqcota-nodescan v0.20.0 (go1.26.11 linux/amd64)`, and does nothing else: it reads no key and opens no database. A build that is not a release says `not a release build` and says what it was built from. The line carries no commit.
 - **A Go program from a release, with module hashes** (`go version -m` needs Go installed; it only reads the file and does not run it):
 
   ```bash
   go version -m pqcota-linux-amd64/pqcota-nodescan
   ```
 
-  The `mod` and `dep` lines of the pqcota modules show the release version and a content hash (`h1:`), for example `dep github.com/randyinthedev-hash/pqcota-common v0.19.0 h1:…`. The program does not carry its source commit; the release manifest lists the commit of each repository's tag. Releases before v0.14.0 show `=> ../pqcota-… (devel)` instead.
+  The `mod` and `dep` lines of the pqcota modules show the release version and a content hash (`h1:`), for example `dep github.com/randyinthedev-hash/pqcota-common v0.20.0 h1:…`. The program does not carry its source commit; the release manifest lists the commit of each repository's tag. Releases before v0.14.0 show `=> ../pqcota-… (devel)` instead.
 - **`collector.jar`** carries its version, commit and whether the source was modified in its own manifest:
 
   ```bash
@@ -70,7 +70,7 @@ The same command works for an archive, `collector.jar`, the manifest and `SHA256
 
   ```
   Implementation-Title: pqcota-discovery collector
-  Implementation-Version: v0.19.0
+  Implementation-Version: v0.20.0
   X-Pqcota-Commit: <commit of pqcota-discovery>
   X-Pqcota-Dirty: false
   ```
@@ -120,9 +120,9 @@ cd pqcota
 | `pqcota-discovery` | The collectors, their commands, the reference Ansible playbook |
 | `pqcota-provisioning` | Plan approval, artifact generation, execution records |
 
-Each release is the same tag (for example `v0.19.0`) on all five. A plain clone gives you `main` of each, which is development state. To build a release, check out that tag in **all five** repositories, for example, from the `pqcota` directory (the `cd pqcota` above), `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.19.0; done`. The checkout leaves each repository on a detached HEAD at the tag. The `require` lines in `go.mod` do not pin the siblings, because the local `replace` directives read the working trees next to it.
+Each release is the same tag (for example `v0.20.0`) on all five. A plain clone gives you `main` of each, which is development state. To build a release, check out that tag in **all five** repositories, for example, from the `pqcota` directory (the `cd pqcota` above), `for r in pqcota pqcota-common pqcota-inventory pqcota-discovery pqcota-provisioning; do git -C ../$r checkout v0.20.0; done`. The checkout leaves each repository on a detached HEAD at the tag. The `require` lines in `go.mod` do not pin the siblings, because the local `replace` directives read the working trees next to it.
 
-**What a tag gives a consumer outside this workspace.** Importing a package from the tag as a library works: Go ignores the `replace` lines of a dependency and resolves the `require` lines to the tags. Running a command straight from the tag does not. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.19.0`, and `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.19.0`, are refused by Go while a `go.mod` carries `replace` directives. To run a command, build it from the five-repository checkout above, or take the release bundle. As of 2026-10-02 the same holds for v0.10.0, v0.10.1 and v0.10.2.
+**What a tag gives a consumer outside this workspace.** Importing a package from the tag as a library works: Go ignores the `replace` lines of a dependency and resolves the `require` lines to the tags. Running a command straight from the tag does not. `go install github.com/randyinthedev-hash/pqcota-discovery/cmd/pqcota-hosts@v0.20.0`, and `go run github.com/randyinthedev-hash/pqcota/tools/checkprose@v0.20.0`, are refused by Go while a `go.mod` carries `replace` directives. To run a command, build it from the five-repository checkout above, or take the release bundle. As of 2026-10-02 the same holds for v0.10.0, v0.10.1 and v0.10.2.
 
 `go run …/tools/checkprose@v0.9.1` still works, because that tag predates the split. Pinning it keeps using the v0.9.1 checker; it is not a way to receive a newer one, and the checker has changed since.
 

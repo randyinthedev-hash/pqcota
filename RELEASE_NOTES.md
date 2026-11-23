@@ -99,6 +99,8 @@ unchanged.** The new view reads what is already stored and decides nothing.
   - The output is deterministic: the same inventory gives the same bytes. With `-` the DOT goes to standard output and
     a one-line summary to standard error. It creates no tables and takes no other query option.
 - The rules are in the [inventory command reference](https://github.com/randyinthedev-hash/pqcota-inventory/blob/main/cmd/README.md#pqcota-inventory).
+- **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.19.0.
+  `govulncheck` found no vulnerabilities in the five repositories.
 - **Tests.**
   - Unit tests draw one inventory that holds every case: a connection observed on one side, the same connection
     observed on both sides (exactly two lines, each `×3`, no `×6`), unconfirmed roles in the current and the older form,
