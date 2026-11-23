@@ -92,6 +92,21 @@ program, so the release build and the rebuild check work as before.
   and in each repository's command reference.
 - **Go toolchain.** The published programs are built with Go 1.26.11 (the `toolchain` line in `go.mod`), as in v0.18.0.
   `govulncheck` found no vulnerabilities in the five repositories.
+- **Release assets** (checked after publishing):
+  - the checksums of all seven files in `SHA256SUMS` match, and the manifest matched the downloaded assets;
+  - all 46 programs are built with Go 1.26.11 and show the pqcota modules at v0.19.0 with `h1:` hashes and no
+    `replace`; `govulncheck -mode=binary` found no vulnerabilities in any of them;
+  - `collector.jar` carries v0.19.0 and the pqcota-discovery tag commit;
+  - the commits in the manifest equal the `v0.19.0` tag commits of the five repositories, and rebuilding the tag gave
+    the same SHA-256 for all 46 programs;
+  - all 54 files passed attestation verification against the repository, the release workflow, `refs/tags/v0.19.0` and
+    the commit taken from the tag; a copy with one byte changed, another tag and another commit were rejected.
+
+  The released programs were run with `--version` and `-version` alone, under broken key settings and an unreachable
+  database, each in an empty directory. On Linux amd64, all 19 commands of the controller bundle printed exactly
+  `<command> v0.19.0 (go1.26.11 linux/amd64)` and exited 0, 38 runs in all. On a real Windows 11 machine,
+  `pqcota-cngscan.exe` and `pqcota-jvmscan.exe` printed `<command> v0.19.0 (go1.26.11 windows/amd64)`, 4 runs. No run
+  wrote to standard error or created a file.
 - **Tests.**
   - Unit tests cover the release, local-folder and module replacements (the real replacement and its version are shown,
     not only the version in `go.mod`), a build inside one repository, missing build information, and choosing the module a
